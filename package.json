@@ -117,7 +117,7 @@
     "@angular/compiler-cli": "17.2.1",
     "@angular/language-service": "17.2.1",
     "@angular/pwa": "^17.2.1",
-    "@compodoc/compodoc": "^1.1.22",
+    "@compodoc/compodoc": "^1.1.25",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@fullhuman/postcss-purgecss": "^5.0.0",
