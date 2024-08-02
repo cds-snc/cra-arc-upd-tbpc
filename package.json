@@ -100,7 +100,7 @@
     "rxjs": "~7.8.0",
     "stopwords-en": "^0.3.0",
     "stopwords-fr": "^0.3.0",
-    "tar": "^6.1.12",
+    "tar": "^6.2.1",
     "text-readability": "1.0.5",
     "tslib": "^2.5.0",
     "xlsx": "^0.18.5",
