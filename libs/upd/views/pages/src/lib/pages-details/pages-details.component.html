@@ -1,6 +1,6 @@
 <div class="back_link">
   <span class="material-icons align-top">west</span>
-  <a [routerLink]="['/', langLink, 'pages']">Pages</a>
+  <a [routerLink]="['/', langLink(), 'pages']">Pages</a>
 </div>
 
 <upd-loading-spinner
@@ -29,23 +29,15 @@
     </span>
   </h2>
 
-  <ng-container *ngIf="showUrl"
-    ><p class="page_url">{{ url$ | async }}</p></ng-container
-  >
+  <p class="page_url">
+    <span class="material-icons material-icon-wysiwyg">wysiwyg</span>
+    <a [href]="'https://' + url()" target="_blank">{{ url() }}</a>
+  </p>
   <div class="page_header back_link">
     <span id="page_project">
-      <span id="view_url" (click)="toggleUrl()" tabindex="0">
-        <span class="material-icons align-top" aria-hidden="true">link</span>
-        <span class="m-0" translate
-          ><ng-container *ngIf="!showUrl"> View URL</ng-container></span
-        >
-        <span class="m-0" translate
-          ><ng-container *ngIf="showUrl"> Hide URL</ng-container></span
-        >
-      </span>
       <span
         id="copy_url"
-        cdkCopyToClipboard="{{ url$ | async }}"
+        cdkCopyToClipboard="{{ url() }}"
         [cdkCopyToClipboardAttempts]="5"
         (click)="toggleAlert()"
         translate
@@ -59,17 +51,24 @@
         <upd-alert position="top">Copied successfully!</upd-alert>
       </ng-container>
     </span>
+    <span id="language" (click)="navigateToAltPage()" tabindex="0">
+      <span class="material-icons align-top" aria-hidden="true">language</span>
+      {{ 'View page' | translate: { lang: pageLangText() } }}
+    </span>
   </div>
 
   <upd-project-header
-    [data]="(projects$ | async) || []"
-    [config]="projectsCol"
+    [data]="projects() || []"
+    [config]="projectsCol()"
   ></upd-project-header>
 
   <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
 
   <upd-date-selector
-    *ngIf="!(currentUrl$ | async)?.startsWith('readability')"
+    *ngIf="
+      !((currentRoute$ | async) || '').endsWith('readability') &&
+      !((currentRoute$ | async) || '').endsWith('version-history')
+    "
   ></upd-date-selector>
 
   <router-outlet></router-outlet>

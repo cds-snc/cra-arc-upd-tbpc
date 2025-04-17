@@ -1,9 +1,12 @@
 {
   "extends": ["../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
+  "ignorePatterns": ["!**/*", "!**/webpack.config.js"],
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "files": ["*.ts", "*.tsx", "*(?!webpack.config).js", "*.jsx"],
+      "parserOptions": {
+        "project": ["apps/db-updater/tsconfig.*?.json"]
+      },
       "rules": {}
     },
     {

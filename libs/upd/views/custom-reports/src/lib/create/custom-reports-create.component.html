@@ -1,454 +1,1000 @@
-<ng-container *ngIf="showCopyAlert">
-  <upd-alert #alert position="top" [selfClosing]="true">{{
-    'Copied successfully!' | translate
-  }}</upd-alert>
-</ng-container>
-
 <div class="container-fluid gx-0">
   <div class="row">
     <div class="col">
-      <p translate="custom-report-desc"></p>
+      <div [innerHTML]="'custom-report-desc' | translate"></div>
     </div>
   </div>
 </div>
 
-<div
-  *ngIf="
-    validationTriggered &&
-    (!isDateRangeValid() ||
-      !areUrlsValid() ||
-      !areMetricsValid() ||
-      this.error())
-  "
->
-  <ngb-alert
-    *ngIf="overviewError"
-    [type]="'danger'"
-    [dismissible]="false"
-    (closed)="overviewError = false"
-    tabindex="0"
-    role="alert"
-    aria-live="assertive"
-    aria-atomic="true"
-  >
-    <p class="align-top pe-1">
-      <span class="material-icons align-top pe-1" aria-hidden="true"
-        >error</span
-      >
-      {{ 'Oops' | translate }}
-    </p>
-    <p class="align-top pe-1">{{ 'please-fix-following' | translate }}</p>
-    <ul>
-      <li *ngIf="!isDateRangeValid()">
-        <a class="alert-link" (click)="scrollToAnchor('select-date')"
-          ><span [translate]="'alert-date'"></span
-        ></a>
-      </li>
-      <li *ngIf="!areUrlsValid()">
-        <a class="alert-link" (click)="scrollToAnchor('select-url')"
-          ><span [translate]="'alert-url'"></span>
-        </a>
-      </li>
-      <li *ngIf="!areMetricsValid()">
-        <a class="alert-link" (click)="scrollToAnchor('select-metric')"
-          ><span [translate]="'alert-metric'"></span>
-        </a>
-      </li>
-      <li *ngIf="this.error()">
-        <span [translate]="this.error() || 'error'"></span>
-      </li>
-    </ul>
-  </ngb-alert>
-</div>
+<div class="report-tabs">
+  <p-tabView styleClass="tabview-custom" [(activeIndex)]="activeTab">
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <span>{{ 'traffic' | translate }}</span>
+      </ng-template>
+      <ng-container *ngIf="showCopyAlert">
+        <upd-alert #alert position="top" [selfClosing]="true">{{
+          'Copied successfully!' | translate
+        }}</upd-alert>
+      </ng-container>
 
-<div class="container-fluid my-2 gx-0">
-  <div class="row">
-    <div class="col">
-      <h3 class="mb-2 h5 pt-2 pb-2 me-2 card-tooltip">
-        <span
-          placement="top"
-          ngbTooltip="{{ 'tooltip-select-granularity' | translate }}"
-          >{{ 'select-granularity' | translate }}</span
-        >
-      </h3>
-
-      <upd-dropdown
-        id="granularity"
-        [label]="'Select' | translate"
-        [options]="granularityOptions"
-        [initialSelection]="selectedGranularity()"
-        (selectOption)="selectGranularity($event.value); resetValidation()"
-        [autoDisplayFirst]="true"
-      >
-      </upd-dropdown>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <h3 class="mb-2 h5 pt-2 pb-2" id="select-date">
-        <span class="required-star"></span>
-        <span
-          placement="top"
-          ngbTooltip="{{ 'tooltip-select-date' | translate }}"
-          class="card-tooltip"
-          >{{ 'select-date' | translate }}</span
-        >
-        <span class="required-title">
-          {{ 'required' | translate }}
-        </span>
-      </h3>
-      <upd-calendar
-        #calendar
-        [id]="'date_range'"
-        [showAction]="true"
-        [showPreset]="true"
-        [initialDates]="stateCalendarDates"
-        (dateChange)="handleDateChange($event); resetValidation()"
-        [granularity]="selectedGranularity()"
-        [required]="false"
-        [dateFormat]="calendarDateFormat()"
-        [invalid]="validationTriggered && !isDateRangeValid()"
-      ></upd-calendar>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
       <div
-        id="validation-messages"
-        [title]="'Validation Results' | translate"
         *ngIf="
-          invalidUrls().length > 0 ||
-          reportUrls().length > 0 ||
-          duplicateUrls().length > 0
+          validationTriggered &&
+          (!isDateRangeValid() ||
+            !areUrlsValid() ||
+            !areMetricsValid() ||
+            this.error())
         "
       >
-        <div *ngIf="reportUrls().length > 0 && newUrls().length > 0">
-          <ngb-alert
-            *ngIf="successUrls"
-            [type]="'success'"
-            [dismissible]="true"
-            (closed)="successUrls = false"
-            tabindex="0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
-            <span class="material-icons align-top pe-1" aria-hidden="true"
-              >check</span
-            >
-            <span>{{ 'success-urls' | translate }}</span>
-            <ol>
-              <li *ngFor="let url of newUrls()">{{ url }}</li>
-            </ol>
-          </ngb-alert>
-        </div>
-        <div *ngIf="invalidUrls().length > 0">
-          <ngb-alert
-            *ngIf="dangerUrls"
-            [type]="'danger'"
-            [dismissible]="false"
-            (closed)="dangerUrls = false"
-            tabindex="0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
+        <ngb-alert
+          *ngIf="overviewError"
+          [type]="'danger'"
+          [dismissible]="false"
+          (closed)="overviewError = false"
+          tabindex="0"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <p class="align-top pe-1">
             <span class="material-icons align-top pe-1" aria-hidden="true"
               >error</span
             >
-            <span>{{ 'invalid-urls' | translate }}</span
-            ><br />
-            <span>{{ 'invalid-urls-note' | translate }}</span>
-            <ol>
-              <li *ngFor="let url of invalidUrls()">{{ url }}</li>
-            </ol>
-          </ngb-alert>
-        </div>
-        <div *ngIf="duplicateUrls().length > 0">
-          <ngb-alert
-            *ngIf="warningUrls"
-            [type]="'warning'"
-            [dismissible]="true"
-            (closed)="warningUrls = false"
-            tabindex="0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
-            <span class="material-icons align-top pe-1" aria-hidden="true"
-              >warning</span
-            >
-            <span>{{ 'duplicate-urls' | translate }}</span
-            ><br />
-            <span>{{ 'duplicate-urls-note' | translate }}</span>
-            <ol>
-              <li *ngFor="let url of duplicateUrls()">{{ url }}</li>
-            </ol>
-          </ngb-alert>
-        </div>
+            {{ 'Oops' | translate }}
+          </p>
+          <p class="align-top pe-1">{{ 'please-fix-following' | translate }}</p>
+          <ul>
+            <li *ngIf="!isDateRangeValid()">
+              <a class="alert-link" (click)="scrollToAnchor('select-date')"
+                ><span [translate]="'alert-date'"></span
+              ></a>
+            </li>
+            <li *ngIf="!areUrlsValid()">
+              <a class="alert-link" (click)="scrollToAnchor('select-url')"
+                ><span [translate]="'alert-url'"></span>
+              </a>
+            </li>
+            <li *ngIf="!areMetricsValid()">
+              <a class="alert-link" (click)="scrollToAnchor('select-metric')"
+                ><span [translate]="'alert-metric'"></span>
+              </a>
+            </li>
+            <li *ngIf="this.error()">
+              <span [translate]="this.error() || 'error'"></span>
+            </li>
+          </ul>
+        </ngb-alert>
       </div>
-      <div class="row">
-        <div class="col guidance-modal">
-          <h3 class="mb-2 h5 pt-2 pb-2" id="select-url">
-            <span class="required-star"></span>
-            {{ 'select-url' | translate }}
-            <span class="required-title">
-              {{ 'required' | translate }}
-            </span>
-            <upd-modal
-              id="add-pages-modal"
-              [modalTitle]="'select-url'"
-              [modalContent]="'select-pages-modal' | translate"
-            >
-            </upd-modal>
-          </h3>
-        </div>
-      </div>
-      <div
-        class="card add-pages-card"
-        [ngClass]="{ 'card-invalid': validationTriggered && !areUrlsValid() }"
-      >
-        <p-tabView styleClass="tabview-custom">
-          <p-tabPanel>
-            <ng-template pTemplate="header">
-              <span>{{ 'Bulk Pages' | translate }}</span>
-            </ng-template>
-            <span class="p-float-label mt-3">
-              <textarea
-                pInputTextarea
-                #urlTextarea
-                rows="5"
-                id="float-input"
-                class="w-100"
-              ></textarea>
-              <label for="float-input">{{ 'Enter URLs' | translate }}</label>
-            </span>
-          </p-tabPanel>
-          <p-tabPanel>
-            <ng-template pTemplate="header">
-              <span>{{ 'Pages' | translate }}</span>
-            </ng-template>
-            <upd-data-table
-              #dataTable
-              id="pages-home-"
-              [data]="pages()"
-              [cols]="columns()"
-              [displayRows]="5"
-              [loading]="selectionData() === null"
-              placeholderText="dt_search_keyword_url"
-              [searchFields]="searchFields()"
-              [exports]="false"
-              [checkboxes]="true"
-              (rowSelectionChanged)="selectPages($event)"
-              [ngClass]="'pages-home'"
-            >
-            </upd-data-table>
-          </p-tabPanel>
-          <p-tabPanel>
-            <ng-template pTemplate="header">
-              <span>{{ 'tasks' | translate }}</span>
-            </ng-template>
-            <upd-data-table
-              #tasksTable
-              id="tasks-list-"
-              [data]="tasks()"
-              [cols]="taskColumns()"
-              [displayRows]="5"
-              [loading]="selectionData() === null"
-              [exports]="false"
-              [checkboxes]="true"
-              (rowSelectionChanged)="selectTasks($event)"
-              [ngClass]="'tasks-list'"
-            >
-            </upd-data-table>
-          </p-tabPanel>
-          <p-tabPanel>
-            <ng-template pTemplate="header">
-              <span>{{ 'ux_projects' | translate }}</span>
-            </ng-template>
-            <upd-data-table
-              #projectsTable
-              id="projects-list-"
-              [data]="projects()"
-              [cols]="taskColumns()"
-              [displayRows]="5"
-              [loading]="selectionData() === null"
-              [exports]="false"
-              [checkboxes]="true"
-              (rowSelectionChanged)="selectProjects($event)"
-              [ngClass]="'projects-list'"
-            >
-            </upd-data-table>
-          </p-tabPanel>
-        </p-tabView>
 
-        <button
-          class="btn btn-outline-primary"
-          [translate]="'Add pages'"
-          (click)="
-            addPages(urlTextarea.value);
-            resetTableSelection();
-            resetValidation();
-            successUrls = true;
-            dangerUrls = true;
-            warningUrls = true;
-            scrollToAnchor('validation-messages')
-          "
-        ></button>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="container-fluid my-4 gx-0" *ngIf="reportUrls().length > 0">
-  <div class="row">
-    <div class="col">
-      <!--   ACCORDION IS DEPRECATED   -->
-      <upd-accordion
-        #urlsAdded
-        [styleClass]="'mb-2'"
-        [expanded]="isAccordionExpanded"
-        title="{{
-          'URLs added to report' | translate: { count: reportUrls().length }
-        }} "
-      >
-        <div class="d-flex justify-content-between mb-2">
-          <upd-input-switch
-            id="group"
-            [text]="'Group pages as a segment' | translate"
-            [checked]="isGrouped()"
-            (checkedChange)="setIsGrouped($event); resetValidation()"
-          >
-          </upd-input-switch>
-          <div>
-            <button
-              id="copy_url"
-              cdkCopyToClipboard="{{ reportUrls().join('\n') }}"
-              [cdkCopyToClipboardAttempts]="5"
-              class="btn btn-outline-primary btn-sm me-2"
-              (click)="copyToClipboard()"
-            >
-              <span class="material-icons" aria-hidden="true"
-                >content_copy</span
+      <div class="container-fluid my-2 gx-0">
+        <div class="row">
+          <div class="col">
+            <h3 class="mb-2 h5 pt-2 pb-2 me-2 card-tooltip">
+              <span
+                placement="top"
+                ngbTooltip="{{ 'tooltip-select-granularity' | translate }}"
+                >{{ 'select-granularity' | translate }}</span
               >
-              <span [translate]="'copy-all'"></span>
-            </button>
-            <button
-              id="remove_all"
-              class="btn btn-outline-primary btn-sm"
-              (click)="
-                resetUrls();
-                successUrls = false;
-                dangerUrls = false;
-                warningUrls = false
+            </h3>
+
+            <upd-dropdown
+              id="granularity"
+              [label]="'Select' | translate"
+              [options]="granularityOptions"
+              [initialSelection]="selectedGranularity()"
+              (selectOption)="
+                selectGranularity($event.value); resetValidation()
               "
+              [autoDisplayFirst]="true"
             >
-              <span class="material-icons" aria-hidden="true">close</span>
-              <span [translate]="'remove-all'"></span>
-            </button>
+            </upd-dropdown>
           </div>
         </div>
-        <p-table
-          [value]="reportUrls()"
-          styleClass="p-datatable-striped"
-          class="urls-added-table w-100"
-          [styleClass]="'p-datatable-sm'"
-        >
-          <ng-template pTemplate="body" let-url let-rowIndex="rowIndex">
-            <tr>
-              <td>
-                <a
-                  href="{{ 'https://' + url }}"
-                  (click)="openLink($event, 'https://' + url)"
-                  class="p-1 align-text-top"
-                  placement="right"
-                  ngbTooltip="{{ 'open-link' | translate }}"
-                  >{{ url }}</a
+      </div>
+
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col">
+            <h3 class="mb-2 h5 pt-2 pb-2" id="select-date">
+              <span class="required-star"></span>
+              <span
+                placement="top"
+                ngbTooltip="{{ 'tooltip-select-date' | translate }}"
+                class="card-tooltip"
+                >{{ 'select-date' | translate }}</span
+              >
+              <span class="required-title">
+                {{ 'required' | translate }}
+              </span>
+            </h3>
+            <upd-calendar
+              #calendar
+              [id]="'date_range'"
+              [showAction]="true"
+              [showPreset]="true"
+              [initialDates]="stateCalendarDates"
+              (dateChange)="handleDateChange($event); resetValidation()"
+              [granularity]="selectedGranularity()"
+              [required]="false"
+              [dateFormat]="calendarDateFormat()"
+              [invalid]="validationTriggered && !isDateRangeValid()"
+            ></upd-calendar>
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col">
+            <div
+              id="validation-messages"
+              [title]="'Validation Results' | translate"
+              *ngIf="
+                invalidUrls().length > 0 ||
+                reportUrls().length > 0 ||
+                duplicateUrls().length > 0
+              "
+            >
+              <div *ngIf="reportUrls().length > 0 && newUrls().length > 0">
+                <ngb-alert
+                  *ngIf="successUrls"
+                  [type]="'success'"
+                  [dismissible]="true"
+                  (closed)="successUrls = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
                 >
-              </td>
-              <td>
-                <button
-                  type="button"
-                  class="mt-1 me-1 rounded p-0 btn btn-light"
-                  aria-label="Remove"
-                  (click)="removePage(rowIndex); resetValidation()"
-                >
-                  <span aria-hidden="true" class="material-icons text-danger"
-                    >close</span
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >check</span
                   >
-                </button>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </upd-accordion>
-    </div>
-  </div>
-</div>
+                  <span>{{ 'success-urls' | translate }}</span>
+                  <ol>
+                    <li *ngFor="let url of newUrls()">{{ url }}</li>
+                  </ol>
+                </ngb-alert>
+              </div>
+              <div *ngIf="invalidUrls().length > 0">
+                <ngb-alert
+                  *ngIf="dangerUrls"
+                  [type]="'danger'"
+                  [dismissible]="false"
+                  (closed)="dangerUrls = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >error</span
+                  >
+                  <span>{{ 'invalid-urls' | translate }}</span
+                  ><br />
+                  <span>{{ 'invalid-urls-note' | translate }}</span>
+                  <ol>
+                    <li *ngFor="let url of invalidUrls()">{{ url }}</li>
+                  </ol>
+                </ngb-alert>
+              </div>
+              <div *ngIf="duplicateUrls().length > 0">
+                <ngb-alert
+                  *ngIf="warningUrls"
+                  [type]="'warning'"
+                  [dismissible]="true"
+                  (closed)="warningUrls = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >warning</span
+                  >
+                  <span>{{ 'duplicate-urls' | translate }}</span
+                  ><br />
+                  <span>{{ 'duplicate-urls-note' | translate }}</span>
+                  <ol>
+                    <li *ngFor="let url of duplicateUrls()">{{ url }}</li>
+                  </ol>
+                </ngb-alert>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col guidance-modal">
+                <h3 class="mb-2 h5 pt-2 pb-2" id="select-url">
+                  <span class="required-star"></span>
+                  {{ 'select-url' | translate }}
+                  <span class="required-title">
+                    {{ 'required' | translate }}
+                  </span>
+                  <upd-modal
+                    id="add-pages-modal"
+                    [modalTitle]="'select-url'"
+                    [modalContent]="'select-pages-modal' | translate"
+                  >
+                  </upd-modal>
+                </h3>
+              </div>
+            </div>
+            <div
+              class="card add-pages-card"
+              [ngClass]="{
+                'card-invalid': validationTriggered && !areUrlsValid(),
+              }"
+            >
+              <p-tabView styleClass="tabview-custom">
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'Bulk Pages' | translate }}</span>
+                  </ng-template>
+                  <span class="p-float-label mt-3">
+                    <textarea
+                      pInputTextarea
+                      #urlTextarea
+                      rows="5"
+                      id="float-input"
+                      class="w-100"
+                    ></textarea>
+                    <label for="float-input">{{
+                      'Enter URLs' | translate
+                    }}</label>
+                  </span>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'pages' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #dataTable
+                    id="pages-home-"
+                    [data]="pages()"
+                    [cols]="columns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    placeholderText="dt_search_keyword_url"
+                    [searchFields]="searchFields()"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectPages($event)"
+                    [ngClass]="'pages-home'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'tasks' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #tasksTable
+                    id="tasks-list-"
+                    [data]="tasks()"
+                    [cols]="taskColumns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectTasks($event)"
+                    [ngClass]="'tasks-list'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'ux_projects' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #projectsTable
+                    id="projects-list-"
+                    [data]="projects()"
+                    [cols]="taskColumns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectProjects($event)"
+                    [ngClass]="'projects-list'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+              </p-tabView>
 
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-12">
-      <h3 class="mb-2 h5 pt-2 pb-2" id="select-metric">
-        <span class="required-star"></span>
-        {{ 'select-metric' | translate }}
-        <span class="required-title">
-          {{ 'required' | translate }}
-        </span>
-      </h3>
+              <button
+                class="btn btn-outline-primary"
+                [translate]="'Add pages'"
+                (click)="
+                  addPages(urlTextarea.value);
+                  resetTableSelection();
+                  resetValidation();
+                  successUrls = true;
+                  dangerUrls = true;
+                  warningUrls = true;
+                  scrollToAnchor('validation-messages')
+                "
+              ></button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <upd-checkbox
-        [id]="'metrics'"
-        [items]="reportMetrics"
-        [selectedItems]="stateMetrics"
-        [invalid]="validationTriggered && !areMetricsValid()"
-        (selectedItemsChange)="selectMetrics($event); resetValidation()"
-      >
-      </upd-checkbox>
-    </div>
-  </div>
-</div>
+      <div class="container-fluid my-4 gx-0" *ngIf="reportUrls().length > 0">
+        <div class="row">
+          <div class="col">
+            <!--   ACCORDION IS DEPRECATED   -->
+            <upd-accordion
+              #urlsAdded
+              [styleClass]="'mb-2'"
+              [expanded]="isAccordionExpanded"
+              title="{{
+                'URLs added to report'
+                  | translate: { count: reportUrls().length }
+              }} "
+            >
+              <div class="d-flex justify-content-between mb-2">
+                <upd-input-switch
+                  id="group"
+                  [text]="'Group pages as a segment' | translate"
+                  [checked]="isGrouped()"
+                  (checkedChange)="setIsGrouped($event); resetValidation()"
+                >
+                </upd-input-switch>
+                <div>
+                  <button
+                    id="copy_url"
+                    cdkCopyToClipboard="{{ reportUrls().join('\n') }}"
+                    [cdkCopyToClipboardAttempts]="5"
+                    class="btn btn-outline-primary btn-sm me-2"
+                    (click)="copyToClipboard()"
+                  >
+                    <span class="material-icons" aria-hidden="true"
+                      >content_copy</span
+                    >
+                    <span [translate]="'copy-all'"></span>
+                  </button>
+                  <button
+                    id="remove_all"
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="
+                      resetUrls();
+                      successUrls = false;
+                      dangerUrls = false;
+                      warningUrls = false
+                    "
+                  >
+                    <span class="material-icons" aria-hidden="true">close</span>
+                    <span [translate]="'remove-all'"></span>
+                  </button>
+                </div>
+              </div>
+              <p-table
+                [value]="reportUrls()"
+                styleClass="p-datatable-striped"
+                class="urls-added-table w-100"
+                [styleClass]="'p-datatable-sm'"
+              >
+                <ng-template pTemplate="body" let-url let-rowIndex="rowIndex">
+                  <tr>
+                    <td>
+                      <a
+                        href="{{ 'https://' + url }}"
+                        (click)="openLink($event, 'https://' + url)"
+                        class="p-1 align-text-top"
+                        placement="right"
+                        ngbTooltip="{{ 'open-link' | translate }}"
+                        >{{ url }}</a
+                      >
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        class="mt-1 me-1 rounded p-0 btn btn-light"
+                        aria-label="Remove"
+                        (click)="removePage(rowIndex); resetValidation()"
+                      >
+                        <span
+                          aria-hidden="true"
+                          class="material-icons text-danger"
+                          >close</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </upd-accordion>
+          </div>
+        </div>
+      </div>
 
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-12">
-      <h3 class="mb-2 h5 pt-2 pb-2 card-tooltip">
-        <span
-          placement="top"
-          ngbTooltip="{{ 'tooltip-select-dimension' | translate }}"
-          >{{ 'select-dimension' | translate }}</span
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-2 h5 pt-2 pb-2" id="select-metric">
+              <span class="required-star"></span>
+              {{ 'select-metric' | translate }}
+              <span class="required-title">
+                {{ 'required' | translate }}
+              </span>
+            </h3>
+
+            <upd-checkbox
+              [id]="'metrics'"
+              [items]="reportMetrics"
+              [selectedItems]="stateMetrics"
+              [invalid]="validationTriggered && !areMetricsValid()"
+              (selectedItemsChange)="selectMetrics($event); resetValidation()"
+            >
+            </upd-checkbox>
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col-12">
+            <h3 class="mb-2 h5 pt-2 pb-2 card-tooltip">
+              <span
+                placement="top"
+                ngbTooltip="{{ 'tooltip-select-dimension' | translate }}"
+                >{{ 'select-dimension' | translate }}</span
+              >
+            </h3>
+
+            <upd-radio
+              [id]="'dimensions'"
+              [items]="reportDimensions"
+              [selectedItem]="stateDimension"
+              (selectedItemsChange)="
+                selectDimension($event.value); resetValidation()
+              "
+            ></upd-radio>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex">
+        <button
+          class="btn btn-primary btn-generate-report"
+          (click)="!isDateRangeValid(); createReport(config())"
         >
-      </h3>
+          <span [translate]="'generate-report'"></span>
+          <span class="material-icons" aria-hidden="true">navigate_next</span>
+        </button>
+      </div>
 
-      <upd-radio
-        [id]="'dimensions'"
-        [items]="reportDimensions"
-        [selectedItem]="stateDimension"
-        (selectedItemsChange)="selectDimension($event.value); resetValidation()"
-      ></upd-radio>
-    </div>
-  </div>
-</div>
-
-<div class="d-flex">
-  <button
-    class="btn btn-primary btn-generate-report"
-    (click)="!isDateRangeValid(); createReport(config())"
-  >
-    <span [translate]="'generate-report'"></span>
-    <span class="material-icons" aria-hidden="true">navigate_next</span>
-  </button>
-</div>
-
-<!-- <upd-card styleClass="mt-3 d-inline-block">
+      <!-- <upd-card styleClass="mt-3 d-inline-block">
   <code>
     <pre>{{ config() | json }}</pre>
   </code>
 </upd-card> -->
 
-<hr />
+      <hr />
+    </p-tabPanel>
+    <p-tabPanel>
+      <ng-template pTemplate="header">
+        <span>{{ 'tab-pagefeedback' | translate }}</span>
+      </ng-template>
+
+      <div
+        *ngIf="
+          validationFeedbackTriggered &&
+          (!isFeedbackDateRangeValid() ||
+            !arePagesTasksProjectsValid() ||
+            this.errorFeedback())
+        "
+      >
+        <ngb-alert
+          *ngIf="overviewFeedbackError"
+          [type]="'danger'"
+          [dismissible]="false"
+          (closed)="overviewFeedbackError = false"
+          tabindex="0"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <p class="align-top pe-1">
+            <span class="material-icons align-top pe-1" aria-hidden="true"
+              >error</span
+            >
+            {{ 'Oops' | translate }}
+          </p>
+          <p class="align-top pe-1">{{ 'please-fix-following' | translate }}</p>
+          <ul>
+            <li *ngIf="!isFeedbackDateRangeValid()">
+              <a class="alert-link" (click)="scrollToAnchor('select-date2')"
+                ><span [translate]="'alert-date'"></span
+              ></a>
+            </li>
+            <li *ngIf="!arePagesTasksProjectsValid()">
+              <a class="alert-link" (click)="scrollToAnchor('select-items')"
+                ><span [translate]="'alert-url'"></span>
+              </a>
+            </li>
+            <li *ngIf="this.errorFeedback()">
+              <span [translate]="this.errorFeedback() || 'error'"></span>
+            </li>
+          </ul>
+        </ngb-alert>
+      </div>
+
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col">
+            <h3 class="mb-2 h5 pt-2 pb-2" id="select-date2">
+              <span class="required-star"></span>
+              <span
+                placement="top"
+                ngbTooltip="{{ 'tooltip-select-date' | translate }}"
+                class="card-tooltip"
+                >{{ 'select-date' | translate }}</span
+              >
+              <span class="required-title">
+                {{ 'required' | translate }}
+              </span>
+            </h3>
+            <upd-calendar
+              #calendar2
+              [id]="'date_range2'"
+              [showAction]="true"
+              [showPreset]="true"
+              [initialDates]="stateFeedbackCalendarDates"
+              (dateChange)="
+                handleFeedbackDateChange($event); resetFeedbackValidation()
+              "
+              [required]="false"
+              [dateFormat]="calendarDateFormat()"
+              [invalid]="
+                validationFeedbackTriggered && !isFeedbackDateRangeValid()
+              "
+            ></upd-calendar>
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid my-4 gx-0">
+        <div class="row">
+          <div class="col">
+            <div
+              id="validation-messages2"
+              [title]="'Validation Results' | translate"
+              *ngIf="
+                invalidFeedbackData().length > 0 ||
+                pagesFeedbackData().length > 0 ||
+                duplicateFeedbackPages().length > 0 ||
+                tasksFeedbackData().length > 0 ||
+                duplicateFeedbackTasks().length > 0 ||
+                projectsFeedbackData().length > 0 ||
+                duplicateFeedbackProjects().length > 0
+              "
+            >
+              <div
+                *ngIf="
+                  (pagesFeedbackData().length > 0 &&
+                    newFeedbackPages().length > 0) ||
+                  (tasksFeedbackData().length > 0 &&
+                    newFeedbackTasks().length > 0) ||
+                  (projectsFeedbackData().length > 0 &&
+                    newFeedbackProjects().length > 0)
+                "
+              >
+                <ngb-alert
+                  *ngIf="successFeedbackData"
+                  [type]="'success'"
+                  [dismissible]="true"
+                  (closed)="successFeedbackData = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >check</span
+                  >
+                  <span>{{ 'success-items' | translate }}</span>
+                  @if (newFeedbackPages().length > 0) {
+                    <p class="fw-bold">{{ 'pages' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let page of newFeedbackPages()">
+                      {{ page.title }}
+                    </li>
+                  </ol>
+                  @if (newFeedbackTasks().length > 0) {
+                    <p class="fw-bold">{{ 'tasks' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let task of newFeedbackTasks()">
+                      {{ task.title | translate }}
+                      {{
+                        'page-count' | translate: { count: task.pages?.length }
+                      }}
+                    </li>
+                  </ol>
+                  @if (newFeedbackProjects().length > 0) {
+                    <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let project of newFeedbackProjects()">
+                      {{ project.title | translate }}
+                      {{
+                        'page-count'
+                          | translate: { count: project.pages?.length }
+                      }}
+                    </li>
+                  </ol>
+                </ngb-alert>
+              </div>
+              <div *ngIf="invalidFeedbackData().length > 0">
+                <ngb-alert
+                  *ngIf="dangerFeedbackData"
+                  [type]="'danger'"
+                  [dismissible]="false"
+                  (closed)="dangerFeedbackData = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >error</span
+                  >
+                  <span>{{ 'invalid-urls' | translate }}</span
+                  ><br />
+                  <span>{{ 'invalid-urls-note' | translate }}</span>
+                  <ol>
+                    <li *ngFor="let data of invalidFeedbackData()">
+                      {{ data }}
+                    </li>
+                  </ol>
+                </ngb-alert>
+              </div>
+              <div
+                *ngIf="
+                  duplicateFeedbackPages().length > 0 ||
+                  duplicateFeedbackTasks().length > 0 ||
+                  duplicateFeedbackProjects().length > 0
+                "
+              >
+                <ngb-alert
+                  *ngIf="warningFeedbackData"
+                  [type]="'warning'"
+                  [dismissible]="true"
+                  (closed)="warningFeedbackData = false"
+                  tabindex="0"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                >
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >warning</span
+                  >
+                  <span>{{ 'duplicate-items' | translate }}</span
+                  ><br />
+                  <span>{{ 'duplicate-items-note' | translate }}</span>
+                  @if (duplicateFeedbackPages().length > 0) {
+                    <p class="fw-bold">{{ 'pages' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let page of duplicateFeedbackPages()">
+                      {{ page.title }}
+                    </li>
+                  </ol>
+                  @if (duplicateFeedbackTasks().length > 0) {
+                    <p class="fw-bold">{{ 'tasks' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let task of duplicateFeedbackTasks()">
+                      {{ task.title }}
+                    </li>
+                  </ol>
+                  @if (duplicateFeedbackProjects().length > 0) {
+                    <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
+                  }
+                  <ol>
+                    <li *ngFor="let project of duplicateFeedbackProjects()">
+                      {{ project.title }}
+                    </li>
+                  </ol>
+                </ngb-alert>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col guidance-modal">
+                <h3 class="mb-2 h5 pt-2 pb-2" id="select-items">
+                  <span class="required-star"></span>
+                  {{ 'select-items' | translate }}
+                  <span class="required-title">
+                    {{ 'required' | translate }}
+                  </span>
+                  <upd-modal
+                    id="add-pages-modal"
+                    [modalTitle]="'select-url'"
+                    [modalContent]="'select-pages-modal' | translate"
+                  >
+                  </upd-modal>
+                </h3>
+              </div>
+            </div>
+            <div
+              class="card add-pages-card"
+              [ngClass]="{
+                'card-invalid':
+                  validationFeedbackTriggered && !arePagesTasksProjectsValid(),
+              }"
+            >
+              <p-tabView styleClass="tabview-custom">
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'Bulk Pages' | translate }}</span>
+                  </ng-template>
+                  <span class="p-float-label mt-3">
+                    <textarea
+                      pInputTextarea
+                      #urlTextarea2
+                      rows="5"
+                      id="float-input"
+                      class="w-100"
+                    ></textarea>
+                    <label for="float-input">{{
+                      'Enter URLs' | translate
+                    }}</label>
+                  </span>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'pages' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #dataTable2
+                    id="pages-home-"
+                    [data]="pages()"
+                    [cols]="columns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    placeholderText="dt_search_keyword_url"
+                    [searchFields]="searchFields()"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectPages($event)"
+                    [ngClass]="'pages-home'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'tasks' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #tasksTable2
+                    id="tasks-list-"
+                    [data]="tasks()"
+                    [cols]="taskColumns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectTasks($event)"
+                    [ngClass]="'tasks-list'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+                <p-tabPanel>
+                  <ng-template pTemplate="header">
+                    <span>{{ 'ux_projects' | translate }}</span>
+                  </ng-template>
+                  <upd-data-table
+                    #projectsTable2
+                    id="projects-list-"
+                    [data]="projects()"
+                    [cols]="taskColumns()"
+                    [displayRows]="5"
+                    [loading]="selectionData() === null"
+                    [exports]="false"
+                    [checkboxes]="true"
+                    (rowSelectionChanged)="selectProjects($event)"
+                    [ngClass]="'projects-list'"
+                  >
+                  </upd-data-table>
+                </p-tabPanel>
+              </p-tabView>
+
+              <button
+                class="btn btn-outline-primary"
+                [translate]="'Add'"
+                (click)="
+                  addPagesFeedback(urlTextarea2.value);
+                  resetFeedbackTableSelection();
+                  resetFeedbackValidation();
+                  successFeedbackData = true;
+                  dangerFeedbackData = true;
+                  warningFeedbackData = true;
+                  scrollToAnchor('validation-messages2')
+                "
+              ></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="container-fluid my-4 gx-0"
+        *ngIf="
+          pagesFeedbackData().length > 0 ||
+          tasksFeedbackData().length > 0 ||
+          projectsFeedbackData().length > 0
+        "
+      >
+        <div class="row">
+          <div class="col">
+            <!--   ACCORDION IS DEPRECATED   -->
+            <upd-accordion
+              #urlsAdded2
+              [styleClass]="'mb-2'"
+              [expanded]="isAccordionExpanded"
+              title="{{
+                'Items added to report'
+                  | translate
+                    : {
+                        count:
+                          pagesFeedbackData().length +
+                          tasksFeedbackData().length +
+                          projectsFeedbackData().length,
+                      }
+              }} "
+            >
+              <div class="d-flex justify-content-between mb-2">
+                <div></div>
+                <div>
+                  <button
+                    id="remove_all"
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="
+                      resetPagesTasksProjects();
+                      successFeedbackData = false;
+                      dangerFeedbackData = false;
+                      warningFeedbackData = false
+                    "
+                  >
+                    <span class="material-icons" aria-hidden="true">close</span>
+                    <span [translate]="'remove-all'"></span>
+                  </button>
+                </div>
+              </div>
+              @if (pagesFeedbackData().length > 0) {
+                <p class="fw-bold ms-2">{{ 'pages' | translate }}</p>
+              }
+              <p-table
+                [value]="pagesFeedbackData()"
+                styleClass="p-datatable-striped"
+                class="urls-added-table w-100"
+                [styleClass]="'p-datatable-sm'"
+              >
+                <ng-template pTemplate="body" let-page let-rowIndex="rowIndex">
+                  <tr>
+                    <td>
+                      {{ page.title }}
+                    </td>
+                    <td class="text-end">
+                      <button
+                        type="button"
+                        class="mt-1 me-1 rounded p-0 btn btn-light"
+                        aria-label="Remove"
+                        (click)="
+                          removeFeedbackPage(rowIndex);
+                          resetFeedbackValidation()
+                        "
+                      >
+                        <span
+                          aria-hidden="true"
+                          class="material-icons text-danger"
+                          >close</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+
+              @if (tasksFeedbackData().length > 0) {
+                <p class="fw-bold mt-4 ms-2">{{ 'tasks' | translate }}</p>
+              }
+              <p-table
+                [value]="tasksFeedbackData()"
+                styleClass="p-datatable-striped"
+                class="urls-added-table w-100"
+                [styleClass]="'p-datatable-sm'"
+              >
+                <ng-template pTemplate="body" let-task let-rowIndex="rowIndex">
+                  <tr>
+                    <td>
+                      {{ task.title }}
+                      {{
+                        'page-count' | translate: { count: task.pages.length }
+                      }}
+                    </td>
+                    <td class="text-end">
+                      <button
+                        type="button"
+                        class="mt-1 me-1 rounded p-0 btn btn-light"
+                        aria-label="Remove"
+                        (click)="
+                          removeFeedbackTask(rowIndex);
+                          resetFeedbackValidation()
+                        "
+                      >
+                        <span
+                          aria-hidden="true"
+                          class="material-icons text-danger"
+                          >close</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+
+              @if (projectsFeedbackData().length > 0) {
+                <p class="fw-bold mt-4 ms-2">{{ 'ux-projects' | translate }}</p>
+              }
+              <p-table
+                [value]="projectsFeedbackData()"
+                styleClass="p-datatable-striped"
+                class="urls-added-table w-100"
+                [styleClass]="'p-datatable-sm'"
+              >
+                <ng-template
+                  pTemplate="body"
+                  let-project
+                  let-rowIndex="rowIndex"
+                >
+                  <tr>
+                    <td>
+                      {{ project.title }}
+                      {{
+                        'page-count'
+                          | translate: { count: project.pages.length }
+                      }}
+                    </td>
+                    <td class="text-end">
+                      <button
+                        type="button"
+                        class="mt-1 me-1 rounded p-0 btn btn-light"
+                        aria-label="Remove"
+                        (click)="
+                          removeFeedbackProject(rowIndex);
+                          resetFeedbackValidation()
+                        "
+                      >
+                        <span
+                          aria-hidden="true"
+                          class="material-icons text-danger"
+                          >close</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+            </upd-accordion>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex">
+        <button
+          class="btn btn-primary btn-generate-report"
+          (click)="
+            !isFeedbackDateRangeValid(); createFeedbackReport(feedbackConfig())
+          "
+        >
+          <span [translate]="'generate-report'"></span>
+          <span class="material-icons" aria-hidden="true">navigate_next</span>
+        </button>
+      </div>
+
+      <hr />
+    </p-tabPanel>
+  </p-tabView>
+</div>

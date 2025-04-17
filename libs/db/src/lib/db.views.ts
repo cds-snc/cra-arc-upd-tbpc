@@ -3,12 +3,10 @@ import dayjs, { ManipulateType } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {
   arrayToDictionary,
-  DateRange,
-  logJson,
   sum,
 } from '@dua-upd/utils-common';
 import { Page, PageMetrics, Task } from '../';
-import { IPage } from '@dua-upd/types-common';
+import type { DateRange, IPage } from '@dua-upd/types-common';
 
 dayjs.extend(utc);
 

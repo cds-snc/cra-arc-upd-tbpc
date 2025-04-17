@@ -1,0 +1,124 @@
+@if (loading() && hashes().length <= 1) {
+  <div class="loading-overlay">
+    <div class="loading-spinner" aria-live="polite"></div>
+  </div>
+} @else {
+  @if (hashes().length <= 1) {
+    <p>{{ 'no-comparison-available' | translate }}</p>
+  } @else {
+    <div class="row g-3 align-items-center">
+      <div class="col-md-8 d-flex justify-content-start">
+        <!-- Previous Version Dropdown -->
+        <div class="me-3">
+          <label for="previous-version" class="form-label me-2"
+            >{{ 'previous-version' | translate }}</label
+          >
+          <upd-dropdown
+            id="previous-version"
+            class="w-100"
+            [label]="'Select' | translate"
+            [options]="beforeDropdownOptions()"
+            [initialSelection]="selectedDate('left')()"
+            (selectOption)="updateSelection($event, 'left')"
+          ></upd-dropdown>
+        </div>
+
+        <!-- Current Version Dropdown -->
+        <div>
+          <label for="current-version" class="form-label me-2"
+            >{{ 'compared-to' | translate }}</label
+          >
+          <upd-dropdown
+            id="current-version"
+            class="w-100"
+            [label]="'Select' | translate"
+            [options]="afterDropdownOptions()"
+            [initialSelection]="selectedDate('right')()"
+            (selectOption)="updateSelection($event, 'right')"
+          ></upd-dropdown>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex justify-content-end">
+        @if (viewMode().value !== 'source') {
+          @if (elements().length > 0) {
+            <div class="slide-content text-end">
+              <p class="change-text">
+                {{ (elements().length === 1 ? 'total-changesOne' : 'total-changesOther') | translate:{ num: elements().length } }}  |
+                {{ currentIndex() === 0 ? '-' : currentIndex() }}/{{
+                  elements().length
+                }}
+              </p>
+
+              <div class="btn custom-prev" (click)="prev()">
+                <span class="material-icons">keyboard_arrow_up</span>
+              </div>
+              <div class="btn custom-next" (click)="next()">
+                <span class="material-icons">keyboard_arrow_down</span>
+              </div>
+            </div>
+          } @else if (elements().length === 0) {
+            <div class="slide-content text-end">
+              <p class="change-text">
+                {{ 'total-changesOther' | translate:{ num: elements().length } }}
+              </p>
+            </div>
+            <!-- <p class="text-end">{{ 'no-pageversion-changes' | translate }}</p> -->
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Output Section -->
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        <label for="output-selection" class="form-label">{{ 'View' | translate }}</label>
+        <upd-radio
+          id="output-selection"
+          class="w-100"
+          [items]="viewModeOptions"
+          (selectedItemsChange)="changeViewMode($event)"
+          [initialSelection]="getInitialSelectionView()()"
+          [displayTooltip]="false"
+        ></upd-radio>
+      </div>
+    </div>
+
+    <!-- Live Container -->
+    <div class="row mt-3">
+      <div [class.hidden]="viewMode().value !== 'live'">
+        <div class="group-legend mb-2">
+          <div *ngFor="let item of legendItems()" class="legend-item">
+            <div
+              class="legend-box"
+              [ngStyle]="{
+                'background-color':
+                  item.style === 'highlight' ? item.colour : 'transparent',
+                border:
+                  item.style === 'line'
+                    ? '2px ' + (item.lineStyle || 'solid') + ' ' + item.colour
+                    : 'none',
+              }"
+            ></div>
+            <span class="legend-text">{{ item.text | translate }}</span>
+          </div>
+        </div>
+        <div class="col-12">
+          <div #liveContainer class="live-container mt-3"></div>
+        </div>
+      </div>
+
+      <!-- Source Container -->
+      <div [class.hidden]="viewMode().value !== 'source'">
+        <upd-dropdown
+          id="format"
+          [label]="'Select' | translate"
+          [options]="sourceFormatOptions"
+          [initialSelection]="outputFormat()"
+          (selectOption)="changeOutputFormat($event.value || '')"
+        ></upd-dropdown>
+        <div #sourceContainer class="mt-3"></div>
+      </div>
+    </div>
+  }
+}

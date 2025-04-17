@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { set } from 'mongoose';
-import { CustomReportsModule } from '@dua-upd/api/custom-reports';
+import { AdobeAnalyticsModule, CustomReportsModule } from '@dua-upd/api/custom-reports';
 import { QueryModule } from '@dua-upd/api/query';
 import { PagesModule } from '../pages/pages.module';
 import { OverallModule } from '../overall/overall.module';
@@ -12,9 +13,16 @@ import { DbModule } from '@dua-upd/db';
 import { InternalSearchModule } from '../internal-search/internal-search.module';
 import { ReportsModule } from '../reports/reports.module';
 import { FeedbackModule } from '@dua-upd/api/feedback';
+import { HashesModule } from '@dua-upd/api/hashes';
+import { HealthCheckController } from '../healthcheck/healthcheck.controller';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: process.env.DOTENV_CONFIG_PATH || '.env',
+      cache: true,
+      isGlobal: true,
+    }),
     DbModule.forRoot(environment.production, environment.dbHost),
     PagesModule,
     OverallModule,
@@ -25,6 +33,7 @@ import { FeedbackModule } from '@dua-upd/api/feedback';
     CustomReportsModule.register(environment.production),
     QueryModule,
     FeedbackModule,
+    HashesModule,
     BullModule.forRoot({
       connection: {
         host: environment.redisHost,
@@ -36,8 +45,10 @@ import { FeedbackModule } from '@dua-upd/api/feedback';
         failoverDetector: true,
       },
     }),
+    AdobeAnalyticsModule.register(environment.production),
   ],
   providers: [],
+  controllers: [HealthCheckController],
 })
 export class AppModule {
   constructor() {

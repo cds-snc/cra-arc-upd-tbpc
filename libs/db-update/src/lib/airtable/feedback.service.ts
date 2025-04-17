@@ -1,4 +1,4 @@
-import { IFeedback } from '@dua-upd/types-common';
+import { AbstractDate, DateRange, IFeedback } from '@dua-upd/types-common';
 import { AsyncLogTiming } from '@dua-upd/utils-common';
 import { ConsoleLogger, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,7 +6,6 @@ import { Model, Types } from 'mongoose';
 import { dayjs, type Dayjs, today } from '@dua-upd/utils-common';
 
 import { AirtableClient } from '@dua-upd/external-data';
-import type { DateRange, DateType } from '@dua-upd/external-data';
 import { Feedback } from '@dua-upd/db';
 import type { FeedbackDocument } from '@dua-upd/db';
 
@@ -20,7 +19,7 @@ export class FeedbackService {
   ) {}
 
   @AsyncLogTiming
-  async updateFeedbackData(endDate?: DateType) {
+  async updateFeedbackData(endDate?: AbstractDate) {
     this.logger.log('Updating Feedback data');
 
     const newFeedback: IFeedback[] = [];
@@ -31,9 +30,9 @@ export class FeedbackService {
 
     const start = dayjs
       .utc(latestDataDate || '2020-01-01')
-      .add(1, 'day') as DateType;
+      .add(1, 'day');
 
-    const end = endDate || (today().subtract(1, 'day') as DateType);
+    const end = endDate || (today().subtract(1, 'day'));
 
     // if the db is empty, we can skip this part
     if (latestDataDate) {
@@ -41,9 +40,9 @@ export class FeedbackService {
       const lateAdditionsStart = dayjs
         .utc(latestDataDate || '2020-01-01')
         .subtract(14, 'days')
-        .startOf('day') as DateType;
+        .startOf('day');
 
-      const lateAdditionsEnd = (start as Dayjs).subtract(1, 'day') as DateType;
+      const lateAdditionsEnd = (start as Dayjs).subtract(1, 'day');
 
       const existingFeedback =
         (await this.feedbackModel
@@ -95,7 +94,7 @@ export class FeedbackService {
     const dateRange = {
       start,
       end,
-    } as DateRange;
+    };
 
     // Promise.all() would be slower here because of rate-limiting
     const craFeedbackData = await this.airtableClient.getFeedback(dateRange);

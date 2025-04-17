@@ -29,6 +29,7 @@ export class ApexBarLineComponent<T> implements OnInit {
   @Input() titleTooltip = '';
   @Input() table: T[] = [];
   @Input() tableCols: ColumnConfig[] = [];
+  @Input() allowHeaderWrap = false;
 
   @Input() set colours(value: string[]) {
     this.apexStore.setColours(value);

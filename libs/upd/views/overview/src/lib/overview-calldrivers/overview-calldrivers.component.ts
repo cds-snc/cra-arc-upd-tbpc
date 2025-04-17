@@ -5,6 +5,13 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import type { LocaleId } from '@dua-upd/upd/i18n';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { OverviewFacade } from '../+state/overview/overview.facade';
+import type { GetTableProps } from '@dua-upd/utils-common';
+import { createCategoryConfig } from '@dua-upd/upd/utils';
+
+type callDriversColTypes = GetTableProps<
+  OverviewCalldriversComponent,
+  'calldriverTopics$'
+>;
 
 @Component({
   selector: 'upd-overview-calldrivers',
@@ -35,7 +42,7 @@ export class OverviewCalldriversComponent implements OnInit {
   }>[] = [];
 
   calldriverTopics$ = this.overviewService.calldriverTopics$;
-  calldriverTopicsConfig$ = this.overviewService.calldriverTopicsConfig$;
+  calldriverTopicsCols: ColumnConfig<callDriversColTypes>[] = [];
 
   top5IncreasedCalldriverTopics$ =
     this.overviewService.top5IncreasedCalldriverTopics$;
@@ -58,11 +65,12 @@ export class OverviewCalldriversComponent implements OnInit {
       this.currentLang$,
       this.dateRangeLabel$,
       this.comparisonDateRangeLabel$,
-    ]).subscribe(([lang, dateRange, comparisonDateRange]) => {
+      this.calldriverTopics$,
+    ]).subscribe(([lang, dateRange, comparisonDateRange, data]) => {
       this.calldriversCols = [
         {
           field: 'name',
-          header: this.i18n.service.translate('Inquiry line', lang),
+          header: this.i18n.service.translate('enquiry_line', lang),
         },
         {
           field: 'currValue',
@@ -73,6 +81,65 @@ export class OverviewCalldriversComponent implements OnInit {
           field: 'prevValue',
           header: comparisonDateRange,
           pipe: 'number',
+        },
+      ];
+
+      this.calldriverTopicsCols = [
+        {
+          field: 'tpc_id',
+          header: 'tpc_id',
+        },
+        {
+          field: 'enquiry_line',
+          header: 'enquiry_line',
+          filterConfig: {
+            type: 'category',
+            categories: createCategoryConfig({
+              i18n: this.i18n.service,
+              data,
+              field: 'enquiry_line',
+            }),
+          },
+        },
+        {
+          field: 'topic',
+          header: 'topic',
+          translate: true,
+        },
+        {
+          field: 'subtopic',
+          header: 'sub-topic',
+          translate: true,
+        },
+        {
+          field: 'sub_subtopic',
+          header: 'sub-subtopic',
+          translate: true,
+        },
+        {
+          field: 'tasks',
+          header: 'tasks',
+          translate: true,
+        },
+        {
+          field: 'calls',
+          header: 'calls',
+          pipe: 'number',
+        },
+        {
+          field: 'change',
+          header: 'change',
+          pipe: 'percent',
+          pipeParam: '1.0-2',
+          upGoodDownBad: false,
+          indicator: true,
+          useArrows: true,
+          showTextColours: true,
+          secondaryField: {
+            field: 'difference',
+            pipe: 'number',
+          },
+          width: '160px',
         },
       ];
     });

@@ -3,6 +3,7 @@ import { type Document, Types, Model, mongo, FilterQuery } from 'mongoose';
 import type {
   CallsByTasks,
   CallsByTopic,
+  DateRange,
   ICallDriver,
   TopCalldriverTopics,
 } from '@dua-upd/types-common';
@@ -111,13 +112,16 @@ export class CallDriver implements ICallDriver {
 
   static async getCallsByTopic(
     this: CallDriverModel,
-    dateRange: string,
+    dateRange: string | DateRange<Date>,
     idFilter?:
       | { page: Types.ObjectId }
       | { tasks: Types.ObjectId }
       | { projects: Types.ObjectId },
   ): Promise<CallsByTopic[]> {
-    const [startDate, endDate] = dateRangeSplit(dateRange);
+    const [startDate, endDate] =
+      typeof dateRange === 'string'
+        ? dateRangeSplit(dateRange)
+        : [dateRange.start, dateRange.end];
 
     const projection = idFilter
       ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
@@ -199,13 +203,16 @@ export class CallDriver implements ICallDriver {
 
   static async getCallsByEnquiryLine(
     this: CallDriverModel,
-    dateRange: string,
+    dateRange: string | DateRange<Date>,
     idFilter?:
       | { page: Types.ObjectId }
       | { tasks: Types.ObjectId }
       | { projects: Types.ObjectId },
   ): Promise<{ enquiry_line: string; calls: number }[]> {
-    const [startDate, endDate] = dateRangeSplit(dateRange);
+    const [startDate, endDate] =
+      typeof dateRange === 'string'
+        ? dateRangeSplit(dateRange)
+        : [dateRange.start, dateRange.end];
 
     const projection = idFilter
       ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
@@ -263,10 +270,7 @@ export class CallDriver implements ICallDriver {
       .exec();
   }
 
-  static async getCallsByTask(
-    this: CallDriverModel,
-    dateRange: string,
-  ) {
+  static async getCallsByTask(this: CallDriverModel, dateRange: string) {
     const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
 
     return this.aggregate<{ task: Types.ObjectId; calls: number }>()
@@ -355,7 +359,8 @@ export class CallDriver implements ICallDriver {
           change: !previousData?.calls
             ? null
             : percentChange(currentData.calls, previousData.calls),
-        };
+            difference: currentData.calls - (previousData?.calls ?? 0),
+      };
       })
       .sort((a, b) => (b.calls ?? 0) - (a.calls ?? 0));
   }

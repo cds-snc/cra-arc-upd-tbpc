@@ -39,7 +39,6 @@ header#header {
 
 .pointer {
   cursor: pointer;
-  transform: rotate(90deg);
 }
 
 .header {
@@ -451,6 +450,11 @@ margin: 0px 20px 0px 20px;
 
 .page_header span {
   cursor: pointer !important;
+}
+
+.flow-tooltip .tooltip-inner {
+  min-width: 300px;
+  text-align: left;
 }
 
 .datatable-headers {

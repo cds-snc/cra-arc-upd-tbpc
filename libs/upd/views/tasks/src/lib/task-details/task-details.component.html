@@ -15,17 +15,35 @@
 <ng-template #elseBlock2>
   <h2 class="h3 pt-2 pb-2" data-i18n="task-title">
     <span [translate]="'task'"></span>: {{ title$ | async }}
+    <span class="d-block h6 mt-1">
+      @if (audience().length > 0) {
+        <ng-container *ngFor="let d of audience()">
+          <span
+            class="badge mt-1 me-2"
+            [style.backgroundColor]="colours[d.index % colours.length]"
+            [style.color]="getOptimalTextColour(colours[d.index % colours.length])"
+          >
+            {{ d.text }}
+          </span>
+        </ng-container>
+      }
+    </span>
   </h2>
 
   <upd-project-header
     [data]="(projects$ | async) || []"
     [config]="projectsCol"
+    [service]="service() || []"
   ></upd-project-header>
 
   <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
   <upd-date-selector
-    *ngIf="!(((currentRoute$ | async) || '').endsWith('uxtests') || 
-    ((currentRoute$ | async) || '').endsWith('details'))"
+    *ngIf="
+      !(
+        ((currentRoute$ | async) || '').endsWith('uxtests') ||
+        ((currentRoute$ | async) || '').endsWith('details')
+      )
+    "
   ></upd-date-selector>
   <router-outlet></router-outlet>
 </ng-template>

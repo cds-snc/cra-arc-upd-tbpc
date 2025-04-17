@@ -3,7 +3,7 @@ import {
   SearchAnalyticsClient,
   SearchAnalyticsPageQueryOptions,
 } from './index';
-import type { DateRange } from '../types';
+import type { DateRange } from '@dua-upd/types-common';
 import { Overall, PageMetrics } from '@dua-upd/db';
 import { Retry } from '@dua-upd/utils-common';
 
@@ -16,7 +16,7 @@ export class GoogleSearchConsoleService {
   ) {}
 
   async getOverallMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     dataState: 'final' | 'all' = 'final',
     onComplete?: (results: Overall[]) => void,
   ) {
@@ -33,7 +33,7 @@ export class GoogleSearchConsoleService {
 
   @Retry(3, 520)
   async getPageMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options: {
       onComplete?: (results: Partial<PageMetrics>[]) => Promise<void>;
     } & SearchAnalyticsPageQueryOptions = {},

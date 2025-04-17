@@ -24,14 +24,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.11.1
+          node-version: 22.14.0
 
       - name: Use the node_modules cache if available [npm]
         id: use-npm-cache
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-20.11.1-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-22.14.0-modules-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
         if: steps.use-npm-cache.outputs.cache-hit != 'true'
@@ -60,7 +60,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image (web)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/performance_base/Dockerfile
@@ -71,7 +71,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (nginx)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/performance_base/Dockerfile
@@ -82,7 +82,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (db-updater)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/performance_base/Dockerfile

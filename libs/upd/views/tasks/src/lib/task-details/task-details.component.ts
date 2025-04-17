@@ -1,8 +1,10 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { TasksDetailsFacade } from './+state/tasks-details.facade';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import type { ColumnConfig } from '@dua-upd/types-common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { globalColours, getOptimalTextcolour } from '@dua-upd/utils-common';
 
 @Component({
   selector: 'upd-task-details',
@@ -27,10 +29,23 @@ export class TaskDetailsComponent implements OnInit {
   projects$ = this.taskDetailsService.projects$;
   projectsCol: ColumnConfig = { field: '', header: '' };
 
+  colours = globalColours;
+  getOptimalTextColour = getOptimalTextcolour;
+  
+  taskHeader = toSignal(this.taskDetailsService.taskHeader$);
+  
+  audience = computed(() => {
+    return this.taskHeader()?.audience ?? [];
+  });
+  service = computed(() => {
+    return this.taskHeader()?.service ?? [];
+  });
+
   ngOnInit() {
     this.taskDetailsService.init();
 
     this.currentLang$.subscribe((lang) => {
+      this.langLink = lang === EN_CA ? 'en' : 'fr';
       this.navTabs = [
         {
           href: 'summary',
@@ -66,13 +81,12 @@ export class TaskDetailsComponent implements OnInit {
         field: 'title',
         header: 'project',
         type: 'link',
+        translate: true,
         typeParams: {
           preLink: '/' + this.langLink + '/projects',
-          link: 'id',
+          link: '_id',
         },
       } as ColumnConfig;
-
-      this.langLink = lang === EN_CA ? 'en' : 'fr';
     });
   }
 }

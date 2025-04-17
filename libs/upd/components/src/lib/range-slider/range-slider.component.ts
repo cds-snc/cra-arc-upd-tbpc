@@ -26,7 +26,7 @@ import { I18nModule } from '@dua-upd/upd/i18n';
           [step]="step()"
           [value]="value()"
           [class]="'form-range flex-grow-1 d-inline align-bottom me-2 ' + styleClass"
-          [id]="id"
+          [id]="id()"
           (input)="valueChange($event)"
         />
         <span>{{ value() }}</span>

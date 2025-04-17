@@ -22,6 +22,7 @@
       <upd-data-card
         [current]="totalParticipants$ | async"
         [title]="'Total participants from all tests'"
+        [emptyMessage]="(totalParticipants$ | async) === 0 ? ('task-not-tested' | translate) : ('nodata-available' | translate)"
       ></upd-data-card>
     </div>
     <div class="col-auto"></div>
@@ -43,8 +44,10 @@
           showMarker: true,
           shared: false
         }"
+        [height]="(taskSuccessChartHeight$ | async) || 0"
         [table]="(taskSuccessChart$ | async) || []"
         [tableCols]="taskSuccessChartCols"
+        [emptyMessage]="(taskSuccessChart$ | async)?.length === 0 ? ('task-not-tested' | translate) : ('nodata-available' | translate)"
       ></upd-apex-bar>
     </div>
   </div>
@@ -76,6 +79,7 @@
         [sort]="false"
         [pagination]="false"
         [title]="'Success rate and scenarios'"
+        [emptyStateMessage]="(taskSuccessData$ | async)?.length === 0 ? ('task-not-tested' | translate) : ('nodata-available' | translate)"
       >
       </upd-data-table-card>
     </div>
@@ -92,6 +96,7 @@
         [pagination]="false"
         [filter]="false"
         [title]="'Documents'"
+        [emptyStateMessage]="(taskSuccessChart$ | async)?.length === 0 ? ('task-not-tested' | translate) : ('nodata-available' | translate)"
       ></upd-data-table-card>
     </div>
   </div>

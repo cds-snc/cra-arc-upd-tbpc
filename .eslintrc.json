@@ -33,19 +33,27 @@
       "files": ["*.ts", "*.tsx"],
       "extends": [
         "plugin:@nx/typescript",
-        "plugin:@ngrx/eslint-plugin/recommended"
+        "plugin:@ngrx/all"
       ],
       "rules": {
         "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/no-unused-vars": "warn",
         "@typescript-eslint/ban-ts-comment": "warn",
-        "@nx/dependency-checks": "warn"
+        "@nx/dependency-checks": "warn",
+        "@typescript-eslint/no-extra-semi": "error",
+        "no-extra-semi": "off",
+        "@ngrx/no-typed-global-store": "warn",
+        "@ngrx/avoid-mapping-selectors": "warn",
+        "@ngrx/prefix-selectors-with-select": "warn"
       }
     },
     {
       "files": ["*.js", "*.jsx"],
       "extends": ["plugin:@nx/javascript"],
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/no-extra-semi": "error",
+        "no-extra-semi": "off"
+      }
     }
   ]
 }

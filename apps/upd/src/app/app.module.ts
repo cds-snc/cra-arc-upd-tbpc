@@ -1,6 +1,9 @@
 import { NgModule, isDevMode } from '@angular/core';
 import { APP_BASE_HREF, NgOptimizedImage } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 import { BrowserModule, Title } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -25,9 +28,9 @@ import { SwUpdateService } from './sw-update.service';
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent, SidebarComponent],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
-    HttpClientModule,
     I18nModule.forRoot(),
     BrowserAnimationsModule,
     AppRoutingModule,
@@ -63,7 +66,7 @@ import { SwUpdateService } from './sw-update.service';
     I18nFacade,
     { provide: APP_BASE_HREF, useValue: '/' },
     SwUpdateService,
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}

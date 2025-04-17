@@ -1,8 +1,12 @@
 import { readFile } from 'node:fs/promises';
-import type { AuthParams } from '@dua-upd/types-common';
+import type { AuthParams } from './adobe-analytics.types';
 
-export const getAACredsPool = async (): Promise<AuthParams[]> =>
-  await readFile(
+const getAACredsString = async (): Promise<string> =>
+  process.env.AA_CREDS_POOL ||
+  (await readFile(
     process.env.AA_KEY_POOL_PATH || 'keys/aa_creds_pool.json',
     'utf8',
-  ).then(JSON.parse);
+  ));
+
+export const getAACredsPool = (): Promise<AuthParams[]> =>
+  getAACredsString().then(JSON.parse);

@@ -11,7 +11,6 @@ import { EN_CA, FR_CA, LocaleId } from '@dua-upd/upd/i18n';
 import type { OverviewProject } from '@dua-upd/types-common';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 
-
 @Component({
   selector: 'upd-overview-ux-tests',
   templateUrl: './overview-ux-tests.component.html',
@@ -41,54 +40,54 @@ export class OverviewUxTestsComponent implements OnInit {
   kpiUXTestsTotal$ = this.overviewService.kpiUXTestsTotal$;
 
   improvedKpiSuccessRate$ = this.overviewService.improvedKpiSuccessRate$;
-  improvedKpiSuccessRateDifference$ = 
+  improvedKpiSuccessRateDifference$ =
     this.overviewService.improvedKpiSuccessRateDifference$;
 
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;
-    
+
   improvedKpi$ = this.overviewService.improvedKpi$;
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
+
+  improvedKpiTopSuccessRate$ = this.overviewService.improvedKpiTopSuccessRate$;
+  improvedKpiTopSuccessRateDifference$ =
+    this.overviewService.improvedKpiTopSuccessRateDifference$;
+
+  improvedKpiTopSuccessRateValidation$ =
+    this.overviewService.improvedKpiTopSuccessRateValidation$;
+
+  improvedTopKpi$ = this.overviewService.improvedTopKpi$;
+  improvedKpiTopUniqueTasks$ = this.overviewService.improvedKpiTopUniqueTasks$;
+  improvedKpiTopTasks$ = this.overviewService.improvedKpiTopTasks$;
 
   kpiLastAvgSuccessRate$ = this.overviewService.kpiLastAvgSuccessRate$;
   kpiTestsCompleted$ = this.overviewService.kpiTestsCompleted$;
   uniqueTaskTestedLatestTestKpi$ =
     this.overviewService.uniqueTaskTestedLatestTestKpi$;
+
+  totalTasks$ = this.overviewService.totalTasks$;
+
   kpiTotAvgSuccessRate$ = this.overviewService.kpiTotAvgSuccessRate$;
 
   uxChartCols: ColumnConfig<OverviewProject>[] = [];
 
-  getDiffText(diff: number): string {
-    if (diff > 0) {
-       return 'increase' ; 
-    } else if (diff < 0) {
-       return 'decrease' ; 
-    } else {
-       return ''; 
-    }
-   }
-
-   
-   getTrendIconAndColor(diff: number): { iconName: string; color: string } {
+  getTrendIconAndColor(diff: number): { iconName: string; color: string } {
     let iconName = '';
     let color = '';
-   
-    if (diff > 0) {
-       iconName = 'arrow_upward'; 
-       color = '#26A69A'; 
-    } else if (diff < 0) {
-       iconName = 'arrow_downward'; 
-       color = '#DF2929'; 
-    } else {
-       iconName = ''; 
-       color = ''; 
-    }
-   
-    return { iconName, color };
-   }
-   
 
-  
+    if (diff > 0) {
+      iconName = 'arrow_upward';
+      color = '#26A69A';
+    } else if (diff < 0) {
+      iconName = 'arrow_downward';
+      color = '#DF2929';
+    } else {
+      iconName = '';
+      color = '';
+    }
+
+    return { iconName, color };
+  }
 
   ngOnInit() {
     this.currentLang$.subscribe((lang) => {
@@ -112,12 +111,13 @@ export class OverviewUxTestsComponent implements OnInit {
           field: 'startDate',
           header: this.i18n.service.translate('Start date', lang),
           pipe: 'date',
-          pipeParam: lang === FR_CA ? 'd MMM YYYY' : 'MMM dd, YYYY',
+          pipeParam: lang === FR_CA ? 'd MMM yyyy' : 'MMM dd, yyyy',
         },
         {
           field: 'lastAvgSuccessRate',
           header: this.i18n.service.translate('Average success rate', lang),
           pipe: 'percent',
+          tooltip: 'tooltip-avg_success_last_uxtest'
         },
         {
           field: 'totalUsers',

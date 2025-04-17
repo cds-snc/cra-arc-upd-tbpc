@@ -1,4 +1,4 @@
-import { createFeatureSelector, createSelector, select } from '@ngrx/store';
+import { createFeatureSelector, createSelector } from '@ngrx/store';
 import {
   PROJECTS_DETAILS_FEATURE_KEY,
   ProjectsDetailsState,
@@ -146,7 +146,7 @@ export const selectCallsPerVisits = createSelector(
           y: calls ? (calls / visits) * 100 : 0,
         };
       })
-      .filter(({ y }) => y);
+      .filter(({ y }) => y);  // allow valid 0 values
   }
 );
 

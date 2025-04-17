@@ -2,7 +2,15 @@ import { InjectFlowProducer, InjectQueue } from '@nestjs/bullmq';
 import { type FlowChildJob, FlowProducer, Queue } from 'bullmq';
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { combineLatest, map, Observable, shareReplay, startWith } from 'rxjs';
+import {
+  combineLatest,
+  lastValueFrom,
+  map,
+  Observable,
+  shareReplay,
+  startWith,
+  take,
+} from 'rxjs';
 import type {
   AADimensionName,
   AAMetricName,
@@ -117,6 +125,12 @@ export class CustomReportsService implements OnApplicationBootstrap {
 
   getStatusObservable(reportId: string) {
     return this.observablesRegistry.get(reportId);
+  }
+
+  async getStatus(reportId: string) {
+    const reportStatus$ = this.getStatusObservable(reportId);
+
+    return reportStatus$ && (await lastValueFrom(reportStatus$.pipe(take(1))));
   }
 
   // are these necessary? duplicate jobs are ignored

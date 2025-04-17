@@ -1,0 +1,14 @@
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-card
+        [title]="'version-history'"
+        [titleTooltip]="'tooltip-versioning'"
+        modal="{{ 'guidance-versioning' | translate }}"
+        modalSize="lg"
+      >
+        <upd-page-version [hashes]="hashes()" [url]="url()" [loading]="loadingHashes()"></upd-page-version>
+      </upd-card>
+    </div>
+  </div>
+</div>

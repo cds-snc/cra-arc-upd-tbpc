@@ -17,14 +17,14 @@
       <upd-apex-bar
         [title]="'d3-dyfwywlf'"
         titleTooltip="{{ 'tooltip-d3-dyfwywlf' | translate }}"
-        [series]="(dyfChartApex$ | async) || []"
+        [series]="dyfChartApex() || []"
         [yAxis]="'Date range' | translate"
         [xAxis]="[
-          (fullDateRangeLabel$ | async) || [],
-          (fullComparisonDateRangeLabel$ | async) || []
+          fullDateRangeLabel() || [],
+          fullComparisonDateRangeLabel() || []
         ]"
-        [tableCols]="dyfTableCols"
-        [table]="dyfChart$ | async"
+        [tableCols]="dyfTableCols()"
+        [table]="dyfChart()"
         [tableExport]="false"
         [horizontal]="{ isHorizontal: true, colorDistributed: false }"
         [stacked]="{ isStacked: true, isStacked100: true, hasDataLabels: true }"
@@ -83,7 +83,7 @@
 
 <upd-heatmap
   title="Number of comments per day"
-  [data]="(feedbackByDay$ | async) || []"
+  [data]="feedbackByDay() || []"
   [tableCols]="feedbackByDayCols"
-  [table]="(feedbackByDay$ | async) || []"
+  [table]="feedbackByDay() || []"
 ></upd-heatmap>

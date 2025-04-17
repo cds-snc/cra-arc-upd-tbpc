@@ -11,8 +11,9 @@ import { BlobStorageService } from '@dua-upd/blob-storage';
 import { DbService, Readability } from '@dua-upd/db';
 import { BlobLogger } from '@dua-upd/logger';
 import { md5Hash } from '@dua-upd/node-utils';
-import { type DateRange, prettyJson, round, wait } from '@dua-upd/utils-common';
+import { prettyJson, round, wait } from '@dua-upd/utils-common';
 import type {
+  DateRange,
   IPage,
   IReadability,
   ReadabilityScore,

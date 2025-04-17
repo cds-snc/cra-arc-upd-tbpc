@@ -5,9 +5,9 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import 'dayjs/locale/en-ca';
 import 'dayjs/locale/fr-ca';
-import { FR_CA, type LocaleId } from '@dua-upd/upd/i18n';
-import { I18nFacade, selectDatePeriodSelection } from '@dua-upd/upd/state';
-import { percentChange, UnwrapObservable } from '@dua-upd/utils-common';
+import { type LocaleId } from '@dua-upd/upd/i18n';
+import { I18nFacade, selectDatePeriodSelection, selectUrl } from '@dua-upd/upd/state';
+import { percentChange } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import type {
   GscSearchTermMetrics,
@@ -18,7 +18,6 @@ import * as PagesDetailsActions from './pages-details.actions';
 import * as PagesDetailsSelectors from './pages-details.selectors';
 import type {
   ApexAxisChartSeries,
-  ApexNonAxisChartSeries,
 } from 'ng-apexcharts';
 import {
   selectPageLang,
@@ -27,7 +26,6 @@ import {
   selectVisitsByDayChartTable,
   selectDyfNoPerVisitsSeries,
 } from './pages-details.selectors';
-import { createColConfigWithI18n } from '@dua-upd/upd/utils';
 
 dayjs.extend(utc);
 
@@ -42,39 +40,87 @@ export class PagesDetailsFacade {
     .select(PagesDetailsSelectors.selectPagesDetailsLoading)
     .pipe(debounceTime(500));
 
+  loadedHashes$ = this.store.select(PagesDetailsSelectors.selectHashesLoaded);
+
+  loadingHashes$ = this.store
+    .select(PagesDetailsSelectors.selectHashesLoading)
+    .pipe(debounceTime(500));
+
   pagesDetailsData$ = this.store.select(
     PagesDetailsSelectors.selectPagesDetailsData,
   );
 
   currentLang$ = this.i18n.currentLang$;
 
+  currentRoute$ = this.store
+      .select(selectUrl)
+      .pipe(map((url) => url.replace(/\?.+$/, '')));
+
   dateRangeSelected$ = this.store.select(selectDatePeriodSelection);
+
+  rawDateRange$ = combineLatest([this.pagesDetailsData$]).pipe(
+    map(([data]) => {
+      const dateRange = data.dateRange;
+      if (dateRange) {
+        const [startDate, endDate] = dateRange.split('/').map((d) => dayjs(d));
+
+        return {
+          start: startDate.startOf('day').toISOString().slice(0, -1),
+          end: endDate.endOf('day').toISOString().slice(0, -1),
+        };
+      }
+      return;
+    }),
+  );
 
   dateRangeLabel$ = combineLatest([
     this.pagesDetailsData$,
     this.currentLang$,
-  ]).pipe(map(([data, lang]) => getWeeklyDatesLabel(data.dateRange, lang)));
+  ]).pipe(
+    map(
+      ([data, lang]) => this.getDateRangeLabel(data.dateRange, lang) as string,
+    ),
+  );
 
   comparisonDateRangeLabel$ = combineLatest([
     this.pagesDetailsData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getWeeklyDatesLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(data.comparisonDateRange || '', lang) as string,
     ),
   );
 
   fullDateRangeLabel$ = combineLatest([
     this.pagesDetailsData$,
     this.currentLang$,
-  ]).pipe(map(([data, lang]) => getFullDateRangeLabel(data.dateRange, lang)));
+  ]).pipe(
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.dateRange,
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
+    ),
+  );
 
   fullComparisonDateRangeLabel$ = combineLatest([
     this.pagesDetailsData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getFullDateRangeLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.comparisonDateRange || '',
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
     ),
   );
 
@@ -82,6 +128,8 @@ export class PagesDetailsFacade {
 
   pageTitle$ = this.pagesDetailsData$.pipe(map((data) => data?.title));
   pageUrl$ = this.pagesDetailsData$.pipe(map((data) => data?.url));
+  
+  altPageId$ = this.pagesDetailsData$.pipe(map((data) => data?.alternatePageId || 0));
 
   pageStatus$ = this.pagesDetailsData$.pipe(
     map((data) => {
@@ -146,58 +194,6 @@ export class PagesDetailsFacade {
   apexKpiFeedback$ = this.store.select(selectDyfNoPerVisitsSeries);
 
   pageLang$ = this.store.select(selectPageLang);
-
-  latestReadability$ = this.readability$.pipe(
-    map((readability) => readability[0]),
-  );
-
-  pageLastUpdated$ = this.latestReadability$.pipe(
-    map((readability) => readability?.date),
-  );
-
-  totalScore$ = this.latestReadability$.pipe(
-    map((readability) => readability?.total_score),
-  );
-
-  readabilityPoints$ = this.latestReadability$.pipe(
-    map((readability) => readability?.fk_points),
-  );
-
-  fleshKincaid$ = this.latestReadability$.pipe(
-    map((readability) => readability?.final_fk_score),
-  );
-
-  headingPoints$ = this.latestReadability$.pipe(
-    map((readability) => readability?.header_points),
-  );
-
-  wordsPerHeading$ = this.latestReadability$.pipe(
-    map((readability) => readability?.avg_words_per_header),
-  );
-
-  paragraphPoints$ = this.latestReadability$.pipe(
-    map((readability) => readability?.paragraph_points),
-  );
-
-  wordsPerParagraph$ = this.latestReadability$.pipe(
-    map((readability) => readability?.avg_words_per_paragraph),
-  );
-
-  mostFrequentWordsOnPage$ = this.latestReadability$.pipe(
-    map((readability) => readability?.word_counts || []),
-  );
-
-  wordCount$ = this.latestReadability$.pipe(
-    map((readability) => readability?.total_words),
-  );
-
-  paragraphCount$ = this.latestReadability$.pipe(
-    map((readability) => readability?.total_paragraph),
-  );
-
-  headingCount$ = this.latestReadability$.pipe(
-    map((readability) => readability?.total_headings),
-  );
 
   currentKpiFeedback$ = this.pagesDetailsData$.pipe(
     map((data) => {
@@ -280,16 +276,21 @@ export class PagesDetailsFacade {
       }
 
       const dateRangeDates = visitsByDay.map(({ date }) => date);
-      const dateRangeLabel = getWeeklyDatesLabel(data.dateRange, lang);
+      const dateRangeLabel = this.getDateRangeLabel(
+        data.dateRange,
+        lang,
+        'MMM D',
+      );
 
       const dateRangeSeries = visitsByDay.map(({ visits }) => ({
         name: dateRangeLabel, // todo: date label (x-axis) formatting based on date range length
         value: visits || 0,
       }));
 
-      const comparisonDateRangeLabel = getWeeklyDatesLabel(
+      const comparisonDateRangeLabel = this.getDateRangeLabel(
         data.comparisonDateRange || '',
         lang,
+        'MMM D',
       );
 
       const comparisonDateRangeSeries = comparisonVisitsByDay.map(
@@ -387,10 +388,15 @@ export class PagesDetailsFacade {
     this.currentLang$,
   ]).pipe(
     map(([data, lang]) => {
-      const dateRangeLabel = getWeeklyDatesLabel(data.dateRange || '', lang);
-      const comparisonDateRangeLabel = getWeeklyDatesLabel(
+      const dateRangeLabel = this.getDateRangeLabel(
+        data.dateRange || '',
+        lang,
+        'MMM D',
+      );
+      const comparisonDateRangeLabel = this.getDateRangeLabel(
         data.comparisonDateRange || '',
         lang,
+        'MMM D',
       );
 
       const dataByDeviceType = [
@@ -696,20 +702,6 @@ export class PagesDetailsFacade {
     map((data) => data?.searchTerms),
   );
 
-  searchTermsColConfig$ = createColConfigWithI18n<
-    UnwrapObservable<typeof this.topSearchTerms$>
-  >(this.i18n.service, [
-    { field: 'term', header: 'search-term' },
-    { field: 'clicks', header: 'clicks', pipe: 'number' },
-    { field: 'clicksChange', header: 'comparison-for-clicks', pipe: 'percent' },
-    {
-      field: 'position',
-      header: 'position',
-      pipe: 'number',
-      pipeParam: '1.0-2',
-    },
-  ]);
-
   feedbackMostRelevant = this.store.selectSignal(
     PagesDetailsSelectors.selectFeedbackMostRelevant,
   );
@@ -720,7 +712,39 @@ export class PagesDetailsFacade {
     PagesDetailsSelectors.selectNumCommentsPercentChange,
   );
 
+  getDateRangeLabel(
+    dateRange: string,
+    lang: LocaleId,
+    dateFormat = 'MMM D YYYY',
+    separator = '-',
+    breakLine = false,
+  ) {
+    const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
+
+    dateFormat = this.i18n.service.translate(dateFormat, lang);
+    separator = this.i18n.service.translate(separator, lang);
+
+    const formattedStartDate = dayjs
+      .utc(startDate)
+      .locale(lang)
+      .format(dateFormat);
+    const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
+
+    //breakLine exists for apexcharts labels
+    return breakLine
+      ? [`${formattedStartDate} ${separator}`, `${formattedEndDate}`]
+      : `${formattedStartDate} ${separator} ${formattedEndDate}`;
+  }
+
   error$ = this.store.select(PagesDetailsSelectors.selectPagesDetailsError);
+
+  hashesData = this.store.selectSignal(
+    PagesDetailsSelectors.selectHashesData
+  );
+
+  getHashes() {
+    this.store.dispatch(PagesDetailsActions.getHashes());
+  }
 
   /**
    * Use the initialization action to perform one
@@ -758,36 +782,6 @@ function mapToPercentChange(
     return percentChange(current, previous);
   });
 }
-
-const getWeeklyDatesLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
-
-  const dateFormat = lang === 'fr-CA' ? 'D MMM' : 'MMM D';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return `${formattedStartDate}-${formattedEndDate}`;
-};
-
-const getFullDateRangeLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/');
-
-  const dateFormat = lang === FR_CA ? 'D MMM YYYY' : 'MMM D YYYY';
-  const separator = lang === FR_CA ? ' au' : ' to';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return [`${formattedStartDate}${separator}`, `${formattedEndDate}`];
-};
 
 function mapObjectArraysWithPercentChange(
   propName: keyof PageAggregatedData,

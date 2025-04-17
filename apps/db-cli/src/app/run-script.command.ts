@@ -14,6 +14,7 @@ import { LoggerService } from '@dua-upd/logger';
 import * as scripts from './scripts';
 import { ModuleRef } from '@nestjs/core';
 import { TypeOrToken } from './scripts/utils/misc';
+import { FeedbackService } from '@dua-upd/api/feedback';
 
 // Use this interface to add any other dependencies to be passed as args
 export type DbScript<Args extends unknown[] = unknown[]> = (
@@ -36,6 +37,7 @@ export class RunScriptCommand extends CommandRunner {
     @Inject(BlobStorageService.name) private readonly blob: BlobStorageService,
     private readonly urlService: UrlsService,
     private readonly readability: ReadabilityService,
+    private readonly feedbackService: FeedbackService
   ) {
     super();
   }
@@ -54,7 +56,8 @@ export class RunScriptCommand extends CommandRunner {
       this.logger,
       this.blob,
       this.urlService,
-      this.readability
+      this.readability,
+      this.feedbackService
     ];
 
     try {

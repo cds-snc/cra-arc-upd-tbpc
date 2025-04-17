@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
-import type { IGCTasks, ITask } from '@dua-upd/types-common';
+import { model, type Document, Types } from 'mongoose';
+import type { DateRange, IGCTasks, ITask } from '@dua-upd/types-common';
+import { dateRangeSplit } from '@dua-upd/utils-common/date';
+import { ModelWithStatics } from '@dua-upd/utils-common/types';
 
 export type GcTasksDocument = GcTasks & Document;
 
@@ -33,7 +35,7 @@ export class GcTasks implements IGCTasks {
   @Prop({ type: String, required: true })
   department: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   theme: string;
 
   @Prop({ type: String })
@@ -89,14 +91,150 @@ export class GcTasks implements IGCTasks {
 
   @Prop({ type: String })
   sampling_task?: string;
+
+  static getTotalEntries(
+    this: GcTasksModel,
+    dateRange: string | DateRange<Date>,
+  ) {
+    const [startDate, endDate] =
+      typeof dateRange === 'string'
+        ? dateRangeSplit(dateRange)
+        : [dateRange.start, dateRange.end];
+
+    return this.aggregate<{
+      gc_task: string;
+      total_entries: number;
+      completed_entries: number;
+    }>()
+      .match({
+        date: { $gte: startDate, $lte: endDate },
+        sampling_task: 'y',
+        able_to_complete: {
+          $in: ['Yes', 'No'],
+        },
+      })
+      .group({
+        _id: { gc_task: '$gc_task' },
+        total_entries: { $sum: 1 },
+        completed_entries: {
+          $sum: {
+            $cond: [{ $eq: ['$able_to_complete', 'Yes'] }, 1, 0],
+          },
+        },
+      })
+      .project({
+        _id: 0,
+        gc_task: '$_id.gc_task',
+        total_entries: 1,
+        completed_entries: 1,
+      })
+      .exec();
+  }
+
+  static getGcTaskData(
+    this: GcTasksModel,
+    dateRange: string | DateRange<Date>,
+  ) {
+    const [startDate, endDate] =
+      typeof dateRange === 'string'
+        ? dateRangeSplit(dateRange)
+        : [dateRange.start, dateRange.end];
+
+    return this.aggregate()
+      .match({
+        date: { $gte: startDate, $lte: endDate },
+        sampling_task: 'y',
+        able_to_complete: {
+          $in: ['Yes', 'No'],
+        },
+      })
+      .group({
+        _id: { gc_task: '$gc_task', theme: '$theme' },
+        total_entries: { $sum: 1 },
+        satisfaction: {
+          $avg: {
+            $cond: [
+              { $in: ['$satisfaction', ['Very satisfied', 'Satisfied']] },
+              1,
+              0,
+            ],
+          },
+        },
+        ease: {
+          $avg: { $cond: [{ $in: ['$ease', ['Very easy', 'Easy']] }, 1, 0] },
+        },
+        able_to_complete: {
+          $avg: { $cond: [{ $eq: ['$able_to_complete', 'Yes'] }, 1, 0] },
+        },
+      })
+      .project({
+        gc_task: '$_id.gc_task',
+        theme: '$_id.theme',
+        total_entries: 1,
+        satisfaction: 1,
+        ease: 1,
+        able_to_complete: 1,
+        margin_of_error: avgMarginOfErrorExpr([
+          'satisfaction',
+          'ease',
+          'able_to_complete',
+        ]),
+      })
+      .sort({ total_entries: -1 })
+      .project({ _id: 0 })
+      .exec();
+  }
 }
 
 export const GcTasksSchema = SchemaFactory.createForClass(GcTasks);
 
-GcTasksSchema.index({date: 1, url: 1})
-GcTasksSchema.index({date: 1, gc_task: 1})
-GcTasksSchema.index({date: 1, sampling_task: 1, able_to_complete: 1})
+GcTasksSchema.index({ date: 1, url: 1 });
+GcTasksSchema.index({ date: 1, gc_task: 1 });
+GcTasksSchema.index({ date: 1, sampling_task: 1, able_to_complete: 1 });
+
+const statics = {
+  getTotalEntries: GcTasks.getTotalEntries,
+  getGcTaskData: GcTasks.getGcTaskData,
+};
+
+GcTasksSchema.statics = statics;
+
+export type GcTasksModel = ModelWithStatics<GcTasks, typeof statics>;
 
 export function getGCTasksModel() {
   return model(GcTasks.name, GcTasksSchema);
 }
+
+const marginOfErrorExpr = (prop: string) => ({
+  $divide: [
+    {
+      $add: [
+        {
+          $multiply: [
+            1.96,
+            {
+              $sqrt: {
+                $divide: [
+                  {
+                    $multiply: [`$${prop}`, { $subtract: [1, `$${prop}`] }],
+                  },
+                  '$total_entries',
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+    3,
+  ],
+});
+
+const avgMarginOfErrorExpr = (props: string[]) => ({
+  $divide: [
+    {
+      $add: props.map((prop) => marginOfErrorExpr(prop)),
+    },
+    props.length,
+  ],
+});

@@ -16,7 +16,7 @@ export type CompressionAlgorithm = 'brotli' | 'zstd';
 export const compressStringBrotli = async (string: string) => {
   const stringBuffer = Buffer.from(string);
 
-  return Buffer.from(compressBrotli(stringBuffer));
+  return Buffer.from(compressBrotli(new Uint8Array(stringBuffer)));
 };
 
 export const compressStringZstd = async (string: string, level = 9) => {
@@ -33,7 +33,7 @@ export const compressString = async (
 
   switch (algorithm) {
     case 'brotli':
-      return Buffer.from(compressBrotli(stringBuffer));
+      return Buffer.from(compressBrotli(new Uint8Array(stringBuffer)));
     case 'zstd':
       return Buffer.from(await compressZstd(stringBuffer));
     default:
@@ -42,7 +42,7 @@ export const compressString = async (
 };
 
 export const decompressStringBrotli = async (compressed: Buffer) =>
-  Buffer.from(decompressBrotli(compressed)).toString('utf-8');
+  Buffer.from(decompressBrotli(new Uint8Array(compressed))).toString('utf-8');
 
 export const decompressStringZstd = async (compressed: Buffer) =>
   (await decompressZstd(compressed)).toString('utf-8');
@@ -55,7 +55,9 @@ export const decompressString = async (
 
   switch (algorithm) {
     case 'brotli':
-      return Buffer.from(decompressBrotli(stringBuffer)).toString('utf-8');
+      return Buffer.from(
+        decompressBrotli(new Uint8Array(stringBuffer)),
+      ).toString('utf-8');
     case 'zstd':
       return (await decompressZstd(stringBuffer)).toString('utf-8');
     default:

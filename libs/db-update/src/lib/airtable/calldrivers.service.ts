@@ -1,12 +1,12 @@
 import { ConsoleLogger, Inject, Injectable } from '@nestjs/common';
-import { AirtableClient, DateRange } from '@dua-upd/external-data';
+import { AirtableClient } from '@dua-upd/external-data';
 import { InjectModel } from '@nestjs/mongoose';
 import { CallDriver, type CallDriverModel, Task } from '@dua-upd/db';
 import { Model, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import chalk from 'chalk';
 import { Retry } from '@dua-upd/utils-common';
-import type { DateType } from '@dua-upd/external-data';
+import type { DateRange, AbstractDate } from '@dua-upd/types-common';
 
 @Injectable()
 export class CalldriversService {
@@ -20,7 +20,7 @@ export class CalldriversService {
   ) {}
 
   @Retry(4, 1000)
-  async updateCalldrivers(endDate?: DateType) {
+  async updateCalldrivers(endDate?: AbstractDate) {
     this.logger.log('Updating calldrivers...');
 
     const latestDataDate =
@@ -32,9 +32,9 @@ export class CalldriversService {
       )?.date || '2021-01-01';
 
     const dateRange = {
-      start: dayjs(latestDataDate).utc(false).add(1, 'day') as DateType,
-      end: (endDate || dayjs().utc(true).subtract(1, 'day')) as DateType,
-    } as DateRange;
+      start: dayjs(latestDataDate).utc(false).add(1, 'day'),
+      end: endDate || dayjs().utc(true).subtract(1, 'day'),
+    } satisfies DateRange<AbstractDate>;
 
     try {
       const calldriversData: CallDriver[] = (
@@ -52,6 +52,13 @@ export class CalldriversService {
 
       if (calldriversData.length === 0) {
         this.logger.log('Calldrivers already up-to-date.');
+
+        this.logger.log('Syncing Calldrivers references...');
+
+        await this.calldriverModel.syncTaskReferences(this.taskModel);
+
+        this.logger.log('Successfully synced Calldrivers references.');
+
         return;
       }
 

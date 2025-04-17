@@ -1,5 +1,13 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { Required } from '@dua-upd/utils-common';
+import {
+  Component,
+  Input,
+  OnInit,
+  Output,
+  EventEmitter,
+  effect,
+  input,
+} from '@angular/core';
+import { isNullish, Required } from '@dua-upd/utils-common';
 
 export interface DropdownOption<T> {
   label: string;
@@ -66,20 +74,6 @@ export class DropdownComponent<T> implements OnInit {
   @Input() styleClasses = '';
   @Input() icon?: string;
   @Input() autoDisplayFirst = false;
-  @Input() set initialSelection(
-    option: DropdownOption<T> | DropdownOption<T>['value'] | undefined,
-  ) {
-    if (!option) {
-      return;
-    }
-
-    if (typeof option === 'object' && 'label' in option && 'value' in option) {
-      this.selectedOption = option;
-      return;
-    }
-
-    this.selectedOption = this.options.find((o) => o.value === option);
-  }
   @Input() placeholder?: DropdownOption<'placeholder'>;
 
   // only perform an action on select, always display the placeholder
@@ -87,9 +81,19 @@ export class DropdownComponent<T> implements OnInit {
 
   @Output() selectOption = new EventEmitter<DropdownOption<T>>();
 
+  initialSelection = input<
+    DropdownOption<T> | DropdownOption<T>['value'] | void
+  >(null);
+
   displayedOptions = this.placeholder ? [this.placeholder] : this.options;
 
   selectedOption?: DropdownOption<T> = this.placeholder as DropdownOption<T>;
+
+  constructor() {
+    effect(() => {
+      this.setInitialSelection();
+    });
+  }
 
   displayPlaceholder(bool = true) {
     if (bool) {
@@ -115,8 +119,38 @@ export class DropdownComponent<T> implements OnInit {
       : this.options;
   }
 
+  setInitialSelection() {
+    const initialSelection = this.initialSelection();
+
+    if (isNullish(initialSelection)) return;
+
+    const selectionIsObject =
+      initialSelection &&
+      typeof initialSelection === 'object' &&
+      'value' in initialSelection;
+
+    const selectionValue = (
+      selectionIsObject ? initialSelection.value : initialSelection
+    ) as string;
+
+    const option = this.options.find((o) => o.value === selectionValue);
+
+    if (
+      (option && !this.selectedOption) ||
+      (this.selectedOption?.value === option?.value &&
+        this.selectedOption?.label !== option?.label)
+    ) {
+      this.selectedOption = option;
+    }
+  }
+
   ngOnInit() {
-    if (this.selectedOption !== undefined) {
+    if (!isNullish(this.selectedOption)) {
+      return;
+    }
+
+    if (this.initialSelection()) {
+      this.setInitialSelection();
       return;
     }
 

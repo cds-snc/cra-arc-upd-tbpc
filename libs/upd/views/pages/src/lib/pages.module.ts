@@ -10,6 +10,7 @@ import { PagesDetailsSummaryComponent } from './pages-details/pages-details-summ
 import { PagesDetailsWebtrafficComponent } from './pages-details/pages-details-webtraffic/pages-details-webtraffic.component';
 import { PagesDetailsSearchAnalyticsComponent } from './pages-details/pages-details-search-analytics/pages-details-search-analytics.component';
 import { PagesDetailsFeedbackComponent } from './pages-details/pages-details-feedback/pages-details-feedback.component';
+import { PagesDetailsFlowComponent } from './pages-details/pages-details-flow/pages-details-flow.component';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import {
@@ -29,6 +30,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { I18nModule } from '@dua-upd/upd/i18n';
 import { PagesDetailsReadabilityComponent } from './pages-details/pages-details-readability/pages-details-readability.component';
 import { PipesModule } from '@dua-upd/upd/pipes';
+import { PagesDetailsVersionsComponent } from './pages-details/pages-details-versions/pages-details-versions.component';
 
 @NgModule({
   imports: [
@@ -52,7 +54,9 @@ import { PipesModule } from '@dua-upd/upd/pipes';
     PagesDetailsWebtrafficComponent,
     PagesDetailsSearchAnalyticsComponent,
     PagesDetailsFeedbackComponent,
+    PagesDetailsFlowComponent,
     PagesDetailsReadabilityComponent,
+    PagesDetailsVersionsComponent,
   ],
   providers: [PagesHomeFacade, PagesDetailsFacade, ApiService],
 })

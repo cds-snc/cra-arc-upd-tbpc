@@ -46,14 +46,14 @@ export class I18nService {
     return this.translateService.stream(keys);
   }
 
-  // todo: add support for passing an array of keys
   translationSignal<T>(
     key: string,
     computation: (signal: Signal<string>) => T,
   ): Signal<T>;
   translationSignal(key: string): Signal<string>;
+  translationSignal(keys: string[]): Signal<string[]>;
   translationSignal<T>(
-    key: string,
+    key: string | string[],
     computation?: (signal: Signal<string>) => T,
   ): Signal<string> | Signal<T> {
     const signal: Signal<string> = toSignal(this.translateService.stream(key), {
@@ -76,7 +76,9 @@ export class I18nService {
 
       const inputArray = Array.isArray(input) ? input : input();
 
-      return inputArray.map((val: T) => computation(val, this.instant.bind(this)));
+      return inputArray.map((val: T) =>
+        computation(val, this.instant.bind(this)),
+      );
     });
   }
 

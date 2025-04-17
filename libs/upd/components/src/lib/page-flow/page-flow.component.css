@@ -1,0 +1,226 @@
+/* ===============================
+    Global Styles & Utilities
+================================ */
+a:not(.btn) {
+  color: inherit !important;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+
+.badge:empty {
+  display: inherit;
+}
+
+.badge-empty {
+  background: #d5d7d9;
+  height: 1.25rem;
+}
+
+.title {
+  min-height: 3rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===============================
+    Flow Container & Flow Items
+================================ */
+.flow-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.flow-item {
+  display: flex;
+  padding: 0px 15px;
+  width: 240px;
+  height: 160px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: white;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.2s,
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.flow-item:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(to bottom, #f0f0f0, #e9e9e9);
+  scale: 1.02;
+}
+
+.flow-item:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+  background: linear-gradient(to bottom, #e9e9e9, #e0e0e0);
+  border-color: #aaa;
+}
+
+/* ===============================
+    Specialized Flow Item Variants
+================================ */
+.selected-previous-flow-item {
+  background-color: #fffae6 !important;
+}
+
+.selected-next-flow-item {
+  background-color: #e7f2fd !important;
+}
+
+.focal-url {
+  border: 2px solid #000;
+}
+
+.inactive {
+  border: 2px dashed #ccc;
+  padding: 30px;
+  box-sizing: border-box;
+  text-align: center;
+  font-weight: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.inactive:hover, .inactive:active {
+  background: inherit;
+  border: 2px dashed #ccc;
+  box-shadow: none;
+  transform: none;
+  scale: 1;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+/* ===============================
+    Previous & Next Flow Items
+================================ */
+.previous-flow-item {
+  background: linear-gradient(to bottom, #fff8e1, #fff8dc);
+}
+
+.previous-flow-item {
+  background: linear-gradient(to bottom, #fff8e1, #fff8dc);
+}
+
+.previous-flow-item:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(to bottom, #fff7d4, #fff8dc);
+}
+
+.previous-flow-item:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+  background: linear-gradient(to bottom, #fff2c0, #fff8dc);
+  border-color: #aaa;
+}
+
+.next-flow-item {
+  background: linear-gradient(to bottom, #e6f3ff, #d0e7ff);
+}
+
+.next-flow-item:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(to bottom, #dcefff, #d0e7ff);
+}
+
+.next-flow-item:active {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+  background: linear-gradient(to bottom, #c8e0ff, #d0e7ff);
+  border-color: #aaa;
+}
+
+.flow-item-selectable {
+  width: auto;
+  min-height: 45px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ===============================
+    Current Flow, Hover Effects
+================================ */
+.current-flow {
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+  scale: 1;
+}
+
+.focal-url.previous-flow-item.next-flow-item {
+  background: linear-gradient(
+    90deg,
+    #fff8dc 5%,
+    #f9f9f9 10%,
+    #f9f9f9 90%,
+    #d0e7ff 95%
+  );
+}
+
+.focal-url.previous-flow-item {
+  background: linear-gradient(90deg, #fff8dc 5%, #f9f9f9 10%);
+}
+
+.focal-url.next-flow-item {
+  background: linear-gradient(90deg, #f9f9f9 90%, #d0e7ff 95%);
+}
+
+@media (max-width: 991px) {
+  .flow-arrow {
+    display: none;
+  }
+}

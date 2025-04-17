@@ -12,3 +12,17 @@ export const loadPagesDetailsError = createAction(
   '[PagesDetails/API] Load PagesDetails Error',
   props<{ error: string }>()
 );
+
+export const getHashes = createAction(
+  '[PagesDetails/API] Get Hashes',
+);
+
+export const getHashesSuccess = createAction(
+  '[PagesDetails/API] Get Hashes Success',
+  props<{ data: PageDetailsData['hashes'] }>(),
+);
+
+export const getHashesError = createAction(
+  '[PagesDetails/API] Get Hashes Error',
+  props<{ error: string }>(),
+);

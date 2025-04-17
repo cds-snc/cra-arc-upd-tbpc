@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { createEffect, Actions, ofType, concatLatestFrom } from '@ngrx/effects';
+import { createEffect, Actions, ofType } from '@ngrx/effects';
+import { concatLatestFrom } from '@ngrx/operators';
 import { Store } from '@ngrx/store';
 import { catchError, EMPTY, mergeMap, map, of } from 'rxjs';
 import { selectDateRanges, selectDatePeriod } from '@dua-upd/upd/state';

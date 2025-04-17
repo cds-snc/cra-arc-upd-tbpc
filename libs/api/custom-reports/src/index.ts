@@ -8,3 +8,4 @@ export * from './lib/clients/adobe-analytics.client';
 export * from './lib/clients/adobe-analytics.config';
 export * from './lib/clients/adobe-analytics.query';
 export * from './lib/clients/adobe-analytics.api';
+export * from './lib/clients/adobe-analytics.module';

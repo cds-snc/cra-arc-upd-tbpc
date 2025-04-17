@@ -1,4 +1,11 @@
-import { Controller, Get, Header, ParseBoolPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  ParseBoolPipe,
+  ParseIntPipe,
+  Query,
+} from '@nestjs/common';
 import { OverallService } from './overall.service';
 
 @Controller('overall')
@@ -39,5 +46,23 @@ export class OverallController {
       comparisonDateRange,
       ipd,
     });
+  }
+
+  @Get('most-relevant')
+  @Header('Content-Type', 'application/json')
+  getMostRelevant(
+    @Query('dateRange') dateRange: string,
+    @Query('comparisonDateRange') comparisonDateRange: string,
+    @Query('ipd', ParseBoolPipe) ipd: boolean,
+    @Query('part', ParseIntPipe) part: number,
+  ) {
+    return this.overallService.getCachedCommentsAndWordsChunk(
+      {
+        dateRange,
+        comparisonDateRange,
+        ipd,
+      },
+      part,
+    );
   }
 }

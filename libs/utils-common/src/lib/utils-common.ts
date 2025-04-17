@@ -315,6 +315,40 @@ export function sortArrayDesc(arr: { data: number; value: string }[][]) {
   return arr;
 }
 
+export const globalColours: string[] = [
+  '#2E5EA7',
+  '#64B5F6',
+  '#26A69A',
+  '#FBC02D',
+  '#1DE9B6',
+  '#F57F17',
+  '#602E9C',
+  '#2196F3',
+  '#DE4CAE',
+  '#C3680A',
+  '#C5C5FF',
+  '#1A8361',
+];
+
+/**
+ * Determines the optimal text colour (black or white) for readability
+ * based on the background colour’s luminance.
+ * @param {string} backgroundColour - The hex colour code to evaluate.
+ * @returns {string} The ideal contrast colour (`#333` for dark text or `#FFF` for light text).
+ */
+export function getOptimalTextcolour(backgroundColour: string): string {
+  const hex = backgroundColour.replace('#', '');
+
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  // Calculate relative luminance (WCAG formula)
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+  return luminance > 0.5 ? '#333' : '#FFF';
+}
+
 /**
  * Performs async processing in batches of a given size, with
  * an optional delay between calls to handle rate-limiting.
@@ -338,14 +372,57 @@ export async function batchAwait<T, U>(
     const currentDelay = typeof delay === 'number' ? delay : delay.delay;
 
     if (promises.length !== 0 && promises.length % batchSize === 0) {
-      await Promise.all([...promises, wait(currentDelay)]);
-    } else {
-      await wait(currentDelay);
+      await Promise.all(
+        currentDelay ? [...promises, wait(currentDelay)] : promises,
+      );
+      continue;
     }
+
+    currentDelay && (await wait(currentDelay));
   }
 
   return Promise.all(promises);
 }
+
+type InsertFunc<T> = (ops: T[]) => Promise<void>;
+
+/**
+ * Creates a queue that will perform queued updates when it reaches maxQueueSize
+ * @param maxQueueSize
+ * @param insertFunc
+ */
+export const createUpdateQueue = <T>(
+  maxQueueSize: number,
+  insertFunc: InsertFunc<T>,
+) => {
+  const queue: T[] = [];
+
+  const flush = async () => {
+    const ops = queue.splice(0, queue.length);
+
+    try {
+      if (ops.length > 0) {
+        await insertFunc(ops);
+      }
+    } catch (err) {
+      console.error('Error occurred in createUpdateQueue flush:', err);
+      logJson(ops);
+    }
+  };
+
+  const add = async (ops: T) => {
+    if (queue.length >= maxQueueSize) {
+      await flush();
+    }
+
+    queue.push(ops);
+  };
+
+  return {
+    add,
+    flush,
+  };
+};
 
 /**
  * Maps over chunks of an array rather than individual items
@@ -368,15 +445,40 @@ export function chunkMap<T, ReturnT>(
   return chunks;
 }
 
-// Thanks ChatGPT
+/**
+ * Utility class for timing and logging iterations.
+ *
+ * @example
+ * ```typescript
+ * const anArray = ['an', 'array'];
+ * const timingUtility = new TimingUtility(anArray.length);
+ *
+ * for (const item of anArray) {
+ *   // Perform some operation
+ *   timingUtility.logIteration(`Iteration ${i + 1} completed`);
+ * }
+ * ```
+ */
 export class TimingUtility {
   private previousIterationEndTime = Date.now();
   private iterationDurations: number[] = [];
   private iterationCount = 0;
   private averageDuration = 1500;
 
-  constructor(private totalIterations: number) {}
+  /**
+   * Creates an instance of TimingUtility.
+   *
+   * @param totalIterations - The total number of iterations to be performed.
+   * @param logInterval - The interval at which to output a log message. Defaults to 100.
+   */
+  constructor(
+    private totalIterations: number,
+    private logInterval = 100,
+  ) {}
 
+  /**
+   * Calculates the average duration of the iterations.
+   */
   private calculateAverage(): void {
     const sum = this.iterationDurations.reduce(
       (total, duration) => total + duration,
@@ -385,6 +487,12 @@ export class TimingUtility {
     this.averageDuration = sum / this.iterationDurations.length;
   }
 
+  /**
+   * Formats the remaining time in a human-readable string.
+   *
+   * @param milliseconds - The remaining time in milliseconds.
+   * @returns The formatted remaining time as a string.
+   */
   private formatTimeRemaining(milliseconds: number): string {
     const seconds = Math.ceil(milliseconds / 1000);
     const minutes = (seconds / 60).toFixed(2);
@@ -393,22 +501,38 @@ export class TimingUtility {
       : `${seconds} second${seconds === 1 ? '' : 's'}`;
   }
 
+  /**
+   * Formats the iteration count with leading zeros.
+   *
+   * @returns The formatted iteration count as a string.
+   */
   private formatIterationCount() {
     const lessThan10 = this.iterationCount < 10 ? '0' : '';
     const lessThan100 = this.iterationCount < 100 ? '0' : '';
     return `${lessThan10}${lessThan100}${this.iterationCount}`;
   }
 
+  /**
+   * Logs the duration of the current iteration and other relevant information.
+   *
+   * @param customMessage - An optional custom message to include in the log.
+   */
   public logIteration(customMessage?: string): void {
     const iterationStartTime = Date.now();
+
     const iterationDuration =
       iterationStartTime - this.previousIterationEndTime;
+
     this.iterationDurations.push(iterationDuration);
+
     this.iterationCount++;
+
     this.calculateAverage();
+
     const timeRemaining = this.formatTimeRemaining(
       (this.totalIterations - this.iterationCount) * this.averageDuration,
     );
+
     const message =
       `${chalk.green('✔')}  ${chalk.dim(new Date().toLocaleTimeString())} | ` +
       `${chalk.bold(this.formatIterationCount())}: ${chalk.yellow(
@@ -420,6 +544,7 @@ export class TimingUtility {
       }\r`;
 
     if (
+      (this.logInterval && this.iterationCount % this.logInterval === 0) ||
       iterationDuration >= 500 ||
       (iterationDuration <= 200 && this.iterationCount % 100 === 0) ||
       (iterationDuration > 200 && this.iterationCount % 8 === 0)
@@ -429,6 +554,62 @@ export class TimingUtility {
 
     this.previousIterationEndTime = Date.now();
   }
+}
+
+/**
+ * Maps an array using the provided mapping function and logs the estimated time of arrival (ETA) at specified intervals.
+ *
+ * @template T - The type of elements in the input array.
+ * @template U - The type of elements in the output array.
+ * @param array - The array to be mapped.
+ * @param mapFunc - The mapping function to apply to each element in the array.
+ * @param logInterval - The interval at which to log the ETA. Defaults to 100.
+ * @returns  The array resulting from applying the mapping function to each element in the input array.
+ */
+export function mapWithETALogging<T, U>(
+  array: T[],
+  mapFunc: (val: T) => U,
+  logInterval = 100,
+): U[] {
+  const timingUtility = new TimingUtility(array.length, logInterval);
+
+  const results: U[] = [];
+
+  for (const [i, val] of array.entries()) {
+    results.push(mapFunc(val));
+
+    timingUtility.logIteration();
+  }
+
+  return results;
+}
+
+/**
+ * Asynchronously maps an array using a provided mapping function and logs the estimated time of arrival (ETA) at specified intervals.
+ *
+ * @template T - The type of elements in the input array.
+ * @template U - The type of elements in the resulting array.
+ * @param array - The array to be mapped.
+ * @param mapFunc - The asynchronous mapping function to apply to each element.
+ * @param logInterval - The interval at which to log the ETA. Defaults to 100.
+ * @returns A promise that resolves to an array of mapped values.
+ */
+export async function mapWithETALoggingAsync<T, U>(
+  array: T[],
+  mapFunc: (val: T) => Promise<U>,
+  logInterval = 100,
+) {
+  const timingUtility = new TimingUtility(array.length, logInterval);
+
+  const results: U[] = [];
+
+  for (const val of array) {
+    results.push(await mapFunc(val));
+
+    timingUtility.logIteration();
+  }
+
+  return results;
 }
 
 /*
@@ -525,7 +706,10 @@ export const collapseStrings = (strings: string[]) => [
   ...new Set(strings.map((s) => s.replace(/\s+/g, ' ').trim())),
 ];
 
-class Mutex {
+/**
+ * A simple mutex implementation for controlling access to shared resources
+ */
+export class Mutex {
   private queue: (() => void)[] = [];
   private locked = false;
 
@@ -552,14 +736,35 @@ class Mutex {
   }
 }
 
-export function withMutex<T extends object>(obj: T, unlockDelay = 0): T {
+export type MutexOptions<T> = {
+  unlockDelay?: number;
+  methodList?: (keyof T)[];
+};
+
+/**
+ * Wraps an object or class instance with a mutex to control access to shared resources
+ *
+ * @param obj The object or class instance to wrap with a mutex
+ * @param options.unlockDelay The delay in milliseconds to wait before unlocking the mutex
+ * @param options.methodList The list of methods that require mutex locking
+ * @returns
+ */
+export function withMutex<T extends object>(
+  obj: T,
+  options?: MutexOptions<T>,
+): T {
   const mutex = new Mutex();
+  const unlockDelay = options?.unlockDelay || 0;
+  const methodList = options?.methodList;
 
   return new Proxy(obj, {
     get(target, propKey, receiver) {
       const origMethod = Reflect.get(target, propKey, receiver);
 
-      if (typeof origMethod === 'function') {
+      if (
+        typeof origMethod === 'function' &&
+        (!methodList || methodList.includes(propKey as keyof T))
+      ) {
         return async (...args: unknown[]) => {
           await mutex.lock();
 
@@ -575,3 +780,62 @@ export function withMutex<T extends object>(obj: T, unlockDelay = 0): T {
     },
   });
 }
+
+export function withErrorCallback<
+  T extends object,
+  Fn extends (err: unknown) => any,
+>(
+  obj: T,
+  callback: Fn,
+  options?: {
+    methodList?: (keyof T)[];
+  },
+): T {
+  const methodList = options?.methodList;
+
+  return new Proxy(obj, {
+    get(target, propKey, receiver) {
+      const origMethod = Reflect.get(target, propKey, receiver);
+
+      if (
+        typeof origMethod === 'function' &&
+        (!methodList || methodList.includes(propKey as keyof T))
+      ) {
+        return async (...args: unknown[]) => {
+          try {
+            return await origMethod.apply(target, args);
+          } catch (err) {
+            await callback(err);
+            throw err;
+          }
+        };
+      }
+      return origMethod;
+    },
+  });
+}
+
+/**
+ * Helper function to work around DocumentDB's lack of support for the $pow operator
+ * @param mongoExpression - The expression to be raised to the power of exponent
+ * @param exponent - The exponent to raise the expression to
+ */
+export const $pow = (
+  mongoExpression: string | Record<string, unknown>,
+  exponent: number,
+) => ({ $multiply: Array(exponent).fill(mongoExpression) });
+
+/**
+ * Helper function to work around DocumentDB's lack of support for the $trunc operator
+ * @param mongoExpression - The expression to be truncated
+ * @param precision - The number of decimal places to truncate to
+ */
+export const $trunc = (
+  mongoExpression: string | Record<string, unknown>,
+  precision: number,
+) => ({
+  $divide: [
+    { $floor: { $multiply: [mongoExpression, Math.pow(10, precision)] } },
+    Math.pow(10, precision),
+  ],
+});

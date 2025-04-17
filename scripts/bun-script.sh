@@ -1,0 +1,1 @@
+bun run --tsconfig-override tsconfig.bun.json ./scripts/bun-scripts/$1.ts $2 $3 $4 $5 $6 $7 $8 $9

@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 // need mongo import or TS will complain about missing types
-import { Types, type FilterQuery, type mongo } from 'mongoose';
+import { Types, type FilterQuery } from 'mongoose';
 import { omit } from 'rambdax';
 import { DbService, Feedback } from '@dua-upd/db';
-import { arrayToDictionary, type DateRange } from '@dua-upd/utils-common';
+import { $trunc, arrayToDictionary } from '@dua-upd/utils-common';
+import type {
+  DateRange,
+  FeedbackBase,
+  FeedbackWithScores,
+} from '@dua-upd/types-common';
 import { FeedbackCache } from './feedback.cache';
 import type {
   IFeedback,
@@ -104,14 +109,13 @@ export class FeedbackService {
       : wordResultsAggregation;
 
     const wordsResults = await wordResultsIntermediate
-      .match(wordsFilterQuery)
       .group({
         _id: null,
         avgWords: { $avg: { $size: '$words' } },
         totalWords: { $sum: { $size: '$words' } },
       })
       .addFields({
-        avgWords: { $round: ['$avgWords', 4] },
+        avgWords: $trunc('$avgWords', 5),
       })
       .exec();
 
@@ -133,25 +137,37 @@ export class FeedbackService {
     const wordScoresMap = arrayToDictionary(wordScores, 'word');
 
     const commentsAggregation = this.db.collections.feedback
-      .aggregate<IFeedback>()
+      .aggregate<FeedbackBase>()
       .project({ tags: 0, __v: 0, airtable_id: 0, unique_id: 0 })
-      .match(filterQuery);
+      .match(filterQuery)
+      .lookup({
+        from: 'pages',
+        localField: 'url',
+        foreignField: 'url',
+        as: 'page',
+      })
+      .unwind('$page')
+      .addFields({
+        sections: '$page.sections',
+        tasks: '$page.tasks',
+        owners: '$page.owners',
+      })
+      .lookup({
+        from: 'tasks',
+        localField: 'tasks',
+        foreignField: '_id',
+        as: 'tasks',
+      })
+      .addFields({
+        tasks: {
+          $map: { input: '$tasks', as: 'task', in: '$$task.title' },
+        },
+      });
 
     const comments = await (
       params.ipd
         ? commentsAggregation
-            .lookup({
-              from: 'pages',
-              localField: 'url',
-              foreignField: 'url',
-              as: 'page',
-            })
-            .unwind('$page')
             .match({ 'page.owners': /ipd/i })
-            .addFields({
-              sections: '$page.sections',
-              owners: '$page.owners',
-            })
             .project({ page: 0 })
         : commentsAggregation
     ).exec();
@@ -198,11 +214,7 @@ export class FeedbackService {
       return { commentScore };
     };
 
-    const commentsWithScores: (IFeedback & {
-      commentScore?: number;
-      pageScore?: number;
-      rank?: number;
-    })[] = comments.map((comment) => {
+    const commentsWithScores: FeedbackWithScores[] = comments.map((comment) => {
       if (!comment.words?.length) {
         return comment;
       }
@@ -219,45 +231,11 @@ export class FeedbackService {
       a.commentScore ? (b.commentScore || 0) - a.commentScore : 1,
     );
 
-    if (params.ipd) {
-      return {
-        comments: commentsWithScores.map((comment, i) => ({
-          ...comment,
-          rank: comment.commentScore ? i + 1 : undefined,
-        })),
-        words: wordScores,
-      };
-    }
-
-    const pagesWithSections = await this.db.collections.pages
-      .find({
-        ...omit(['date', 'lang'], filterQuery),
-        $or: [{ sections: { $exists: true } }, { owners: { $exists: true } }],
-      })
-      .lean()
-      .exec();
-
-    const pagesMap = arrayToDictionary(pagesWithSections, 'url');
-
-    const commentsWithScoresAndSections = commentsWithScores.map(
-      (comment, i) => {
-        const page = pagesMap[comment.url];
-
-        if (!page) {
-          return { ...comment, rank: comment.commentScore ? i + 1 : undefined };
-        }
-
-        return {
-          ...comment,
-          rank: comment.commentScore ? i + 1 : undefined,
-          sections: page.sections,
-          owners: page.owners,
-        };
-      },
-    );
-
     return {
-      comments: commentsWithScoresAndSections,
+      comments: commentsWithScores.map((comment, i) => ({
+        ...comment,
+        rank: comment.commentScore ? i + 1 : undefined,
+      })),
       words: wordScores,
     };
   }
@@ -360,21 +338,19 @@ export class FeedbackService {
         //     7,
         //   ],
         // },
-        term_frequency: {
-          $round: [
-            {
-              $ln: {
-                $sum: [
-                  1,
-                  {
-                    $divide: ['$word_occurrences', totalWords],
-                  },
-                ],
-              },
+        term_frequency: $trunc(
+          {
+            $ln: {
+              $sum: [
+                1,
+                {
+                  $divide: ['$word_occurrences', totalWords],
+                },
+              ],
             },
-            7,
-          ],
-        },
+          },
+          8,
+        ),
       })
       .addFields({
         // ...ifPage({
@@ -387,14 +363,12 @@ export class FeedbackService {
         //     ],
         //   },
         // }),
-        comment_frequency: {
-          $round: [
-            {
-              $divide: ['$comment_occurrences', totalComments],
-            },
-            6,
-          ],
-        },
+        comment_frequency: $trunc(
+          {
+            $divide: ['$comment_occurrences', totalComments],
+          },
+          7,
+        ),
       })
       .match({
         term_frequency: { $gt: 0.000001 },
@@ -423,48 +397,46 @@ export class FeedbackService {
 
         // --------------------------- EXPERIMENTAL IDF CALCULATION!
 
-        inverse_doc_frequency: {
-          $round: [
-            {
-              $multiply: [
-                Math.E,
-                {
-                  $ln: {
-                    $sum: [
-                      1,
-                      {
-                        $divide: [
-                          {
-                            $sum: [
-                              {
-                                $subtract: [
-                                  totalComments,
-                                  '$comment_occurrences',
-                                ],
-                              },
-                              {
-                                $sqrt: totalComments,
-                              },
-                            ],
-                          },
-                          {
-                            $sum: [
-                              '$comment_occurrences',
-                              {
-                                $sqrt: totalComments,
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
+        inverse_doc_frequency: $trunc(
+          {
+            $multiply: [
+              Math.E,
+              {
+                $ln: {
+                  $sum: [
+                    1,
+                    {
+                      $divide: [
+                        {
+                          $sum: [
+                            {
+                              $subtract: [
+                                totalComments,
+                                '$comment_occurrences',
+                              ],
+                            },
+                            {
+                              $sqrt: totalComments,
+                            },
+                          ],
+                        },
+                        {
+                          $sum: [
+                            '$comment_occurrences',
+                            {
+                              $sqrt: totalComments,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
                 },
-              ],
-            },
-            4,
-          ],
-        },
+              },
+            ],
+          },
+          5,
+        ),
         // ----------- not using page score for now
         // ...ifPage({
         //   // --------------------------- could potentially use "EXPERIMENTAL CALCULATION" here too

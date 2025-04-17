@@ -4,6 +4,7 @@
   "projectType": "application",
   "sourceRoot": "apps/upd/src",
   "prefix": "upd",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/angular:browser-esbuild",
@@ -33,7 +34,7 @@
             {
               "type": "anyComponentStyle",
               "maximumWarning": "2kb",
-              "maximumError": "4kb"
+              "maximumError": "20kb"
             }
           ],
           "fileReplacements": [
@@ -74,6 +75,7 @@
       "executor": "@nx/angular:dev-server",
       "configurations": {
         "development": {
+          "host": "127.0.0.1",
           "buildTarget": "upd:build:development",
           "hmr": true,
           "watch": true
@@ -91,7 +93,8 @@
         "buildTarget": "upd:build:production",
         "configFile": "apps/upd/vite.config.mts",
         "watch": true
-      }
+      },
+      "dependsOn": ["build"]
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -122,6 +125,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }

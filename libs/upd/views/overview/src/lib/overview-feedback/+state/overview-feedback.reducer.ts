@@ -1,12 +1,13 @@
 import { createReducer, on } from '@ngrx/store';
 import { OverviewFeedbackActions } from './overview-feedback.actions';
 import type { OverviewFeedback } from '@dua-upd/types-common';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export const OVERVIEW_FEEDBACK_FEATURE_KEY = 'overview-feedback';
 
 export type OverviewFeedbackState = {
   loading: boolean;
-  error: string | null;
+  error: HttpErrorResponse | null;
   data: OverviewFeedback | null;
 };
 

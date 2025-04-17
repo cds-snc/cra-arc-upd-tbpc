@@ -24,6 +24,20 @@ export class UpdateQuestions {
   }
 }
 
+@QuestionSet({ name: 'skipAirtableUpdates' })
+export class SkipAirtableQuestions {
+  @Question({
+    message: 'Skip airtable updates?',
+    name: 'skipAirtableUpdates',
+    type: 'list',
+    choices: ['No', 'Yes'],
+    default: 'No',
+  })
+  parseSkipAirtableUpdates(str: string): boolean {
+    return str === 'Yes';
+  }
+}
+
 @Command({
   name: 'update',
   description: 'Update the database',
@@ -32,7 +46,7 @@ export class UpdateCommand extends CommandRunner {
   constructor(
     private readonly inquirerService: InquirerService,
     private dataIntegrityService: DataIntegrityService,
-    private dbUpdateService: DbUpdateService
+    private dbUpdateService: DbUpdateService,
   ) {
     super();
   }
@@ -53,10 +67,17 @@ export class UpdateCommand extends CommandRunner {
       return;
     }
 
+    const skipAirtableUpdates = (
+      await this.inquirerService.prompt<{
+        skipAirtableUpdates: boolean;
+      }>('skipAirtableUpdates', { ...options })
+    );
+
     try {
-      await this.dbUpdateService.updateAll(false);
+      await this.dbUpdateService.updateAll(false, skipAirtableUpdates);
       await this.dataIntegrityService.fillMissingData();
       await this.dataIntegrityService.cleanPageUrls();
+      await this.dbUpdateService.recalculateViews(false);
     } catch (error) {
       console.error(chalk.red(error.stack));
     }

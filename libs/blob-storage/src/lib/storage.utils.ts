@@ -1,4 +1,4 @@
-import type { TransferProgressEvent } from '@azure/core-http';
+import type { TransferProgressEvent } from '@azure/core-http-compat';
 import { throttle } from 'rambdax';
 import { bytesToMbs } from '@dua-upd/node-utils';
 

@@ -40,7 +40,7 @@ export class ProjectDetailsCalldriversComponent implements OnInit {
       this.calldriversCols = [
         {
           field: 'name',
-          header: this.i18n.service.translate('Inquiry line', lang),
+          header: this.i18n.service.translate('enquiry_line', lang),
         },
         {
           field: 'currValue',

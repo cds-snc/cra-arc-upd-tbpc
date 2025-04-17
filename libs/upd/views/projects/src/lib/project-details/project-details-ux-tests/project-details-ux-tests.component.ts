@@ -43,6 +43,9 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
   apexTaskSuccessByUxTest$ =
     this.projectsDetailsService.apexTaskSuccessByUxTest$;
 
+  taskSuccessChartHeight$ =
+    this.projectsDetailsService.taskSuccessChartHeight$;
+
   avgTaskSuccessFromLastTest$ =
     this.projectsDetailsService.avgTaskSuccessFromLastTest$;
 
@@ -88,6 +91,7 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
             field: 'title',
             header: this.i18n.service.translate('Task list', lang),
             type: 'link',
+            translate: true,
             typeParams: { preLink: `/${this.langLink}/tasks`, link: '_id' },
           },
         ];

@@ -1,0 +1,27 @@
+{
+  "name": "duckdb-lib",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/duckdb-lib/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/duckdb-lib",
+        "tsConfig": "libs/duckdb-lib/tsconfig.lib.json",
+        "packageJson": "libs/duckdb-lib/package.json",
+        "main": "libs/duckdb-lib/src/index.ts",
+        "assets": ["libs/duckdb-lib/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/duckdb-lib/jest.config.ts"
+      }
+    }
+  }
+}

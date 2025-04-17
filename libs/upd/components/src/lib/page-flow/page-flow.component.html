@@ -1,0 +1,598 @@
+<ng-template #itemTemplate let-page="page">
+  <div class="d-flex flex-column h-100 w-100 pointer">
+    <div class="title mt-1">
+      <div>{{ page?.title || page.url }}</div>
+    </div>
+
+    <div class="d-flex mt-2">
+      <strong>{{ page.visits | localeNumber }}</strong>
+      @if (page !== focusPage()) {
+        &nbsp;({{ page.visits / focusPage().visits | localePercent: '1.0-1' }})
+      }
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+      @if (page === focusPage()) {
+        <!-- Center the Focus badge -->
+        <span class="badge bg-dark">Focus</span>
+      } @else if (page.rank && page.entries) {
+        <!-- Left-align the Rank badge with entries -->
+        <span class="badge bg-warning text-dark"
+          >{{ 'Rank' | translate }} {{ page.rank }}</span
+        >
+      } @else if (page.rank && page.exits) {
+        <!-- Right-align the Rank badge with exits -->
+        <span class="badge" style="background: #1976d2"
+          >{{ 'Rank' | translate }} {{ page.rank }}</span
+        >
+      } @else {
+        <!-- Default case for Rank with a placeholder -->
+        <div class="badge badge-empty">{{ 'Rank' | translate }} ?</div>
+      }
+    </div>
+
+    <div
+      class="d-flex justify-content-between align-items-center gap-2 mt-auto mb-2"
+    >
+      @if (page.entries) {
+        <span class="badge bg-success w-100" aria-describedby="entriesTooltip"
+          >{{ 'Entries:' | translate }}
+          {{ page?.entries / page?.visits | localePercent: '1.0-1' }}</span
+        >
+      }
+
+      @if (page.exits) {
+        <span class="badge bg-danger w-100" aria-describedby="exitsTooltip"
+          >{{ 'Exits:' | translate }}
+          {{ page?.exits / page?.visits | localePercent: '1.0-1' }}</span
+        >
+      }
+
+      @if (!page.entries && !page.exits) {
+        <span class="badge badge-empty w-100"></span>
+      }
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #topPreviousTooltip>
+  <p
+    *ngIf="previousPages().length === 0 && previousOptions().length > 0"
+    [innerHTML]="
+      'flow-tooltip-top-prev-nopages'
+        | translate: { focuspage: focusPage().title || focusPage().url }
+    "
+  ></p>
+  <p
+    *ngIf="previousPages().length > 0"
+    [innerHTML]="
+      'flow-tooltip-top-prev'
+        | translate
+          : {
+              page: selectedFlow()[0].title || selectedFlow()[0].url,
+              focuspage: focusPage().title || focusPage().url,
+            }
+    "
+  ></p>
+</ng-template>
+
+<ng-template #topNextTooltip>
+  <p
+    *ngIf="nextPages().length === 0 && nextOptions().length > 0"
+    [innerHTML]="
+      'flow-tooltip-top-next-nopages'
+        | translate: { focuspage: focusPage().title || focusPage().url }
+    "
+  ></p>
+  <p
+    *ngIf="nextPages().length > 0"
+    [innerHTML]="
+      'flow-tooltip-top-next'
+        | translate
+          : {
+              page:
+                selectedFlow()[selectedFlow().length - 1].title ||
+                selectedFlow()[selectedFlow().length - 1].url,
+              focuspage: focusPage().title || focusPage().url,
+            }
+    "
+  ></p>
+</ng-template>
+
+<div class="container-fluid my-4 gx-0">
+  <upd-card [title]="title()" [modal]="modal()" [modalSize]="modalSize()">
+    <!-- <upd-arrow-connect
+      [visible]="!isLoadingPrevious"
+      [update]="!isLoadingNext"
+      [source]="sourcePreviousFlow()"
+      [target]="targetPreviousFlow()"
+      class="flow-arrow"
+    ></upd-arrow-connect>
+
+    <upd-arrow-connect
+      [visible]="!isLoadingNext"
+      [update]="!isLoadingPrevious"
+      [source]="sourceNextFlow()"
+      [target]="targetNextFlow()"
+      class="flow-arrow"
+    ></upd-arrow-connect> -->
+
+    <div class="row">
+      @if (isInit()) {
+        <div class="loading-overlay">
+          <div class="loading-spinner" aria-live="polite"></div>
+        </div>
+      } @else {
+        <!-- Current Flow Section -->
+        <div class="col-lg-12 col-md-12 col-sm-12 flow-container">
+          @if (totalPages() !== 4) {
+            <!-- Select previous top page -->
+            <div
+              id="targetPreviousFlow"
+              class="flow-item current-flow inactive selected-previous-flow-item"
+              tabindex="0"
+            >
+              {{ 'flow-select-previous' | translate }}
+            </div>
+
+            <div class="material-icons">chevron_right</div>
+          }
+
+          <!-- Flow items (dynamic items generated in a loop) -->
+          @for (page of selectedFlow(); track page.url + $index) {
+            <ng-template #tooltip>
+              @if (page?.title) {
+                <strong class="my-1">{{ page.title }}</strong> <br />
+              }
+              {{ page.url }}
+              <span class="d-block mt-2 my-1">
+                @if (page === focusPage()) {
+                  <strong
+                    >{{ page.visits | localeNumber }}
+                    {{ 'flow-total-visits' | translate }}</strong
+                  >
+                } @else {
+                  <strong
+                    >{{ page.visits | localeNumber }}
+                    {{ 'flow-visits' | translate }}
+                  </strong>
+                  ({{
+                    page.visits / focusPage().visits | localePercent: '1.0-1'
+                  }})
+                }
+              </span>
+              @if (page === focusPage()) {
+                <span class="my-1 d-block"
+                  ><strong>{{ 'Rank:' | translate }}</strong> Focus
+                </span>
+              }
+              @if (page.rank) {
+                <span class="my-1 d-block"
+                  ><strong>{{ 'Rank:' | translate }}</strong>
+                  {{ page.rank }}</span
+                >
+              }
+              @if (page.entries) {
+                <span class="my-1 d-block">
+                  <strong>{{ 'Entries:' | translate }}</strong>
+                  {{ page.entries | localeNumber }} ({{
+                    page.entries / page.visits | localePercent: '1.0-1'
+                  }})
+                </span>
+                @if (page !== focusPage()) {
+                  <span
+                    *ngIf="
+                      previousPages().length &&
+                      previousPages()[previousPages().length - 1] === page
+                    "
+                    class="my-1 d-block"
+                    [innerHTML]="
+                      'flow-tooltip-flow-prev-beforefocus'
+                        | translate
+                          : {
+                              visits: page.visits | localeNumber,
+                              page: page?.title || page.url,
+                            }
+                    "
+                  >
+                  </span>
+                  <span
+                    *ngIf="
+                      previousPages().length > 1 &&
+                      previousPages()[previousPages().length - 1] !== page
+                    "
+                    class="my-1 d-block"
+                    [innerHTML]="
+                      'flow-tooltip-flow-prev'
+                        | translate
+                          : {
+                              visits: page.visits | localeNumber,
+                              page: page?.title || page.url,
+                            }
+                    "
+                  >
+                  </span>
+                }
+              }
+              @if (page.exits) {
+                <span class="my-1 d-block">
+                  <strong>{{ 'Exits:' | translate }}</strong>
+                  {{ page.exits | localeNumber }} ({{
+                    page.exits / page.visits | localePercent: '1.0-1'
+                  }})
+                </span>
+                @if (page !== focusPage()) {
+                  <span
+                    *ngIf="nextPages().length && nextPages()[0] === page"
+                    class="my-1 d-block"
+                    [innerHTML]="
+                      'flow-tooltip-flow-next-afterfocus'
+                        | translate
+                          : {
+                              visits: page.visits | localeNumber,
+                              page: page?.title || page.url,
+                            }
+                    "
+                  >
+                  </span>
+                  <span
+                    *ngIf="nextPages().length > 1 && nextPages()[0] !== page"
+                    class="my-1 d-block"
+                    [innerHTML]="
+                      'flow-tooltip-flow-next'
+                        | translate
+                          : {
+                              visits: page.visits | localeNumber,
+                              page: page?.title || page.url,
+                            }
+                    "
+                  >
+                  </span>
+                }
+              }
+            </ng-template>
+            <div
+              class="flow-item current-flow flow-tooltip"
+              [ngbTooltip]="tooltip"
+              [tooltipClass]="'flow-tooltip'"
+              placement="top"
+              [ngClass]="{ 'focal-url': page === focusPage() }"
+              tabindex="0"
+              (click)="flowClick(page)"
+              (keydown)="handleKeyDownFlow($event, page)"
+            >
+              <ng-container
+                *ngTemplateOutlet="itemTemplate; context: { page }"
+              ></ng-container>
+            </div>
+
+            @if (!$last) {
+              <div class="material-icons">chevron_right</div>
+            }
+          }
+
+          @if (totalPages() !== 4) {
+            <div class="material-icons">chevron_right</div>
+
+            <!-- Select next page -->
+            <div
+              id="sourceNextFlow"
+              class="flow-item current-flow selected-next-flow-item inactive"
+              tabindex="0"
+            >
+              {{ 'flow-select-next' | translate }}
+            </div>
+          }
+        </div>
+
+        @if (totalPages() === 4) {
+          <upd-alert [type]="'danger'" [dismissible]="false">
+            {{ 'flow-limit' | translate }}</upd-alert
+          >
+        }
+
+        <!-- Previous Pages Section -->
+        <div class="col-lg-6 col-md-12 col-sm-12">
+          <div class="d-flex align-items-center mb-2">
+            <strong
+              class="card-tooltip me-2"
+              [ngbTooltip]="topPreviousTooltip"
+              aria-describedby="topPreviousTooltip"
+              >{{ 'flow-previous-top-pages' | translate }}</strong
+            >
+
+            @if (isLoadingPrevious || previousPages().length === 0) {
+              <button
+                class="btn btn-sm d-flex align-items-center"
+                role="button"
+                disabled
+              >
+                <span class="material-icons me-1" aria-hidden="true"
+                  >refresh</span
+                >
+                {{ 'flow-reset' | translate }}
+              </button>
+            } @else {
+              <button
+                class="btn btn-sm d-flex align-items-center"
+                (click)="resetPageFlowData('previous')"
+              >
+                <span class="material-icons me-1" aria-hidden="true"
+                  >refresh</span
+                >
+                {{ 'flow-reset' | translate }}
+              </button>
+            }
+          </div>
+          @if (previousOptions().length > 0 && !isLoadingPrevious) {
+            <div class="flow-wrapper">
+              @for (page of previousOptions(); track page.url + $index) {
+                <ng-template #tooltip>
+                  @if (page?.title) {
+                    <strong>{{ page.title }}</strong> <br />
+                  }
+                  {{ page.url }} <br />
+                  <span class="item-data"
+                    ><strong>{{ page.visits | localeNumber }}</strong> ({{
+                      page.visits / focusPage().visits | localePercent: '1.0-1'
+                    }})</span
+                  >
+                </ng-template>
+                @if (totalPages() === 4) {
+                  <div
+                    #sourcePreviousFlow
+                    class="flow-item previous-flow-item flow-item-selectable d-flex justify-content-between align-items-center disabled"
+                    [ngClass]="{ 'prev-first-item': $first }"
+                    [ngbTooltip]="tooltip"
+                    placement="top"
+                  >
+                    <!-- Left section (Badge and Title) -->
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-warning text-dark me-2">{{
+                        $index + 1
+                      }}</span>
+                      <span *ngIf="!isLoadingPrevious">{{
+                        page?.title || page.url
+                      }}</span>
+                    </div>
+
+                    <!-- Right section (Visits and Percentage) -->
+                    <div class="text-end text-nowrap">
+                      <strong>{{ page.visits | localeNumber }}</strong>
+                      ({{
+                        page.visits / focusPage().visits
+                          | localePercent: '1.0-1'
+                      }})
+                    </div>
+                  </div>
+                } @else {
+                  <div
+                    #sourcePreviousFlow
+                    class="flow-item previous-flow-item flow-item-selectable d-flex justify-content-between align-items-center pointer"
+                    [ngClass]="{ 'prev-first-item': $first }"
+                    [ngbTooltip]="tooltip"
+                    placement="top"
+                    (click)="pageClick('previous', 5, page, $index + 1)"
+                    (keydown)="
+                      handleKeyDown($event, 'previous', 5, page, $index + 1)
+                    "
+                    tabindex="0"
+                  >
+                    <!-- Left section (Badge and Title) -->
+                    <div class="d-flex align-items-center">
+                      <span class="badge bg-warning text-dark me-2">{{
+                        $index + 1
+                      }}</span>
+                      <span *ngIf="!isLoadingPrevious">{{
+                        page?.title || page.url
+                      }}</span>
+                    </div>
+
+                    <!-- Right section (Visits and Percentage) -->
+                    <div class="text-end text-nowrap">
+                      <strong>{{ page.visits | localeNumber }}</strong>
+                      ({{
+                        page.visits / focusPage().visits
+                          | localePercent: '1.0-1'
+                      }})
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+            <div
+              class="flow-item flow-item-selectable pointer"
+              *ngIf="!(previousOptions().length % 5)"
+              (click)="pageClick('previous', previousOptions().length + 5)"
+              (keydown)="
+                handleKeyDown($event, 'previous', previousOptions().length + 5)
+              "
+              tabindex="0"
+              aria-label="Load more previous pages"
+            >
+              <div class="d-flex align-items-center">
+                {{ 'flow-load-more' | translate }}
+              </div>
+            </div>
+          } @else {
+            @if (!isLoadingPrevious && previousPages().length === 0) {
+              <div
+                class="flow-item"
+                (click)="resetPageFlowData('previous')"
+                tabindex="0"
+                aria-label="Load previous pages"
+              >
+                <p>{{ 'flow-load-prev' | translate }}</p>
+              </div>
+            } @else if (!isLoadingPrevious && previousPages().length > 0) {
+              <div class="flow-item" tabindex="0" aria-label="No more results">
+                <p>{{ 'flow-no-more-result' | translate }}</p>
+              </div>
+            } @else {
+              <div tabindex="0" aria-label="Loading previous pages">
+                <p>{{ 'flow-loading' | translate }}</p>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Next Pages Section -->
+        <div class="col-lg-6 col-md-12 col-sm-12">
+          <div class="d-flex align-items-center mb-2">
+            <strong
+              class="card-tooltip me-2"
+              [ngbTooltip]="topNextTooltip"
+              aria-describedby="topNextTooltip"
+              >{{ 'flow-next-top-pages' | translate }}</strong
+            >
+            @if (isLoadingNext || nextPages().length === 0) {
+              <button
+                class="btn btn-sm d-flex align-items-center"
+                role="button"
+                disabled
+              >
+                <span class="material-icons me-1" aria-hidden="true"
+                  >refresh</span
+                >
+                {{ 'flow-reset' | translate }}
+              </button>
+            } @else {
+              <button
+                class="btn btn-sm d-flex align-items-center"
+                (click)="resetPageFlowData('next')"
+              >
+                <span class="material-icons me-1" aria-hidden="true"
+                  >refresh</span
+                >
+                {{ 'flow-reset' | translate }}
+              </button>
+            }
+          </div>
+          @if (nextOptions().length > 0 && !isLoadingNext) {
+            <div class="flow-wrapper">
+              @for (page of nextOptions(); track page.url + $index) {
+                <ng-template #tooltip>
+                  @if (page?.title) {
+                    <strong>{{ page.title }}</strong> <br />
+                  }
+                  {{ page.url }} <br />
+                  <span class="item-data"
+                    ><strong>{{ page.visits | localeNumber }}</strong> ({{
+                      page.visits / focusPage().visits | localePercent: '1.0-1'
+                    }})</span
+                  >
+                </ng-template>
+                @if (totalPages() === 4) {
+                  <div
+                    #targetNextFlow
+                    class="flow-item next-flow-item flow-item-selectable d-flex justify-content-between align-items-center disabled"
+                    [ngClass]="{ 'next-first-item': $first }"
+                    [ngbTooltip]="tooltip"
+                    placement="top"
+                  >
+                    <!-- Left section (Badge and Title) -->
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="badge me-2"
+                        [style]="'background: #1976D2'"
+                        >{{ $index + 1 }}</span
+                      >
+                      <span *ngIf="!isLoadingNext">{{
+                        page?.title || page.url
+                      }}</span>
+                    </div>
+
+                    <!-- Right section (Visits and Percentage) -->
+                    <div class="text-end text-nowrap">
+                      <strong>{{ page.visits | localeNumber }}</strong>
+                      ({{
+                        page.visits / focusPage().visits
+                          | localePercent: '1.0-1'
+                      }})
+                    </div>
+                  </div>
+                } @else {
+                  <div
+                    #targetNextFlow
+                    class="flow-item next-flow-item flow-item-selectable d-flex justify-content-between align-items-center pointer"
+                    [ngClass]="{ 'next-first-item': $first }"
+                    [ngbTooltip]="tooltip"
+                    placement="top"
+                    (click)="pageClick('next', 5, page, $index + 1)"
+                    (keydown)="
+                      handleKeyDown($event, 'next', 5, page, $index + 1)
+                    "
+                    tabindex="0"
+                  >
+                    <!-- Left section (Badge and Title) -->
+                    <div class="d-flex align-items-center">
+                      <span
+                        class="badge me-2"
+                        [style]="'background: #1976D2'"
+                        >{{ $index + 1 }}</span
+                      >
+                      <span *ngIf="!isLoadingNext">{{
+                        page?.title || page.url
+                      }}</span>
+                    </div>
+
+                    <!-- Right section (Visits and Percentage) -->
+                    <div class="text-end text-nowrap">
+                      <strong>{{ page.visits | localeNumber }}</strong>
+                      ({{
+                        page.visits / focusPage().visits
+                          | localePercent: '1.0-1'
+                      }})
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+            <div
+              class="flow-item flow-item-selectable pointer"
+              *ngIf="!(nextOptions().length % 5)"
+              (click)="pageClick('next', nextOptions().length + 5)"
+              (keydown)="
+                handleKeyDown($event, 'next', nextOptions().length + 5)
+              "
+              tabindex="0"
+              aria-label="Load more next pages"
+            >
+              <div class="d-flex align-items-center">
+                {{ 'flow-load-more' | translate }}
+              </div>
+            </div>
+          } @else {
+            @if (!isLoadingNext && nextPages().length === 0) {
+              <div
+                class="flow-item"
+                (click)="resetPageFlowData('next')"
+                tabindex="0"
+                aria-label="Load next pages"
+              >
+                <p>{{ 'flow-load-next' | translate }}</p>
+              </div>
+            } @else if (!isLoadingNext && nextPages().length > 0) {
+              <div class="flow-item" tabindex="0" aria-label="No more results">
+                <p>{{ 'flow-no-more-result' | translate }}</p>
+              </div>
+            } @else {
+              <div tabindex="0" aria-label="Loading next pages">
+                <p>{{ 'flow-loading' | translate }}</p>
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+
+    <div class="pt-3">
+      <upd-accordion>
+        <upd-data-table
+          [data]="selectedFlow()"
+          [cols]="currentFlowCols"
+        ></upd-data-table>
+      </upd-accordion>
+    </div>
+  </upd-card>
+</div>

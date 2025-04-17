@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map } from 'rxjs';
+import { map } from 'rxjs';
 import * as TasksHomeActions from './tasks-home.actions';
 import * as TasksHomeSelectors from './tasks-home.selectors';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { round } from '@dua-upd/utils-common';
 
 @Injectable()
 export class TasksHomeFacade {
@@ -14,12 +13,9 @@ export class TasksHomeFacade {
   loaded$ = this.store.select(TasksHomeSelectors.getTasksHomeLoaded);
   tasksHomeData$ = this.store.select(TasksHomeSelectors.getTasksHomeData);
 
-  tasksHomeTableData$ = combineLatest([
-    this.tasksHomeData$,
-    this.i18n.currentLang$,
-  ]).pipe(
-    map(([tasksHomeData]) => {
-      return (tasksHomeData?.dateRangeData || []).map((row) => ({
+  tasksHomeTableData$ = this.tasksHomeData$.pipe(
+    map((tasksHomeData) =>
+      (tasksHomeData?.dateRangeData || []).map((row) => ({
         ...row,
         task: row.title?.replace(/\s+/g, ' ') || '',
         group: row.group || '',
@@ -31,8 +27,8 @@ export class TasksHomeFacade {
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
             : '',
-      }));
-    }),
+      })),
+    ),
   );
 
   totalTasks$ = this.tasksHomeTableData$.pipe(

@@ -4,7 +4,7 @@ import { CompressionAlgorithm } from '@dua-upd/node-utils';
 
 export interface BlobDefinition {
   containerName: string;
-  path: string;
+  path?: string;
   overwrite?: boolean;
   compression?: CompressionAlgorithm;
 }
@@ -20,6 +20,8 @@ export const blobModels = [
   'aa_raw',
   'feedback',
   'urls',
+  'html_snapshots',
+  'html_snapshots_backup',
 ] as const;
 
 export type BlobModels = typeof blobModels;
@@ -61,6 +63,13 @@ export class BlobStorageService {
       containerName: 'raw-data',
       compression: 'zstd',
     },
+    html_snapshots: {
+      containerName: 'html-snapshots',
+    },
+    html_snapshots_backup: {
+      path: 'backup',
+      containerName: 'html-snapshots',
+    }
   } as const;
 
   readonly blobModels: Record<RegisteredBlobModel, BlobModel | null> = {
@@ -70,6 +79,8 @@ export class BlobStorageService {
     aa_raw: null,
     feedback: null,
     urls: null,
+    html_snapshots: null,
+    html_snapshots_backup: null,
   };
 
   private async configureBlobs(): Promise<BlobStorageService> {
@@ -92,5 +103,9 @@ export class BlobStorageService {
 
   static async init() {
     return await new BlobStorageService().configureBlobs();
+  }
+
+  async container(containerName: string) {
+    return this.storageClient.container(containerName);
   }
 }

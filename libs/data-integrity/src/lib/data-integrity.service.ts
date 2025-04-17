@@ -1,6 +1,6 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import type { Model, mongo } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Overall, Page, PageMetrics, PagesList } from '@dua-upd/db';
@@ -12,6 +12,7 @@ import type {
 } from '@dua-upd/db';
 import { DbUpdateService } from '@dua-upd/db-update';
 import { outputCsv } from './utils';
+import type { IPage } from '@dua-upd/types-common';
 
 dayjs.extend(utc);
 
@@ -27,7 +28,7 @@ export class DataIntegrityService {
     @InjectModel(PagesList.name, 'defaultConnection')
     private pageListModel: Model<PagesListDocument>,
     private dbUpdateService: DbUpdateService,
-    private readonly logger: ConsoleLogger
+    private readonly logger: ConsoleLogger,
   ) {}
 
   // todo: implement this
@@ -56,13 +57,15 @@ export class DataIntegrityService {
   }
 
   async findMissingGscPageMetrics() {
+    const sixteenMonthsAgo = dayjs(new Date()).subtract(16, 'month').toDate();
+
     const missingDays = (
       await this.pageMetricsModel
         .find({
           date: {
-            $gte: new Date('2020-09-01')
+            $gte: sixteenMonthsAgo,
           },
-          url: 'www.canada.ca/en/revenue-agency/services/e-services/represent-a-client.html',
+          url: 'www.canada.ca/en/revenue-agency.html',
           gsc_total_impressions: { $exists: false },
         })
         .exec()
@@ -72,7 +75,7 @@ export class DataIntegrityService {
       this.logger.log('Found no days in pages_metrics missing gsc data.');
     } else {
       this.logger.log(
-        'Found the following days in pages_metrics missing gsc data:'
+        'Found the following days in pages_metrics missing gsc data:',
       );
       this.logger.log(missingDays);
     }
@@ -89,19 +92,21 @@ export class DataIntegrityService {
   }
 
   async findMissingGscOverallMetrics() {
+    const sixteenMonthsAgo = dayjs(new Date()).subtract(16, 'month').toDate();
+
     const missingDays = (
       await this.overallModel
         .find(
           {
             date: {
-              $gte: new Date('2020-09-01')
+              $gte: sixteenMonthsAgo,
             },
             gsc_total_impressions: { $exists: false },
           },
           {
             _id: 0,
             date: 1,
-          }
+          },
         )
         .lean()
         .exec()
@@ -111,7 +116,7 @@ export class DataIntegrityService {
       this.logger.log('Found no days in overall_metrics missing gsc data.');
     } else {
       this.logger.log(
-        'Found the following days in overall_metrics missing gsc data:'
+        'Found the following days in overall_metrics missing gsc data:',
       );
       this.logger.log(missingDays);
     }
@@ -121,7 +126,7 @@ export class DataIntegrityService {
 
   async fillMissingGscOverallMetrics() {
     this.logger.log(
-      'Finding and filling any missing gsc data in overall_metrics...'
+      'Finding and filling any missing gsc data in overall_metrics...',
     );
 
     const dates = await this.findMissingGscOverallMetrics();
@@ -148,19 +153,32 @@ export class DataIntegrityService {
   async cleanPageUrls() {
     this.logger.log('Cleaning page urls...');
 
-    await this.pageModel.updateMany({ url: /^https/i }, [
-      {
-        $set: {
-          url: {
-            $replaceOne: {
-              input: '$url',
-              find: 'https://',
-              replacement: '',
-            },
-          },
+    const pageUrlsToClean = await this.pageModel
+      .find({ url: /^https:\/\//i }, { url: 1 })
+      .lean()
+      .exec();
+
+    this.logger.log('Found the following pages with invalid urls:');
+    this.logger.log(
+      JSON.stringify(
+        pageUrlsToClean.map(({ url }) => url),
+        null,
+        2,
+      ),
+    );
+
+    const updates: mongo.AnyBulkWriteOperation<IPage>[] = pageUrlsToClean.map(
+      ({ _id, url }) => ({
+        updateOne: {
+          filter: { _id },
+          update: { $set: { url: url.replace(/^https:\/\//i, '') } },
         },
-      },
-    ]);
+      }),
+    );
+
+    await this.pageModel.bulkWrite(updates, {
+      ordered: false,
+    });
 
     this.logger.log('Finished cleaning page urls.');
   }

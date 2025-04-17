@@ -2,8 +2,24 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'upd-nav-tabs',
-  templateUrl: './nav-tabs.component.html',
-  styleUrls: ['./nav-tabs.component.css'],
+  template: `
+    <div class="tabs sticky">
+      <ul>
+        @for (tab of tabs; track $index) {
+          <li>
+            <a
+              [routerLinkActive]="['active']"
+              [routerLink]="tab.href"
+              [queryParamsHandling]="'merge'"
+              translate="tab-{{ tab.href }}"
+            >
+              {{ tab.title | translate }}
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  `,
 })
 export class NavTabsComponent {
   @Input() tabs: { href: string; title: string }[] = [];

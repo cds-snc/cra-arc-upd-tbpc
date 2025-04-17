@@ -7,7 +7,7 @@
 >
   <ng-container *ngIf="(hasData$ | async) === false; else elseBlock">
     <p>
-      <span [translate]="'nodata-available'"></span>
+      <span [translate]="emptyMessage || ''"></span>
     </p>
   </ng-container>
   <ng-template #elseBlock>
@@ -41,6 +41,7 @@
           [data]="table"
           [cols]="tableCols"
           [exports]="tableExport"
+          [allowHeaderWrap]="allowHeaderWrap"
         ></upd-data-table>
       </upd-accordion>
     </div>

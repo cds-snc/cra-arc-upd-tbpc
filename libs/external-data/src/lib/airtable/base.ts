@@ -1,4 +1,4 @@
-export const bases = {
+export const getBases = () => ({
   TASKS_INVENTORY: process.env.AIRTABLE_BASE_TASKS_INVENTORY,
   FEEDBACK: process.env.AIRTABLE_BASE_FEEDBACK,
   LIVE_FEEDBACK: process.env.AIRTABLE_BASE_LIVE_FEEDBACK,
@@ -22,4 +22,8 @@ export const bases = {
   DCD_2024_Q2: process.env.AIRTABLE_BASE_DCD_2024_Q2,
   DCD_2024_Q3: process.env.AIRTABLE_BASE_DCD_2024_Q3,
   DCD_2024_Q4: process.env.AIRTABLE_BASE_DCD_2024_Q4,
-};
+  DCD_2025_Q1: process.env.AIRTABLE_BASE_DCD_2025_Q1,
+  DCD_2025_Q2: process.env.AIRTABLE_BASE_DCD_2025_Q2,
+  DCD_2025_Q3: process.env.AIRTABLE_BASE_DCD_2025_Q3,
+  DCD_2025_Q4: process.env.AIRTABLE_BASE_DCD_2025_Q4,
+});

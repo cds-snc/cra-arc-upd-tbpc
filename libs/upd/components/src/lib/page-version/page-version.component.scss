@@ -1,0 +1,156 @@
+@import 'diff2html/bundles/css/diff2html.min.css';
+@import 'https://use.fontawesome.com/releases/v5.15.4/css/all.css';
+/* * {
+  outline: 1px solid red; /* Highlight all elements */
+
+/* @import 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css'; */
+
+.d2h-file-side-diff {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  max-height: 75vh;
+}
+
+.d2h-file-diff {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  max-height: 75vh;
+}
+
+.d2h-code-wrapper {
+  position: relative;
+}
+
+.d2h-file-name-wrapper {
+  display: none;
+}
+
+.live-container {
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-y: scroll;
+  height: 75vh;
+  position: relative;
+}
+
+
+
+.slide-content {
+  display: flex;
+  justify-content: flex-end; /* Align content to the right */
+  align-items: center; /* Vertically center the text and buttons */
+}
+
+.change-text {
+  margin: 0;
+  text-align: right; /* Align the text to the right */
+  padding: 10px;
+}
+
+.custom-prev,
+.custom-next {
+  background: #fff;
+  color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.custom-prev {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.custom-next {
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.custom-prev:hover,
+.custom-next:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #888;
+}
+
+.group-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  overflow-x: auto; /* Add horizontal scrolling if content overflows */
+  justify-content: flex-end; /* Align items to the right */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px; /* Adjust for rounded corners */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.legend-box-modal {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.legend-red-modal { background-color: rgb(243, 165, 157); }
+.legend-green-modal { background-color: rgb(131, 213, 168); }
+.legend-yellow-modal { background-color: rgb(255, 238, 140); }
+.legend-blue-modal { background-color: transparent; border: 2px solid rgb(111, 159, 255); }
+.legend-dashed-popup-modal { background-color: transparent; border: 2px dashed rgb(102, 102, 102); }
+.legend-dashed-dynamic-modal { background-color: transparent; border: 2px dashed rgb(251, 192, 47); }
+
+.no-bullet-points {list-style: none;}

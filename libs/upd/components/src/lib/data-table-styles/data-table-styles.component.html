@@ -63,7 +63,7 @@
     <ng-container *ngSwitchCase="true">
       <ng-container *ngIf="data[config.field]; else notAvailable">
         <span class="material-icons material-icon-wysiwyg">wysiwyg</span>
-        <a [href]="'https://' + data[config.typeParams.link]" target="_blank">
+        <a [href]="ensureLinkFormat(data[config.typeParams.link])" target="_blank">
           <ng-container
             [ngTemplateOutlet]="displayData"
             [ngTemplateOutletContext]="{ item: data[config.field] }"

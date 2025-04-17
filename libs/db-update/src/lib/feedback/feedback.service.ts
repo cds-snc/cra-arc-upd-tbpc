@@ -1,11 +1,10 @@
-import { IFeedback } from '@dua-upd/types-common';
+import type { AbstractDate, IFeedback } from '@dua-upd/types-common';
 import { AsyncLogTiming } from '@dua-upd/utils-common';
 import { ConsoleLogger, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { dayjs, today } from '@dua-upd/utils-common';
 import { AirtableClient } from '@dua-upd/external-data';
-import type { DateType } from '@dua-upd/external-data';
 import { Feedback } from '@dua-upd/db';
 import type { FeedbackDocument } from '@dua-upd/db';
 import { preprocessCommentWords } from '@dua-upd/feedback';
@@ -51,7 +50,7 @@ export class FeedbackService {
   }
 
   @AsyncLogTiming
-  async updateFeedbackData(endDate?: DateType, useProcessedDate = true) {
+  async updateFeedbackData(endDate?: AbstractDate, useProcessedDate = true) {
     this.logger.log('Updating Feedback data');
     const latestDataDate: Date | null = (
       await this.feedbackModel.findOne({}, { date: 1 }).sort({ date: -1 })

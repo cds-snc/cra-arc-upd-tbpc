@@ -25,8 +25,9 @@
         [current]="(callPerVisits$ | async) || 0"
         [comparison]="(apexCallPercentChange$ | async) || 0"
         [keyword]="'calls'"
-        [scale]="100"
+        [scale]="1"
         [difference]="(apexCallDifference$ | async) || 0"
+        [emptyMessage]="(callsEmptyMessages$ | async) || ''"
         modal=" {{ 'kpi-calls-per-100-guidance-task' | translate }}"
       ></upd-apex-spark-line>
     </div>
@@ -37,7 +38,7 @@
         [series]="(apexKpiFeedback$ | async) || []"
         [current]="(currentKpiFeedback$ | async) || 0"
         [comparison]="(kpiFeedbackPercentChange$ | async) || 0"
-        [scale]="1000"
+        [scale]="1"
         [kpiObjectiveCriteria]="feedbackKpiObjectiveCriteria"
         [difference]="(kpiFeedbackDifference$ | async) || 0"
         modal=" {{ 'kpi-feedback-per-1000-guidance-task' | translate }} "
@@ -66,6 +67,7 @@
         [displayKpis]="false"
         [kpiObjectiveCriteria]="callVolumeObjectiveCriteria"
         [kpiStylesConfig]="callVolumeKpiConfig"
+        [emptyMessage]="(callsEmptyMessages$ | async) || ''"
         comparisonMode="upBadDownGood"
       ></upd-data-card>
     </div>
@@ -111,6 +113,7 @@
         [cols]="taskSuccessByUxTestCols"
         [pagination]="false"
         [title]="'Task success by UX test'"
+        [emptyStateMessage]="'task-not-tested'"
       >
       </upd-data-table-card>
     </div>

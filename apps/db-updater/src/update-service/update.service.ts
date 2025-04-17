@@ -19,7 +19,7 @@ export class UpdateService {
     private db: DbService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async updateDatabase() {
     if (this.isRunning) {
       return;

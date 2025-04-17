@@ -32,7 +32,8 @@
             "class-transformer",
             "class-validator",
             "cache-manager",
-            "mongoose"
+            "mongoose",
+            "duckdb"
           ],
           "extractLicenses": false,
           "inspect": false,

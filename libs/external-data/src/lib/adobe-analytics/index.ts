@@ -1,15 +1,32 @@
-import { ActivityMapMetrics } from '@dua-upd/types-common';
+import { ConsoleLogger } from '@nestjs/common';
+import chalk from 'chalk';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Overall, PageMetrics } from '@dua-upd/db';
+import type {
+  AASearchTermMetrics,
+  ActivityMapMetrics,
+  DateRange,
+  ReportSearch,
+  ReportSettings,
+} from '@dua-upd/types-common';
 import {
   wait,
   sortArrayDesc,
   seperateArray,
   AsyncLogTiming,
 } from '@dua-upd/utils-common';
-import type { AASearchTermMetrics } from '@dua-upd/types-common';
-import { type AnalyticsCoreAPI, getAAClient } from './client';
+import type {
+  AnalyticsCoreAPI,
+  AAMaybeResponse,
+  AAResponse,
+  AAResultsRow,
+} from '@dua-upd/node-utils';
+import {
+  type AdobeAnalyticsReportQuery,
+  queryDateFormat,
+  getAAClient,
+} from '@dua-upd/node-utils';
 import {
   createActivityMapQuery,
   createCXTasksQuery,
@@ -22,30 +39,22 @@ import {
   createPageUrlItemIdsQuery,
   createWhereVisitorsCameFromQuery,
 } from './queries';
-import {
-  type AdobeAnalyticsReportQuery,
-  queryDateFormat,
-  type ReportSearch,
-  type ReportSettings,
-} from './querybuilder';
-import type {
-  AAMaybeResponse,
-  AAQueryCreatorParam,
-  AAResponse,
-  AAResultsParser,
-  AAResultsRow,
-  DateRange,
-} from '../types';
 import { singleDatesFromDateRange, withRetry } from '../utils';
-import { ConsoleLogger } from '@nestjs/common';
-import chalk from 'chalk';
 
-export * from './client';
-export * from './querybuilder';
 export * from './queries';
-export * from './aa-dimensions';
-export * from './aa-metrics';
-export * from '../types';
+
+export type AAResultsParser<T> = (
+  columnIds: string[],
+  rows: AAResultsRow[],
+) => T[];
+
+export type AAQueryCreator = (
+  dateRange: DateRange<string>,
+  ...args: unknown[]
+) => AdobeAnalyticsReportQuery;
+export type AAQueryCreatorParam = (
+  dateRange: DateRange<string>,
+) => AdobeAnalyticsReportQuery;
 
 dayjs.extend(utc);
 
@@ -65,7 +74,7 @@ export class AdobeAnalyticsClient {
   ) {
     this.clientTokenExpiry = clientTokenExpiry;
 
-    this.client = await getAAClient(clientTokenExpiry);
+    this.client = await getAAClient();
 
     return this.client;
   }
@@ -76,7 +85,7 @@ export class AdobeAnalyticsClient {
 
   // Creates an array of single-day queries from a date range and query creator function
   createMultiDayQueries(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     queryCreator: AAQueryCreatorParam,
     inclusiveEndDate = false,
   ) {
@@ -104,7 +113,7 @@ export class AdobeAnalyticsClient {
     options: {
       resultsParser?: AAResultsParser<T>;
       hooks?: {
-        pre?: (dateRange: string | DateRange) => void;
+        pre?: (dateRange: string | DateRange<string>) => void;
         post?: <U>(data: T[]) => U extends Promise<unknown> ? U : Promise<U>;
       };
       parseResults?: boolean;
@@ -162,10 +171,10 @@ export class AdobeAnalyticsClient {
   }
 
   async executeMultiDayQuery<T>(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     queryCreator: AAQueryCreatorParam,
     hooks?: {
-      pre?: (dateRange: string | DateRange) => void;
+      pre?: (dateRange: string | DateRange<string>) => void;
       post?: (data: T[]) => void;
     },
     inclusiveEndDate = false,
@@ -217,7 +226,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getOverallMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options: ReportSettings = {},
   ): Promise<Partial<Overall>[]> {
     if (!this.client || this.clientTokenIsExpired()) {
@@ -265,7 +274,7 @@ export class AdobeAnalyticsClient {
 
   // make sure url_last_255 itemIds get captured ***** @@
   async getPageMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options?: {
       settings?: ReportSettings;
       search?: ReportSearch;
@@ -355,7 +364,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getOverallCXMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options: ReportSettings = {},
   ): Promise<Partial<Overall>[]> {
     if (!this.client || this.clientTokenIsExpired()) {
@@ -402,7 +411,10 @@ export class AdobeAnalyticsClient {
     );
   }
 
-  async getPageUrlItemIds(dateRange: DateRange, options: ReportSettings = {}) {
+  async getPageUrlItemIds(
+    dateRange: DateRange<string>,
+    options: ReportSettings = {},
+  ) {
     if (!this.client || this.clientTokenIsExpired()) {
       await this.initClient();
     }
@@ -436,7 +448,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getActivityMapItemIds(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options: ReportSettings = {},
   ) {
     if (!this.client || this.clientTokenIsExpired()) {
@@ -472,7 +484,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getInternalSearchItemIds(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options: ReportSettings = {},
   ) {
     if (!this.client || this.clientTokenIsExpired()) {
@@ -511,7 +523,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getActivityMap(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     itemIds: string[],
     options: ReportSettings = {},
   ) {
@@ -556,7 +568,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getWhereVisitorsCameFrom(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     itemIds: string[],
     options: ReportSettings = {},
   ) {
@@ -604,7 +616,7 @@ export class AdobeAnalyticsClient {
 
   @AsyncLogTiming
   async getInternalSearches(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     itemIds: string[],
     options: ReportSettings = {},
   ) {
@@ -652,7 +664,7 @@ export class AdobeAnalyticsClient {
   }
 
   async getPhrasesSearchedOnPage(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     itemIds: string[],
     options: ReportSettings = {},
   ) {

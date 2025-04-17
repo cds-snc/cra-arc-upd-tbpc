@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { CustomReportsComponent } from './custom-reports.component';
 import { CustomReportsCreateComponent } from './create/custom-reports-create.component';
 import { CustomReportsReportComponent } from './report/custom-reports-report.component';
+import { CustomReportsFeedbackReportComponent } from './feedback-report/custom-reports-feedback-report.component';
 
 @NgModule({
   imports: [
@@ -17,6 +18,11 @@ import { CustomReportsReportComponent } from './report/custom-reports-report.com
             path: 'create',
             component: CustomReportsCreateComponent,
             data: { title: 'Custom reports | Create' },
+          },
+          {
+            path: 'feedback',
+            component: CustomReportsFeedbackReportComponent,
+            data: { title: 'Custom reports | Page feedback report' },
           },
           {
             path: ':id',

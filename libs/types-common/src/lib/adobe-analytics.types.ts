@@ -1,10 +1,16 @@
 import { AADimensionId } from './adobe-analytics.dimensions';
-import { AAMetricId } from './adobe-analytics.metrics';
+import { AAMetricId, CalculatedMetricId } from './adobe-analytics.metrics';
 import type { AAQueryDateEnd, AAQueryDateStart } from './date.types';
 
 export * from './adobe-analytics.dimensions';
 export * from './adobe-analytics.metrics';
 export { AAQueryDateEnd, AAQueryDateStart };
+
+export interface ReportSearch {
+  clause?: string;
+  excludeItemIds?: string[];
+  itemIds?: string[];
+}
 
 export interface ReportSettings {
   limit?: number;
@@ -19,7 +25,7 @@ export interface ReportSettings {
 }
 
 export type MetricConfig = {
-  id: AAMetricId;
+  id: AAMetricId | CalculatedMetricId;
   filters?: ReportFilter[];
 };
 
@@ -35,16 +41,11 @@ export interface ReportFilter {
   excludeItemIds?: string[];
 }
 
-export type MetricsConfig = {
-  [key: string]: AAMetricId | MetricConfig;
-};
+export interface ReportStatistics {
+  functions?: string[];
+  ignoreZeroes?: boolean;
+}
 
-export type AuthParams = {
-  expiryDateTime?: number;
-  organizationId: string;
-  technicalId: string;
-  companyId: string;
-  clientId: string;
-  clientSecret: string;
-  privateKey: string;
+export type MetricsConfig = {
+  [key: string]: (AAMetricId | CalculatedMetricId) | MetricConfig;
 };

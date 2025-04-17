@@ -5,9 +5,15 @@ import { PagesController } from './pages.controller';
 import { DbModule, DbService } from '@dua-upd/db';
 import { hours } from '@dua-upd/utils-common';
 import { FeedbackModule } from '@dua-upd/api/feedback';
+import { FlowModule } from '@dua-upd/api/flow';
 
 @Module({
-  imports: [CacheModule.register({ ttl: hours(12) }), DbModule, FeedbackModule],
+  imports: [
+    CacheModule.register({ ttl: hours(12) }),
+    DbModule,
+    FeedbackModule,
+    FlowModule.register()
+  ],
   controllers: [PagesController],
   providers: [PagesService, DbService],
 })

@@ -6,15 +6,18 @@ import isBetween from 'dayjs/plugin/isBetween';
 import { Types, mongo } from 'mongoose';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { DbService, PageMetrics } from '@dua-upd/db';
-import type { ActivityMapMetrics, IAAItemId } from '@dua-upd/types-common';
+import type {
+  ActivityMapMetrics,
+  DateRange,
+  IAAItemId,
+} from '@dua-upd/types-common';
 import {
   ActivityMapResult,
   AdobeAnalyticsService,
   BlobProxyService,
-  DateRange,
-  queryDateFormat,
   singleDatesFromDateRange,
 } from '@dua-upd/external-data';
+import { queryDateFormat } from '@dua-upd/node-utils';
 import {
   arrayToDictionary,
   arrayToDictionaryMultiref,
@@ -45,7 +48,7 @@ export class ActivityMapService {
     @Inject(BlobStorageService.name) private blob: BlobStorageService,
   ) {}
 
-  async updateActivityMap(dateRange?: DateRange) {
+  async updateActivityMap(dateRange?: DateRange<string>) {
     try {
       const latestDateResult = () =>
         this.db.collections.pageMetrics
@@ -103,7 +106,7 @@ export class ActivityMapService {
         blobModel: 'aa_raw',
         filenameGenerator: (dates: string) => `activityMap_data_${dates}.json`,
         queryExecutor: async ([dateRange, itemIdDocs]: [
-          DateRange,
+          DateRange<string>,
           IAAItemId[],
         ]) =>
           await this.adobeAnalyticsService.getPageActivityMap(
@@ -165,7 +168,7 @@ export class ActivityMapService {
     }
   }
 
-  async updateActivityMapItemIds(dateRange: DateRange) {
+  async updateActivityMapItemIds(dateRange: DateRange<string>) {
     this.logger.log(
       chalk.blueBright(
         'Updating itemIds for dateRange: ',
@@ -176,7 +179,7 @@ export class ActivityMapService {
     const blobProxy = this.blobProxyService.createProxy({
       blobModel: 'aa_raw',
       filenameGenerator: (date: string) => `activityMap_itemIds_${date}.json`,
-      queryExecutor: async (dateRange: DateRange) =>
+      queryExecutor: async (dateRange: DateRange<string>) =>
         await this.adobeAnalyticsService.getActivityMapItemIds(dateRange),
     });
 

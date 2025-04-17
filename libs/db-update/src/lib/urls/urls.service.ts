@@ -17,9 +17,16 @@ import {
   prettyJson,
   squishTrim,
   today,
+  wait,
 } from '@dua-upd/utils-common';
 import { ReadabilityService } from '../readability/readability.service';
 import { createUpdateQueue } from '../utils';
+import {
+  DuckDbService,
+  type HtmlSnapshot,
+  type OrderBy,
+} from '@dua-upd/duckdb';
+import { sql } from 'drizzle-orm';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -38,8 +45,8 @@ export class UrlsService {
   private readonly http = new HttpClient({
     logger: this.logger,
     rateLimitStats: this.rateLimitStats,
-    rateLimitDelay: 88,
-    batchSize: 12,
+    rateLimitDelay: 101,
+    batchSize: 10,
   });
 
   constructor(
@@ -47,6 +54,7 @@ export class UrlsService {
     @Inject('DB_UPDATE_LOGGER') private logger: BlobLogger,
     @Inject(BlobStorageService.name) private blobService: BlobStorageService,
     @Inject('ENV') private production: boolean,
+    @Inject(DuckDbService.name) private duckDb: DuckDbService,
     @Optional() private readability: ReadabilityService,
   ) {}
 
@@ -206,7 +214,7 @@ export class UrlsService {
 
     if (!this.production) {
       await this.updateCollectionFromBlobStorage();
-      await this.readability.updateCollectionFromBlobStorage();
+      // await this.readability.updateCollectionFromBlobStorage();
 
       return;
     }
@@ -326,6 +334,8 @@ export class UrlsService {
         .group({ _id: '$hash' })
         .exec()
     ).map(({ _id }) => _id);
+
+    const urlsParquetUpdateQueue: HtmlSnapshot[] = [];
 
     // using an update queue to batch updates rather than flooding the db with requests
     const urlsQueue = createUpdateQueue<mongo.AnyBulkWriteOperation<Url>>(
@@ -494,6 +504,14 @@ export class UrlsService {
                   date: date.toISOString(),
                 },
               });
+
+              urlsParquetUpdateQueue.push({
+                url: collectionData.url,
+                page: collectionData.page.toString(),
+                hash,
+                html: minifiedBody,
+                date,
+              });
             } catch (err) {
               // If an error is caught here, it could either be because minifying failed,
               // or because the blob was uploaded from a "redirect" url after we
@@ -519,6 +537,14 @@ export class UrlsService {
                     urls: JSON.stringify([response.url]),
                     date: date.toISOString(),
                   },
+                });
+
+                urlsParquetUpdateQueue.push({
+                  url: collectionData.url,
+                  page: collectionData.page.toString(),
+                  hash,
+                  html: processedHtml.body,
+                  date,
                 });
               }
             }
@@ -653,6 +679,13 @@ export class UrlsService {
       this.logger.error(
         'An error occurred during readability.saveCollectionToBlobStorage():',
       );
+      this.logger.error(err);
+    }
+
+    try {
+      await this.updateRemoteParquet(urlsParquetUpdateQueue);
+    } catch (err) {
+      this.logger.error('An error occurred during updateRemoteParquet():');
       this.logger.error(err);
     }
 
@@ -1025,6 +1058,168 @@ export class UrlsService {
 
     return;
   }
+
+  async updateRemoteParquet(snapshots: HtmlSnapshot[]) {
+    if (!snapshots?.length) {
+      this.logger.info('No new snapshots, skipping parquet update.');
+
+      return;
+    }
+
+    const htmlTable = this.duckDb.remote.html;
+
+    await htmlTable.backupRemote();
+    await htmlTable.createLocalTable();
+    await htmlTable.insertLocal(snapshots);
+
+    const appendOrderBy: OrderBy<typeof htmlTable.table> = {
+      [htmlTable.table.url.name]: 'ASC',
+      [htmlTable.table.date.name]: 'DESC',
+    };
+
+    await htmlTable.appendLocalToRemote({
+      orderBy: appendOrderBy,
+      rowGroupSize: 10000,
+      compressionLevel: 7,
+    });
+
+    // clear data and free memory
+    await htmlTable.deleteLocalTable();
+  }
+
+  async syncRemoteParquet(runBackup = true) {
+    this.logger.info('Syncing remote parquet...');
+    console.time('syncRemoteParquet time');
+
+    const htmlTable = this.duckDb.remote.html;
+
+    console.time('mongo fetch time');
+    const dbHashes = await this.db.collections.urls
+      .aggregate<{ hashes: string }>()
+      .project({ hashes: '$hashes.hash' })
+      .unwind('hashes')
+      .exec()
+      .then((hashes) => hashes.map(({ hashes }) => `'${hashes}'`).join(','));
+
+    console.timeEnd('mongo fetch time');
+
+    const dbHashesSql = sql.raw(`unnest([${dbHashes}]) db(hash)`);
+
+    const differenceSql = sql`
+      SELECT * from ${dbHashesSql}
+      EXCEPT
+      ${htmlTable.selectRemote({ hash: htmlTable.table.hash })}
+    `;
+
+    console.time('Missing hashes query time');
+    const missingHashes = await this.duckDb.db
+      .execute(differenceSql)
+      .then((rows) => rows.map(({ hash }) => hash));
+    console.timeEnd('Missing hashes query time');
+
+    if (missingHashes.length === 0) {
+      this.logger.info(
+        'No missing hashes found in parquet file, skipping updates.',
+      );
+
+      return;
+    }
+
+    runBackup && (await htmlTable.backupRemote());
+    await htmlTable.createLocalTable();
+
+    const missingHashDocs = (
+      await this.db.collections.urls
+        .find(
+          { 'hashes.hash': { $in: missingHashes } },
+          { url: 1, page: 1, hashes: 1 },
+        )
+        .lean()
+        .exec()
+    ).flatMap((urlDoc) =>
+      urlDoc.hashes
+        .filter((hashDoc) => missingHashes.includes(hashDoc.hash))
+        .map((hashDoc) => ({
+          url: urlDoc.url,
+          page: urlDoc.page.toString(),
+          hash: hashDoc.hash,
+          date: hashDoc.date,
+        })),
+    );
+
+    console.log(`Found ${missingHashDocs.length} missing hashes`);
+
+    const promises: Promise<{
+      url: string;
+      page: string;
+      hash: string;
+      html: string;
+      date: Date;
+    } | null>[] = [];
+
+    console.time('HTML blob download time');
+    for (const hashDoc of missingHashDocs) {
+      const promise = this.blobService.blobModels.urls
+        .blob(hashDoc.hash)
+        .downloadToString({ decompressData: true })
+        .then((html) => ({
+          ...hashDoc,
+          html,
+        }))
+        .catch((err) => {
+          this.logger.error(`Error occurred downloading html blob:`);
+          this.logger.error(err);
+
+          return null;
+        });
+
+      promises.push(promise);
+
+      await wait(20);
+    }
+
+    const rowsToInsert = (await Promise.allSettled(promises))
+      .map((result) => {
+        if (result.status === 'rejected') {
+          this.logger.error(`Error occurred downloading html blob:`);
+          this.logger.error(result.reason);
+
+          return null;
+        }
+
+        return result.value;
+      })
+      .filter((result) => result !== null);
+
+    console.timeEnd('HTML blob download time');
+
+    if (!rowsToInsert.length) {
+      this.logger.info('No new rows to insert, skipping update.');
+
+      return;
+    }
+
+    console.time('Local DuckDB insert time');
+    await htmlTable.insertLocal(rowsToInsert);
+    console.timeEnd('Local DuckDB insert time');
+
+    console.time('Remote DuckDB append time');
+    await htmlTable.appendLocalToRemote({
+      orderBy: {
+        [htmlTable.table.url.name]: 'ASC',
+        [htmlTable.table.date.name]: 'DESC',
+      },
+      rowGroupSize: 5000,
+      compressionLevel: 7,
+    });
+    console.timeEnd('Remote DuckDB append time');
+
+    // clear data and free memory
+    await htmlTable.deleteLocalTable();
+
+    this.logger.info('Sync process completed successfully.');
+    console.timeEnd('syncRemoteParquet time');
+  }
 }
 
 type ProcessedHtml = {
@@ -1087,7 +1282,9 @@ export const processHtml = (html: string): ProcessedHtml => {
       .toArray()
       .filter((link) => link.attribs.hreflang && link.attribs.href)
       .map((link) => {
-        const href = link.attribs.href.replace('https://', '');
+        const href = link.attribs.href
+          .replace('https://', '')
+          .replace(/(\.html)+$/i, '.html');
 
         return [link.attribs.hreflang, href];
       }),

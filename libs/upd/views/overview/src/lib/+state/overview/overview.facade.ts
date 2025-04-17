@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -9,12 +10,13 @@ import 'dayjs/locale/fr-ca';
 import { combineLatest, debounceTime, map, mergeMap, of } from 'rxjs';
 import { FR_CA, type LocaleId } from '@dua-upd/upd/i18n';
 import type {
+  ColumnConfig,
   OverviewAggregatedData,
   OverviewData,
 } from '@dua-upd/types-common';
 import {
+  avg,
   percentChange,
-  round,
   type UnwrapObservable,
 } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
@@ -26,10 +28,7 @@ import {
   selectUrl,
 } from '@dua-upd/upd/state';
 import { createColConfigWithI18n } from '@dua-upd/upd/utils';
-import type {
-  ApexAxisChartSeries,
-  ApexNonAxisChartSeries,
-} from 'ng-apexcharts';
+import type { ApexAxisChartSeries } from 'ng-apexcharts';
 import {
   selectCallsPerVisitsChartData,
   selectComboChartData,
@@ -130,6 +129,7 @@ export class OverviewFacade {
   kpiTotAvgSuccessRate$ = this.overviewData$.pipe(
     map((data) => data?.projects?.avgTestSuccess || 0),
   );
+
   improvedKpi$ = this.overviewData$.pipe(
     map((overviewData) => overviewData?.improvedTasksKpi),
   );
@@ -150,12 +150,40 @@ export class OverviewFacade {
     map((improvedKpi) => improvedKpi?.successRates.validation || 0),
   );
 
+  improvedTopKpi$ = this.overviewData$.pipe(
+    map((overviewData) => overviewData?.improvedKpiTopSuccessRate),
+  );
+
+  improvedKpiTopUniqueTasks$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.uniqueTopTasks || 0),
+  );
+
+  improvedKpiTopTasks$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.allTopTasks || 0),
+  );
+
+  improvedKpiTopSuccessRate$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.topSuccessRates || 0),
+  );
+
+  improvedKpiTopSuccessRateDifference$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.topSuccessRates.difference || 0),
+  );
+
+  improvedKpiTopSuccessRateValidation$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.topSuccessRates.validation || 0),
+  );
+
   kpiTestsCompleted$ = this.overviewData$.pipe(
     map((data) => data?.projects?.testsCompleted || 0),
   );
 
   uniqueTaskTestedLatestTestKpi$ = this.overviewData$.pipe(
     map((data) => data?.projects?.uniqueTaskTestedLatestTestKpi || 0),
+  );
+
+  totalTasks$ = this.overviewData$.pipe(
+    map((overviewData) => overviewData?.totalTasks || 0),
   );
 
   testTypeTranslations$ = combineLatest([
@@ -399,20 +427,34 @@ export class OverviewFacade {
   tableMerge$ = this.store.select(selectComboChartTable);
 
   dateRangeLabel$ = combineLatest([this.overviewData$, this.currentLang$]).pipe(
-    map(([data, lang]) => getWeeklyDatesLabel(data.dateRange, lang)),
+    map(
+      ([data, lang]) => this.getDateRangeLabel(data.dateRange, lang) as string,
+    ),
   );
 
   fullDateRangeLabel$ = combineLatest([
     this.overviewData$,
     this.currentLang$,
-  ]).pipe(map(([data, lang]) => getFullDateRangeLabel(data.dateRange, lang)));
+  ]).pipe(
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.dateRange,
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
+    ),
+  );
 
   comparisonDateRangeLabel$ = combineLatest([
     this.overviewData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getWeeklyDatesLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(data.comparisonDateRange || '', lang) as string,
     ),
   );
 
@@ -420,8 +462,15 @@ export class OverviewFacade {
     this.overviewData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getFullDateRangeLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.comparisonDateRange || '',
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
     ),
   );
 
@@ -429,7 +478,10 @@ export class OverviewFacade {
     this.overviewData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) => getWeeklyDatesLabel(data.satDateRange || '', lang)),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(data.satDateRange || '', lang) as string,
+    ),
   );
 
   dyfData$ = combineLatest([this.overviewData$, this.currentLang$]).pipe(
@@ -486,6 +538,11 @@ export class OverviewFacade {
 
       return dyfData;
     }),
+  );
+
+  topTasksTable = toSignal(
+    this.overviewData$.pipe(map((data) => data?.topTasksTable || [])),
+    { initialValue: [] },
   );
 
   searchAssessmentData$ = combineLatest([
@@ -619,31 +676,26 @@ export class OverviewFacade {
     map((data) => data.copsTestsCompletedSince2018),
   );
 
-  calldriverTopics$ = this.overviewData$.pipe(
-    map((data) =>
+  calldriverTopics$ = combineLatest([
+    this.overviewData$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, lang]) =>
       data.calldriverTopics.map((topicData) => ({
         topic: topicData.topic || '',
         tpc_id: topicData.tpc_id || '',
-        enquiry_line: topicData.enquiry_line || '',
+        enquiry_line:
+          this.i18n.service.translate(`d3-${topicData.enquiry_line}`, lang) ||
+          '',
         subtopic: topicData.subtopic || '',
         sub_subtopic: topicData.sub_subtopic || '',
         tasks: topicData.tasks,
         calls: topicData.calls,
         change: topicData.change,
+        difference: topicData.difference,
       })),
     ),
   );
-
-  calldriverTopicsConfig$ = createColConfigWithI18n(this.i18n.service, [
-    { field: 'tpc_id', header: 'tpc_id' },
-    { field: 'enquiry_line', header: 'enquiry_line', translate: true },
-    { field: 'topic', header: 'topic', translate: true },
-    { field: 'subtopic', header: 'sub-topic', translate: true },
-    { field: 'sub_subtopic', header: 'sub-subtopic', translate: true },
-    { field: 'tasks', header: 'tasks', translate: true },
-    { field: 'calls', header: 'calls', pipe: 'number' },
-    { field: 'change', header: 'comparison', pipe: 'percent' },
-  ]);
 
   gcTasksTable$ = this.overviewData$.pipe(
     map((data) =>
@@ -661,6 +713,126 @@ export class OverviewFacade {
             }
           : baseData;
       }),
+    ),
+  );
+
+  comparisonGcTasksTable$ = this.overviewData$.pipe(
+    map((data) =>
+      data?.comparisonDateRangeData?.gcTasksData.map((d) => {
+        const data_reliability = evaluateDataReliability(d.margin_of_error);
+        const baseData = { ...d, data_reliability };
+
+        return data_reliability === 'Insufficient data'
+          ? {
+              ...baseData,
+              able_to_complete: NaN,
+              ease: NaN,
+              satisfaction: NaN,
+              margin_of_error: NaN,
+            }
+          : baseData;
+      }),
+    ),
+  );
+
+  gcTasksCompletionAvg$ = this.gcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(
+            data
+              .map((d) => d.able_to_complete)
+              .filter((value) => value === 0 || value),
+          )
+        : null,
+    ),
+  );
+
+  comparisonGcTasksCompletionsAvg$ = this.comparisonGcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(
+            data
+              .map((d) => d.able_to_complete)
+              .filter((value) => value === 0 || value),
+          )
+        : null,
+    ),
+  );
+
+  gcTasksCompletionPercentChange$ = combineLatest([
+    this.gcTasksCompletionAvg$,
+    this.comparisonGcTasksCompletionsAvg$,
+  ]).pipe(
+    map(([gcTasksCompletionsAvg, comparisonGcTasksCompletionsAvg]) =>
+      gcTasksCompletionsAvg !== null && comparisonGcTasksCompletionsAvg !== null
+        ? percentChange(gcTasksCompletionsAvg, comparisonGcTasksCompletionsAvg)
+        : null,
+    ),
+  );
+
+  gcTasksEaseAvg$ = this.gcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(data.map((d) => d.ease).filter((value) => value === 0 || value))
+        : null,
+    ),
+  );
+
+  comparisonGcTasksEaseAvg$ = this.comparisonGcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(data.map((d) => d.ease).filter((value) => value === 0 || value))
+        : null,
+    ),
+  );
+
+  gcTasksEasePercentChange$ = combineLatest([
+    this.gcTasksEaseAvg$,
+    this.comparisonGcTasksEaseAvg$,
+  ]).pipe(
+    map(([gcTasksEaseAvg, comparisonGcTasksEaseAvg]) =>
+      gcTasksEaseAvg !== null && comparisonGcTasksEaseAvg !== null
+        ? percentChange(gcTasksEaseAvg, comparisonGcTasksEaseAvg)
+        : null,
+    ),
+  );
+
+  gcTasksSatisfactionAvg$ = this.gcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(
+            data
+              .map((d) => d.satisfaction)
+              .filter((value) => value === 0 || value),
+          )
+        : null,
+    ),
+  );
+
+  comparisonGcTasksSatisfactionAvg$ = this.comparisonGcTasksTable$.pipe(
+    map((data) =>
+      data?.length
+        ? avg(
+            data
+              .map((d) => d.satisfaction)
+              .filter((value) => value === 0 || value),
+          )
+        : null,
+    ),
+  );
+
+  gcTasksSatisfactionPercentChange$ = combineLatest([
+    this.gcTasksSatisfactionAvg$,
+    this.comparisonGcTasksSatisfactionAvg$,
+  ]).pipe(
+    map(([gcTasksSatisfactionAvg, comparisonGcTasksSatisfactionAvg]) =>
+      gcTasksSatisfactionAvg !== null &&
+      comparisonGcTasksSatisfactionAvg !== null
+        ? percentChange(
+            gcTasksSatisfactionAvg,
+            comparisonGcTasksSatisfactionAvg,
+          )
+        : null,
     ),
   );
 
@@ -763,6 +935,7 @@ export class OverviewFacade {
         sub_subtopic: topicData.sub_subtopic || '',
         calls: topicData.calls,
         change: topicData.change,
+        difference: topicData.difference,
       })),
     ),
   );
@@ -776,8 +949,24 @@ export class OverviewFacade {
       { field: 'subtopic', header: 'sub-topic', translate: true },
       { field: 'sub_subtopic', header: 'sub-subtopic', translate: true },
       { field: 'calls', header: 'calls', pipe: 'number' },
-      { field: 'change', header: 'comparison', pipe: 'percent' },
-    ],
+      {
+        field: 'change',
+        header: 'change',
+        pipe: 'percent',
+        pipeParam: '1.0-2',
+        upGoodDownBad: true,
+        indicator: true,
+        useArrows: true,
+        showTextColours: true,
+        secondaryField: {
+          field: 'difference',
+          pipe: 'number',
+        },
+        width: '160px',
+      },
+    ] as ColumnConfig<
+      UnwrapObservable<typeof this.top5IncreasedCalldriverTopics$>
+    >[],
   );
 
   top5DecreasedCalldriverTopics$ = this.overviewData$.pipe(
@@ -790,6 +979,7 @@ export class OverviewFacade {
         sub_subtopic: topicData.sub_subtopic || '',
         calls: topicData.calls,
         change: topicData.change,
+        difference: topicData.difference,
       })),
     ),
   );
@@ -803,8 +993,24 @@ export class OverviewFacade {
       { field: 'subtopic', header: 'sub-topic', translate: true },
       { field: 'sub_subtopic', header: 'sub-subtopic', translate: true },
       { field: 'calls', header: 'calls', pipe: 'number' },
-      { field: 'change', header: 'comparison', pipe: 'percent' },
-    ],
+      {
+        field: 'change',
+        header: 'change',
+        pipe: 'percent',
+        pipeParam: '1.0-2',
+        upGoodDownBad: true,
+        indicator: true,
+        useArrows: true,
+        showTextColours: true,
+        secondaryField: {
+          field: 'difference',
+          pipe: 'number',
+        },
+        width: '160px',
+      },
+    ] as ColumnConfig<
+      UnwrapObservable<typeof this.top5DecreasedCalldriverTopics$>
+    >[],
   );
 
   top20SearchTermsEn$ = this.overviewData$.pipe(
@@ -821,7 +1027,7 @@ export class OverviewFacade {
     { field: 'total_searches', header: 'Total searches', pipe: 'number' },
     {
       field: 'searchesChange',
-      header: 'comparison-for-searches',
+      header: 'change-for-searches',
       pipe: 'percent',
     },
     { field: 'clicks', header: 'clicks', pipe: 'number' },
@@ -843,37 +1049,31 @@ export class OverviewFacade {
   getMostRelevantFeedback() {
     this.store.dispatch(OverviewActions.getMostRelevantFeedback());
   }
+
+  getDateRangeLabel(
+    dateRange: string,
+    lang: LocaleId,
+    dateFormat = 'MMM D YYYY',
+    separator = '-',
+    breakLine = false,
+  ) {
+    const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
+
+    dateFormat = this.i18n.service.translate(dateFormat, lang);
+    separator = this.i18n.service.translate(separator, lang);
+
+    const formattedStartDate = dayjs
+      .utc(startDate)
+      .locale(lang)
+      .format(dateFormat);
+    const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
+
+    //breakLine exists for apexcharts labels
+    return breakLine
+      ? [`${formattedStartDate} ${separator}`, `${formattedEndDate}`]
+      : `${formattedStartDate} ${separator} ${formattedEndDate}`;
+  }
 }
-
-const getWeeklyDatesLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
-
-  const dateFormat = lang === FR_CA ? 'D MMM' : 'MMM D';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return `${formattedStartDate}-${formattedEndDate}`;
-};
-
-const getFullDateRangeLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/');
-
-  const dateFormat = lang === FR_CA ? 'D MMM YYYY' : 'MMM D YYYY';
-  const separator = lang === FR_CA ? ' au' : ' to';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return [`${formattedStartDate}${separator}`, `${formattedEndDate}`];
-};
 
 type DateRangeDataIndexKey = keyof OverviewAggregatedData &
   keyof PickByType<OverviewAggregatedData, number>;
@@ -928,7 +1128,7 @@ function mapObjectArraysWithPercentChange(
     if (propsAreValidArrays) {
       const sortBy = (a: any, b: any) => {
         if (sortPath && a[sortPath] instanceof Date) {
-          return a[sortPath] - b[sortPath];
+          return a[sortPath].getTime() - b[sortPath].getTime();
         }
 
         if (sortPath && typeof a[sortPath] === 'string') {

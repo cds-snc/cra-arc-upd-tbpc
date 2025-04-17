@@ -4,9 +4,21 @@ import { ProjectStatus, PageStatus, ProjectType } from '@dua-upd/types-common';
 @Component({
   selector: 'upd-project-status-label',
   template: `
-    <span *ngIf="projectStatus" class="badge {{ styleClass }}  {{ projectStatusClassMap[projectStatus] }}">{{ projectStatus | translate }}</span>
-    <span *ngIf="pageStatus" class="badge w-100 {{ styleClass }}  {{ pageStatusClassMap[pageStatus] }}">{{ pageStatus | translate }}</span>
-    <span *ngIf="projectType" class="badge {{ styleClass }} {{ projectTypeClassMap[projectType] }}">{{ projectType | translate }}</span>
+    <span
+      *ngIf="projectStatus"
+      class="badge {{ styleClass }}  {{ projectStatusClassMap[projectStatus] }}"
+      >{{ projectStatus | translate }}</span
+    >
+    <span
+      *ngIf="pageStatus"
+      class="badge w-100 {{ styleClass }}  {{ pageStatusClassMap[pageStatus] }}"
+      >{{ pageStatus | translate }}</span
+    >
+    <span
+      *ngIf="projectType"
+      class="badge {{ styleClass }} {{ projectTypeClassMap[projectType] }}"
+      >{{ projectType | translate }}</span
+    >
   `,
   styleUrls: ['./project-status-label.component.scss'],
 })
@@ -23,18 +35,18 @@ export class ProjectStatusLabelComponent {
     Complete: 'bg-complete',
     Delayed: 'bg-delayed',
     Exploratory: 'bg-exploratory',
-    'Being monitored': 'bg-being-monitored',
+    Monitoring: 'bg-monitoring',
     'Needs review': 'bg-needs-review',
     Paused: 'bg-paused',
   };
 
   pageStatusClassMap: Record<PageStatus, string> = {
-    'Live': 'bg-complete',
+    Live: 'bg-complete',
     '404': 'bg-404',
-    'Redirected': 'bg-redirect',
+    Redirected: 'bg-redirect',
   };
 
   projectTypeClassMap: Record<ProjectType, string> = {
-    'COPS': 'bg-primary',
+    COPS: 'bg-primary',
   };
 }

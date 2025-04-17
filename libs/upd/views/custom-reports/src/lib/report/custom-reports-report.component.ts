@@ -10,18 +10,25 @@ import {
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { ColumnConfig, ReportConfig, ReportStatus } from '@dua-upd/types-common';
+import type {
+  ColumnConfig,
+  ReportConfig,
+  ReportStatus,
+} from '@dua-upd/types-common';
 import { UpdComponentsModule } from '@dua-upd/upd-components';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { round } from '@dua-upd/utils-common';
 import {
   catchError,
-  iif,
   map,
-  mergeMap,
   Observable,
   takeWhile,
   of,
+  timer,
+  switchMap,
+  defer,
+  concat,
+  exhaustMap,
 } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ApiService } from '@dua-upd/upd/services';
@@ -82,10 +89,10 @@ export class CustomReportsReportComponent implements OnInit {
     this.config()?.granularity === 'day'
       ? 'Daily'
       : this.config()?.granularity === 'month'
-      ? 'Monthly'
-      : this.config()?.granularity === 'week'
-      ? 'Weekly'
-      : 'None',
+        ? 'Monthly'
+        : this.config()?.granularity === 'week'
+          ? 'Weekly'
+          : 'None',
   );
   startDate = computed(() =>
     dayjs.utc(this.config()?.dateRange?.start).format('YYYY-MM-DD'),
@@ -138,19 +145,19 @@ export class CustomReportsReportComponent implements OnInit {
           ...(['startDate', 'endDate', 'date'].includes(key)
             ? { pipe: 'date' }
             : [
-                'visits',
-                'views',
-                'visitors',
-                'dyf_no',
-                'dyf_yes',
-                'dyf_submit',
-              ].includes(key)
-            ? { pipe: 'number' }
-            : ['bouncerate'].includes(key)
-            ? { pipe: 'percent' }
-            : ['average_time_spent'].includes(key)
-            ? { pipe: 'secondsToMinutes' }
-            : []),
+                  'visits',
+                  'views',
+                  'visitors',
+                  'dyf_no',
+                  'dyf_yes',
+                  'dyf_submit',
+                ].includes(key)
+              ? { pipe: 'number' }
+              : ['bouncerate'].includes(key)
+                ? { pipe: 'percent' }
+                : ['average_time_spent'].includes(key)
+                  ? { pipe: 'secondsToMinutes' }
+                  : []),
           translate: true,
         }) as ColumnConfig,
     );
@@ -167,7 +174,7 @@ export class CustomReportsReportComponent implements OnInit {
       `/api/custom-reports/${this.id()}`,
     );
 
-    const statusStream$ = this.setupEventSource();
+    const statusPolling$ = this.setupPolling();
 
     this.reportStatus = toSignal(
       status$.pipe(
@@ -176,9 +183,13 @@ export class CustomReportsReportComponent implements OnInit {
           true,
         ),
         takeUntilDestroyed(),
-        mergeMap(({ status }) =>
-          iif(() => status !== 'complete', statusStream$, status$),
-        ),
+        switchMap((response) => {
+          if (response.status !== 'pending') {
+            return of(response);
+          } else {
+            return concat(status$, statusPolling$);
+          }
+        }),
         catchError((err) => {
           return of({
             status: 'error',
@@ -193,30 +204,23 @@ export class CustomReportsReportComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  setupEventSource() {
-    return new Observable<ReportStatus>((subscriber) => {
-      const es = new EventSource(`/api/custom-reports/${this.id()}/status`);
+  setupPolling() {
+    const request$ = defer(() =>
+      this.http.get<ReportStatus>(`/api/custom-reports/${this.id()}/status`),
+    );
 
-      es.onmessage = (event: MessageEvent) => {
-        const message = JSON.parse(event.data) as ReportStatus;
-        this._zone.run(() => subscriber.next(message));
-
-        if (message.status === 'complete') {
-          this._zone.run(() => subscriber.complete());
-        } else if (message.status === 'error') {
-          this._zone.run(() => subscriber.error(new Error(message.message)));
-          this._zone.run(() => subscriber.complete());
-        }
-      };
-
-      es.onerror = (event: Event) => {
-        this._zone.run(() => subscriber.error(event));
-        this._zone.run(() => subscriber.complete());
-      }
-
-      return () => {
-        es.close();
-      }
-    });
+    return timer(0, 1000).pipe(
+      exhaustMap(() => request$),
+      catchError((err) => {
+        return of({
+          status: 'error',
+          message: err.message,
+        }) as Observable<ReportStatus>;
+      }),
+      takeWhile(
+        (response) => !['error', 'complete'].includes(response.status),
+        true,
+      ),
+    );
   }
 }

@@ -11,7 +11,7 @@ import {
   PageMetrics,
   PageMetricsDocument,
 } from '@dua-upd/db';
-import { IPageMetrics } from '@dua-upd/types-common';
+import { DateRange, IPageMetrics } from '@dua-upd/types-common';
 import {
   AirtableService,
   ActivityMapService,
@@ -22,7 +22,6 @@ import {
 } from '@dua-upd/db-update';
 import {
   AdobeAnalyticsService,
-  DateRange,
   GoogleSearchConsoleService,
 } from '@dua-upd/external-data';
 
@@ -30,11 +29,11 @@ export interface PopulatePipelineConfig<T> {
   dataSources: Record<string, () => Promise<T[] | void>>;
   mergeBeforeInsert?: (
     allResults: Record<string, T[]>,
-    context: Record<string, unknown>
+    context: Record<string, unknown>,
   ) => T[];
   onBeforeInsert?: (
     data: T[],
-    context: Record<string, unknown>
+    context: Record<string, unknown>,
   ) => T[] | Promise<T[]>;
   insertFn: (data: T[], context: Record<string, unknown>) => Promise<void>;
   insertWithHooks?: boolean;
@@ -43,7 +42,7 @@ export interface PopulatePipelineConfig<T> {
 
 export const assemblePipeline = <T>(
   pipelineConfig: PopulatePipelineConfig<T>,
-  logger = console
+  logger = console,
 ) => {
   const {
     dataSources,
@@ -67,13 +66,13 @@ export const assemblePipeline = <T>(
         Object.entries(dataSources).map(([dataSourceKey, dataSource]) => [
           dataSourceKey,
           dataSource(),
-        ])
+        ]),
       );
       await Promise.all(Object.values(dataSourcePromises));
 
       // then add unwrapped result promises into new results object
       for (const [resultKey, resultPromise] of Object.entries(
-        dataSourcePromises
+        dataSourcePromises,
       )) {
         const result = await resultPromise;
 
@@ -84,7 +83,7 @@ export const assemblePipeline = <T>(
 
       const mergedResults = mergeBeforeInsert(
         dataSourceResults as Record<string, T[]>,
-        pipelineContext
+        pipelineContext,
       );
 
       const finalResults =
@@ -104,7 +103,7 @@ export const assemblePipeline = <T>(
           dataSource().catch((err) => {
             console.error(`Error running ${dataSourceName} pipeline:`);
             console.error(err.stack);
-          })
+          }),
       );
 
       await Promise.all(promises);
@@ -169,7 +168,7 @@ export class PopulateCommand extends CommandRunner {
     @InjectModel(Overall.name, 'defaultConnection')
     private overallMetricsModel: Model<OverallDocument>,
     @InjectModel(PageMetrics.name, 'defaultConnection')
-    private pageMetricsModel: Model<PageMetricsDocument>
+    private pageMetricsModel: Model<PageMetricsDocument>,
   ) {
     super();
   }
@@ -221,7 +220,7 @@ export class PopulateCommand extends CommandRunner {
         return await pipeline();
       } else if (metricsOrSearchTerms === 'search terms') {
         return await this.internalSearchService.upsertOverallSearchTerms(
-          dateRange
+          dateRange,
         );
       }
 
@@ -233,7 +232,7 @@ export class PopulateCommand extends CommandRunner {
       await pipeline();
 
       return await this.internalSearchService.upsertOverallSearchTerms(
-        dateRange
+        dateRange,
       );
     }
 
@@ -263,7 +262,7 @@ export class PopulateCommand extends CommandRunner {
         return await pipeline();
       } else if (metricsOrSearchTerms === 'search terms') {
         return await this.internalSearchService.upsertPageSearchTerms(
-          dateRange
+          dateRange,
         );
       } else if (metricsOrSearchTerms === 'activity map') {
         return await this.activityMapService.updateActivityMap(dateRange);
@@ -284,7 +283,7 @@ export class PopulateCommand extends CommandRunner {
   }
 
   createOverallMetricsPipelineConfig(
-    dateRange: DateRange
+    dateRange: DateRange<string>,
   ): PopulatePipelineConfig<Overall> {
     const aaDataSource = () =>
       this.adobeAnalyticsService.getOverallMetrics(dateRange, {
@@ -320,35 +319,37 @@ export class PopulateCommand extends CommandRunner {
   }
 
   createPageMetricsPipelineConfig(
-    dateRange: DateRange
+    dateRange: DateRange<string>,
   ): PopulatePipelineConfig<Partial<PageMetrics>> {
     const insertFunc = async (
       data: Partial<IPageMetrics>[],
-      datasourceName?: string
+      datasourceName?: string,
     ) => {
       if (data.length) {
         console.log(
           `[${
             datasourceName || 'datasource'
-          }] (${data[0].date.toISOString()}) number of records passed to insertFunc:`
+          }] (${data[0].date.toISOString()}) number of records passed to insertFunc:`,
         );
         console.log(data.length);
 
-        const bulkInsertOps: mongo.AnyBulkWriteOperation[] = data.map((record) => ({
-          updateOne: {
-            filter: {
-              url: record.url,
-              date: record.date,
-            },
-            update: {
-              $setOnInsert: {
-                _id: new Types.ObjectId(),
+        const bulkInsertOps: mongo.AnyBulkWriteOperation[] = data.map(
+          (record) => ({
+            updateOne: {
+              filter: {
+                url: record.url,
+                date: record.date,
               },
-              $set: record,
+              update: {
+                $setOnInsert: {
+                  _id: new Types.ObjectId(),
+                },
+                $set: record,
+              },
+              upsert: true,
             },
-            upsert: true,
-          },
-        }));
+          }),
+        );
 
         return await Promise.resolve(bulkInsertOps).then((bulkInsertOps) =>
           this.pageMetricsModel
@@ -359,14 +360,14 @@ export class PopulateCommand extends CommandRunner {
               console.log(
                 `[${
                   datasourceName || 'datasource'
-                }] (${data[0].date.toISOString()}) bulkWrite completed`
-              )
+                }] (${data[0].date.toISOString()}) bulkWrite completed`,
+              ),
             )
             .catch((err) =>
               this.logger.error(
-                chalk.red(`Error during bulkWrite: \r\n${err.stack}`)
-              )
-            )
+                chalk.red(`Error during bulkWrite: \r\n${err.stack}`),
+              ),
+            ),
         );
       }
     };
@@ -378,7 +379,7 @@ export class PopulateCommand extends CommandRunner {
         onComplete: async (pageMetrics) => {
           // ignore pages w/ 0 visits (can assume everything else is 0)
           const filteredPageMetrics = pageMetrics.filter(
-            (metrics) => !!metrics.visits
+            (metrics) => !!metrics.visits,
           );
 
           const pageMetricsWithRepairedUrls =
@@ -386,13 +387,13 @@ export class PopulateCommand extends CommandRunner {
 
           // add urls to set to use for adding refs later
           for (const url of pageMetricsWithRepairedUrls.map(
-            (pageMetrics) => pageMetrics.url
+            (pageMetrics) => pageMetrics.url,
           )) {
             uniqueUrls.add(url);
           }
 
           return Promise.resolve().then(() =>
-            insertFunc(pageMetricsWithRepairedUrls, 'AA')
+            insertFunc(pageMetricsWithRepairedUrls, 'AA'),
           );
         },
       });
@@ -419,8 +420,8 @@ export class PopulateCommand extends CommandRunner {
       onComplete: async () => {
         console.log(
           chalk.blueBright(
-            `Finished inserting results -- Adding Page references to ${uniqueUrls.size} urls`
-          )
+            `Finished inserting results -- Adding Page references to ${uniqueUrls.size} urls`,
+          ),
         );
 
         const uniqueUrlsArray = [...uniqueUrls];
@@ -435,7 +436,7 @@ export class PopulateCommand extends CommandRunner {
         }
 
         console.log(
-          chalk.green('Page Metrics updates completed successfully ✔ ')
+          chalk.green('Page Metrics updates completed successfully ✔ '),
         );
       },
     };

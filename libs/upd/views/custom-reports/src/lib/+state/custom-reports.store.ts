@@ -45,7 +45,7 @@ export class CustomReportStore extends ComponentStore<CustomReportState> {
     map((reportData) => [...(reportData?.dateRangeData || [])]),
   );
 
-  readonly setReportData = this.updater((state, reportData: ReportData) => ({ ...state, reportData }));
+  readonly setReportData = this.updater((state, reportData: ReportData): CustomReportState => ({ ...state, reportData }));
 
   readonly loadReportData = this.effect((trigger$: Observable<void>) =>
     trigger$.pipe(

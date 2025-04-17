@@ -1,5 +1,4 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
-import { combineLatest } from 'rxjs';
+import { Component, computed, inject } from '@angular/core';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import type {
   ColumnConfig,
@@ -14,30 +13,24 @@ import { toSignal } from '@angular/core/rxjs-interop';
   templateUrl: './pages-details-feedback.component.html',
   styleUrls: ['./pages-details-feedback.component.css'],
 })
-export class PagesDetailsFeedbackComponent implements OnInit {
+export class PagesDetailsFeedbackComponent {
   private pageDetailsService = inject(PagesDetailsFacade);
   private i18n = inject(I18nFacade);
 
-  currentLang$ = this.i18n.currentLang$;
+  currentLang = this.i18n.currentLang;
 
   pageLang = toSignal(this.pageDetailsService.pageLang$);
 
-  fullDateRangeLabel$ = this.pageDetailsService.fullDateRangeLabel$;
-  fullComparisonDateRangeLabel$ =
-    this.pageDetailsService.fullComparisonDateRangeLabel$;
+  fullDateRangeLabel = toSignal(this.pageDetailsService.fullDateRangeLabel$);
+  fullComparisonDateRangeLabel = toSignal(
+    this.pageDetailsService.fullComparisonDateRangeLabel$,
+  );
 
-  dyfChart$ = this.pageDetailsService.dyfData$;
+  dyfChart = toSignal(this.pageDetailsService.dyfData$);
 
-  dyfTableCols: ColumnConfig<{
-    name: string;
-    currValue: number;
-    prevValue: string;
-  }>[] = [];
+  dyfChartApex = toSignal(this.pageDetailsService.dyfDataApex$);
 
-  dyfChartApex$ = this.pageDetailsService.dyfDataApex$;
-  dyfChartLegend: string[] = [];
-
-  feedbackByDay$ = this.pageDetailsService.feedbackByDay$;
+  feedbackByDay = toSignal(this.pageDetailsService.feedbackByDay$);
   feedbackByDayCols: ColumnConfig[] = [
     {
       field: 'date',
@@ -53,8 +46,10 @@ export class PagesDetailsFeedbackComponent implements OnInit {
     },
   ];
 
-  dateRangeLabel$ = this.pageDetailsService.dateRangeLabel$;
-  comparisonDateRangeLabel$ = this.pageDetailsService.comparisonDateRangeLabel$;
+  dateRangeLabel = toSignal(this.pageDetailsService.dateRangeLabel$);
+  comparisonDateRangeLabel = toSignal(
+    this.pageDetailsService.comparisonDateRangeLabel$,
+  );
 
   feedbackMostRelevant = this.pageDetailsService.feedbackMostRelevant;
 
@@ -73,8 +68,20 @@ export class PagesDetailsFeedbackComponent implements OnInit {
   );
 
   mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    { field: 'rank', header: 'Rank', width: '10px', center: true, frozen: true },
-    { field: 'date', header: 'Date', pipe: 'date', width: '50px', frozen: true },
+    {
+      field: 'rank',
+      header: 'Rank',
+      width: '10px',
+      center: true,
+      frozen: true,
+    },
+    {
+      field: 'date',
+      header: 'Date',
+      pipe: 'date',
+      width: '50px',
+      frozen: true,
+    },
     { field: 'owners', header: 'Area', width: '10px', hide: true },
     { field: 'sections', header: 'Section', hide: true },
     { field: 'comment', header: 'comment', width: '400px', frozen: true },
@@ -96,36 +103,27 @@ export class PagesDetailsFeedbackComponent implements OnInit {
     },
   ];
 
-  ngOnInit() {
-    combineLatest([
-      this.dateRangeLabel$,
-      this.comparisonDateRangeLabel$,
-      this.currentLang$,
-    ]).subscribe(([dateRange, comparisonDateRange, lang]) => {
-      this.dyfChartLegend = [
-        this.i18n.service.translate('yes', lang),
-        this.i18n.service.translate('no', lang),
-      ];
+  dyfChartLegend = this.i18n.service.translationSignal(['yes', 'no']);
 
-      this.dyfTableCols = [
-        {
-          field: 'name',
-          header: 'Selection',
-          translate: true,
-        },
-        {
-          field: 'currValue',
-          header: dateRange,
-          pipe: 'number',
-          translate: true,
-        },
-        {
-          field: 'prevValue',
-          header: comparisonDateRange,
-          pipe: 'number',
-          translate: true,
-        },
-      ];
-    });
-  }
+  dyfTableCols = computed<
+    ColumnConfig<{ name: string; currValue: number; prevValue: string }>[]
+  >(() => [
+    {
+      field: 'name',
+      header: 'Selection',
+      translate: true,
+    },
+    {
+      field: 'currValue',
+      header: this.dateRangeLabel() || '',
+      pipe: 'number',
+      translate: true,
+    },
+    {
+      field: 'prevValue',
+      header: this.comparisonDateRangeLabel() || '',
+      pipe: 'number',
+      translate: true,
+    },
+  ]);
 }

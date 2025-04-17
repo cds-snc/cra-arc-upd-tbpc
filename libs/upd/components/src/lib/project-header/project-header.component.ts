@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, Input } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
@@ -9,4 +9,6 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 export class ProjectHeaderComponent {
   @Input() config: ColumnConfig = { field: '', header: '' };
   @Input() data: Record<string, number | string>[] = [];
+
+  service = input<string[]>([]);
 }

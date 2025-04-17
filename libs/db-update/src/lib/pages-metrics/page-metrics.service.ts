@@ -6,7 +6,7 @@ import utc from 'dayjs/plugin/utc';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { Model, Types, mongo } from 'mongoose';
 import { today } from '@dua-upd/utils-common';
-import { IPageMetrics } from '@dua-upd/types-common';
+import { DateRange, IPageMetrics } from '@dua-upd/types-common';
 import {
   Page,
   PageMetrics,
@@ -15,7 +15,6 @@ import {
   DbService,
 } from '@dua-upd/db';
 import {
-  DateRange,
   AdobeAnalyticsClient,
   SearchAnalyticsClient,
   AirtableClient,
@@ -110,7 +109,7 @@ export class PageMetricsService {
   }
 
   createPageMetricsPipelineConfig(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
   ): PipelineConfig<Partial<IPageMetrics>> {
     const insertFunc = async (
       data: Partial<IPageMetrics>[],

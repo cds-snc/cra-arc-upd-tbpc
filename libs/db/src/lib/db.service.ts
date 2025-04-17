@@ -28,16 +28,31 @@ import {
   type CallDriverModel,
   GcTasks,
   GCTasksMappings,
+  type GcTasksModel,
   type FeedbackModel,
   type PageModel,
 } from '../';
 import {
   arrayToDictionary,
   AsyncLogTiming,
+  hours,
   logJson,
+  mapWithETALoggingAsync,
   prettyJson,
 } from '@dua-upd/utils-common';
 import { PageVisits, PageVisitsView } from './db.views';
+import {
+  PagesView,
+  type PagesViewModel,
+  PagesViewSchema,
+} from './views/pages-view.schema';
+import { PagesViewService } from './views/pages.view';
+import { TasksViewService } from './views/tasks.view';
+import {
+  TasksView,
+  type TasksViewModel,
+  TasksViewSchema,
+} from './views/tasks-view.schema';
 
 /**
  * This service is primarily for accessing all collection models from the same place
@@ -77,10 +92,22 @@ export class DbService {
   } as const;
 
   readonly views = {
-    pageVisits: new PageVisitsView(
-      this.pageVisits,
-      this.collections.pageMetrics,
-    ),
+    pages: new PagesViewService(this, {
+      name: 'PagesView',
+      model: this.pagesViewModel,
+      schema: PagesViewSchema,
+      maxAge: hours(Number(process.env.DB_VIEWS_MAXAGE) || 120),
+      refreshBatchSize: 50,
+      bulkWriteOptions: { noResponse: true },
+    }),
+    tasks: new TasksViewService(this, {
+      name: 'TasksView',
+      model: this.tasksViewModel,
+      schema: TasksViewSchema,
+      maxAge: hours(Number(process.env.DB_VIEWS_MAXAGE) || 120),
+      refreshBatchSize: 10,
+      bulkWriteOptions: { noResponse: true },
+    }),
   } as const;
 
   constructor(
@@ -112,8 +139,10 @@ export class DbService {
     private readability: ReadabilityModel,
     @InjectModel(Annotations.name, 'defaultConnection')
     private annotations: Model<Annotations>,
-    @InjectModel(PageVisitsView.name, 'defaultConnection')
-    private pageVisits: Model<PageVisits>,
+    @InjectModel(PagesView.name, 'defaultConnection')
+    private pagesViewModel: PagesViewModel,
+    @InjectModel(TasksView.name, 'defaultConnection')
+    private tasksViewModel: TasksViewModel,
     @InjectModel(Url.name, 'defaultConnection')
     private urls: UrlModel,
     @InjectModel(Reports.name, 'defaultConnection')
@@ -123,53 +152,12 @@ export class DbService {
     @InjectModel(CustomReportsMetrics.name, 'defaultConnection')
     private customReportsMetrics: CustomReportsModel,
     @InjectModel(GcTasks.name, 'defaultConnection')
-    private gcTasks: Model<GcTasks>,
+    private gcTasks: GcTasksModel,
     @InjectModel(GCTasksMappings.name, 'defaultConnection')
     private gcTasksMappings: Model<GCTasksMappings>,
     @InjectConnection('defaultConnection')
     private connection: Connection,
   ) {}
-
-  @AsyncLogTiming
-  async syncPageMetricsTimeSeries() {
-    const mostRecentTimeSeries = (
-      await this.pageMetricsTS
-        .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
-        .exec()
-    )?.date;
-
-    const mostRecentPageMetrics = (
-      await this.pageMetrics
-        .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
-        .exec()
-    )?.date;
-
-    if (!mostRecentPageMetrics) {
-      throw Error('No data found in the `pages_metrics` collection');
-    }
-
-    if (!mostRecentTimeSeries) {
-      throw Error(
-        'No time series data found in pageMetricsTS collection.\n' +
-          'This is not a good way to populate the collection from scratch, mongodump/mongorestore should be used instead.',
-      );
-    }
-
-    const uniqueDates = await this.pageMetrics
-      .distinct<Date>('date', { date: { $gt: mostRecentTimeSeries } })
-      .exec();
-
-    uniqueDates.sort((a, b) => a.getTime() - b.getTime());
-
-    for (const date of uniqueDates) {
-      const metrics = await this.pageMetrics.toTimeSeries({
-        start: date,
-        end: date,
-      });
-
-      await this.pageMetricsTS.insertMany(metrics);
-    }
-  }
 
   @AsyncLogTiming
   async validatePageMetricsRefs(filter: FilterQuery<PageMetrics> = {}) {
@@ -248,6 +236,7 @@ export class DbService {
   }
 
   private async simplifiedValidatePageRefs(filter: FilterQuery<PageMetrics>) {
+    console.log('Validating page metrics references...');
     const pages: Page[] = await this.pages
       .find({}, { url: 1, tasks: 1, projects: 1, ux_tests: 1 })
       .lean()
@@ -259,33 +248,29 @@ export class DbService {
 
     const dateFilter = filter.date ? { date: filter.date } : {};
 
-    const bulkWriteOps: mongo.AnyBulkWriteOperation<PageMetrics>[] = pages.map(
-      (page) => ({
-        updateMany: {
-          filter: {
-            ...dateFilter,
-            url: page.url,
-          },
-          update: {
-            $set: {
-              page: page._id,
-              projects: page.projects,
-              tasks: page.tasks,
-              ux_tests: page.ux_tests,
+    await mapWithETALoggingAsync(
+      pages,
+      async (page) =>
+        await this.pageMetrics
+          .updateMany(
+            {
+              ...dateFilter,
+              url: page.url,
             },
-          },
-        },
-      }),
+            {
+              $set: {
+                page: page._id,
+                projects: page.projects,
+                tasks: page.tasks,
+                ux_tests: page.ux_tests,
+              },
+            },
+          )
+          .exec(),
+      25,
     );
 
-    if (bulkWriteOps.length) {
-      const writeResults = await this.pageMetrics.bulkWrite(bulkWriteOps, {
-        ordered: false,
-      });
-
-      console.log('validatePageRefs writeResults:');
-      logJson(writeResults);
-    }
+    console.log('validatePageRefs complete');
   }
 
   private async validateFilteredPageMetricsRefs(
@@ -519,4 +504,45 @@ export class DbService {
 
     console.log('Finished adding missing refs to pages_metrics.');
   }
+  
+  // @AsyncLogTiming
+  // async syncPageMetricsTimeSeries() {
+  //   const mostRecentTimeSeries = (
+  //     await this.pageMetricsTS
+  //       .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
+  //       .exec()
+  //   )?.date;
+
+  //   const mostRecentPageMetrics = (
+  //     await this.pageMetrics
+  //       .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
+  //       .exec()
+  //   )?.date;
+
+  //   if (!mostRecentPageMetrics) {
+  //     throw Error('No data found in the `pages_metrics` collection');
+  //   }
+
+  //   if (!mostRecentTimeSeries) {
+  //     throw Error(
+  //       'No time series data found in pageMetricsTS collection.\n' +
+  //         'This is not a good way to populate the collection from scratch, mongodump/mongorestore should be used instead.',
+  //     );
+  //   }
+
+  //   const uniqueDates = await this.pageMetrics
+  //     .distinct<Date>('date', { date: { $gt: mostRecentTimeSeries } })
+  //     .exec();
+
+  //   uniqueDates.sort((a, b) => a.getTime() - b.getTime());
+
+  //   for (const date of uniqueDates) {
+  //     const metrics = await this.pageMetrics.toTimeSeries({
+  //       start: date,
+  //       end: date,
+  //     });
+
+  //     await this.pageMetricsTS.insertMany(metrics);
+  //   }
+  // }
 }

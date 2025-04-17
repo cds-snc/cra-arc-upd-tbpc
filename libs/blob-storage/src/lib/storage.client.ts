@@ -33,7 +33,8 @@ import {
 } from '@dua-upd/node-utils';
 import { RegisteredBlobModel } from './storage.service';
 
-const connectionString = process.env['AZURE_STORAGE_CONNECTION_STRING'];
+const getConnectionString = () =>
+  process.env['AZURE_STORAGE_CONNECTION_STRING'];
 
 export type BlobType = 'block' | 'append';
 
@@ -46,6 +47,8 @@ export class StorageClient {
   private readonly baseClient: BlobServiceClient;
 
   constructor() {
+    const connectionString = getConnectionString();
+
     if (!connectionString) {
       throw Error('Azure Storage Connection string not found.');
     }
@@ -94,7 +97,7 @@ export class StorageClient {
  * e.g. the path "logs" for the blob named "log1.txt" will have the full blobName "logs/log1.txt"
  */
 export type BlobsConfig = {
-  path: string;
+  path?: string;
   container: StorageContainer;
   overwrite?: boolean;
   compression?: CompressionAlgorithm;
@@ -156,12 +159,6 @@ export class BlobModel {
   private readonly container: StorageContainer;
 
   constructor(private readonly config: BlobsConfig) {
-    if (!this.config.path) {
-      throw Error(
-        'Expected a non-empty path in BlobsConfig, but none was provided.',
-      );
-    }
-
     this.container = this.config.container;
   }
 
@@ -181,7 +178,7 @@ export class BlobModel {
  * to be easier to use and hiding unneeded functionality.
  */
 export class BlobClient {
-  private readonly path: string;
+  private readonly path: string = '';
   private readonly container: StorageContainer;
   private overwrite = false;
   readonly blobType: BlobType;
@@ -196,19 +193,17 @@ export class BlobClient {
     config: BlobsConfig,
     blobType: BlobType = 'block',
   ) {
-    this.path = config.path;
+    this.path = config.path || '';
     this.container = config.container;
     this.overwrite = !!config.overwrite;
     this.blobType = blobType;
 
+    const blobPath = this.path ? `${this.path}/${blobName}` : blobName;
+
     if (blobType === 'append') {
-      this.client = this.container
-        .getClient()
-        .getAppendBlobClient(`${config.path}/${blobName}`);
+      this.client = this.container.getClient().getAppendBlobClient(blobPath);
     } else {
-      this.client = this.container
-        .getClient()
-        .getBlockBlobClient(`${config.path}/${blobName}`);
+      this.client = this.container.getClient().getBlockBlobClient(blobPath);
     }
 
     this.name = this.client.name;
@@ -451,7 +446,10 @@ export class BlobClient {
     return;
   }
 
-  async uploadStream<T extends Readable>(stream: T, overwrite = this.overwrite) {
+  async uploadStream<T extends Readable>(
+    stream: T,
+    overwrite = this.overwrite,
+  ) {
     if (!(this.client instanceof BlockBlobClient)) {
       throw Error('uploadStream() can only be called on BlockBlobClients');
     }

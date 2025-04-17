@@ -16,6 +16,8 @@ export type AAQueryConfig = {
   metricNames: AAMetricName | AAMetricName[];
   dimensionName: AADimensionName;
   urls: string | string[];
+  direction?: Direction;
+  limit?: number;
 };
 
 export const defaultQuerySettings: ReportSettings = {
@@ -23,6 +25,14 @@ export const defaultQuerySettings: ReportSettings = {
   countRepeatInstances: true,
   limit: 25000,
 };
+
+export const limitQuerySettings: ReportSettings = {
+  nonesBehavior: 'return-nones',
+  countRepeatInstances: true,
+  limit: 5,
+};
+
+export type Direction = 'next' | 'previous' | 'focal';
 
 // should calculated metrics be included? probably not?
 export const metrics = {
@@ -35,6 +45,7 @@ export const metrics = {
   dyf_no: 'metrics/event84',
   bouncerate: 'metrics/bouncerate',
   nav_menu_initiated: 'metrics/event69',
+  occurences: 'metrics/occurrences',
 } as const satisfies MetricsConfig;
 
 export const metricNamesMap = Object.fromEntries(
@@ -95,6 +106,22 @@ export type ReportConfig<DateType = string> = {
   grouped: boolean;
   metrics: AAMetricName[];
   breakdownDimension?: AADimensionName;
+};
+
+export type ReportFeedbackConfig<DateType = string> = {
+  dateRange: {
+    start: DateType;
+    end: DateType;
+  };
+  pages: FeedbackSelectionData[];
+  tasks: FeedbackSelectionData[];
+  projects: FeedbackSelectionData[];
+};
+
+export type FeedbackSelectionData = {
+  _id: string;
+  title: string;
+  pages?: string[];
 };
 
 export type ReportCreate = {

@@ -1,6 +1,5 @@
-import { ConsoleLogger, Module } from '@nestjs/common';
+import { ConsoleLogger, DynamicModule, Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ConfigModule } from '@nestjs/config';
 import dayjs from 'dayjs';
 import { BlobStorageModule } from '@dua-upd/blob-storage';
 import { LoggerModule } from '@dua-upd/logger';
@@ -23,22 +22,20 @@ import { ActivityMapService } from './activity-map/activity-map.service';
 import { UrlsService } from './urls/urls.service';
 import { ReadabilityService } from './readability/readability.service';
 import { AnnotationsService } from './airtable/annotations.service';
+import { GcTaskService } from './gc-task/gc-task.service';
 import { GCTasksMappingsService } from './airtable/gc-tasks-mappings.service';
+import { DuckDbModule } from '@dua-upd/duckdb';
 
 const date = dayjs().format('YYYY-MM-DD');
 const month = dayjs().format('YYYY-MM');
 
 @Module({})
 export class DbUpdateModule {
-  static register(production = false) {
+  static register(production = false): DynamicModule {
     return {
       module: DbUpdateModule,
       imports: [
         CacheModule.register({ ttl: 12 * 60 * 60 }),
-        ConfigModule.forRoot({
-          isGlobal: true,
-          envFilePath: process.env.DOTENV_CONFIG_PATH || '.env',
-        }),
         DbModule,
         ExternalDataModule,
         BlobStorageModule,
@@ -51,6 +48,7 @@ export class DbUpdateModule {
             log: `${month}/db-update_${date}`,
           },
         }),
+        DuckDbModule,
       ],
       providers: [
         AirtableService,
@@ -68,10 +66,11 @@ export class DbUpdateModule {
         SearchAssessmentService,
         UrlsService,
         AnnotationsService,
+        GcTaskService,
         GCTasksMappingsService,
         {
           provide: AirtableClient.name,
-          useValue: new AirtableClient(),
+          useFactory: () => new AirtableClient(),
         },
         {
           provide: 'ENV',
@@ -98,6 +97,7 @@ export class DbUpdateModule {
         SearchAssessmentService,
         UrlsService,
         AnnotationsService,
+        GcTaskService,
         GCTasksMappingsService,
       ],
     };

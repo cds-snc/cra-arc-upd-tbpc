@@ -19,7 +19,7 @@
         "generateIndexHtml": false,
         "runtimeChunk": false,
         "optimization": false,
-        "externalDependencies": "all",
+        "externalDependencies": "none",
         "inspect": false,
         "webpackConfig": "apps/db-updater/webpack.config.js"
       },

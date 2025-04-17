@@ -76,8 +76,20 @@ export class TaskDetailsFeedbackComponent implements OnInit {
   mostRelevantWordsFr = computed(() => this.feedbackMostRelevant().fr.words);
 
   mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    { field: 'rank', header: 'Rank', width: '10px', center: true, frozen: true },
-    { field: 'date', header: 'Date', pipe: 'date', width: '100px', frozen: true },
+    {
+      field: 'rank',
+      header: 'Rank',
+      width: '10px',
+      center: true,
+      frozen: true,
+    },
+    {
+      field: 'date',
+      header: 'Date',
+      pipe: 'date',
+      width: '100px',
+      frozen: true,
+    },
     { field: 'url', header: 'URL' },
     { field: 'owners', header: 'Area', width: '10px', hide: true },
     { field: 'sections', header: 'Section', hide: true },
@@ -166,7 +178,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
         },
         {
           field: 'dyfNoPercentChange',
-          header: this.i18n.service.translate('comparison-for-No-answer', lang),
+          header: this.i18n.service.translate('change-for-No-answer', lang),
           pipe: 'percent',
         },
         {
@@ -179,13 +191,13 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           pipeParam: '1.2',
         },
         {
-          field: 'sum',
+          field: 'numComments',
           header: '# of comments',
           pipe: 'number',
         },
         {
-          field: 'commentsPercentChange',
-          header: 'comparison-for-comments',
+          field: 'numCommentsPercentChange',
+          header: 'change-for-comments',
           pipe: 'percent',
         },
       ];

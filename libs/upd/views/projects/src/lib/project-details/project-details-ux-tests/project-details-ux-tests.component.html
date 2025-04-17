@@ -21,6 +21,7 @@
     <div class="col-lg-6 col-sm-12">
       <upd-data-card
         [current]="totalParticipants$ | async"
+        [emptyMessage]="'task-not-tested'"
         [title]="'Total participants from all tests'"
       ></upd-data-card>
     </div>
@@ -35,6 +36,7 @@
         [series]="(apexTaskSuccessByUxTest$ | async)?.series || []"
         [yAxis]="'tasks' | translate"
         [xAxis]="(apexTaskSuccessByUxTest$ | async)?.xaxis || []"
+        [height]="(taskSuccessChartHeight$ | async) || 0"
         [horizontal]="{ isHorizontal: true, colorDistributed: false }"
         [showPercent]="{
           isPercent: true,
@@ -44,6 +46,7 @@
         }"
         [table]="(taskSuccessByUxTest$ | async) || []"
         [tableCols]="taskSuccessRateCols"
+        [emptyMessage]="'task-not-tested'"
       ></upd-apex-bar>
     </div>
   </div>
@@ -96,6 +99,7 @@
         [pagination]="false"
         [filter]="false"
         [title]="'Documents'"
+        [emptyStateMessage]="'task-not-tested'"
       ></upd-data-table-card>
     </div>
   </div>

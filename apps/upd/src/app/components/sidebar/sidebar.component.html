@@ -4,7 +4,7 @@
       <a
         class="nav_logo"
         [routerLink]="[langPath()]"
-        [queryParamsHandling]="'merge'"
+        [queryParamsHandling]="queryParamsHandling()"
       >
         <img [src]="updLogo()" alt="{{ 'app.title' | translate }}" />
       </a>
@@ -12,7 +12,7 @@
         <a
           [routerLink]="[langPath(), 'overview']"
           [routerLinkActive]="['active']"
-          [queryParamsHandling]="'merge'"
+          [queryParamsHandling]="queryParamsHandling()"
           class="nav_link"
           aria-current="page"
           id="active"
@@ -26,7 +26,7 @@
         <a
           [routerLink]="[langPath(), 'pages']"
           [routerLinkActive]="['active']"
-          [queryParamsHandling]="'merge'"
+          [queryParamsHandling]="queryParamsHandling()"
           class="nav_link"
         >
           <span class="material-icons nav_icon" aria-hidden="true">layers</span>
@@ -37,7 +37,7 @@
         <a
           [routerLink]="[langPath(), 'tasks']"
           [routerLinkActive]="['active']"
-          [queryParamsHandling]="'merge'"
+          [queryParamsHandling]="queryParamsHandling()"
           class="nav_link"
         >
           <span class="material-icons nav_icon" aria-hidden="true"
@@ -50,7 +50,7 @@
         <a
           [routerLink]="[langPath(), 'projects']"
           [routerLinkActive]="['active']"
-          [queryParamsHandling]="'merge'"
+          [queryParamsHandling]="queryParamsHandling()"
           class="nav_link"
         >
           <span class="material-icons nav_icon" aria-hidden="true">folder</span>
@@ -76,18 +76,18 @@
           class="nav_link"
           [ngClass]="{ 'cr-link': langPath() === 'fr' }"
         >
-        <div class="row">
-          <div id="menu-custom-report-label" class="col">
+          <div class="row">
+            <div id="menu-custom-report-label" class="col">
               <span class="material-icons nav_icon" aria-hidden="true"
-              >dashboard</span
-            >
+                >dashboard</span
+              >
+            </div>
+            <div class="col ps-1">
+              <span class="nav_name" data-i18n="menu-custom-reports">{{
+                'menu-custom-reports' | translate
+              }}</span>
+            </div>
           </div>
-          <div class="col ps-1">
-            <span class="nav_name" data-i18n="menu-custom-reports">{{
-              'menu-custom-reports' | translate
-            }}</span>
-          </div>  
-        </div>
         </a>
       </div>
     </div>
@@ -95,7 +95,7 @@
       <a
         [routerLink]="[langPath(), 'about-us']"
         [routerLinkActive]="['active']"
-        [queryParamsHandling]="'merge'"
+        [queryParamsHandling]="queryParamsHandling()"
         class="nav_link"
       >
         <span class="material-icons nav_icon" aria-hidden="true"

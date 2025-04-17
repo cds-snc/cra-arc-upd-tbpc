@@ -30,15 +30,17 @@ import {
   type DropdownOption,
 } from '@dua-upd/upd-components';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import type {
-  AADimensionName,
-  AAMetricName,
-  AAQueryDateStart,
-  AAQueryDateEnd,
-  ColumnConfig,
-  ReportCreateResponse,
-  ReportConfig,
-  ReportGranularity,
+import {
+  type AADimensionName,
+  type AAMetricName,
+  type AAQueryDateStart,
+  type AAQueryDateEnd,
+  type ColumnConfig,
+  type ReportCreateResponse,
+  type ReportConfig,
+  type ReportGranularity,
+  type ReportFeedbackConfig,
+  FeedbackSelectionData,
 } from '@dua-upd/types-common';
 
 dayjs.extend(utc);
@@ -46,9 +48,17 @@ dayjs.extend(timezone);
 
 type PageSelectionData = {
   pages: { _id: string; url: string; title: string }[];
-  tasks: { title: string; pages: string[] }[];
-  projects: { title: string; pages: string[] }[];
+  tasks: { _id: string; title: string; pages: string[] }[];
+  projects: { _id: string; title: string; pages: string[] }[];
 };
+
+interface QueryParams {
+  start: string;
+  end: string;
+  pages?: string;
+  tasks?: string;
+  projects?: string;
+}
 
 @Component({
   selector: 'dua-upd-custom-reports-create',
@@ -77,13 +87,30 @@ export class CustomReportsCreateComponent {
   successUrls = true;
   dangerUrls = true;
   warningUrls = true;
+  successFeedbackData = true;
+  dangerFeedbackData = true;
+  warningFeedbackData = true;
   overviewError = true;
+  overviewFeedbackError = true;
 
   lang = this.i18n.currentLang;
 
   storageConfig: ReportConfig | null =
     history.state['config'] ||
     JSON.parse(sessionStorage.getItem('custom-reports-config') || 'null');
+
+  storageFeedbackConfig: ReportFeedbackConfig | null =
+    history.state['feedbackConfig'] ||
+    JSON.parse(
+      sessionStorage.getItem('custom-reports-feedback-config') || 'null',
+    );
+
+  storageTab: number | null =
+    history.state['activeTab'] ||
+    Number(sessionStorage.getItem('custom-reports-active-tab')) ||
+    'null';
+
+  activeTab = signal<number>(this.storageTab || 0);
 
   // get required data from the api
   selectionData: Signal<PageSelectionData | null> = toSignal(
@@ -119,8 +146,10 @@ export class CustomReportsCreateComponent {
   );
 
   validationTriggered = false;
+  validationFeedbackTriggered = false;
 
   error: WritableSignal<string | null> = signal(null);
+  errorFeedback: WritableSignal<string | null> = signal(null);
 
   calendarDateFormat = computed(() =>
     this.lang() === 'en-CA' ? 'M dd yy' : 'dd M yy',
@@ -129,6 +158,11 @@ export class CustomReportsCreateComponent {
   dateRange = signal({
     start: this.storageConfig?.dateRange.start || '',
     end: this.storageConfig?.dateRange.end || '',
+  });
+
+  dateRangeFeedback = signal({
+    start: this.storageFeedbackConfig?.dateRange.start || '',
+    end: this.storageFeedbackConfig?.dateRange.end || '',
   });
 
   selectedReportMetrics = signal<AAMetricName[]>(
@@ -163,6 +197,13 @@ export class CustomReportsCreateComponent {
     breakdownDimension: this.selectedReportDimensions() as AADimensionName,
   }));
 
+  feedbackConfig = computed<ReportFeedbackConfig>(() => ({
+    dateRange: this.dateRangeFeedback(),
+    pages: this.pagesFeedbackData(),
+    tasks: this.tasksFeedbackData(),
+    projects: this.projectsFeedbackData(),
+  }));
+
   @ViewChild('dataTable') dataTableComponent!: DataTableComponent<
     PageSelectionData['pages']
   >;
@@ -174,39 +215,100 @@ export class CustomReportsCreateComponent {
   >;
   @ViewChild('urlTextarea') urlTextarea!: ElementRef<HTMLTextAreaElement>;
   @ViewChild('urlsAdded') accordionComponent!: AccordionComponent;
+
+  @ViewChild('dataTable2') dataTableComponent2!: DataTableComponent<
+    PageSelectionData['pages']
+  >;
+  @ViewChild('tasksTable2') tasksTableComponent2!: DataTableComponent<
+    PageSelectionData['tasks']
+  >;
+  @ViewChild('projectsTable2') projectsTableComponent2!: DataTableComponent<
+    PageSelectionData['projects']
+  >;
+  @ViewChild('urlTextarea2') urlTextarea2!: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('urlsAdded2') accordionComponent2!: AccordionComponent;
   @ViewChild('calendar') calendarComponent!: CalendarComponent;
+  @ViewChild('calendar2') calendarComponent2!: CalendarComponent;
 
   titleCol = this.i18n.service.translationSignal('Title', (title) => ({
-    field: 'title',
+    field: 'title' as const,
     header: title(),
     translate: true,
   }));
 
   urlCol = this.i18n.service.translationSignal('URL', (url) => ({
-    field: 'url',
+    field: 'url' as const,
     header: url(),
   }));
 
-  columns: Signal<ColumnConfig<PageSelectionData['pages']>[]> = computed(() => [
-    this.titleCol(),
-    this.urlCol(),
-  ]);
+  columns: Signal<ColumnConfig<{ _id: string; url: string; title: string }>[]> =
+    computed(() => [this.titleCol(), this.urlCol()]);
 
-  taskColumns: Signal<ColumnConfig<PageSelectionData['tasks']>[]> = computed(
-    () => [this.titleCol()],
-  );
+  taskColumns: Signal<
+    ColumnConfig<{ _id: string; title: string; pages: string[] }>[]
+  > = computed(() => [this.titleCol()]);
 
   searchFields = computed(() => this.columns().map((col) => col.field));
 
   validUrls = computed<string[]>(() => this.pages()?.map((p) => p.url) || []);
 
+  validPages = computed<FeedbackSelectionData[]>(() =>
+    this.pages().map(
+      (page) =>
+        ({
+          _id: page._id,
+          title: page.title,
+        }) as FeedbackSelectionData,
+    ),
+  );
+
+  validTasks = computed<FeedbackSelectionData[]>(() =>
+    this.tasks().map(
+      (task) =>
+        ({
+          _id: task._id,
+          title: this.i18n.service.translate(task.title, this.lang()),
+          pages: task.pages,
+        }) as FeedbackSelectionData,
+    ),
+  );
+
+  validProjects = computed<FeedbackSelectionData[]>(() =>
+    this.projects().map(
+      (project) =>
+        ({
+          _id: project._id,
+          title: this.i18n.service.translate(project.title, this.lang()),
+          pages: project.pages,
+        }) as FeedbackSelectionData,
+    ),
+  );
+
   duplicateUrls = signal<string[]>([]);
   invalidUrls = signal<string[]>([]);
   newUrls = signal<string[]>([]);
 
+  duplicateFeedbackPages = signal<FeedbackSelectionData[]>([]);
+  duplicateFeedbackTasks = signal<FeedbackSelectionData[]>([]);
+  duplicateFeedbackProjects = signal<FeedbackSelectionData[]>([]);
+  invalidFeedbackData = signal<FeedbackSelectionData[]>([]);
+  newFeedbackPages = signal<FeedbackSelectionData[]>([]);
+  newFeedbackTasks = signal<FeedbackSelectionData[]>([]);
+  newFeedbackProjects = signal<FeedbackSelectionData[]>([]);
+
   selectedPages = signal<PageSelectionData['pages']>([]);
   selectedTasks = signal<PageSelectionData['tasks']>([]);
   selectedProjects = signal<PageSelectionData['projects']>([]);
+
+  pagesFeedbackData = signal<FeedbackSelectionData[]>(
+    this.storageFeedbackConfig?.pages || [],
+  );
+  tasksFeedbackData = signal<FeedbackSelectionData[]>(
+    this.storageFeedbackConfig?.tasks || [],
+  );
+  projectsFeedbackData = signal<FeedbackSelectionData[]>(
+    this.storageFeedbackConfig?.projects || [],
+  );
 
   combinedSelectedUrls = computed(() => {
     const selectedPageUrls = this.selectedPages().map((page) => page.url);
@@ -295,14 +397,38 @@ export class CustomReportsCreateComponent {
 
   reportDimensions = [
     { label: 'None', value: '', description: 'tooltip-none-rb' },
-    { label: 'Device type', value: 'device_type', description: 'tooltip-device-rb' },
+    {
+      label: 'Device type',
+      value: 'device_type',
+      description: 'tooltip-device-rb',
+    },
     { label: 'Regions', value: 'region', description: 'tooltip-regions-rb' },
     { label: 'Cities', value: 'city', description: 'tooltip-cities-rb' },
-    { label: 'Countries', value: 'country', description: 'tooltip-countries-rb' },
-    { label: 'Referrer', value: 'referrer', description: 'tooltip-referrer-rb' },
-    { label: 'Referrer type', value: 'referrer_type', description: 'tooltip-referrertype-rb' },
-    { label: 'Previous page', value: 'prev_page', description: 'tooltip-prevpage-rb' },
-    { label: 'Time spent', value: 'time_spent', description: 'tooltip-timespent-rb' },
+    {
+      label: 'Countries',
+      value: 'country',
+      description: 'tooltip-countries-rb',
+    },
+    {
+      label: 'Referrer',
+      value: 'referrer',
+      description: 'tooltip-referrer-rb',
+    },
+    {
+      label: 'Referrer type',
+      value: 'referrer_type',
+      description: 'tooltip-referrertype-rb',
+    },
+    {
+      label: 'Previous page',
+      value: 'prev_page',
+      description: 'tooltip-prevpage-rb',
+    },
+    {
+      label: 'Time spent',
+      value: 'time_spent',
+      description: 'tooltip-timespent-rb',
+    },
   ];
 
   constructor() {
@@ -331,6 +457,20 @@ export class CustomReportsCreateComponent {
         JSON.stringify(this.config()),
       );
     });
+
+    effect(() => {
+      sessionStorage.setItem(
+        'custom-reports-feedback-config',
+        JSON.stringify(this.feedbackConfig()),
+      );
+    });
+
+    effect(() => {
+      sessionStorage.setItem(
+        'custom-reports-active-tab',
+        this.activeTab().toString(),
+      );
+    });
   }
 
   stateDimension =
@@ -341,6 +481,10 @@ export class CustomReportsCreateComponent {
   stateCalendarDates?: Date[] =
     this.storageConfig?.dateRange &&
     dateRangeToCalendarDates(this.storageConfig.dateRange);
+
+  stateFeedbackCalendarDates?: Date[] =
+    this.storageFeedbackConfig?.dateRange &&
+    dateRangeToCalendarDates(this.storageFeedbackConfig.dateRange);
 
   copyToClipboard() {
     this.showCopyAlert = !this.showCopyAlert;
@@ -380,6 +524,143 @@ export class CustomReportsCreateComponent {
     this.reportUrls.update((urls) => [...urls, ...validNewUrls]);
   }
 
+  addPagesFeedback(inputValue: string) {
+    const pagesFeedbackData = this.pagesFeedbackData();
+    const tasksFeedbackData = this.tasksFeedbackData();
+    const projectsFeedbackData = this.projectsFeedbackData();
+
+    const parsedUrls = inputValue
+      .split(/[\n,;]+/)
+      .map((url) => url.trim().replace(/^https?:\/\//, ''))
+      .filter((url) => url.length > 0);
+
+    const pagesFromParsedUrls = parsedUrls
+      .map((url) => {
+        const page = this.pages().find((page) => page.url === url);
+        return page
+          ? ({ _id: page._id, title: page.title } as FeedbackSelectionData)
+          : url;
+      })
+      .filter((page): page is FeedbackSelectionData => page !== undefined);
+
+    const feedbackPages: FeedbackSelectionData[] = [];
+    const validNewFeedbackTasks: FeedbackSelectionData[] = [];
+    const validNewFeedbackProjects: FeedbackSelectionData[] = [];
+
+    const invalidFeedbackData: FeedbackSelectionData[] = [];
+    const duplicateFeedbackPages: FeedbackSelectionData[] = [];
+    const duplicateFeedbackTasks: FeedbackSelectionData[] = [];
+    const duplicateFeedbackProjects: FeedbackSelectionData[] = [];
+
+    const pages = this.selectedPages().map(
+      (page) =>
+        ({
+          _id: page._id,
+          title: page.title,
+        }) as FeedbackSelectionData,
+    );
+
+    const tasks = this.selectedTasks().map(
+      (task) =>
+        ({
+          _id: task._id,
+          title: task.title,
+          pages: task.pages,
+        }) as FeedbackSelectionData,
+    );
+
+    const projects = this.selectedProjects().map(
+      (project) =>
+        ({
+          _id: project._id,
+          title: project.title,
+          pages: project.pages,
+        }) as FeedbackSelectionData,
+    );
+
+    for (const page of [...pagesFromParsedUrls, ...pages]) {
+      if (this.exists(pagesFeedbackData, page)) {
+        duplicateFeedbackPages.push(page);
+        continue;
+      }
+
+      if (
+        this.exists(this.validPages(), page) &&
+        !this.exists(pagesFeedbackData, page)
+      ) {
+        feedbackPages.push(page);
+        continue;
+      }
+
+      invalidFeedbackData.push(page);
+    }
+
+    for (const task of tasks) {
+      if (this.exists(tasksFeedbackData, task)) {
+        duplicateFeedbackTasks.push(task);
+        continue;
+      }
+
+      if (
+        this.exists(this.validTasks(), task) &&
+        !this.exists(tasksFeedbackData, task)
+      ) {
+        validNewFeedbackTasks.push(task);
+        continue;
+      }
+
+      invalidFeedbackData.push(task);
+    }
+
+    for (const project of projects) {
+      if (this.exists(projectsFeedbackData, project)) {
+        duplicateFeedbackProjects.push(project);
+        continue;
+      }
+
+      if (
+        this.exists(this.validProjects(), project) &&
+        !this.exists(projectsFeedbackData, project)
+      ) {
+        validNewFeedbackProjects.push(project);
+        continue;
+      }
+
+      invalidFeedbackData.push(project);
+    }
+
+    const validNewFeedbackPages = feedbackPages.filter(
+      (page, i, self) => i === self.findIndex((p) => p._id === page._id),
+    );
+
+    this.invalidFeedbackData.set(invalidFeedbackData);
+    this.duplicateFeedbackPages.set(duplicateFeedbackPages);
+    this.newFeedbackPages.set(validNewFeedbackPages);
+    this.duplicateFeedbackTasks.set(duplicateFeedbackTasks);
+    this.newFeedbackTasks.set(validNewFeedbackTasks);
+    this.duplicateFeedbackProjects.set(duplicateFeedbackProjects);
+    this.newFeedbackProjects.set(validNewFeedbackProjects);
+
+    this.pagesFeedbackData.update((pages) => [
+      ...pages,
+      ...validNewFeedbackPages,
+    ]);
+    this.tasksFeedbackData.update((tasks) => [
+      ...tasks,
+      ...validNewFeedbackTasks,
+    ]);
+    this.projectsFeedbackData.update((projects) => [
+      ...projects,
+      ...validNewFeedbackProjects,
+    ]);
+  }
+
+  exists(data: FeedbackSelectionData[], target: FeedbackSelectionData) {
+    return data.some(
+      (page) => page._id === target._id && page.title === target.title,
+    );
+  }
+
   removePage(index: number) {
     this.reportUrls.update((urls) => {
       urls.splice(index, 1);
@@ -388,8 +669,38 @@ export class CustomReportsCreateComponent {
     });
   }
 
+  removeFeedbackPage(index: number) {
+    this.pagesFeedbackData.update((pages) => {
+      pages.splice(index, 1);
+
+      return [...pages];
+    });
+  }
+
+  removeFeedbackTask(index: number) {
+    this.tasksFeedbackData.update((tasks) => {
+      tasks.splice(index, 1);
+
+      return [...tasks];
+    });
+  }
+
+  removeFeedbackProject(index: number) {
+    this.projectsFeedbackData.update((projects) => {
+      projects.splice(index, 1);
+
+      return [...projects];
+    });
+  }
+
   resetUrls() {
     this.reportUrls.set([]);
+  }
+
+  resetPagesTasksProjects() {
+    this.pagesFeedbackData.set([]);
+    this.tasksFeedbackData.set([]);
+    this.projectsFeedbackData.set([]);
   }
 
   resetCalendar(): void {
@@ -401,6 +712,13 @@ export class CustomReportsCreateComponent {
     this.tasksTableComponent.clearSelections();
     this.projectsTableComponent.clearSelections();
     this.urlTextarea.nativeElement.value = '';
+  }
+
+  resetFeedbackTableSelection() {
+    this.dataTableComponent2.clearSelections();
+    this.tasksTableComponent2.clearSelections();
+    this.projectsTableComponent2.clearSelections();
+    this.urlTextarea2.nativeElement.value = '';
   }
 
   handleDateChange(date: Date | Date[]) {
@@ -424,6 +742,27 @@ export class CustomReportsCreateComponent {
         end: dayjs(endDate || startDate).format(
           'YYYY-MM-DDT23:59:59.999[Z]',
         ) as AAQueryDateEnd,
+      });
+    }
+  }
+
+  handleFeedbackDateChange(date: Date | Date[]) {
+    if (!Array.isArray(date) || date.length === 0) {
+      this.dateRangeFeedback.set({
+        start: '',
+        end: '',
+      });
+
+      return;
+    }
+
+    if (date.length !== 0) {
+      const [startDate, endDate] = date;
+
+      // make sure the timezone offset is correct
+      this.dateRangeFeedback.set({
+        start: dayjs(startDate).format('YYYY-MM-DDT00:00:00.000[Z]'),
+        end: dayjs(endDate || startDate).format('YYYY-MM-DDT23:59:59.999[Z]'),
       });
     }
   }
@@ -483,6 +822,20 @@ export class CustomReportsCreateComponent {
     );
   }
 
+  isFeedbackDateRangeValid(): boolean {
+    const config = this.feedbackConfig();
+
+    const startDate = dayjs.utc(config.dateRange.start);
+    const endDate = dayjs.utc(config.dateRange.end);
+
+    return (
+      !!config.dateRange.start &&
+      !!config.dateRange.end &&
+      startDate.isBefore(dayjs.utc().startOf('day')) &&
+      endDate.isAfter(startDate)
+    );
+  }
+
   areUrlsValid(): boolean {
     return this.config().urls?.length > 0;
   }
@@ -491,9 +844,23 @@ export class CustomReportsCreateComponent {
     return this.config().metrics?.length > 0;
   }
 
+  arePagesTasksProjectsValid(): boolean {
+    return (
+      this.feedbackConfig().pages?.length > 0 ||
+      this.feedbackConfig().tasks?.length > 0 ||
+      this.feedbackConfig().projects?.length > 0
+    );
+  }
+
   resetValidation() {
     if (this.validationTriggered) {
       this.validationTriggered = false;
+    }
+  }
+
+  resetFeedbackValidation() {
+    if (this.validationFeedbackTriggered) {
+      this.validationFeedbackTriggered = false;
     }
   }
 
@@ -534,10 +901,50 @@ export class CustomReportsCreateComponent {
       this.router.navigate(['../', res._id], { relativeTo: this.route }),
     );
   }
+
+  async createFeedbackReport(config: ReportFeedbackConfig) {
+    if (
+      !this.isFeedbackDateRangeValid() ||
+      !this.arePagesTasksProjectsValid()
+    ) {
+      this.validationFeedbackTriggered = true;
+      this.overviewFeedbackError = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const dateRangeStart = config.dateRange.start;
+    const dateRangeEnd = config.dateRange.end;
+    const pageIds = config.pages.map((page) => page._id);
+    const taskIds = config.tasks.map((task) => task._id);
+    const projectIds = config.projects.map((project) => project._id);
+
+    const queryParams: QueryParams = {
+      start: dateRangeStart.slice(0, 10),
+      end: dateRangeEnd.slice(0, 10),
+    };
+
+    if (pageIds.length > 0) {
+      queryParams.pages = pageIds.join('-');
+    }
+
+    if (taskIds.length > 0) {
+      queryParams.tasks = taskIds.join('-');
+    }
+
+    if (projectIds.length > 0) {
+      queryParams.projects = projectIds.join('-');
+    }
+
+    this.router.navigate(['../feedback'], {
+      relativeTo: this.route,
+      queryParams,
+    });
+  }
 }
 
 function dateRangeToCalendarDates(
-  dateRange: ReportConfig['dateRange'],
+  dateRange: ReportConfig['dateRange'] | ReportFeedbackConfig['dateRange'],
 ): Date[] {
   const dates: Date[] = [];
 

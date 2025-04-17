@@ -29,5 +29,19 @@
         ]
       }
     }
+  ],
+  "dataGroups": [
+    {
+      "name": "canada-cache",
+      "urls": [
+        "https://www.canada.ca/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 100,
+        "maxAge": "1d",
+        "timeout": "10s"
+      }
+    }
   ]
 }

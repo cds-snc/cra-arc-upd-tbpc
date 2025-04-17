@@ -1,149 +1,231 @@
-import { Component, inject } from '@angular/core';
-import { combineLatest, map, Observable } from 'rxjs';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  Signal,
+  WritableSignal,
+  OnInit,
+} from '@angular/core';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type {
   KpiObjectiveCriteria,
   KpiOptionalConfig,
+  DropdownOption,
 } from '@dua-upd/upd-components';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import { formatNumber } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import dayjs from 'dayjs';
+import { FR_CA } from '@dua-upd/upd/i18n';
+import { isNullish } from '@dua-upd/utils-common';
 
 @Component({
   selector: 'upd-pages-details-readability',
   templateUrl: './pages-details-readability.component.html',
   styleUrls: ['./pages-details-readability.component.css'],
 })
-export class PagesDetailsReadabilityComponent {
+export class PagesDetailsReadabilityComponent implements OnInit {
   private i18n = inject(I18nFacade);
   private pageDetailsService = inject(PagesDetailsFacade);
 
-  currentLang$ = this.i18n.currentLang$;
+  url = toSignal(this.pageDetailsService.pageUrl$);
 
-  pageLang$ = this.pageDetailsService.pageLang$;
+  currentLang = this.i18n.currentLang;
+
+  pageLang = toSignal(this.pageDetailsService.pageLang$);
+
   // Flesch-Kincaid vs. Kandel-Moles
-  readabilityDescriptionKey$ = this.pageLang$.pipe(
-    map((lang) =>
-      lang === 'fr'
-        ? 'calculation-of-readability-points-description-fr'
-        : 'calculation-of-readability-points-description',
-    ),
-  );
+  readabilityDescriptionKey = computed(() => {
+    const pageLang = this.pageLang();
+    return pageLang === 'fr'
+      ? 'calculation-of-readability-points-description-fr'
+      : 'calculation-of-readability-points-description';
+  });
 
-  pageLastUpdated$ = this.pageDetailsService.pageLastUpdated$;
-  totalScore$ = this.pageDetailsService.totalScore$;
-  readabilityPoints$ = this.pageDetailsService.readabilityPoints$;
-  fleshKincaid$ = this.pageDetailsService.fleshKincaid$;
-  headingPoints$ = this.pageDetailsService.headingPoints$;
-  wordsPerHeading$ = this.pageDetailsService.wordsPerHeading$;
-  paragraphPoints$ = this.pageDetailsService.paragraphPoints$;
-  wordsPerParagraph$ = this.pageDetailsService.wordsPerParagraph$;
-  mostFrequentWordsOnPage$ =
-    this.pageDetailsService.mostFrequentWordsOnPage$.pipe(
-      map((words) => [...words]),
+  readabilityArray = toSignal(this.pageDetailsService.readability$);
+  dropdownOptions: Signal<DropdownOption<string>[]> = computed(() => {
+    const dates = this.readabilityArray();
+    const currentLang = this.currentLang();
+
+    const dateFormat = currentLang === FR_CA ? 'DD MMM YYYY' : 'MMM DD, YYYY';
+
+    return (dates ?? []).map(({ date }) => ({
+      label: dayjs(date).locale(this.currentLang()).format(dateFormat),
+      value: date.toString(),
+    }));
+  });
+
+  selectedDateIndex: WritableSignal<number | null> = signal(null);
+  selectedDate: Signal<DropdownOption<string> | null> = computed(() => {
+    const selectedDateIndex = this.selectedDateIndex();
+
+    const options = this.dropdownOptions();
+
+    if (options.length === 0 || !this.url()) return null;
+
+    if (isNullish(this.selectedDateIndex()) || selectedDateIndex === -1) {
+      return options[0];
+    }
+
+    return options[selectedDateIndex as number];
+  });
+
+  selectedReadability = computed(() => {
+    const data = this.readabilityArray() || [];
+
+    return data[this.selectedDateIndex() ?? 0];
+  });
+
+  readabilityStats = computed(() => {
+    const selected = this.selectedReadability();
+
+    return {
+      pageLastUpdated: selected?.date || null,
+      totalScore: selected?.total_score || null,
+      readabilityPoints: selected?.fk_points || null,
+      fleshKincaid: selected?.final_fk_score || null,
+      headingPoints: selected?.header_points || null,
+      wordsPerHeading: selected?.avg_words_per_header || null,
+      paragraphPoints: selected?.paragraph_points || null,
+      wordsPerParagraph: selected?.avg_words_per_paragraph || null,
+      mostFrequentWordsOnPage: selected?.word_counts || [],
+      wordCount: selected?.total_words || null,
+      paragraphCount: selected?.total_paragraph || null,
+      headingCount: selected?.total_headings || null,
+    };
+  });
+
+  fleshKincaidFormatted = computed(() => {
+    const message = this.i18n.service.translate(
+      'flesch-kincaid-readability-score',
+      this.currentLang(),
     );
-  wordCount$ = this.pageDetailsService.wordCount$;
-  paragraphCount$ = this.pageDetailsService.paragraphCount$;
-  headingCount$ = this.pageDetailsService.headingCount$;
+    const value = formatNumber(
+      this.readabilityStats()?.fleshKincaid ?? 0,
+      this.currentLang(),
+      '1.0-2',
+    );
 
-  fleshKincaidFormatted$ = combineLatest([
-    this.fleshKincaid$,
-    this.currentLang$,
-  ]).pipe(
-    map(([fleshKincaid, lang]) => {
-      const message = this.i18n.service.translate(
-        'flesch-kincaid-readability-score',
-        lang,
-      );
-      const value = formatNumber(fleshKincaid, lang, '1.0-2');
+    return `${message} ${value}`;
+  });
 
-      return `${message} ${value}`;
-    }),
-  );
+  wordsPerHeadingFormatted = computed(() => {
+    const message = this.i18n.service.translate(
+      'words-between-each-heading',
+      this.currentLang(),
+    );
+    const value = formatNumber(
+      this.readabilityStats()?.wordsPerHeading ?? 0,
+      this.currentLang(),
+      '1.0-2',
+    );
 
-  wordsPerHeadingFormatted$ = combineLatest([
-    this.wordsPerHeading$,
-    this.currentLang$,
-  ]).pipe(
-    map(([wordsPerHeading, lang]) => {
-      const message = this.i18n.service.translate(
-        'words-between-each-heading',
-        lang,
-      );
-      const value = formatNumber(wordsPerHeading, lang, '1.0-2');
+    return `${message} ${value}`;
+  });
 
-      return `${message} ${value}`;
-    }),
-  );
+  wordsPerParagraphFormatted = computed(() => {
+    const message = this.i18n.service.translate(
+      'words-per-paragraph',
+      this.currentLang(),
+    );
+    const value = formatNumber(
+      this.readabilityStats()?.wordsPerParagraph ?? 0,
+      this.currentLang(),
+      '1.0-2',
+    );
 
-  wordsPerParagraphFormatted$ = combineLatest([
-    this.wordsPerParagraph$,
-    this.currentLang$,
-  ]).pipe(
-    map(([wordsPerParagraph, lang]) => {
-      const message = this.i18n.service.translate('words-per-paragraph', lang);
-      const value = formatNumber(wordsPerParagraph, lang, '1.0-2');
+    return `${message} ${value}`;
+  });
 
-      return `${message} ${value}`;
-    }),
-  );
-
-  mostFrequentWordsOnPageCols$ = this.currentLang$.pipe(
-    map(
-      (lang) =>
-        [
-          {
-            field: 'word',
-            header: this.i18n.service.translate('word', lang),
-            headerClass: 'col-3',
-          },
-          {
-            field: 'count',
-            header: this.i18n.service.translate('count', lang),
-            headerClass: 'col-auto',
-          },
-        ] as ColumnConfig<{ word: string; count: number }>[],
-    ),
-  );
+  mostFrequentWordsOnPageCols: ColumnConfig<{ word: string; count: number }>[] =
+    [
+      {
+        field: 'word',
+        header: 'word',
+        headerClass: 'col-3',
+      },
+      {
+        field: 'count',
+        header: 'count',
+        headerClass: 'col-auto',
+      },
+    ];
 
   totalScoreTemplateParams = ['{{}}/100', '1.0-2'];
   readabilityScoreTemplateParams = ['{{}}/60', '1.0-2'];
   otherScoresTemplateParams = ['{{}}/20', '1.0-2'];
 
-  totalScoreKpiConfig$: Observable<KpiOptionalConfig> = combineLatest([
-    this.totalScore$,
-    this.currentLang$,
-  ]).pipe(
-    map(([totalScore]) => {
-      const messageFromScore = (score: number) => {
-        switch (true) {
-          case score >= 90:
-            return 'kpi-90-or-more';
-          case score >= 80 && score < 90:
-            return 'kpi-80-and-90';
-          case score >= 70 && score < 80:
-            return 'kpi-70-and-80';
-          case score >= 60 && score < 70:
-            return 'kpi-60-and-70';
-          case score >= 50 && score < 60:
-            return 'kpi-50-and-60';
-          case score < 50:
-            return 'kpi-50-or-under';
-          default:
-            return '';
+  totalScoreKpiConfig: Signal<KpiOptionalConfig> = computed(() => {
+    const totalScore = this.readabilityStats()?.totalScore;
+
+    const messageFromScore = (score: number): string => {
+      if (score >= 90) return 'kpi-90-or-more';
+      if (score >= 80) return 'kpi-80-and-90';
+      if (score >= 70) return 'kpi-70-and-80';
+      if (score >= 60) return 'kpi-60-and-70';
+      if (score >= 50) return 'kpi-50-and-60';
+      return 'kpi-50-or-under';
+    };
+
+    const messageFormatter = () =>
+      this.i18n.service.instant(messageFromScore(totalScore ?? 0));
+
+    return {
+      pass: { messageFormatter },
+      partial: { messageFormatter },
+      fail: { messageFormatter },
+    };
+  });
+
+  constructor() {
+    effect(
+      () => {
+        if (!this.url()) return;
+
+        const storedConfig = this.getStoredConfig();
+
+        if (storedConfig) {
+          this.updateSelection(storedConfig);
         }
-      };
+      },
+      { allowSignalWrites: true },
+    );
 
-      const messageFormatter = () =>
-        this.i18n.service.instant(messageFromScore(totalScore));
+    effect(() => {
+      if (
+        !this.selectedDate() ||
+        !this.url() ||
+        isNullish(this.selectedDateIndex())
+      )
+        return;
 
-      return {
-        pass: { messageFormatter },
-        partial: { messageFormatter },
-        fail: { messageFormatter },
-      };
-    }),
-  );
+      sessionStorage.setItem(
+        `${this.url()}-readability-config`,
+        JSON.stringify(this.selectedDate()),
+      );
+    });
+  }
+
+  ngOnInit() {
+    const storedConfig = this.getStoredConfig();
+
+    if (storedConfig) {
+      this.updateSelection(storedConfig);
+    }
+  }
+
+  private getStoredConfig(): DropdownOption<string> | null {
+    const currentUrl = this.url();
+
+    return currentUrl
+      ? JSON.parse(
+          sessionStorage.getItem(`${currentUrl}-readability-config`) || 'null',
+        )
+      : null;
+  }
 
   totalScoreKpiCriteria: KpiObjectiveCriteria = (totalScore: number) => {
     switch (true) {
@@ -157,4 +239,14 @@ export class PagesDetailsReadabilityComponent {
         return 'none';
     }
   };
+
+  updateSelection(option: DropdownOption<string>) {
+    if (!this.url()) return;
+
+    const dateOptionIndex = this.dropdownOptions()?.findIndex(
+      (opt) => opt.value === option.value,
+    );
+
+    this.selectedDateIndex.set(dateOptionIndex);
+  }
 }

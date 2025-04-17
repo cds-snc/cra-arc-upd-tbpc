@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { combineLatest, tap } from 'rxjs';
+import { combineLatest } from 'rxjs';
 
 @Component({
   selector: 'upd-overview-webtraffic',
@@ -23,7 +23,7 @@ export class OverviewWebtrafficComponent implements OnInit {
   pageViews$ = this.overviewService.views$;
   pageViewsPercentChange$ = this.overviewService.viewsPercentChange$;
 
-  apexBar$ = this.overviewService.apexBar$.pipe(tap(console.log));
+  apexBar$ = this.overviewService.apexBar$;
   annotationsData$ = this.overviewService.annotationsData$;
 
   topPagesWithChangeData$ =
@@ -68,7 +68,7 @@ export class OverviewWebtrafficComponent implements OnInit {
         },
         {
           field: 'percentChange',
-          header: this.i18n.service.translate('comparison', lang),
+          header: this.i18n.service.translate('change', lang),
           pipe: 'percent',
         },
       ];

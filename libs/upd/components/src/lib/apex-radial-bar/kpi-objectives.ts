@@ -51,7 +51,7 @@ export const searchKpiObjectiveCriteria: KpiObjectiveCriteria = (
   comparison: number
 ) => {
   switch (true) {
-    case current >= 0.75:
+    case current >= 0.80:
       return 'pass';
     case current >= 0.6:
       return 'partial';

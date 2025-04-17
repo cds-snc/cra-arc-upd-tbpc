@@ -1,7 +1,4 @@
-import {
-  Component,
-  inject,
-} from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 
 @Component({
@@ -16,5 +13,17 @@ export class OverviewGCTasksComponent {
   gcTasksTableConfig$ = this.overviewService.gcTasksTableConfig$;
 
   gcTasksCommentsTable$ = this.overviewService.gcTasksCommentsTable$;
-  gcTasksCommentsTableConfig$ = this.overviewService.gcTasksCommentsTableConfig$;
+  gcTasksCommentsTableConfig$ =
+    this.overviewService.gcTasksCommentsTableConfig$;
+
+  gcTasksCompletionAvg$ = this.overviewService.gcTasksCompletionAvg$;
+  gcTasksCompletionPercentChange$ =
+    this.overviewService.gcTasksCompletionPercentChange$;
+
+  gcTasksEaseAvg$ = this.overviewService.gcTasksEaseAvg$;
+  gcTasksEasePercentChange$ = this.overviewService.gcTasksEasePercentChange$;
+
+  gcTasksSatisfactionAvg$ = this.overviewService.gcTasksSatisfactionAvg$;
+  gcTasksSatisfactionPercentChange$ =
+    this.overviewService.gcTasksSatisfactionPercentChange$;
 }

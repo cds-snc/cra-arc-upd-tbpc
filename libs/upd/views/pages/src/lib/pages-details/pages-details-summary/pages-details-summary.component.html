@@ -11,7 +11,7 @@
 
     <div class="col-lg-4 col-md-12 col-sm-12">
       <upd-data-card
-        [current]="visits$ | async"
+        [current]="visits()"
         [comparison]="visitsPercentChange$ | async"
         [title]="'visits'"
         [tooltip]="'tooltip-visits'"
@@ -52,7 +52,8 @@
         [series]="(apexBar$ | async) || []"
         [table]="barTable$ | async"
         [yAxis]="'visits' | translate"
-        [tableCols]="barTableCols"
+        [tableCols]="barTableCols()"
+        [allowHeaderWrap]="true"
       ></upd-apex-bar>
     </div>
   </div>
@@ -66,12 +67,12 @@
         [titleTooltip]="'tooltip-d3-visits-by-device-type' | translate"
         [series]="(apexVisitsByDeviceTypeChart$ | async) || []"
         [xAxis]="[
-          visitsByDeviceTypeCols[1].header,
-          visitsByDeviceTypeCols[2].header
+          visitsByDeviceTypeCols()[1].header,
+          visitsByDeviceTypeCols()[2].header
         ]"
         [yAxis]="'visits' | translate"
         [table]="visitsByDeviceTypeTable$ | async"
-        [tableCols]="visitsByDeviceTypeCols"
+        [tableCols]="visitsByDeviceTypeCols()"
       ></upd-apex-bar>
     </div>
   </div>
@@ -109,7 +110,7 @@
       <div class="col">
         <upd-data-table-card
           [data]="(tasks$ | async) || []"
-          [cols]="tasksCols"
+          [cols]="tasksCols()"
           [pagination]="false"
           [sort]="false"
           [filter]="false"

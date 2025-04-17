@@ -37,21 +37,9 @@ export class DataTableExportsComponent<T> {
   };
 
   exportOptions: DropdownOption<'csv' | 'pdf' | 'xlsx' | null>[] = [
-    {
-      label: 'CSV',
-      icon: 'file',
-      value: 'csv',
-    },
-    {
-      label: 'PDF',
-      icon: 'file-pdf',
-      value: 'pdf',
-    },
-    {
-      label: 'XLSX',
-      icon: 'file-excel',
-      value: 'xlsx',
-    },
+    { label: 'CSV', icon: 'file', value: 'csv' },
+    { label: 'PDF', icon: 'file-pdf', value: 'pdf' },
+    { label: 'XLSX', icon: 'file-excel', value: 'xlsx' },
   ];
 
   @Input() id!: string;
@@ -77,7 +65,7 @@ export class DataTableExportsComponent<T> {
       'Delayed',
       'Paused',
       'Exploratory',
-      'Being monitored',
+      'Monitoring',
       'In Progress',
       'Needs review',
       'Planning',
@@ -126,7 +114,7 @@ export class DataTableExportsComponent<T> {
           } else if (col.pipe === 'date') {
             formattedRow[colKey] = formatDate(
               (<unknown>cellValue) as Date,
-              col.pipeParam ?? 'YYYY-MM-dd',
+              col.pipeParam ?? 'yyyy-MM-dd',
               currentLang,
               'UTC',
             );
@@ -183,11 +171,8 @@ export class DataTableExportsComponent<T> {
   }
 
   async exportPdf() {
-    type JsPdf = typeof import('jspdf').jsPDF;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const jsPdf: JsPdf = (await import('jspdf/dist/jspdf.es.min.js')).default;
-    const autoTable = (await import('jspdf-autotable')).default;
+    const { jsPDF } = await import('jspdf');
+    const { autoTable } = await import('jspdf-autotable');
 
     try {
       const columnsExport = this.cols.map((obj) => ({
@@ -198,18 +183,19 @@ export class DataTableExportsComponent<T> {
       const minCellWidth =
         columnsExport.length === 1 ? 100 : 100 / (columnsExport.length - 1);
 
-      const doc = new jsPdf('p', 'mm', 'a4');
+      const doc = new jsPDF('p', 'mm', 'a4');
 
       autoTable(doc, {
         styles: { halign: 'left' },
         body: (await this.getFormattedExportData()) as RowInput[],
         bodyStyles: { overflow: 'linebreak', minCellWidth: minCellWidth },
         columns: columnsExport,
+        head: [columnsExport.map((col) => col.title)],
       });
 
       const date = dayjs().format('YYYY-MM-DD');
 
-      await doc.save(`upd-table-data_export_${date}.pdf`);
+      doc.save(`upd-table-data_export_${date}.pdf`);
     } catch (err) {
       console.error('Error exporting PDF file:', err);
     }
@@ -232,10 +218,7 @@ export class DataTableExportsComponent<T> {
 
         utils.sheet_add_aoa(worksheet, [headers], { origin: 'A1' });
 
-        const workbook = {
-          Sheets: { data: worksheet },
-          SheetNames: ['data'],
-        };
+        const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
         const excelBuffer: ArrayBuffer = write(workbook, {
           bookType: 'xlsx',
           type: 'array',

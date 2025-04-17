@@ -71,7 +71,7 @@ export class PagesDetailsWebtrafficComponent implements OnInit {
         },
         {
           field: 'change',
-          header: this.i18n.service.translate('comparison', lang),
+          header: this.i18n.service.translate('change', lang),
           pipe: 'percent',
         },
       ];
@@ -110,7 +110,7 @@ export class PagesDetailsWebtrafficComponent implements OnInit {
         },
         {
           field: 'clicksChange',
-          header: this.i18n.service.translate('comparison', lang),
+          header: this.i18n.service.translate('change', lang),
           pipe: 'percent',
         },
       ];

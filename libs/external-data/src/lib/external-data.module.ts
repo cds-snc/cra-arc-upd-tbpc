@@ -5,6 +5,7 @@ import { BlobProxyService } from './blob-proxy.service';
 import { GoogleSearchConsoleService } from './google-search-console/google-search-console.service';
 import { AdobeAnalyticsClient } from './adobe-analytics';
 import { SearchAnalyticsClient } from './google-search-console';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [BlobStorageModule],
@@ -19,7 +20,8 @@ import { SearchAnalyticsClient } from './google-search-console';
     },
     {
       provide: SearchAnalyticsClient.name,
-      useValue: new SearchAnalyticsClient(),
+      useFactory: () => new SearchAnalyticsClient(),
+      inject: [ConfigService],
     },
   ],
   exports: [

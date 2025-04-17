@@ -1,7 +1,6 @@
 import { createReducer, on, Action } from '@ngrx/store';
 import { zip } from 'rambdax';
 import {
-  DateRange,
   Dayjs,
   DateRangeType,
   DateRangeConfig,
@@ -9,6 +8,7 @@ import {
   datesFromDateRange,
   createCustomDateRangePeriod,
 } from '@dua-upd/utils-common';
+import type { DateRange } from '@dua-upd/types-common';
 
 import * as DateSelectionActions from './date-selection.actions';
 

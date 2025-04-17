@@ -1,6 +1,9 @@
 services:
   nginx:
     image: "upd_nginx"
+    network_mode: host
+    extra_hosts:
+        - "web:127.0.0.1"
     build:
       context: ../
       dockerfile: docker/performance_base/Dockerfile
@@ -14,12 +17,16 @@ services:
 
   web:
     image: "upd_web"
+    network_mode: host
+    extra_hosts:
+        - "redis:127.0.0.1"
     container_name: upd_web
     restart: unless-stopped
     build:
       context: ../
       dockerfile: docker/performance_base/Dockerfile
       target: web-dev
+      network: host
     secrets:
       - .env
       - secret.pem
@@ -28,54 +35,60 @@ services:
       DOTENV_CONFIG_PATH: /run/secrets/.env
       AA_KEY_PATH: /run/secrets/secret.pem
       AA_KEY_POOL_PATH: /run/secrets/aa_creds_pool.json
-      PORT: 9000
+      PORT: 9321
       INSTANCE_ID: "docker-dev-001"
-    depends_on:
-      - mongodb
+      NODE_OPTIONS: "--max-old-space-size=8192"
+      DB_HOST: "localhost"
+    # depends_on:
+    #   - mongodb
 
-#  db-updater:
-#    image: "upd_db-updater"
-#    container_name: upd_db-updater
-#    restart: unless-stopped
-#    build:
-#      context: ../
-#      dockerfile: docker/performance_base/Dockerfile
-#      target: db-updater-dev
-#    secrets:
-#      - .env
-#      - secret.pem
-#      - service-account-credentials.json
-#    environment:
-#      DOTENV_CONFIG_PATH: /run/secrets/.env
-#      AA_KEY_PATH: /run/secrets/secret.pem
-#      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/service-account-credentials.json
+  db-updater:
+    image: "upd_db-updater"
+    container_name: upd_db-updater
+    network_mode: host
+    restart: unless-stopped
+    build:
+      context: ../
+      dockerfile: docker/performance_base/Dockerfile
+      target: db-updater-dev
+    secrets:
+      - .env
+      - secret.pem
+      - service-account-credentials.json
+    environment:
+      DOTENV_CONFIG_PATH: /run/secrets/.env
+      AA_KEY_PATH: /run/secrets/secret.pem
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/service-account-credentials.json
+      DB_HOST: "localhost"
 #    depends_on:
 #      - mongodb
 
-  mongodb:
-    image: mongo:7.0.5-jammy
-    pull_policy: if_not_present
-    container_name: upd_mongo
-    restart: unless-stopped
-    volumes:
-      - type: volume
-        source: db-data
-        target: /data
-        volume:
-          nocopy: true
+  # mongodb:
+  #   image: mongo:7.0.5-jammy
+  #   pull_policy: if_not_present
+  #   container_name: upd_mongo
+  #   restart: unless-stopped
+  #   volumes:
+  #     - type: volume
+  #       source: db-data
+  #       target: /data
+  #       volume:
+  #         nocopy: true
 
   redis:
     image: redis:7.2.4
     pull_policy: if_not_present
     command: "redis-server --appendonly yes --maxmemory-policy noeviction"
+    ports:
+      - "6379:6379"
 
-volumes:
-  db-data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: "D:/docker-db"
+# volumes:
+#   db-data:
+#     driver: local
+#     driver_opts:
+#       o: bind
+#       type: none
+#       device: "D:/docker-db"
 
 secrets:
   .env:

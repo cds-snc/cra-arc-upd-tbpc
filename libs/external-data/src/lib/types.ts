@@ -1,4 +1,4 @@
-import { AdobeAnalyticsReportQuery } from './adobe-analytics';
+import { AdobeAnalyticsReportQuery } from '@dua-upd/node-utils';
 
 export type DateRange = {
   start: string;
@@ -53,8 +53,13 @@ export type AAResponseBody = unknown & {
   reportId: string;
   columns: AAColumnsMetadata;
   rows: AAResultsRow[];
-  summaryData?: Record<string, unknown>;
+  summaryData?: AASummaryData;
 };
+
+export interface AASummaryData {
+  filteredTotals: number[];
+  totals: number[];
+}
 
 export interface AAErrorResponseBody extends AABaseError {
   errorDetails: unknown;
@@ -68,3 +73,4 @@ export type AAMaybeResponse = unknown & {
 export type AAResponse = unknown & {
   body: AAResponseBody;
 }
+

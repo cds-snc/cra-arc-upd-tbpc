@@ -7,8 +7,6 @@ import {
 import type {
   AttachmentData,
   CallsByTopic,
-  CallsByTasks,
-  FeedbackComment,
   GscSearchTermMetrics,
   TopCalldriverTopics,
   IPage,
@@ -18,6 +16,8 @@ import type {
   IReadability,
   IAnnotations,
   IReports,
+  IFeedback,
+  UrlHash,
 } from './schema.types';
 import type { MostRelevantCommentsAndWordsByLang } from './feedback.types';
 
@@ -134,6 +134,9 @@ export interface PageDetailsData extends EntityDetailsData<PageAggregatedData> {
   mostRelevantCommentsAndWords: MostRelevantCommentsAndWordsByLang;
   numComments: number;
   numCommentsPercentChange: number | null;
+
+  hashes: UrlHash[];
+  alternatePageId: string;
 }
 
 export interface OverviewAggregatedData {
@@ -146,10 +149,6 @@ export interface OverviewAggregatedData {
   dyf_yes: number;
   dyf_no: number;
   dyf_submit: number;
-  fwylf_error: number;
-  fwylf_hard_to_understand: number;
-  fwylf_other: number;
-  fwylf_cant_find_info: number;
   visitsByDay: { date: string; visits: number }[];
   calldriversByDay: { date: string; calls: number }[];
   dyfByDay: {
@@ -255,6 +254,7 @@ export interface OverviewData
   extends ViewData<OverviewAggregatedData>,
     OverviewUxData {
   projects?: OverviewProjectData;
+  totalTasks?: number;
   uxTests: {
     title: string;
     date?: Date;
@@ -272,6 +272,24 @@ export interface OverviewData
     uniqueTasks: number;
     successRates: SuccessRates;
   };
+  improvedKpiTopSuccessRate?: {
+    uniqueTopTasks: number;
+    allTopTasks: number;
+    topSuccessRates: SuccessRates;
+  };
+  topTasksTable: {
+    _id: string;
+    tmf_rank: number;
+    title: string;
+    calls_per_100_visits_percent_change: number | null;
+    calls_per_100_visits_difference: number | null;
+    dyf_no_per_1000_visits_percent_change: number | null;
+    dyf_no_per_1000_visits_difference: number | null;
+    latest_ux_success: number | null;
+    latest_success_rate_difference: number | null;
+    latest_success_rate_percent_change: number | null;
+    survey_completed: number;
+  }[];
 }
 
 export type OverviewFeedback = {
@@ -284,9 +302,15 @@ export type OverviewFeedback = {
     url: string;
     sum: number;
     percentChange: number | null;
+    owners?: string;
+    sections?: string;
   }[];
   feedbackByDay: { date: string; sum: number }[];
-}
+};
+
+export type PartialOverviewFeedback = OverviewFeedback & {
+  mostRelevantCommentsAndWords: { parts: number };
+};
 
 export type InternalSearchTerm = {
   term: string;
@@ -329,7 +353,16 @@ export interface TasksHomeAggregatedData {
   calls: number;
   dyf_no: number;
   latest_ux_success: number;
-  // gc_survey_participants?: number; // to be added?
+  survey: number;
+  survey_completed: number;
+  calls_per_100_visits: number;
+  dyf_no_per_1000_visits: number;
+  calls_per_100_visits_difference: number;
+  dyf_no_per_1000_visits_difference: number;
+  calls_percent_change: number | null;
+  dyf_no_percent_change: number | null;
+  latest_success_rate_difference: number | null;
+  latest_success_rate_percent_change: number | null;
 }
 
 export type TasksHomeData = ViewData<TasksHomeAggregatedData[]> & {
@@ -342,12 +375,8 @@ export type TasksHomeData = ViewData<TasksHomeAggregatedData[]> & {
 
 export interface TaskDetailsMetrics {
   calldriversEnquiry: { enquiry_line: string; calls: number }[];
-  callsByTopic: CallsByTopic[];
-  calldriversByDay: { date: string; calls: number }[];
-  visitsByDay: { date: string; visits: number; dyfNo: number }[];
-  dyfNoPerVisits: { date: string; value: number }[];
-  totalCalldrivers: number;
-  visits: number; // for calls/visits ratio
+  callsPer100VisitsByDay: { date: string; calls: number }[];
+  dyfNoPer1000VisitsByDay: { date: string; dyfNo: number }[];
   dyfYes: number;
   dyfNo: number;
 }
@@ -359,6 +388,7 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   subtopic: string;
   sub_subtopic: string[];
   user_type: string[];
+  tpc_ids: number[];
   program: string;
   service: string;
   user_journey: string[];
@@ -367,6 +397,14 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   core: string[];
   visits?: number;
   visitsPercentChange?: number | null;
+  totalCalls?: number;
+  totalCallsPercentChange?: number | null;
+  callsPer100Visits?: number;
+  callsPer100VisitsPercentChange?: number | null;
+  callsPer100VisitsDifference?: number | null;
+  dyfNoPer1000Visits?: number;
+  dyfNoPer1000VisitsPercentChange?: number | null;
+  dyfNoPer1000VisitsDifference?: number | null;
   gscTotalClicks?: number;
   gscTotalClicksPercentChange?: number | null;
   gscTotalImpressions?: number;
@@ -388,10 +426,14 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     scenario: string;
   }[];
   projects: {
-    id: string;
+    _id: string;
     title: string;
     attachments: AttachmentData[];
   }[];
+  callsByTopic: (CallsByTopic & {
+    callsPercentChange?: number | null;
+    callsDifference?: number | null;
+  })[];
   searchTerms: InternalSearchTerm[];
   mostRelevantCommentsAndWords: MostRelevantCommentsAndWordsByLang;
   visitsByPage?: {
@@ -403,11 +445,7 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     title: string;
     url: string;
     lang?: string;
-    is_404?: boolean;
-    redirect?: string;
     language: string;
-    is404: boolean;
-    isRedirect: boolean;
     pageStatus: string;
     visitsPercentChange: number | null;
     dyfNoPercentChange: number | null;
@@ -417,15 +455,10 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     gscTotalPosition: number;
     owners: string;
     sections: string;
+    numComments: number;
+    numCommentsPercentChange: number | null;
   }[];
-  feedbackByPage?: {
-    _id: string;
-    title: string;
-    url: string;
-    sum: number;
-    percentChange: number | null;
-  }[];
-  feedbackByDay: { date: string; sum: number }[];
+  feedbackByDay: { date: string; numComments: number }[];
   numComments?: number;
   numCommentsPercentChange?: number | null;
 }
@@ -434,7 +467,7 @@ export type ProjectStatus =
   | 'Planning'
   | 'In Progress'
   | 'Exploratory'
-  | 'Being monitored'
+  | 'Monitoring'
   | 'Needs review'
   | 'Complete'
   | 'Paused'
@@ -510,10 +543,6 @@ export interface ProjectDetailsAggregatedData {
   visits: number;
   dyfYes: number;
   dyfNo: number;
-  fwylfCantFindInfo: number;
-  fwylfHardToUnderstand: number;
-  fwylfOther: number;
-  fwylfError: number;
   gscTotalClicks: number;
   gscTotalImpressions: number;
   gscTotalCtr: number;
@@ -523,10 +552,8 @@ export interface ProjectDetailsAggregatedData {
   visitsByDay: { date: string; visits: number }[];
   dyfByDay: { date: string; dyf_yes: number; dyf_no: number }[];
   calldriversByDay: { date: string; calls: number }[];
-  feedbackByPage: { _id: string; title: string; url: string; sum: number }[];
   calldriversEnquiry: { enquiry_line: string; calls: number }[];
   callsByTopic: CallsByTopic[];
-  callsByTasks: CallsByTasks[];
   totalCalldrivers: number;
 }
 
@@ -537,13 +564,21 @@ export interface ProjectsDetailsData
   description?: string;
   startDate: string | undefined;
   launchDate: string | undefined;
-  members: string | undefined;
   avgTaskSuccessFromLastTest: number | null;
   avgSuccessPercentChange: number | null;
   avgSuccessValueChange: number | null;
   dateFromLastTest: Date;
-  taskSuccessByUxTest: (Partial<IUxTest> & { tasks: string })[];
-  tasks: Pick<ITask, '_id' | 'title'>[];
+  taskSuccessByUxTest: (Omit<IUxTest, 'project' | 'tasks' | 'pages'> & {
+    tasks: string;
+  })[];
+  taskMetrics: {
+    _id: string;
+    title: string;
+    callsPer100Visits: number;
+    dyfNoPer1000Visits: number;
+    uxTestInLastTwoYears: boolean;
+    latestSuccessRate: number;
+  }[];
   searchTerms: InternalSearchTerm[];
   attachments: AttachmentData[];
   feedbackByPage: {
@@ -615,3 +650,26 @@ export type SuccessRates = {
   validation: number;
   difference: number;
 };
+
+export type PageFlowData = {
+  url: string;
+  visits: number;
+  rank?: number;
+  sequence?: string | number;
+  title?: string;
+  total: number;
+  entries?: number;
+  exits?: number;
+};
+
+export type CustomReportsComment = Pick<IFeedback, 'comment' | 'date' | 'url'> & {
+  taskTitles: string[];
+  projectTitles: string[];
+};
+
+export type CustomReportsFeedback = {
+  comments: CustomReportsComment[];
+  selectedPages: { _id: string; title: string }[];
+  selectedTasks: { _id: string; title: string; pages: string[] }[];
+  selectedProjects: { _id: string; title: string; pages: string[] }[];
+}

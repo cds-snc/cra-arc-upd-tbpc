@@ -36,7 +36,7 @@
     <div class="col">
       <upd-data-table-card
         [data]="(topGSCSearchTerms$ | async) || []"
-        [cols]="topGSCSearchTermsCols"
+        [cols]="topGscSearchTermsCols"
         [title]="'top25-search-terms-google-page'"
         [tooltip]="'tooltip_table_title_top25_search_terms_google'"
       >
@@ -51,7 +51,7 @@
       <upd-data-table-card
         [sort]="true"
         [data]="(topSearchTerms$ | async) || []"
-        [cols]="(searchTermsColConfig$ | async) || []"
+        [cols]="(searchTermsColConfig) || []"
         [title]="'top10-terms-canada.ca' | translate"
         [pagination]="false"
       >

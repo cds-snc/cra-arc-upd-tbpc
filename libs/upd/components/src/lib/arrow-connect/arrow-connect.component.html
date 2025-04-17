@@ -1,0 +1,65 @@
+<svg class="connector">
+  <defs>
+    <marker
+      id="arrowhead"
+      markerWidth="8"
+      markerHeight="10"
+      refX="7"
+      refY="5"
+      orient="auto"
+    >
+      <polygon points="0 0, 8 5, 0 10" fill="black" />
+    </marker>
+  </defs>
+
+  <!-- @if (next()) {
+    <line
+      [attr.x1]="line1EndX()"
+      [attr.y1]="line1EndY()"
+      [attr.x2]="line1StartX()"
+      [attr.y2]="line1StartY()"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrowhead)"
+    ></line>
+  } @else { -->
+    <line
+      [attr.x1]="line1StartX()"
+      [attr.y1]="line1StartY()"
+      [attr.x2]="line1EndX()"
+      [attr.y2]="line1EndY()"
+      stroke="black"
+      stroke-width="2"
+    ></line>
+  <!-- } -->
+
+  <line
+    [attr.x1]="line2StartX()"
+    [attr.y1]="line2StartY()"
+    [attr.x2]="line2EndX()"
+    [attr.y2]="line2EndY()"
+    stroke="black"
+    stroke-width="2"
+  ></line>
+
+  <!-- @if (previous()) {
+    <line
+      [attr.x1]="line3StartX()"
+      [attr.y1]="line3StartY()"
+      [attr.x2]="line3EndX()"
+      [attr.y2]="line3EndY()"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrowhead)"
+    ></line>
+  } @else { -->
+    <line
+      [attr.x1]="line3StartX()"
+      [attr.y1]="line3StartY()"
+      [attr.x2]="line3EndX()"
+      [attr.y2]="line3EndY()"
+      stroke="black"
+      stroke-width="2"
+    ></line>
+  <!-- } -->
+</svg>

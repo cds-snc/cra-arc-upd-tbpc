@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { combineLatest } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
@@ -28,6 +28,14 @@ export class TaskDetailsCalldriversComponent implements OnInit {
 
   dateRange = '';
   comparisonDateRange = '';
+  
+  hasTopicIds$ = this.taskDetailsService.hasTopicIds$;
+
+  callsEmptyMessages$ = this.hasTopicIds$.pipe(
+    map((hasTopicIds) =>
+      hasTopicIds === false ? 'nocall-drivers-mapped' : 'nodata-available',
+    ),
+  );
 
   ngOnInit() {
     combineLatest([
@@ -38,7 +46,7 @@ export class TaskDetailsCalldriversComponent implements OnInit {
       this.calldriversCols = [
         {
           field: 'name',
-          header: this.i18n.service.translate('Inquiry line', lang),
+          header: this.i18n.service.translate('enquiry_line', lang),
         },
         {
           field: 'currValue',

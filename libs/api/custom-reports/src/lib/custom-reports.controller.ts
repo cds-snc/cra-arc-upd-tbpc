@@ -7,13 +7,9 @@ import {
   Body,
   Controller,
   Get,
-  Header,
-  type MessageEvent,
   Param,
   Post,
-  Sse,
 } from '@nestjs/common';
-import { map, Observable, of } from 'rxjs';
 import { CustomReportsService } from './custom-reports.service';
 
 @Controller('custom-reports')
@@ -46,28 +42,22 @@ export class CustomReportsController {
     }
   }
 
-  @Sse(':id/status')
-  getStatus(@Param('id') id: string): Observable<MessageEvent> {
-    const reportStatus$ = this.reportsService.getStatusObservable(id);
+  @Get(':id/status')
+  async getStatus(@Param('id') id: string): Promise<ReportStatus> {
+    const reportStatus = await this.reportsService.getStatus(id);
 
-    if (!reportStatus$) {
-      return of({
-        data: {
-          status: 'error',
-          message: 'report not found',
-        },
-      });
+    if (!reportStatus) {
+      return {
+        status: 'error',
+        message: 'report not found',
+      }
     }
 
-    return reportStatus$.pipe(
-      map((status) => ({
-        data: status.error
-          ? {
-              ...status,
-              message: 'Could not fetch report data',
-            }
-          : status,
-      })),
-    );
+    return 'error' in reportStatus
+    ? {
+        ...reportStatus,
+        message: 'Could not fetch report data',
+      }
+    : reportStatus;
   }
 }

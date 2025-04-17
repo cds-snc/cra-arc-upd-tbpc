@@ -51,18 +51,6 @@ export class CustomReportsModule {
         ReportsQueueEvents,
         ChildQueueEvents,
         {
-          provide: AdobeAnalyticsClient,
-          useFactory: async () => {
-            const client = production
-              ? new AdobeAnalyticsClient(await getAACredsPool())
-              : new AdobeAnalyticsClient();
-
-            await client.init();
-
-            return client;
-          },
-        },
-        {
           provide: 'INSTANCE_ID',
           useValue: instanceId,
         },

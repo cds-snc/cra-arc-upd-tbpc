@@ -10,6 +10,7 @@ import isBetween from 'dayjs/plugin/isBetween';
 import 'dayjs/locale/en-ca';
 import 'dayjs/locale/fr-ca';
 import { partial, zip } from 'rambdax';
+import type { AbstractDate, DateRange } from '@dua-upd/types-common';
 
 _dayjs.extend(utc);
 _dayjs.extend(quarterOfYear);
@@ -21,13 +22,6 @@ export const dayjs = _dayjs;
 export type Dayjs = _Dayjs;
 export type OpUnitType = _OpUnitType;
 export type QUnitType = _QUnitType;
-
-export type AbstractDate = string | Date | Dayjs;
-
-export type DateRange<T extends AbstractDate> = {
-  start: T;
-  end: T;
-};
 
 export function datesFromDateRange(
   dateRange: DateRange<Dayjs> | DateRange<Date> | string,
@@ -56,6 +50,54 @@ export function datesFromDateRange(
   return format
     ? dates.map((date) => date.format(format))
     : dates.map((date) => date.toDate());
+}
+
+/**
+ * Creates an array of date ranges for each month in the given date range.
+ * If `inclusive` is true, the end date is included in the range.
+ *
+ * For example, if `inclusive` is `true` and the date range is `'2021-01-01/2021-03-01'`, the function will return:
+ *
+ * `['2021-01-01/2021-01-31', '2021-02-01/2021-02-28', '2021-03-01/2021-03-31']`
+ *
+ * @param parsedDateRange The date range to get months from
+ * @param format The format to return the date ranges in
+ * @param inclusive Whether to include the end date in the range
+ * @returns An array of date ranges in the specified format
+ */
+export function monthsFromDateRange(
+  dateRange: DateRange<Dayjs> | DateRange<Date> | string,
+  inclusive = false,
+  exactEndDate = false,
+): DateRange<Date>[] {
+  const parsedDateRange =
+    typeof dateRange === 'string' ? parseDateRangeString(dateRange) : dateRange;
+
+  const dates: DateRange<Date>[] = [];
+
+  let currentDate = dayjs.utc(parsedDateRange.start).startOf('month');
+
+  const exactEnd = inclusive
+    ? dayjs.utc(parsedDateRange.end)
+    : dayjs.utc(parsedDateRange.end).subtract(1, 'day');
+
+  const endDate = exactEnd.endOf('month');
+
+  if (endDate.isBefore(currentDate)) {
+    throw Error('Invalid dateRange - end is before start');
+  }
+
+  while (!currentDate.isAfter(endDate, 'month')) {
+    const endOfMonth = currentDate.endOf('month');
+    const end = (
+      exactEndDate && endOfMonth.isAfter(exactEnd) ? exactEnd : endOfMonth
+    ).toDate();
+
+    dates.push({ start: currentDate.toDate(), end });
+    currentDate = currentDate.add(1, 'month');
+  }
+
+  return dates;
 }
 
 /**
@@ -195,12 +237,12 @@ const quarterlyConfig: DateRangeConfig = {
   },
 };
 
-export const dateRangeConfigs: readonly DateRangeConfig[] = Object.freeze([
-  genericPeriods['week'],
-  genericPeriods['month'],
-  quarterlyConfig,
-  genericPeriods['year'],
-  {
+export const structuredDateRangeConfigs = {
+  week: genericPeriods['week'],
+  month: genericPeriods['month'],
+  quarter: quarterlyConfig,
+  year: genericPeriods['year'],
+  fiscal_year: {
     type: 'fiscal_year',
     label: 'Last fiscal year',
     getDateRange: (fromDate = today()) => {
@@ -222,7 +264,7 @@ export const dateRangeConfigs: readonly DateRangeConfig[] = Object.freeze([
     getComparisonDate: (fromDate = today()) =>
       dayjs.utc(fromDate).subtract(52, 'weeks'),
   },
-  {
+  last_52_weeks: {
     type: 'last_52_weeks',
     label: 'Last 52 weeks',
     getDateRange: (fromDate = today()) => {
@@ -234,7 +276,7 @@ export const dateRangeConfigs: readonly DateRangeConfig[] = Object.freeze([
     getComparisonDate: (fromDate = today()) =>
       dayjs.utc(fromDate).subtract(52, 'weeks'),
   },
-  {
+  year_to_date: {
     type: 'year_to_date',
     label: 'Year to date',
     getDateRange: (fromDate = today()) => {
@@ -246,7 +288,144 @@ export const dateRangeConfigs: readonly DateRangeConfig[] = Object.freeze([
     getComparisonDate: (fromDate = today()) =>
       dayjs.utc(fromDate).subtract(52, 'weeks'),
   },
-]);
+} as const;
+
+export const dateRangeConfigs: readonly DateRangeConfig[] = Object.freeze(
+  Object.values(structuredDateRangeConfigs) as DateRangeConfig[],
+);
+
+export const getDateRangesWithComparison = (options?: {
+  asDate?: boolean;
+  asDayjs?: boolean;
+}) =>
+  dateRangeConfigs
+    .map((config) => {
+      const dateRange = config.getDateRange();
+      const comparisonDateRange = {
+        start: config.getComparisonDate(dateRange.start),
+        end: config.getComparisonDate(dateRange.end),
+      };
+
+      if (options?.asDayjs) {
+        return [dateRange, comparisonDateRange];
+      }
+
+      const toOutput = (dateRange: DateRange<Dayjs>) =>
+        options?.asDate
+          ? ({
+              start: dateRange.start.toDate(),
+              end: dateRange.end.toDate(),
+            } as DateRange<Date>)
+          : ({
+              start: dateRange.start.format('YYYY-MM-DD'),
+              end: dateRange.end.format('YYYY-MM-DD'),
+            } as DateRange<string>);
+
+      return [toOutput(dateRange), toOutput(comparisonDateRange)];
+    })
+    .flat();
+
+export type StructuredDateRangeWithComparison<T extends AbstractDate> = {
+  dateRange: DateRange<T>;
+  comparisonDateRange: DateRange<T>;
+};
+
+function getStructuredDateRange(
+  type: keyof typeof structuredDateRangeConfigs,
+  asDate: true,
+): StructuredDateRangeWithComparison<Date>;
+function getStructuredDateRange(
+  type: keyof typeof structuredDateRangeConfigs,
+  asDate: false,
+): StructuredDateRangeWithComparison<Dayjs>;
+function getStructuredDateRange(
+  type: keyof typeof structuredDateRangeConfigs,
+): StructuredDateRangeWithComparison<Dayjs>;
+function getStructuredDateRange(
+  type: keyof typeof structuredDateRangeConfigs,
+  asDate = false,
+) {
+  const dateRange = structuredDateRangeConfigs[type].getDateRange();
+
+  const dateRanges = {
+    dateRange,
+    comparisonDateRange: {
+      start: structuredDateRangeConfigs[type].getComparisonDate(
+        dateRange.start,
+      ),
+      end: structuredDateRangeConfigs[type].getComparisonDate(dateRange.end),
+    },
+  };
+
+  if (asDate) {
+    return {
+      dateRange: {
+        start: dateRanges.dateRange.start.toDate(),
+        end: dateRanges.dateRange.end.toDate(),
+      },
+      comparisonDateRange: {
+        start: dateRanges.comparisonDateRange.start.toDate(),
+        end: dateRanges.comparisonDateRange.end.toDate(),
+      },
+    };
+  }
+
+  return dateRanges;
+}
+
+export const getStructuredDateRangesWithComparison = () => ({
+  week: getStructuredDateRange('week'),
+  month: getStructuredDateRange('month'),
+  quarter: getStructuredDateRange('quarter'),
+  year: getStructuredDateRange('year'),
+  fiscal_year: getStructuredDateRange('fiscal_year'),
+  last_52_weeks: getStructuredDateRange('last_52_weeks'),
+  year_to_date: getStructuredDateRange('year_to_date'),
+});
+
+export type GetDateRangeOptions = {
+  asDate?: boolean;
+  withComparison: boolean;
+};
+
+const getDateRangeDefaults = {
+  asDate: true,
+  withComparison: false,
+} as const;
+
+export function getDateRange(
+  type: DateRangeType,
+): DateRange<Date>;
+export function getDateRange(
+  type: DateRangeType,
+  options: GetDateRangeOptions & { asDate: false },
+): DateRange<Dayjs>;
+export function getDateRange(
+  type: DateRangeType,
+  options: GetDateRangeOptions & { withComparison: true },
+): ReturnType<typeof getStructuredDateRange>;
+
+export function getDateRange(
+  type: DateRangeType,
+  options: GetDateRangeOptions = getDateRangeDefaults,
+) {
+  // basically just a type guard
+  if (type === 'custom') {
+    throw new Error('Cannot get date range for custom type');
+  }
+
+  const mergedOptions = { ...getDateRangeDefaults, ...options };
+
+  const withComparison = mergedOptions.asDate
+    ? getStructuredDateRange(type, mergedOptions.asDate)
+    : getStructuredDateRange(type);
+
+  if (options.withComparison) {
+    return withComparison;
+  }
+
+  return withComparison.dateRange;
+}
 
 export function createCustomDateRangePeriod(
   dateRangeString: string,

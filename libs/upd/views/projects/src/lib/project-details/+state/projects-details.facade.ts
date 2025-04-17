@@ -1,13 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import type {
   CalldriversTableRow,
+  ColumnConfig,
   ProjectDetailsAggregatedData,
   ProjectsDetailsData,
   TaskKpi,
   VisitsByPage,
 } from '@dua-upd/types-common';
 import { FR_CA, LocaleId } from '@dua-upd/upd/i18n';
-import { I18nFacade, selectUrl } from '@dua-upd/upd/state';
+import { I18nFacade, selectRoute } from '@dua-upd/upd/state';
 import { createColConfigWithI18n } from '@dua-upd/upd/utils';
 
 import {
@@ -18,15 +19,15 @@ import {
   type UnwrapObservable,
   round,
   arrayToDictionary,
+  isNullish,
+  arrayToDictionaryMultiref,
 } from '@dua-upd/utils-common';
 import { Store } from '@ngrx/store';
 import dayjs from 'dayjs/esm';
 import 'dayjs/esm/locale/en-ca';
 import 'dayjs/esm/locale/fr-ca';
 import utc from 'dayjs/esm/plugin/utc';
-import type {
-  ApexAxisChartSeries,
-} from 'ng-apexcharts';
+import type { ApexAxisChartSeries } from 'ng-apexcharts';
 import { combineLatest, map } from 'rxjs';
 import * as ProjectsDetailsActions from './projects-details.actions';
 import * as ProjectsDetailsSelectors from './projects-details.selectors';
@@ -61,9 +62,7 @@ export class ProjectsDetailsFacade {
 
   currentLang$ = this.i18n.currentLang$;
 
-  currentRoute$ = this.store
-    .select(selectUrl)
-    .pipe(map((url) => url.replace(/\?.+$/, '')));
+  currentRoute$ = this.store.select(selectRoute);
 
   title$ = this.projectsDetailsData$.pipe(
     map((data) => data?.title.replace(/\s+/g, ' ')),
@@ -144,10 +143,6 @@ export class ProjectsDetailsFacade {
     mapPageMetricsArraysWithPercentChange('visitsByPage', 'gscTotalClicks'),
   );
 
-  feedbackByPage$ = this.projectsDetailsData$.pipe(
-    map((data) => data?.dateRangeData?.feedbackByPage),
-  );
-
   feedbackByDay$ = this.projectsDetailsData$.pipe(
     map((data) => {
       const feedbackByDayData = data?.feedbackByDay || [];
@@ -157,41 +152,53 @@ export class ProjectsDetailsFacade {
         : feedbackByDayData;
     }),
   );
-  
+
   visitsByPageFeedbackWithPercentChange$ = this.projectsDetailsData$.pipe(
     map((data) => {
-      const feedbackByPageDict = arrayToDictionary(
-        data?.feedbackByPage,
+      const feedbackByPageDict = arrayToDictionary(data?.feedbackByPage, '_id');
+
+      const prevVisitsByPageDict = arrayToDictionary(
+        data?.comparisonDateRangeData?.visitsByPage || [],
         '_id',
       );
 
-      const prevVisitsByPageDict = arrayToDictionary(data?.comparisonDateRangeData?.visitsByPage || [], '_id');
+      return (
+        data.dateRangeData?.visitsByPage
+          .map((page) => {
+            const { sum, percentChange: commentsPercentChange } =
+              feedbackByPageDict[page._id] || { sum: 0, percentChange: null };
 
-      return data.dateRangeData?.visitsByPage.map((page) => {
-        const { sum, percentChange: commentsPercentChange } = feedbackByPageDict[page._id] || { sum: 0, percentChange: null };
+            const prevDyfNo = prevVisitsByPageDict[page._id]?.dyfNo || 0;
 
-        const prevDyfNo = prevVisitsByPageDict[page._id]?.dyfNo || 0;
+            const dyfNoPercentChange = prevDyfNo
+              ? percentChange(page.dyfNo || 0, prevDyfNo)
+              : null;
 
-        const dyfNoPercentChange = prevDyfNo ? percentChange(page.dyfNo || 0, prevDyfNo) : null;
+            const merged = {
+              ...page,
+              sum,
+              commentsPercentChange,
+              dyfNoPercentChange,
+            };
 
-        const merged = {
-          ...page,
-          sum,
-          commentsPercentChange,
-          dyfNoPercentChange,
-        };
+            const totalFeedback = (page.dyfYes || 0) + (page.dyfNo || 0);
 
-        const totalFeedback = (page.dyfYes || 0) + (page.dyfNo || 0);
+            if (page.visits === 0 || totalFeedback === 0) {
+              return merged;
+            }
 
-        if (page.visits === 0 || totalFeedback === 0) {
-          return merged;
-        }
-
-        return {
-          ...merged,
-          feedbackToVisitsRatio: totalFeedback / page.visits,
-        };
-      }) || [];
+            return {
+              ...merged,
+              feedbackToVisitsRatio: totalFeedback / page.visits,
+            };
+          })
+          .sort(
+            (a, b) =>
+              (b.dyfYes || 0) +
+              (b.dyfNo || 0) -
+              ((a.dyfYes || 0) + (a.dyfNo || 0)),
+          ) || []
+      );
     }),
   );
 
@@ -262,60 +269,17 @@ export class ProjectsDetailsFacade {
     this.comparisonKpiFeedback$,
   ]).pipe(map(([currentKpi, comparisonKpi]) => currentKpi - comparisonKpi));
 
-  // this isn't used apparently?
-  kpiTaskSuccessByUxTest$ = combineLatest([
-    this.projectsDetailsData$,
-    this.currentLang$,
-  ]).pipe(
-    map(([data, lang]) => {
-      const uxTests = data?.taskSuccessByUxTest.filter(
-        (uxTest) => uxTest.success_rate != null,
-      );
-
-      const tasksWithSuccessRate = uxTests
-        ?.map((uxTest) => uxTest.tasks.split('; ') || [])
-        .flat();
-      const tasks = data?.tasks.filter((task) =>
-        tasksWithSuccessRate.includes(task.title),
-      );
-
-      return tasks.map((task) => {
-        const relevantTests = uxTests.filter(
-          (uxTest) =>
-            uxTest.tasks.split('; ').includes(task.title) &&
-            uxTest.success_rate != null,
-        );
-
-        const latestDate = relevantTests.reduce((latest, test) => {
-          return dayjs(latest.date).isAfter(dayjs(test.date)) ? latest : test;
-        }).date;
-
-        const latestDateSuccessRates = relevantTests
-          .filter(
-            (uxTest) =>
-              uxTest.date === latestDate &&
-              (uxTest.success_rate || uxTest.success_rate === 0),
-          )
-          .map((uxTest) => uxTest.success_rate) as number[];
-
-        return {
-          title: this.i18n.service.translate(task.title, lang),
-          success: avg(latestDateSuccessRates, 2),
-          latestDate,
-        };
-      });
-    }),
+  projectTasks$ = this.projectsDetailsData$.pipe(
+    map((data) => data?.taskMetrics || []),
   );
-
-  projectTasks$ = this.projectsDetailsData$.pipe(map((data) => data?.tasks));
 
   calldriversChart$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
   ]).pipe(
     map(([data, lang]) => {
-      const dateRangeLabel = getWeeklyDatesLabel(data.dateRange || '', lang);
-      const comparisonDateRangeLabel = getWeeklyDatesLabel(
+      const dateRangeLabel = this.getDateRangeLabel(data.dateRange || '', lang);
+      const comparisonDateRangeLabel = this.getDateRangeLabel(
         data.comparisonDateRange || '',
         lang,
       );
@@ -413,33 +377,31 @@ export class ProjectsDetailsFacade {
   );
 
   callsByTopic$ = this.projectsDetailsData$.pipe(
-    // callsByTopic$ gets the data from the store and maps it to the callsByTopic property of the ProjectsDetailsData object
     map((data) => {
       if (!data?.dateRangeData || !data?.comparisonDateRangeData) {
         return null;
       }
       const comparisonData = data?.comparisonDateRangeData?.callsByTopic || [];
 
-      return (data?.dateRangeData?.callsByTopic || [])
-        .map((callsByTopic) => {
-          const previousCalls = comparisonData.find(
-            (prevTopic) => prevTopic.tpc_id === callsByTopic.tpc_id,
-          );
+      return (data?.dateRangeData?.callsByTopic || []).map((callsByTopic) => {
+        const previousCalls = comparisonData.find(
+          (prevTopic) => prevTopic.tpc_id === callsByTopic.tpc_id,
+        );
 
-          return {
-            topic: callsByTopic.topic || '',
-            tpc_id: callsByTopic.tpc_id || 0,
-            subtopic: callsByTopic.subtopic || '',
-            enquiry_line: callsByTopic.enquiry_line || '',
-            sub_subtopic: callsByTopic.sub_subtopic || '',
-            tasks: callsByTopic.tasks || '',
-            calls: callsByTopic.calls,
-            comparison: !previousCalls?.calls
-              ? null
-              : percentChange(callsByTopic.calls, previousCalls.calls),
-          };
-        })
-        .sort((a, b) => (b.calls ?? 0) - (a.calls ?? 0));
+        return {
+          topic: callsByTopic.topic || '',
+          tpc_id: callsByTopic.tpc_id || '',
+          enquiry_line: callsByTopic.enquiry_line || '',
+          tasks: callsByTopic.tasks || [],
+          subtopic: callsByTopic.subtopic || '',
+          sub_subtopic: callsByTopic.sub_subtopic || '',
+          calls: callsByTopic.calls,
+          change: !previousCalls?.calls
+            ? null
+            : percentChange(callsByTopic.calls, previousCalls.calls),
+          difference: callsByTopic.calls - (previousCalls?.calls || 0),
+        };
+      });
     }),
   );
 
@@ -472,44 +434,64 @@ export class ProjectsDetailsFacade {
       },
       {
         field: 'tasks',
-        header: 'tasks',
+        header: 'Task',
         translate: true,
       },
-
       {
         field: 'calls',
         header: 'calls',
         pipe: 'number',
       },
       {
-        field: 'comparison',
-        header: 'comparison',
+        field: 'change',
+        header: 'change',
         pipe: 'percent',
+        pipeParam: '1.0-2',
+        upGoodDownBad: false,
+        indicator: true,
+        useArrows: true,
+        showTextColours: true,
+        secondaryField: {
+          field: 'difference',
+          pipe: 'number',
+        },
+        width: '160px',
       },
-    ],
+    ] as ColumnConfig<UnwrapObservable<typeof this.callsByTopic$>>[],
   );
 
-  dyfDataApex$ = combineLatest([this.projectsDetailsData$, this.currentLang$]).pipe(
+  dyfDataApex$ = combineLatest([
+    this.projectsDetailsData$,
+    this.currentLang$,
+  ]).pipe(
     map(([data, lang]) => {
       const dyfData: ApexAxisChartSeries = [
         {
           name: this.i18n.service.translate('yes', lang),
-          data: [data?.dateRangeData?.dyfYes || 0, data?.comparisonDateRangeData?.dyfYes || 0],
+          data: [
+            data?.dateRangeData?.dyfYes || 0,
+            data?.comparisonDateRangeData?.dyfYes || 0,
+          ],
         },
         {
           name: this.i18n.service.translate('no', lang),
-          data: [data?.dateRangeData?.dyfNo || 0, data?.comparisonDateRangeData?.dyfNo || 0],
+          data: [
+            data?.dateRangeData?.dyfNo || 0,
+            data?.comparisonDateRangeData?.dyfNo || 0,
+          ],
         },
       ];
-  
-      const isZero = dyfData.every(item => 
-        (item.data as number[]).every(value => typeof value === 'number' && value === 0)
+
+      const isZero = dyfData.every((item) =>
+        (item.data as number[]).every(
+          (value) => typeof value === 'number' && value === 0,
+        ),
       );
-      
+
       if (isZero) {
         return [];
       }
-  
+
       return dyfData;
     }),
   );
@@ -518,19 +500,21 @@ export class ProjectsDetailsFacade {
     map(([data, lang]) => {
       const yes = this.i18n.service.translate('yes', lang);
       const no = this.i18n.service.translate('no', lang);
-  
+
       const currYesVal = data?.dateRangeData?.dyfYes || 0;
       const prevYesVal = data?.comparisonDateRangeData?.dyfYes || NaN;
       const currNoVal = data?.dateRangeData?.dyfNo || 0;
       const prevNoVal = data?.comparisonDateRangeData?.dyfNo || NaN;
-  
+
       const pieChartData = [
         { name: yes, currValue: currYesVal, prevValue: prevYesVal },
         { name: no, currValue: currNoVal, prevValue: prevNoVal },
       ];
-  
-      const filteredPieChartData = pieChartData.filter((v) => v.currValue > 0 || v.prevValue > 0);
-  
+
+      const filteredPieChartData = pieChartData.filter(
+        (v) => v.currValue > 0 || v.prevValue > 0,
+      );
+
       return filteredPieChartData.length > 0 ? filteredPieChartData : [];
     }),
   );
@@ -580,22 +564,22 @@ export class ProjectsDetailsFacade {
         ...uxTests.map((test) => test.total_users || 0),
       );
 
-      return uxTests.map((uxTest) => {
-        return {
-          ...uxTest,
-          date: dayjs.utc(uxTest.date).locale(lang).format(dateFormat),
-          test_type: uxTest.test_type
-            ? this.i18n.service.translate(uxTest.test_type, lang)
-            : uxTest.test_type,
-          tasks: uxTest.tasks
-            .split('; ')
-            .map((task) =>
-              task ? this.i18n.service.translate(task, lang) : task,
-            )
-            .join('; '),
-          total_users: maxTotalUsers,
-        };
-      });
+      return uxTests.map((uxTest) => ({
+        ...uxTest,
+        date: uxTest.date
+          ? dayjs.utc(uxTest.date).locale(lang).format(dateFormat)
+          : null,
+        test_type: uxTest.test_type
+          ? this.i18n.service.translate(uxTest.test_type, lang)
+          : uxTest.test_type,
+        tasks: uxTest.tasks
+          .split('; ')
+          .map((task) =>
+            task ? this.i18n.service.translate(task, lang) : task,
+          )
+          .join('; '),
+        total_users: maxTotalUsers,
+      }));
     }),
   );
 
@@ -612,48 +596,48 @@ export class ProjectsDetailsFacade {
         ?.map((uxTest) => uxTest.tasks.split('; ') || [])
         .flat();
 
-      const tasks = data?.tasks.filter(({ title }) =>
-        tasksWithSuccessRate.includes(title),
-      );
-
-      const categories = tasks.map((task) => task.title);
+      const taskTitles = data?.taskMetrics
+        .filter(({ title }) => tasksWithSuccessRate.includes(title))
+        .map((task) => task.title);
 
       const uniqueTestTypes = [
         ...new Set(uxTests.map((item) => item.test_type)),
       ];
 
-      const series = uniqueTestTypes.map((testType) => {
-        const data = categories.map((category) => {
-          const tasks = uxTests.filter(
-            (task) =>
-              task.tasks.split('; ').includes(category) &&
-              task.test_type === testType &&
-              task.success_rate !== null &&
-              task.success_rate !== undefined,
-          );
-          const taskSuccessRates = tasks.map(
-            (task) => task.success_rate,
-          ) as number[];
-          const totalSuccessRates = taskSuccessRates.reduce(
-            (acc, val) => acc + val,
-            0,
-          );
-          return tasks.length > 0 ? totalSuccessRates / tasks.length : null;
-        }) as number[];
+      const validTests = uxTests
+        .filter((uxTest) => !isNullish(uxTest.success_rate))
+        .map((uxTest) => ({ ...uxTest, _tasks: uxTest.tasks.split('; ') }));
 
-        const name = testType
-          ? this.i18n.service.translate(testType as string, lang)
-          : testType;
+      const validTestsByTask = arrayToDictionaryMultiref(
+        validTests,
+        '_tasks',
+        true,
+      );
 
-        return { name, data };
-      });
+      const taskSuccessRatesByTestType = uniqueTestTypes.map((testType) => ({
+        name: this.i18n.service.translate(testType as string, lang),
+        // `data` is an array of avg success rate by task
+        data: taskTitles.map((taskTitle) => {
+          const taskSuccessRates =
+            validTestsByTask[taskTitle]
+              ?.filter((uxTest) => uxTest.test_type === testType)
+              .map((uxTest) => uxTest.success_rate || 0) || [];
 
-      const xaxis = categories.map((category) => {
-        return this.i18n.service.translate(category, lang);
-      });
+          return avg(taskSuccessRates);
+        }),
+      }));
 
-      return { series, xaxis };
+      return {
+        series: taskSuccessRatesByTestType,
+        xaxis: taskTitles.map((task) =>
+          this.i18n.service.translate(task, lang),
+        ),
+      };
     }),
+  );
+
+  taskSuccessChartHeight$ = this.apexTaskSuccessByUxTest$.pipe(
+    map((chart) => chart.xaxis.length * 35 * chart.series.length + 100),
   );
 
   taskSuccessByUxTestKpi$ = combineLatest([
@@ -668,14 +652,12 @@ export class ProjectsDetailsFacade {
         return [];
       }
 
-      // get unique tasks from all ux tests and create an array including the avg success rate by task
       const tasks = uxTests
         ?.map((uxTest) => uxTest?.tasks?.split('; '))
         .reduce((acc, val) => acc.concat(val), [])
         .filter((v, i, a) => a.indexOf(v) === i);
 
-      // create an array of success_rate for each test_type and task combination
-      const taskSuccess = tasks?.map((task, i) => {
+      const taskSuccess = tasks?.map((task) => {
         const successRate = uxTests?.map((uxTest) => {
           const taskSuccessRate = uxTest?.tasks
             ?.split('; ')
@@ -759,12 +741,14 @@ export class ProjectsDetailsFacade {
         } as TaskKpi;
       });
 
-      // divide baseline by validation to get the change in success rate
       return taskSuccessByUxTestKpi?.map((task) => {
         const validation = task.Validation;
         const baseline = task.Baseline;
         const change = (round(validation, 2) - round(baseline, 2)) * 100;
-        const taskPercentChange = percentChange(round(validation, 2), round(baseline, 2));
+        const taskPercentChange = percentChange(
+          round(validation, 2),
+          round(baseline, 2),
+        );
 
         return {
           ...task,
@@ -779,11 +763,22 @@ export class ProjectsDetailsFacade {
     map((data) => {
       const uxTests = data?.taskSuccessByUxTest;
 
-      if (!uxTests || !uxTests.length) {
-        return 0;
+      const maxUsersByType: Record<string, number> = {};
+
+      for (const { test_type, total_users = 0 } of uxTests) {
+        if (test_type) {
+          maxUsersByType[test_type] = Math.max(
+            maxUsersByType[test_type] || 0,
+            total_users,
+          );
+        }
       }
 
-      return Math.max(...uxTests.map((test) => test.total_users || 0));
+      const totalUsers = Object.values(maxUsersByType).reduce(
+        (accumulator, value) => accumulator + value,
+        0,
+      );
+      return totalUsers;
     }),
   );
 
@@ -798,28 +793,51 @@ export class ProjectsDetailsFacade {
   dateRangeLabel$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
-  ]).pipe(map(([data, lang]) => getWeeklyDatesLabel(data.dateRange, lang)));
+  ]).pipe(
+    map(
+      ([data, lang]) => this.getDateRangeLabel(data.dateRange, lang) as string,
+    ),
+  );
 
   comparisonDateRangeLabel$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getWeeklyDatesLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(data.comparisonDateRange || '', lang) as string,
     ),
   );
 
   fullDateRangeLabel$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
-  ]).pipe(map(([data, lang]) => getFullDateRangeLabel(data.dateRange, lang)));
+  ]).pipe(
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.dateRange,
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
+    ),
+  );
 
   fullComparisonDateRangeLabel$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
   ]).pipe(
-    map(([data, lang]) =>
-      getFullDateRangeLabel(data.comparisonDateRange || '', lang),
+    map(
+      ([data, lang]) =>
+        this.getDateRangeLabel(
+          data.comparisonDateRange || '',
+          lang,
+          'MMM D YYYY',
+          'to',
+          true,
+        ) as string[],
     ),
   );
 
@@ -843,7 +861,7 @@ export class ProjectsDetailsFacade {
         .filter((v, i, a) => a.indexOf(v) === i);
 
       return tasks
-        ?.map((task, i) => {
+        ?.map((task) => {
           const successRate = taskSuccessByUxData
             ?.map((uxTest) => {
               const taskSuccessRate = uxTest?.tasks
@@ -892,12 +910,11 @@ export class ProjectsDetailsFacade {
   );
 
   documents$ = this.projectsDetailsData$.pipe(
-    map(
-      (data) =>
-        data?.attachments.map((attachment) => ({
-          url: attachment.storage_url,
-          filename: attachment.filename,
-        })),
+    map((data) =>
+      data?.attachments.map((attachment) => ({
+        url: attachment.storage_url,
+        filename: attachment.filename,
+      })),
     ),
   );
 
@@ -910,7 +927,7 @@ export class ProjectsDetailsFacade {
   >(this.i18n.service, [
     { field: 'term', header: 'search-term' },
     { field: 'clicks', header: 'clicks', pipe: 'number' },
-    { field: 'clicksChange', header: 'comparison-for-clicks', pipe: 'percent' },
+    { field: 'clicksChange', header: 'change-for-clicks', pipe: 'percent' },
     {
       field: 'position',
       header: 'position',
@@ -925,19 +942,34 @@ export class ProjectsDetailsFacade {
   launchDate$ = this.projectsDetailsData$.pipe(
     map(({ launchDate }) => launchDate),
   );
-  members$ = this.projectsDetailsData$.pipe(
-    map(({ members }) =>
-      (members || '')
-        .split(', ')
-        .filter((member) => member)
-        .map((member) => ({
-          name: member,
-          role: 'Project lead',
-        })),
-    ),
+
+  getDateRangeLabel(
+    dateRange: string,
+    lang: LocaleId,
+    dateFormat = 'MMM D YYYY',
+    separator = '-',
+    breakLine = false,
+  ) {
+    const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
+
+    dateFormat = this.i18n.service.translate(dateFormat, lang);
+    separator = this.i18n.service.translate(separator, lang);
+
+    const formattedStartDate = dayjs
+      .utc(startDate)
+      .locale(lang)
+      .format(dateFormat);
+    const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
+
+    //breakLine exists for apexcharts labels
+    return breakLine
+      ? [`${formattedStartDate} ${separator}`, `${formattedEndDate}`]
+      : `${formattedStartDate} ${separator} ${formattedEndDate}`;
+  }
+
+  feedbackMostRelevant = this.store.selectSignal(
+    ProjectsDetailsSelectors.selectFeedbackMostRelevant,
   );
-  
-  feedbackMostRelevant = this.store.selectSignal(ProjectsDetailsSelectors.selectFeedbackMostRelevant);
 
   error$ = this.store.select(
     ProjectsDetailsSelectors.selectProjectsDetailsError,
@@ -1021,33 +1053,3 @@ function mapPageMetricsArraysWithPercentChange(
     });
   });
 }
-
-const getWeeklyDatesLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
-
-  const dateFormat = lang === 'fr-CA' ? 'D MMM' : 'MMM D';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return `${formattedStartDate}-${formattedEndDate}`;
-};
-
-const getFullDateRangeLabel = (dateRange: string, lang: LocaleId) => {
-  const [startDate, endDate] = dateRange.split('/');
-
-  const dateFormat = lang === FR_CA ? 'D MMM YYYY' : 'MMM D YYYY';
-  const separator = lang === FR_CA ? ' au' : ' to';
-
-  const formattedStartDate = dayjs
-    .utc(startDate)
-    .locale(lang)
-    .format(dateFormat);
-
-  const formattedEndDate = dayjs.utc(endDate).locale(lang).format(dateFormat);
-
-  return [`${formattedStartDate}${separator}`, `${formattedEndDate}`];
-};

@@ -1,14 +1,14 @@
 import { FieldSet, Query, RecordData } from 'airtable';
 import { QueryParams, SortParameter } from 'airtable/lib/query_params';
 import dayjs from 'dayjs';
-import type { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { Types } from 'mongoose';
 import { squishTrim } from '@dua-upd/utils-common';
+import type { AbstractDate, DateRange } from '@dua-upd/types-common';
 import { getATClient, AirTableAPI } from './client';
-import { bases } from './base';
+import { getBases } from './base';
 import { FieldRecordQuery, Lang } from './query';
 import {
   CalldriverData,
@@ -29,8 +29,6 @@ dayjs.extend(isSameOrBefore);
 export * from './client';
 export * from './types';
 
-export type DateType = string | Date | Dayjs;
-
 export const combineFormulas = (formulas: string[]) => {
   if (formulas.length === 0) {
     return '';
@@ -43,11 +41,11 @@ export const combineFormulas = (formulas: string[]) => {
   return `AND(${formulas.join(', ')})`;
 };
 
-export const createLastUpdatedFilterFormula = (date: DateType) =>
+export const createLastUpdatedFilterFormula = (date: AbstractDate) =>
   `IS_AFTER(LAST_MODIFIED_TIME(), "${dayjs.utc(date).format('YYYY-MM-DD')}")`;
 
 export const createDateRangeFilterFormula = (
-  dateRange: { start: DateType; end: DateType },
+  dateRange: DateRange<AbstractDate>,
   dateField: string,
 ) => {
   const start = dayjs(dateRange.start)
@@ -64,6 +62,7 @@ export const createDateRangeFilterFormula = (
 };
 
 export class AirtableClient {
+  private bases = getBases();
   client: AirTableAPI;
   feedbackClient: AirTableAPI = getATClient(process.env.AIRTABLE_TOKEN);
 
@@ -135,7 +134,7 @@ export class AirtableClient {
 
   async deleteSearchAssessment(id: string[], lang: Lang = 'en') {
     return await this.deleteRecords(
-      bases.SEARCH_ASSESSMENT,
+      this.bases.SEARCH_ASSESSMENT,
       `CRA - ${lang.toUpperCase()}`,
       id,
     );
@@ -189,14 +188,18 @@ export class AirtableClient {
 
   async getSearchAssessment(
     table = 'CRA - ',
-    lastUpdatedDate?: DateType,
+    lastUpdatedDate?: AbstractDate,
   ): Promise<FieldRecordQuery[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
-    const query = this.createQuery(bases.SEARCH_ASSESSMENT, `${table}`, params);
+    const query = this.createQuery(
+      this.bases.SEARCH_ASSESSMENT,
+      `${table}`,
+      params,
+    );
 
     return (await this.selectAll(query)).map(({ id, fields }) => ({
       airtable_id: id,
@@ -214,14 +217,18 @@ export class AirtableClient {
 
   async insertSearchAssessment(data, lang: Lang = 'en') {
     return await this.insertRecords(
-      bases.SEARCH_ASSESSMENT,
+      this.bases.SEARCH_ASSESSMENT,
       `CRA - ${lang.toUpperCase()}`,
       data,
     );
   }
 
   async insertExpectedDB(data, table = 'Expected - EN') {
-    return await this.insertRecords(bases.SEARCH_ASSESSMENT, `${table}`, data);
+    return await this.insertRecords(
+      this.bases.SEARCH_ASSESSMENT,
+      `${table}`,
+      data,
+    );
   }
 
   async updateSearchAssessment(
@@ -230,19 +237,19 @@ export class AirtableClient {
   ) {
     console.log(lang);
     return await this.updateRecords(
-      bases.SEARCH_ASSESSMENT,
+      this.bases.SEARCH_ASSESSMENT,
       `CRA - ${lang.toUpperCase()}`,
       data,
     );
   }
 
-  async getTasks(lastUpdatedDate?: DateType): Promise<TaskData[]> {
+  async getTasks(lastUpdatedDate?: AbstractDate): Promise<TaskData[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
-    const query = this.createQuery(bases.TASKS_INVENTORY, 'Tasks', params);
+    const query = this.createQuery(this.bases.TASKS_INVENTORY, 'Tasks', params);
 
     return (await this.selectAll(query))
       .filter(({ fields }) => fields['Task'])
@@ -268,14 +275,14 @@ export class AirtableClient {
       })) as TaskData[];
   }
 
-  async getReports(lastUpdatedDate?: DateType): Promise<ReportsData[]> {
+  async getReports(lastUpdatedDate?: AbstractDate): Promise<ReportsData[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
     const query = this.createQuery(
-      bases.TASKS_INVENTORY,
+      this.bases.TASKS_INVENTORY,
       'TMF reports',
       params,
     );
@@ -295,14 +302,14 @@ export class AirtableClient {
       })) as ReportsData[];
   }
 
-  async getUxTests(lastUpdatedDate?: DateType): Promise<UxTestData[]> {
+  async getUxTests(lastUpdatedDate?: AbstractDate): Promise<UxTestData[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
     const query = this.createQuery(
-      bases.TASKS_INVENTORY,
+      this.bases.TASKS_INVENTORY,
       'User Testing',
       params,
     );
@@ -362,13 +369,13 @@ export class AirtableClient {
       });
   }
 
-  async getPages(lastUpdatedDate?: DateType): Promise<PageData[]> {
+  async getPages(lastUpdatedDate?: AbstractDate): Promise<PageData[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
-    const query = this.createQuery(bases.TASKS_INVENTORY, 'Pages', params);
+    const query = this.createQuery(this.bases.TASKS_INVENTORY, 'Pages', params);
 
     return (await this.selectAll(query))
       .filter(({ fields }) => !!fields['Url'])
@@ -382,13 +389,15 @@ export class AirtableClient {
       })) as PageData[];
   }
 
-  async getAnnotations(lastUpdatedDate?: DateType): Promise<AnnotationsData[]> {
+  async getAnnotations(
+    lastUpdatedDate?: AbstractDate,
+  ): Promise<AnnotationsData[]> {
     const params = lastUpdatedDate
       ? {
           filterByFormula: createLastUpdatedFilterFormula(lastUpdatedDate),
         }
       : {};
-    const query = this.createQuery(bases.ANNOTATIONS, 'Events', params);
+    const query = this.createQuery(this.bases.ANNOTATIONS, 'Events', params);
 
     return (await this.selectAll(query))
       .filter(({ fields }) => Object.values(fields).some((value) => value))
@@ -413,7 +422,7 @@ export class AirtableClient {
   }
 
   async getGCTasksMappings(
-    lastUpdatedDate?: DateType,
+    lastUpdatedDate?: AbstractDate,
   ): Promise<GCTasksMappingsData[]> {
     const params = lastUpdatedDate
       ? {
@@ -421,7 +430,11 @@ export class AirtableClient {
         }
       : {};
 
-    const query = this.createQuery(bases.GCTASKSMAPPINGS, 'GCTSS->TMF', params);
+    const query = this.createQuery(
+      this.bases.GCTASKSMAPPINGS,
+      'GCTSS->TMF',
+      params,
+    );
 
     return (await this.selectAll(query))
       .filter(({ fields }) => Object.values(fields).some((value) => value))
@@ -435,7 +448,7 @@ export class AirtableClient {
       }));
   }
 
-  createCalldriverQueries(dateRange: { start: DateType; end: DateType }) {
+  createCalldriverQueries(dateRange: DateRange<AbstractDate>) {
     const queries: Query<FieldSet>[] = [];
 
     const start = dayjs(dateRange.start).utc(true);
@@ -448,7 +461,8 @@ export class AirtableClient {
     }
 
     while (queryDate.isSameOrBefore(end)) {
-      const baseId = bases[`DCD_${queryDate.year()}_Q${queryDate.quarter()}`];
+      const baseId =
+        this.bases[`DCD_${queryDate.year()}_Q${queryDate.quarter()}`];
       const table = `${queryDate.format('MMMM')} ${queryDate.year()}`;
       const filterByFormula = createDateRangeFilterFormula(
         dateRange,
@@ -466,7 +480,7 @@ export class AirtableClient {
     return queries;
   }
 
-  async getCalldrivers(dateRange: { start: DateType; end: DateType }) {
+  async getCalldrivers(dateRange: DateRange<AbstractDate>) {
     const queries = this.createCalldriverQueries(dateRange);
 
     const results = [];
@@ -494,10 +508,10 @@ export class AirtableClient {
   }
 
   async getFeedback(
-    dateRange: { start: DateType; end: DateType } = {} as typeof dateRange,
+    dateRange: DateRange<AbstractDate> = {} as typeof dateRange,
   ) {
     const filterByFormula = createDateRangeFilterFormula(dateRange, 'Date');
-    const query = this.createQuery(bases.FEEDBACK, 'Page feedback', {
+    const query = this.createQuery(this.bases.FEEDBACK, 'Page feedback', {
       filterByFormula,
     });
 
@@ -528,7 +542,7 @@ export class AirtableClient {
   }
 
   async getLiveFeedback(
-    dateRange: { start: DateType; end: DateType } = {} as typeof dateRange,
+    dateRange: DateRange<AbstractDate> = {} as typeof dateRange,
   ) {
     const dateRangeFormula = createDateRangeFilterFormula(dateRange, 'Date');
     const craFilterFormula = '{Institution} = "CRA"';
@@ -538,7 +552,7 @@ export class AirtableClient {
       craFilterFormula,
     ]);
 
-    const query = this.createQuery(bases.LIVE_FEEDBACK, 'Page feedback', {
+    const query = this.createQuery(this.bases.LIVE_FEEDBACK, 'Page feedback', {
       filterByFormula,
     });
 
@@ -576,7 +590,7 @@ export class AirtableClient {
     ]);
 
     const query = this.createQuery(
-      bases.TASKS_INVENTORY,
+      this.bases.TASKS_INVENTORY,
       'Unique Call Drivers FINAL',
       {
         filterByFormula,
@@ -621,7 +635,11 @@ export class AirtableClient {
         }
       : {};
 
-    const query = this.createQuery(bases.PAGES, 'Published CRA pages', params);
+    const query = this.createQuery(
+      this.bases.PAGES,
+      'Published CRA pages',
+      params,
+    );
 
     return (await this.selectAll(query)).map<PageListData>(({ id, fields }) => {
       const url = squishTrim(fields['Page path'] as string).replace(

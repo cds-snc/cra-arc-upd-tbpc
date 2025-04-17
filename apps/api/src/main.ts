@@ -1,13 +1,16 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+
 
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(helmet());
+  app.useBodyParser('json', { limit: '20mb' });
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

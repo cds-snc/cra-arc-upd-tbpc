@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { createEffect, Actions, ofType, concatLatestFrom } from '@ngrx/effects';
+import { createEffect, Actions, ofType } from '@ngrx/effects';
+import { concatLatestFrom } from '@ngrx/operators';
 import { EMPTY, mergeMap, of } from 'rxjs';
 import { I18nService, type LocaleId } from '@dua-upd/upd/i18n';
 import * as I18nActions from './i18n.actions';

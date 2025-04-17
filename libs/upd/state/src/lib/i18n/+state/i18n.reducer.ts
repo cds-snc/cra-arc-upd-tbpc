@@ -36,7 +36,7 @@ export const i18nInitialState: I18nState = {
 
 const reducer = createReducer(
   i18nInitialState,
-  on(I18nActions.setLang, (state, { lang }) =>
+  on(I18nActions.setLang, (state, { lang }): I18nState =>
     lang === state.currentLang ? state : { currentLang: lang }
   )
 );

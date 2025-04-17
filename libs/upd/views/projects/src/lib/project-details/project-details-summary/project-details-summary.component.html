@@ -119,29 +119,6 @@
   </div>
 </div>
 
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <ng-container *ngIf="memberList$ | async as members">
-        <upd-data-table-card
-          *ngIf="members.length; else noMembers"
-          [data]="(memberList$ | async) || []"
-          [cols]="memberListCols"
-          [sort]="false"
-          [filter]="false"
-          [pagination]="false"
-          [title]="'Members' | translate"
-        >
-        </upd-data-table-card>
-      </ng-container>
-      <ng-template #noMembers>
-        <upd-card [title]="'Members'">
-          <p>{{ 'Members list not available' | translate }}.</p>
-        </upd-card>
-      </ng-template>
-    </div>
-  </div>
-</div>
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">

@@ -42,6 +42,7 @@ Thumbs.db
 .angular
 .env
 nx-cloud.env
+
 /keys
 keys/*
 docker/certbot
@@ -49,3 +50,4 @@ docker/certbot
 /logs
 
 .nx/cache
+.nx/workspace-data

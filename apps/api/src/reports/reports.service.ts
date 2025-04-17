@@ -62,9 +62,9 @@ const projectStatusSwitchExpression = {
       },
       {
         case: {
-          $in: ['Being monitored', '$statuses'],
+          $in: ['Monitoring', '$statuses'],
         },
-        then: 'Being monitored',
+        then: 'Monitoring',
       },
       {
         case: {
@@ -90,7 +90,7 @@ export class ReportsService {
     private projectsModel: Model<ProjectDocument>,
     @InjectModel(Reports.name, 'defaultConnection')
     private reportsModel: Model<Reports>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getReportsData(): Promise<ReportsData> {
@@ -110,7 +110,7 @@ export class ReportsService {
           fr_title: 1,
           en_attachment: 1,
           fr_attachment: 1,
-        }
+        },
       )
       .exec()) as IReports[];
 

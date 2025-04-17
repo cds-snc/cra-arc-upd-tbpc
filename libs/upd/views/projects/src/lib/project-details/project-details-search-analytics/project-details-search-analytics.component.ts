@@ -99,7 +99,7 @@ export class ProjectDetailsSearchAnalyticsComponent implements OnInit {
         },
         {
           field: 'percentChange',
-          header: this.i18n.service.translate('comparison-for-clicks', lang),
+          header: this.i18n.service.translate('change-for-clicks', lang),
           type: 'comparison',
           pipe: 'percent',
         },

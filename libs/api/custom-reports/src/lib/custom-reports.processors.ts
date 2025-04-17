@@ -7,6 +7,8 @@ import { createQuery } from './clients/adobe-analytics.query';
 import { CustomReportsCache } from './custom-reports.cache';
 import { ChildJobMetadata } from './custom-reports.service';
 import { processResults } from './custom-reports.strategies';
+import { Inject } from '@nestjs/common';
+import { AA_CLIENT_TOKEN } from './clients/adobe-analytics.module';
 
 type ReportCreationMetadata = {
   id: string;
@@ -63,7 +65,7 @@ export class PrepareReportDataProcessor extends WorkerHost {
 })
 export class FetchAndProcessDataProcessor extends WorkerHost {
   constructor(
-    private aaClient: AdobeAnalyticsClient,
+    @Inject(AA_CLIENT_TOKEN) private aaClient: AdobeAnalyticsClient,
     private db: DbService,
   ) {
     super();
@@ -91,9 +93,11 @@ export class FetchAndProcessDataProcessor extends WorkerHost {
     } catch (err) {
       console.error('\nAn error occurred processing child job:');
       console.error('jobId: ', job.id);
+      console.error('job state: ', job.getState());
       console.error('parent report id: ', job.data.reportId);
       console.error('AA query: ', job.data.query);
       console.error((<Error>err).stack);
+
       throw err;
     }
   }

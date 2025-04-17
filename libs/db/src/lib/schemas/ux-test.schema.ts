@@ -24,7 +24,7 @@ export class UxTest implements IUxTest {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Page' }] })
   pages?: Types.ObjectId[] | Page[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }], index: true })
   tasks?: Types.ObjectId[] | Task[];
 
   @Prop({ type: String })

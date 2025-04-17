@@ -10,14 +10,9 @@ import type {
 } from 'ng-apexcharts';
 import { mergeDeepRight } from 'rambdax';
 import { EN_CA } from '@dua-upd/upd/i18n';
-import { arrayToDictionary, round, sum } from '@dua-upd/utils-common';
+import { round, sum } from '@dua-upd/utils-common';
 import { createBaseConfig } from '../apex-base/apex.config.base';
-import {
-  getTooltipHtml,
-  SeriesDates,
-  SeriesWithXYData,
-  formatDate,
-} from '../apex-bar-line/apex.store';
+import { getTooltipHtml } from '../apex-bar-line/apex.store';
 
 export interface ChartOptions extends ApexOptions {
   chart: ApexChart;
@@ -116,6 +111,8 @@ export class ApexStore extends ComponentStore<ChartOptions> {
           ...state.chart,
           stacked: value?.isStacked,
           stackType: value?.isStacked100 ? '100%' : undefined,
+          // update for more than 2 series
+          height: 175,
         },
         dataLabels: {
           enabled: value?.hasDataLabels,
@@ -138,6 +135,16 @@ export class ApexStore extends ComponentStore<ChartOptions> {
                 ? `${val}%`
                 : `${val} %`;
             },
+            show: false,
+          },
+          crosshairs: {
+            show: false,
+          },
+          axisTicks: {
+            show: false,
+          },
+          axisBorder: {
+            show: false,
           },
         },
         yaxis: {
@@ -190,6 +197,15 @@ export class ApexStore extends ComponentStore<ChartOptions> {
         },
       };
     },
+  );
+
+  readonly setHeight = this.updater(
+    (state, value: number): ChartOptions =>
+      mergeDeepRight(state, {
+        chart: {
+          height: value,
+        },
+      }),
   );
 
   readonly setXAxis = this.updater(

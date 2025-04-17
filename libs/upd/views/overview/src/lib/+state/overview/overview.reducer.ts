@@ -33,6 +33,7 @@ export const initialState: OverviewState = {
     uxTests: [],
     searchTermsEn: [],
     searchTermsFr: [],
+    topTasksTable: [],
   },
   loaded: false,
   loading: false,

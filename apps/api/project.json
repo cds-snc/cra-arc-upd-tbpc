@@ -29,7 +29,9 @@
           "mongoose",
           "@adobe/aio-lib-analytics",
           "brotli-wasm",
-          "@mongodb-js/zstd-linux-x64-musl"
+          "@mongodb-js/zstd-linux-x64-musl",
+          "@mongodb-js/zstd-linux-x64-gnu",
+          "duckdb"
         ],
         "inspect": false,
         "sourceMap": true,

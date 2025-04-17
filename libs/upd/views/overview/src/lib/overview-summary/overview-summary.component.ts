@@ -14,6 +14,7 @@ import { EN_CA, type LocaleId } from '@dua-upd/upd/i18n';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 import { combineLatest } from 'rxjs';
+import type { UnwrapSignal } from '@dua-upd/utils-common/types';
 
 @Component({
   selector: 'upd-overview-summary',
@@ -65,25 +66,8 @@ export class OverviewSummaryComponent implements OnInit {
   improvedKpi$ = this.overviewService.improvedKpi$;
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
 
-  getDiffText(diff: number): string {
-    if (diff > 0) {
-      return 'increase';
-    } else if (diff < 0) {
-      return 'decrease';
-    } else {
-      return '';
-    }
-  }
-
-  getColor(diff: number): string {
-    if (diff > 0) {
-      return '#26A69A';
-    } else if (diff < 0) {
-      return '#DF2929';
-    } else {
-      return '';
-    }
-  }
+  uniqueTaskTestedLatestTestKpi$ =
+    this.overviewService.uniqueTaskTestedLatestTestKpi$;
 
   kpiSearchAssessment$ = this.overviewService.currentKpiSearchAssessment$;
   kpiSearchAssessmentPercentChange$ =
@@ -134,12 +118,16 @@ export class OverviewSummaryComponent implements OnInit {
   donutChartCols: ColumnConfig = { field: '', header: '' };
   donutChartData: { text: string; link: string }[] = [];
 
+  topTasksTable = this.overviewService.topTasksTable;
+
+  topTasksTableCols: ColumnConfig<UnwrapSignal<typeof this.topTasksTable>>[] = [];
+
   dyfTableCols: ColumnConfig<{
     name: string;
     currValue: string;
     prevValue: string;
   }>[] = [];
-  
+
   barTableCols: ColumnConfig<{
     date: string;
     visits: string;
@@ -186,7 +174,7 @@ export class OverviewSummaryComponent implements OnInit {
       this.dyfTableCols = [
         {
           field: 'name',
-          header: this.i18n.service.translate('Selection', lang),
+          header: 'Selection',
         },
         {
           field: 'currValue',
@@ -284,6 +272,88 @@ export class OverviewSummaryComponent implements OnInit {
             lang,
           ),
           link: 'pagefeedback',
+        },
+      ];
+
+
+      this.topTasksTableCols = [
+        {
+          field: 'tmf_rank',
+          header: 'Rank',
+          width: '80px',
+          center: true,
+        },
+        {
+          field: 'title',
+          header: 'task',
+          type: 'link',
+          typeParams: { 
+            preLink: '/' + this.langLink + '/tasks', 
+            link: '_id' 
+          },
+          translate: true,
+        },
+        {
+          field: 'calls_per_100_visits_percent_change',
+          header: 'kpi-calls-per-100-title-change',
+          pipe: 'percent',
+          pipeParam: '1.0-2',
+          upGoodDownBad: false,
+          indicator: true,
+          useArrows: true,
+          showTextColours: true,
+          secondaryField: {
+            field: 'calls_per_100_visits_difference',
+            pipe: 'number',
+            pipeParam: '1.0-2',
+          },
+          width: '170px',
+        },
+        {
+          field: 'dyf_no_per_1000_visits_percent_change',
+          header: 'kpi-feedback-per-1000-title-change',
+          pipe: 'percent',
+          pipeParam: '1.0-2',
+          upGoodDownBad: false,
+          indicator: true,
+          useArrows: true,
+          showTextColours: true,
+          secondaryField: {
+            field: 'dyf_no_per_1000_visits_difference',
+            pipe: 'number',
+            pipeParam: '1.0-2',
+          },
+          width: '220px',
+        },
+        {
+          field: 'survey_completed',
+          header: 'Self-reported success',
+          pipe: 'percent',
+          tooltip: 'tooltip-self-reported-success',
+          width: '140px',
+        },
+        {
+          field: 'latest_ux_success',
+          header: 'Latest UX success rate',
+          pipe: 'percent',
+          tooltip: 'tooltip-latest-success-rate',
+          width: '145px',
+        },
+        {
+          field: 'latest_success_rate_percent_change',
+          header: 'latest_success_rate_change',
+          pipe: 'percent',
+          pipeParam: '1.0-2',
+          upGoodDownBad: true,
+          indicator: true,
+          useArrows: true,
+          showTextColours: true,
+          secondaryField: {
+            field: 'latest_success_rate_difference',
+            pipe: 'number',
+            pipeParam: '1.0-2',
+          },
+          width: '150px',
         },
       ];
     });

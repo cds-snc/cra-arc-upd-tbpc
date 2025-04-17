@@ -87,24 +87,14 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     fail: { message: 'kpi-not-met-volume' },
   };
 
-  memberList$ = this.projectsDetailsService.members$;
-  memberListCols: ColumnConfig[] = [];
 
   description$ = this.projectsDetailsService.description$;
 
   startDate$ = this.projectsDetailsService.startDate$;
   launchDate$ = this.projectsDetailsService.launchDate$;
 
-  participantTasksCols: ColumnConfig<ParticipantTasksColTypes>[] = [
-    {
-      field: 'title',
-      header: 'Task list',
-      translate: true,
-      type: 'link',
-      typeParams: { preLink: '/' + this.langLink + '/tasks', link: '_id' },
-    },
-  ];
-
+  participantTasksCols: ColumnConfig<ParticipantTasksColTypes>[] = [];
+    
   dyfTableCols: ColumnConfig<{
     name: string;
     currValue: number;
@@ -156,16 +146,50 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         },
       ];
 
-      this.memberListCols = [
+      this.participantTasksCols = [
         {
-          field: 'name',
-          header: this.i18n.service.translate('Name', lang),
+          field: 'title',
+          header: 'Task list',
+          translate: true,
+          type: 'link',
+          typeParams: { preLink: '/' + this.langLink + '/tasks', link: '_id' },
         },
         {
-          field: 'role',
-          header: this.i18n.service.translate('Role', lang),
+          field: 'callsPer100Visits',
+          header: 'kpi-calls-per-100-title',
+          pipe: 'number',
+          pipeParam: '1.0-2',
+        },
+        {
+          field: 'dyfNoPer1000Visits',
+          header: 'kpi-feedback-per-1000-title',
+          pipe: 'number',
+          pipeParam: '1.0-2',
+        },
+        {
+          field: 'uxTestInLastTwoYears',
+          header: 'UX Test in Past 2 Years?',
+          translate: true,
+        },
+        {
+          field: 'latestSuccessRate',
+          header: 'Latest success rate',
+          pipe: 'percent',
+          tooltip: 'tooltip-latest-success-rate',
         },
       ];
+    
+
+      // this.memberListCols = [
+      //   {
+      //     field: 'name',
+      //     header: this.i18n.service.translate('Name', lang),
+      //   },
+      //   {
+      //     field: 'role',
+      //     header: this.i18n.service.translate('Role', lang),
+      //   },
+      // ];
     });
   }
 }

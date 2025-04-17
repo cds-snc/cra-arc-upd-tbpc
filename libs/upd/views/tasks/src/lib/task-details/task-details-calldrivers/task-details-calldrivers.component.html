@@ -7,7 +7,7 @@
   <div class="row">
     <div class="col">
       <upd-apex-bar
-        [title]="'d3-tcbil'"
+        [title]="'d3-tcbel'"
         [series]="(apexCalldriversChart$ | async) || []"
         [xAxis]="[
           (dateRangeLabel$ | async) || '',
@@ -16,6 +16,7 @@
         [yAxis]="'Number of calls' | translate"
         [table]="calldriversTable$ | async"
         [tableCols]="calldriversCols"
+        [emptyMessage]="(callsEmptyMessages$ | async) || ''"
       ></upd-apex-bar>
     </div>
   </div>
@@ -30,6 +31,7 @@
         [filter]="true"
         [pagination]="true"
         [title]="'tab-calldrivers'"
+        [emptyStateMessage]="(callsEmptyMessages$ | async) || ''"
       >
       </upd-data-table-card>
     </div>

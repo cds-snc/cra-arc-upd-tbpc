@@ -3,6 +3,7 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { GetTableProps } from '@dua-upd/utils-common';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
+import { EN_CA } from '@dua-upd/upd/i18n';
 
 type DocumentsColTypes = GetTableProps<
   TaskDetailsUxTestsComponent,
@@ -21,6 +22,7 @@ export class TaskDetailsUxTestsComponent implements OnInit {
   taskSuccessChart$ = this.taskDetailsService.taskSuccessChart$;
   taskSuccessChartData$ = this.taskDetailsService.taskSuccessChartData$;
   taskSuccessChartLegend$ = this.taskDetailsService.taskSuccessChartLegend$;
+  taskSuccessChartHeight$ = this.taskDetailsService.taskSuccessChartHeight$;
   taskSuccessData$ = this.taskDetailsService.taskSuccessByUxTest$;
 
   totalParticipants$ = this.taskDetailsService.totalParticipants$;
@@ -35,6 +37,8 @@ export class TaskDetailsUxTestsComponent implements OnInit {
   documents$ = this.taskDetailsService.documents$;
   documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
 
+  langLink = 'en';
+
   taskSuccessChartCols: ColumnConfig[] = [];
   taskSuccessDataCols: ColumnConfig[] = [];
 
@@ -43,6 +47,8 @@ export class TaskDetailsUxTestsComponent implements OnInit {
 
   ngOnInit() {
     this.i18n.currentLang$.subscribe((lang) => {
+      this.langLink = lang === EN_CA ? 'en' : 'fr';
+
       this.documentsCols = [
         {
           field: 'filename',
@@ -60,7 +66,19 @@ export class TaskDetailsUxTestsComponent implements OnInit {
         },
       ];
       this.taskSuccessDataCols = [
-        { field: 'title', header: this.i18n.service.translate('UX Test', lang) },
+        {
+          field: 'title',
+          header: this.i18n.service.translate('UX Test', lang),
+          type: 'link',
+          typeParams: {
+            preLink: '/' + this.langLink + '/projects',
+            link: '_project_id',
+          },
+        },
+        {
+          field: 'test_type',
+          header: this.i18n.service.translate('Test type', lang),
+        },
         {
           field: 'scenario',
           header: this.i18n.service.translate('Scenario', lang),

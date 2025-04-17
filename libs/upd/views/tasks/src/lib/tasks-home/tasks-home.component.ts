@@ -179,7 +179,7 @@ export class TasksHomeComponent implements OnInit {
       group: 'metrics',
     },
     {
-      field: 'calls_percent_change',
+      field: 'calls_per_100_visits_percent_change',
       header: 'kpi-calls-per-100-title-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
@@ -204,7 +204,7 @@ export class TasksHomeComponent implements OnInit {
       group: 'metrics',
     },
     {
-      field: 'dyf_no_percent_change',
+      field: 'dyf_no_per_1000_visits_percent_change',
       header: 'kpi-feedback-per-1000-title-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
@@ -230,12 +230,11 @@ export class TasksHomeComponent implements OnInit {
     },
     {
       field: 'latest_ux_success',
-      header: 'Latest success rate',
+      header: 'Latest UX success rate',
       pipe: 'percent',
-      hide: true,
       tooltip: 'tooltip-latest-success-rate',
-      width: '100px',
-      group: 'metrics',
+      width: '110px',
+      frozen: true,
     },
     {
       field: 'latest_success_rate_percent_change',

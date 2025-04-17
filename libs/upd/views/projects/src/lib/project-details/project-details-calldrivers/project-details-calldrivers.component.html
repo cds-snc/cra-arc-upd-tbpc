@@ -7,11 +7,11 @@
   <div class="row">
     <div class="col">
       <upd-apex-bar
-        [title]="'d3-tcbil'"
+        [title]="'d3-tcbel'"
         [series]="(apexCalldriversChart$ | async) || []"
         [xAxis]="[
           (dateRangeLabel$ | async) || '',
-          (comparisonDateRangeLabel$ | async) || ''
+          (comparisonDateRangeLabel$ | async) || '',
         ]"
         [yAxis]="'Number of calls' | translate"
         [table]="calldriversTable$ | async"
@@ -35,3 +35,4 @@
     </div>
   </div>
 </div>
+<!-- {{callsByTopicConfig$ | async | json}} -->

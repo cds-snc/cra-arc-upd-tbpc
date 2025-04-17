@@ -24,26 +24,35 @@ export const tasksHomeInitialState: TasksHomeState = {
 
 const reducer = createReducer(
   tasksHomeInitialState,
-  on(TasksHomeActions.loadTasksHomeInit, (state) => ({
-    ...state,
-    loaded: false,
-    error: null,
-  })),
-  on(TasksHomeActions.loadTasksHomeSuccess, (state, { data }) => ({
-    data: data,
-    loaded: true,
-    error: null,
-  })),
-  on(TasksHomeActions.loadTasksHomeError, (state, { error }) => ({
-    ...state,
-    loaded: true,
-    error,
-  }))
+  on(
+    TasksHomeActions.loadTasksHomeInit,
+    (state): TasksHomeState => ({
+      ...state,
+      loaded: false,
+      error: null,
+    }),
+  ),
+  on(
+    TasksHomeActions.loadTasksHomeSuccess,
+    (state, { data }): TasksHomeState => ({
+      data: data,
+      loaded: true,
+      error: null,
+    }),
+  ),
+  on(
+    TasksHomeActions.loadTasksHomeError,
+    (state, { error }): TasksHomeState => ({
+      ...state,
+      loaded: true,
+      error,
+    }),
+  ),
 );
 
 export function tasksHomeReducer(
   state: TasksHomeState | undefined,
-  action: Action
+  action: Action,
 ) {
   return reducer(state, action);
 }

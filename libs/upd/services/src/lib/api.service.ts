@@ -1,6 +1,10 @@
 import { HttpClient, type HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { DbQuery, OverviewFeedback } from '@dua-upd/types-common';
+import type {
+  ChunkedMostRelevantCommentsAndWords,
+  DbQuery,
+  PartialOverviewFeedback,
+} from '@dua-upd/types-common';
 import type {
   ApiParams,
   OverviewData,
@@ -46,12 +50,27 @@ export class ApiService {
     return this.get<PageDetailsData>('/api/pages/details', params);
   }
 
+  getPageFlow(params: ApiParams) {
+    return this.get('/api/pages/flow', params);
+  }
+
+  getHashes(params: ApiParams) {
+    return this.get('/api/hashes', params);
+  }
+
   getOverviewData(params: ApiParams) {
     return this.get<OverviewData>('/api/overall', params);
   }
-  
+
   getOverviewFeedback(params: ApiParams) {
-    return this.get<OverviewFeedback>('/api/overall/feedback', params);
+    return this.get<PartialOverviewFeedback>('/api/overall/feedback', params);
+  }
+
+  getOverviewMostRelevant(params: ApiParams) {
+    return this.get<ChunkedMostRelevantCommentsAndWords>(
+      '/api/overall/most-relevant',
+      params,
+    );
   }
 
   getTasksHomeData(params: ApiParams) {

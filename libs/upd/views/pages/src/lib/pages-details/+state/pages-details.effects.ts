@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { createEffect, Actions, ofType, concatLatestFrom } from '@ngrx/effects';
+import { createEffect, Actions, ofType } from '@ngrx/effects';
+import { concatLatestFrom } from '@ngrx/operators';
 import { Store } from '@ngrx/store';
 import { catchError, mergeMap, map, of, EMPTY, filter } from 'rxjs';
 import { ApiService } from '@dua-upd/upd/services';
@@ -9,10 +10,14 @@ import {
   selectDatePeriod,
 } from '@dua-upd/upd/state';
 import {
+  getHashes,
+  getHashesError,
+  getHashesSuccess,
   loadPagesDetailsInit,
   loadPagesDetailsSuccess,
 } from './pages-details.actions';
 import { selectPagesDetailsData } from './pages-details.selectors';
+import { UrlHash } from '@dua-upd/types-common';
 
 @Injectable()
 export class PagesDetailsEffects {
@@ -68,6 +73,30 @@ export class PagesDetailsEffects {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
       mergeMap(() => of(loadPagesDetailsInit())),
+    );
+  });
+
+  getHashes$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(getHashes),
+      concatLatestFrom(() => [this.store.select(selectRouteNestedParam('id'))]),
+      mergeMap(([, id]) =>
+        this.api
+          .get<
+            UrlHash[],
+            {
+              id: string;
+            }
+          >('/api/hashes/get-hashes', {
+            id,
+          })
+          .pipe(
+            map((data) => getHashesSuccess({ data })),
+            catchError((error) =>
+              of(getHashesError({ error: error.message || 'Failed to get hashes' })),
+            ),
+          ),
+      ),
     );
   });
 }

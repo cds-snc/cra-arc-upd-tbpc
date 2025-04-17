@@ -39,7 +39,7 @@
         [kpiObjectiveCriteria]="searchKpiObjectiveCriteria"
         [postValue]="'Pass'"
         [preLabel]="'Target'"
-        [valueLabel]="0.75"
+        [valueLabel]="0.8"
         [keyword]="'search'"
         modal="{{ 'kpi-search-assessment-guidance' | translate }}"
         >{{
@@ -48,7 +48,7 @@
               : {
                   passed: (kpiSearchAssessmentPassed$ | async)?.passed,
                   total: (kpiSearchAssessmentPassed$ | async)?.total,
-                  date: satEnd
+                  date: satEnd,
                 }
         }}
       </upd-apex-radial-bar>
@@ -69,7 +69,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiSuccessRateDifference$ | async
+              value: improvedKpiSuccessRateDifference$ | async,
             } as improvedKpi"
           >
             <span
@@ -80,11 +80,14 @@
               }}</i>
               {{ improvedKpi.value | percent: undefined : currentLangSignal() }}
             </span>
-            {{ getDiffText(improvedKpi.value ?? 0) | translate }}
             <br />
             {{
               'kpi-ux-test-improved-text'
-                | translate: { total: (improvedKpiUniqueTasks$ | async) || 0 }
+                | translate
+                  : {
+                      unique: (improvedKpiUniqueTasks$ | async) || 0,
+                      total: (uniqueTaskTestedLatestTestKpi$ | async) || 0,
+                    }
             }}
           </ng-container>
         </div>
@@ -105,6 +108,7 @@
         [secondaryTitleData]="chartData"
         [secondaryTitleCols]="chartCols"
         [annotations]="(annotationsData$ | async) || []"
+        [allowHeaderWrap]="true"
       ></upd-apex-bar-line>
     </div>
   </div>
@@ -180,13 +184,31 @@
         [yAxis]="'Date range' | translate"
         [xAxis]="[
           (fullDateRangeLabel$ | async) || [],
-          (fullComparisonDateRangeLabel$ | async) || []
+          (fullComparisonDateRangeLabel$ | async) || [],
         ]"
         [tableCols]="dyfTableCols"
         [table]="dyfChart$ | async"
+        [allowHeaderWrap]="true"
         [horizontal]="{ isHorizontal: true, colorDistributed: false }"
         [stacked]="{ isStacked: true, isStacked100: true, hasDataLabels: true }"
       ></upd-apex-bar>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col-sm-12">
+      <upd-card title="Top 50 tasks" titleSize="h5">
+        <upd-data-table
+          id="overview-top-tasks-"
+          [data]="topTasksTable()"
+          [cols]="topTasksTableCols"
+          [displayRows]="25"
+          [loading]="(loading$ | async) !== false"
+          [allowHeaderWrap]="true"
+        ></upd-data-table>
+      </upd-card>
     </div>
   </div>
 </div>

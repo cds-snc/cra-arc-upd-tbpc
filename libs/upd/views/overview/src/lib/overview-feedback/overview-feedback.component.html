@@ -1,5 +1,9 @@
 @if (loading()) {
   <upd-loading-spinner></upd-loading-spinner>
+} @else if (error()) {
+  <upd-alert [type]="'danger'" [dismissible]="false">{{
+    error()?.message
+  }}</upd-alert>
 } @else {
   <div class="container-fluid gx-0">
     <div class="row">
@@ -36,7 +40,7 @@
           [yAxis]="'Date range' | translate"
           [xAxis]="[
             (fullDateRangeLabel$ | async) || [],
-            (fullComparisonDateRangeLabel$ | async) || []
+            (fullComparisonDateRangeLabel$ | async) || [],
           ]"
           [tableCols]="dyfTableCols()"
           [table]="dyfChart$ | async"
@@ -45,7 +49,7 @@
           [stacked]="{
             isStacked: true,
             isStacked100: true,
-            hasDataLabels: true
+            hasDataLabels: true,
           }"
         ></upd-apex-bar>
       </div>

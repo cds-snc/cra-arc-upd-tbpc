@@ -122,7 +122,7 @@ const cleanComment = (
 };
 
 // skip words that are entirely non-alphanumeric (unless an emoji)
-const nonAlphaNumericPattern = /^[^a-z0-9\p{Emoji_Presentation}]+$/i;
+const nonAlphaNumericPattern = /^[^a-z0-9\p{Emoji_Presentation}]+$/iu;
 
 export function preprocessCommentWords(comments: IFeedback[]) {
   const stopwordSets = {

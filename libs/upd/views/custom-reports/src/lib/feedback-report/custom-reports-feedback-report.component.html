@@ -1,0 +1,146 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-3 mb-3">
+      <button class="btn btn-outline-primary" (click)="goBack()">
+        <span class="material-icons">arrow_back</span> {{ 'Back' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (!error() && commentsData().length === 0 && !queryResults()) {
+  <upd-did-you-know></upd-did-you-know>
+}
+
+@if (!error() && commentsData().length !== 0 && queryResults()) {
+  <upd-alert position="top" [selfClosing]="true">
+    {{ 'success-generating-report' | translate }}
+  </upd-alert>
+}
+
+@if (!error() && !queryResults()) {
+  <div class="w-100 d-inline-block mx-auto mb-2">
+    <div class="d-flex flex-fill align-content-center h-100 w-100">
+      <div class="card align-middle w-100">
+        <div class="card-body">
+          <p class="text-muted">{{ 'fetching data' | translate }}</p>
+          <div class="w-100">
+            <p-progressBar mode="indeterminate"></p-progressBar>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (!error() && queryResults()) {
+  <div class="card-container mt-3">
+    <div class="card">
+      <h5 class="card-header">{{ 'Report details' | translate }}</h5>
+      <div class="card-body">
+        <div class="report-detail">
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'Date range' | translate }}:</h6>
+            {{ startDate() | translate }} {{ 'to' | translate }}
+            {{ endDate() | translate }}
+          </div>
+
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'items' | translate }}:</h6>
+          </div>
+          <upd-accordion
+            [styleClass]="'mb-2'"
+            [expanded]="selectedCount() < 10"
+            title="{{
+              'Items added to report'
+                | translate
+                  : {
+                      count: selectedCount(),
+                    }
+            }} "
+          >
+            @if (selectedPagesCount()) {
+              <p class="fw-bold">{{ 'pages' | translate }}</p>
+            }
+            <ul>
+              <li *ngFor="let page of selectedPages()">
+                {{ page.title }}
+              </li>
+            </ul>
+            @if (selectedTasksCount()) {
+              <p class="fw-bold">{{ 'tasks' | translate }}</p>
+            }
+            <ul>
+              <li *ngFor="let task of selectedTasks()">
+                {{ task.title | translate }}
+                {{ 'page-count' | translate: { count: task.pages.length } }}
+              </li>
+            </ul>
+            @if (selectedProjectsCount()) {
+              <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
+            }
+            <ul>
+              <li *ngFor="let project of selectedProjects()">
+                {{ project.title | translate }}
+                {{ 'page-count' | translate: { count: project.pages.length } }}
+              </li>
+            </ul>
+          </upd-accordion>
+        </div>
+      </div>
+    </div>
+
+    @if (commentsData().length !== 0) {
+      <div class="w-100 d-inline-block mx-mx-auto mt-4">
+        <div class="d-flex flex-fill align-content-center h-100 w-100">
+          <div class="card align-middle w-100">
+            <div class="card-body">
+              <div>
+                <upd-data-table
+                  #dataTable
+                  id="pages-home-"
+                  [data]="commentsData()"
+                  [cols]="columnsComments"
+                  [displayRows]="50"
+                  [loading]="queryResults() === null"
+                >
+                </upd-data-table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (error()) {
+  <div class="alert alert-danger d-inline-block mx-auto" style="width: 100%">
+    <p class="align-top pe-1">
+      <span class="material-icons align-top pe-1" aria-hidden="true"
+        >error</span
+      >
+      <span class="h5">{{ 'error' | translate }}</span>
+    </p>
+
+    <p class="mb-0">{{ error() | translate }}</p>
+  </div>
+}
+
+@if (queryResults() && commentsData().length === 0) {
+  <div
+    class="alert alert-warning d-inline-block mx-auto mt-4"
+    style="width: 100%"
+  >
+    <p class="align-top pe-1">
+      <span class="material-icons align-top pe-1" aria-hidden="true"
+        >warning</span
+      >
+      <span>{{ 'No feedback data was found' | translate }}</span>
+    </p>
+  </div>
+}

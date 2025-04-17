@@ -1,0 +1,194 @@
+import { sql, type SQLWrapper, type DrizzleTypeError } from 'drizzle-orm';
+import {
+  type PgInsertValue,
+  type PgTableWithColumns,
+  type SelectedFields,
+  type TableLikeHasEmptySelection,
+} from 'drizzle-orm/pg-core';
+import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
+import type { BlobStorageService } from '@dua-upd/blob-storage';
+import { createReadStream } from 'node:fs';
+import { rm } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
+
+export type DuckDbStorageConfig<Table extends PgTableWithColumns<any>> = {
+  name: string;
+  table: Table;
+  tableCreationSql: SQLWrapper | string;
+  remoteContainer: string;
+  remoteContainerPath: string;
+};
+
+export type DrizzleTable<Table extends PgTableWithColumns<any>> =
+  TableLikeHasEmptySelection<Table> extends true
+    ? DrizzleTypeError<"Cannot reference a data-modifying statement subquery if it doesn't contain a `returning` clause">
+    : Table;
+
+export type OrderBy<Table extends PgTableWithColumns<any>> = {
+  [Key in Table['_']['columns'][keyof Table['_']['columns']] | string]:
+    | 'ASC'
+    | 'DESC';
+};
+
+const getStorageUriPrefix = () => process.env['STORAGE_URI_PREFIX'];
+
+export class DuckDbTable<Table extends PgTableWithColumns<any>> {
+  readonly name: string;
+  readonly table: Table;
+  readonly filename: string;
+  readonly remoteContainer: string;
+  readonly remoteContainerPath: string;
+  readonly remotePath: string;
+  readonly remoteBackupPath: string;
+  readonly fullRemotePath: string;
+
+  constructor(
+    private readonly db: DuckDBDatabase,
+    private readonly blob: BlobStorageService,
+    private readonly config: DuckDbStorageConfig<Table>,
+  ) {
+    this.name = config.name;
+    this.table = config.table;
+    this.remoteContainer = config.remoteContainer;
+    this.remoteContainerPath = config.remoteContainerPath;
+    this.remotePath = `${config.remoteContainer}/${config.remoteContainerPath}`;
+    this.remoteBackupPath = `${config.remoteContainer}/backup/${config.remoteContainerPath}`;
+    this.fullRemotePath = `${getStorageUriPrefix()}${this.remotePath}`;
+    this.filename =
+      this.remoteContainerPath.split('/').pop() || this.remoteContainerPath;
+  }
+
+  async backupRemote() {
+    const container = (
+      await this.blob.container(this.remoteContainer)
+    ).getClient();
+
+    const backupFilePath = this.remoteBackupPath.replace(
+      /\.parquet$/,
+      `_${new Date().toISOString().slice(0, 10)}.parquet`,
+    );
+    console.log(`Backing up ${this.remotePath} to ${backupFilePath}`);
+
+    const blobClient = container.getBlobClient(this.remoteContainerPath);
+    const backupBlobClient = container.getBlobClient(backupFilePath);
+
+    const copyPoller = await backupBlobClient
+      .getBlockBlobClient()
+      .beginCopyFromURL(blobClient.url);
+
+    await copyPoller.pollUntilDone();
+
+    console.log(`Backup complete: ${this.remoteBackupPath}`);
+  }
+
+  async createLocalTable() {
+    await this.db.execute(this.config.tableCreationSql);
+  }
+
+  async deleteLocalTable() {
+    await this.db.execute(sql`DROP TABLE IF EXISTS ${this.table}`);
+  }
+
+  async insertLocal(data: PgInsertValue<Table>[]) {
+    await this.db.insert(this.table).values(data).execute();
+  }
+
+  async appendLocalToRemote(options?: {
+    orderBy?: OrderBy<Table>;
+    compressionLevel?: number;
+    rowGroupSize?: number;
+    useTmpFile?: boolean;
+  }) {
+    // to get around bug in drizzle-duckdb causing column names to be "tableName.columnName"
+    // and the "fake" table causing the select to be empty
+    const selectAll = Object.fromEntries(
+      Object.keys(this.table)
+        .filter((key) => key !== 'enableRLS')
+        .map((key) => [key, this.table[key]]),
+    );
+
+    const selectLocalSql = this.db
+      .select(selectAll)
+      .from(this.table as DrizzleTable<Table>);
+
+    const selectRemoteSql = this.selectRemote(selectAll);
+
+    const orderByClause = options?.orderBy
+      ? `ORDER BY ${Object.entries(options.orderBy)
+          .map(([column, direction]) => `${column} ${direction}`)
+          .join(', ')}`
+      : '';
+
+    // todo maybe: add dedicated parquet options parsing/formatting?
+    const compressionLevel = options?.compressionLevel
+      ? `COMPRESSION_LEVEL ${options.compressionLevel}`
+      : 'COMPRESSION_LEVEL 7';
+
+    const rowGroupSize = options?.rowGroupSize
+      ? `ROW_GROUP_SIZE ${options.rowGroupSize}`
+      : null;
+
+    const useTmpFile =
+      typeof options?.useTmpFile === 'boolean'
+        ? `USE_TMP_FILE ${options.useTmpFile}`
+        : null;
+
+    const optionsSql = [compressionLevel, rowGroupSize, useTmpFile]
+      .filter(Boolean)
+      .join(', ');
+
+    console.log(`Writing new ${this.filename} to local disk...`);
+
+    await this.db.execute(
+      sql`COPY (
+        ${selectLocalSql} UNION ALL ${selectRemoteSql}
+        ${sql.raw(orderByClause)}
+      ) TO '${sql.raw(this.filename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})`,
+    );
+
+    console.log(`Wrote new ${this.filename}, uploading to remote storage...`);
+
+    const uploadStreamBufferSize = 8 * 1024 * 1024; // 8MB buffer size
+
+    const storageClient = (await this.blob.container(this.remoteContainer))
+      .getClient()
+      .getBlockBlobClient(this.remoteContainerPath);
+
+    await storageClient.uploadStream(
+      createReadStream(this.filename, {
+        highWaterMark: uploadStreamBufferSize,
+      }),
+      uploadStreamBufferSize,
+      Math.ceil(Math.floor(availableParallelism() / 1.25)),
+    );
+
+    console.log(
+      `Uploaded ${this.filename} to remote storage, deleting local copy...`,
+    );
+
+    await rm(this.filename);
+
+    console.log(`Deleted local copy of ${this.filename}`);
+
+    console.log(`Remote table update complete`);
+  }
+
+  selectRemote<TSelection extends SelectedFields>(selection?: TSelection) {
+    const parquetSql = sql.raw(
+      `read_parquet('${this.fullRemotePath}') as "${this.name}"`,
+    ) as unknown as DrizzleTable<Table>;
+
+    return selection
+      ? this.db.select(selection).from(parquetSql)
+      : // bug in drizzle-duckdb where empty select doesn't default to "*"?
+        this.db.select().from(parquetSql);
+  }
+}
+
+export function duckDbTable<Table extends PgTableWithColumns<any>>(
+  db: DuckDBDatabase,
+  blob: BlobStorageService,
+  config: DuckDbStorageConfig<Table>,
+): DuckDbTable<Table> {
+  return new DuckDbTable(db, blob, config);
+}

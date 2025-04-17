@@ -1,6 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { combineLatest } from 'rxjs';
-import { EN_CA, type LocaleId } from '@dua-upd/upd/i18n';
+import { Component, computed, inject, Signal, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { EN_CA } from '@dua-upd/upd/i18n';
 import { feedbackKpiObjectiveCriteria } from '@dua-upd/upd-components';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
@@ -26,11 +26,12 @@ export class PagesDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);
   private pageDetailsService = inject(PagesDetailsFacade);
 
-  currentLang!: LocaleId;
-  currentLang$ = this.i18n.currentLang$;
+  currentLang = this.i18n.currentLang;
 
   data$ = this.pageDetailsService.pagesDetailsData$;
   error$ = this.pageDetailsService.error$;
+
+  visits = toSignal(this.pageDetailsService.visits$) as () => number;
 
   apexKpiFeedback$ = this.pageDetailsService.apexKpiFeedback$;
 
@@ -39,12 +40,9 @@ export class PagesDetailsSummaryComponent implements OnInit {
   feedbackKpiObjectiveCriteria = feedbackKpiObjectiveCriteria;
   kpiFeedbackDifference$ = this.pageDetailsService.kpiFeedbackDifference$;
 
-  url$ = this.pageDetailsService.pageUrl$;
-
   visitors$ = this.pageDetailsService.visitors$;
   visitorsPercentChange$ = this.pageDetailsService.visitorsPercentChange$;
 
-  visits$ = this.pageDetailsService.visits$;
   visitsPercentChange$ = this.pageDetailsService.visitsPercentChange$;
 
   pageViews$ = this.pageDetailsService.pageViews$;
@@ -59,14 +57,14 @@ export class PagesDetailsSummaryComponent implements OnInit {
   topSearchTermsDecrease$ = this.pageDetailsService.topSearchTermsDecrease$;
 
   tasks$ = this.pageDetailsService.tasks$;
-  tasksCols: ColumnConfig<TasksTableColTypes>[] = [];
 
-  dateRangeLabel$ = this.pageDetailsService.dateRangeLabel$;
-  comparisonDateRangeLabel$ = this.pageDetailsService.comparisonDateRangeLabel$;
+  dateRangeLabel = toSignal(this.pageDetailsService.dateRangeLabel$);
+  comparisonDateRangeLabel = toSignal(
+    this.pageDetailsService.comparisonDateRangeLabel$,
+  );
 
   apexBar$ = this.pageDetailsService.apexBar$;
   barTable$ = this.pageDetailsService.barTable$;
-  barTableCols: ColumnConfig<BarTableColTypes>[] = [];
 
   apexVisitsByDeviceTypeChart$ =
     this.pageDetailsService.apexVisitsByDeviceTypeChart$;
@@ -74,92 +72,94 @@ export class PagesDetailsSummaryComponent implements OnInit {
     this.pageDetailsService.apexVisitsByDeviceTypeLabels$;
 
   visitsByDeviceTypeTable$ = this.pageDetailsService.visitsByDeviceTypeTable$;
-  visitsByDeviceTypeCols: ColumnConfig<VisitsByDeviceColTypes>[] = [];
-  langLink = 'en';
+  langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
-  topSearchTermsCols: ColumnConfig[] = [];
+  topSearchTermsCols: ColumnConfig[] = [
+    {
+      field: 'term',
+      header: 'search-term',
+    },
+    {
+      field: 'impressions',
+      header: 'impressions',
+      pipe: 'number',
+      pipeParam: '1.0-2',
+    },
+    {
+      field: 'change',
+      header: 'change',
+      pipe: 'percent',
+    },
+    {
+      field: 'ctr',
+      header: 'ctr',
+      pipe: 'percent',
+    },
+    {
+      field: 'position',
+      header: 'position',
+      pipe: 'number',
+      pipeParam: '1.0-2',
+    },
+  ];
+
+  barTableCols: Signal<ColumnConfig<BarTableColTypes>[]> = computed(() => [
+    {
+      field: 'date',
+      header: 'Dates',
+    },
+    {
+      field: 'visits',
+      header: this.i18n.service.translate('Visits for ', this.currentLang(), {
+        value: this.dateRangeLabel(),
+      }),
+      pipe: 'number',
+    },
+    {
+      field: 'prevDate',
+      header: 'Dates',
+    },
+    {
+      field: 'prevVisits',
+      header: this.i18n.service.translate('Visits for ', this.currentLang(), {
+        value: this.comparisonDateRangeLabel(),
+      }),
+      pipe: 'number',
+    },
+  ]);
+
+  visitsByDeviceTypeCols: Signal<ColumnConfig<VisitsByDeviceColTypes>[]> =
+    computed(() => [
+      {
+        field: 'name',
+        header: this.i18n.service.translate('Device Type', this.currentLang()),
+      },
+      {
+        field: 'currValue',
+        header: this.dateRangeLabel() || '',
+        pipe: 'number',
+      },
+      {
+        field: 'prevValue',
+        header: this.comparisonDateRangeLabel() || '',
+        pipe: 'number',
+      },
+    ]);
+
+  tasksCols: Signal<ColumnConfig<TasksTableColTypes>[]> = computed(() => [
+    {
+      field: 'title',
+      header: this.i18n.service.translate('Task', this.currentLang()),
+      type: 'link',
+      translate: true,
+      typeParams: {
+        preLink: '/' + this.langLink() + '/tasks',
+        link: '_id',
+      },
+    },
+  ]);
 
   ngOnInit() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    this.i18n.service.onLangChange(({ lang }) => {
-      this.currentLang = lang as LocaleId;
-    });
-
-    combineLatest([
-      this.currentLang$,
-      this.dateRangeLabel$,
-      this.comparisonDateRangeLabel$,
-    ]).subscribe(([lang, dateRange, comparisonDateRange]) => {
-      this.langLink = lang === EN_CA ? 'en' : 'fr';
-      this.topSearchTermsCols = [
-        {
-          field: 'term',
-          header: this.i18n.service.translate('search-term', lang),
-        },
-        {
-          field: 'impressions',
-          header: this.i18n.service.translate('impressions', lang),
-          pipe: 'number',
-          pipeParam: '1.0-2',
-        },
-        {
-          field: 'change',
-          header: this.i18n.service.translate('comparison', lang),
-          pipe: 'percent',
-        },
-        {
-          field: 'ctr',
-          header: this.i18n.service.translate('ctr', lang),
-          pipe: 'percent',
-        },
-        {
-          field: 'position',
-          header: this.i18n.service.translate('position', lang),
-          pipe: 'number',
-          pipeParam: '1.0-2',
-        },
-      ];
-      this.barTableCols = [
-        { field: 'date', header: this.i18n.service.translate('Dates', lang) },
-        {
-          field: 'visits',
-          header: this.i18n.service.translate('Visits for ', lang, {
-            value: dateRange,
-          }),
-          pipe: 'number',
-        },
-        {
-          field: 'prevDate',
-          header: this.i18n.service.translate('Dates', lang),
-        },
-        {
-          field: 'prevVisits',
-          header: this.i18n.service.translate('Visits for ', lang, {
-            value: comparisonDateRange,
-          }),
-          pipe: 'number',
-        },
-      ];
-      this.visitsByDeviceTypeCols = [
-        {
-          field: 'name',
-          header: this.i18n.service.translate('Device Type', lang),
-        },
-        { field: 'currValue', header: dateRange, pipe: 'number' },
-        { field: 'prevValue', header: comparisonDateRange, pipe: 'number' },
-      ];
-      this.tasksCols = [
-        {
-          field: 'title',
-          header: this.i18n.service.translate('Task', lang),
-          type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/tasks',
-            link: '_id',
-          },
-        },
-      ];
-    });
   }
 }

@@ -1,19 +1,17 @@
 import {
   AdobeAnalyticsQueryBuilder,
-  AdobeAnalyticsReportQuery,
-  BreakdownMetricsConfig,
   CALCULATED_METRICS,
-  MetricConfig,
+  SEGMENTS,
+} from '@dua-upd/node-utils';
+import type {
+  DateRange,
+  AADimensionId,
   MetricsConfig,
   ReportFilter,
-  ReportQueryMetricId,
   ReportSearch,
   ReportSettings,
-  SEGMENTS,
-} from './querybuilder';
-import { DateRange } from '../types';
-import { chunkMap, clone, wait } from '@dua-upd/utils-common';
-import { ReportQueryDimension } from './aa-dimensions';
+} from '@dua-upd/types-common';
+import { chunkMap } from '@dua-upd/utils-common';
 
 export const overallMetricsQueryConfig: MetricsConfig = {
   visits: 'metrics/visits',
@@ -85,8 +83,8 @@ export const overallMetricsQueryConfig: MetricsConfig = {
 };
 
 export const createOverallMetricsQuery = (
-  dateRange: DateRange,
-  settings: ReportSettings = {}
+  dateRange: DateRange<string>,
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -115,8 +113,8 @@ export interface PageMetricsQueryOptions {
 }
 
 export const createPageMetricsQuery = (
-  dateRange: DateRange,
-  options: PageMetricsQueryOptions = {}
+  dateRange: DateRange<string>,
+  options: PageMetricsQueryOptions = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -144,8 +142,8 @@ export const createPageMetricsQuery = (
 
 // top Tasks
 export const createCXTasksQuery = (
-  dateRange: DateRange,
-  settings: ReportSettings = {}
+  dateRange: DateRange<string>,
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -167,24 +165,24 @@ export const createCXTasksQuery = (
 };
 
 export const createBatchedInternalSearchQueries = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemIds?: string[],
-  settings: ReportSettings = {}
+  settings: ReportSettings = {},
 ) =>
   chunkMap(
     itemIds,
     (itemIdsBatch) =>
       createInternalSearchQuery(dateRange, itemIdsBatch, settings),
-    200
+    200,
   );
 
 export const createInternalSearchQuery = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemids?: string[],
   settings: ReportSettings & {
     lang?: 'en' | 'fr';
     includeSearchInstances?: boolean;
-  } = {}
+  } = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -208,7 +206,7 @@ export const createInternalSearchQuery = (
       ]
     : [];
 
-  const searchInstances = settings.includeSearchInstances
+  const searchInstances: MetricsConfig = settings.includeSearchInstances
     ? {
         num_searches: {
           id: 'metrics/event50',
@@ -254,9 +252,9 @@ export const createInternalSearchQuery = (
 };
 
 export const createPhrasesSearchedOnPageQuery = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemids: string[],
-  settings: ReportSettings = {}
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -289,9 +287,9 @@ export const createPhrasesSearchedOnPageQuery = (
 };
 
 export const createWhereVisitorsCameFromQuery = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemids: string[],
-  settings: ReportSettings = {}
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -324,8 +322,8 @@ export const createWhereVisitorsCameFromQuery = (
 };
 
 export const createActivityMapItemIdsQuery = (
-  dateRange: DateRange,
-  settings: ReportSettings = {}
+  dateRange: DateRange<string>,
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -347,8 +345,8 @@ export const createActivityMapItemIdsQuery = (
 };
 
 export const createInternalSearchItemIdsQuery = (
-  dateRange: DateRange,
-  settings: ReportSettings = {}
+  dateRange: DateRange<string>,
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -370,8 +368,8 @@ export const createInternalSearchItemIdsQuery = (
 };
 
 export const itemIdQueryCreatorFactory = (
-  dimension: ReportQueryDimension,
-  metric: MetricsConfig = { visits: 'metrics/visits' }
+  dimension: AADimensionId,
+  metric: MetricsConfig = { visits: 'metrics/visits' },
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -386,7 +384,7 @@ export const itemIdQueryCreatorFactory = (
     .setMetrics(metric)
     .setSettings(defaultSettings);
 
-  return (dateRange: DateRange, settings: ReportSettings = {}) =>
+  return (dateRange: DateRange<string>, settings: ReportSettings = {}) =>
     queryBuilder
       .prependGlobalFilters([
         { type: 'segment', segmentId: SEGMENTS.cra },
@@ -398,18 +396,18 @@ export const itemIdQueryCreatorFactory = (
 
 export const createActivityMapItemIdsQuerie = itemIdQueryCreatorFactory(
   'variables/clickmappage',
-  { clicks: 'metrics/clickmaplinkinstances' }
+  { clicks: 'metrics/clickmaplinkinstances' },
 );
 export const createInternalSearchItemIdsQuerie = itemIdQueryCreatorFactory(
   'variables/evar52',
-  { clicks: 'metrics/event51' }
+  { clicks: 'metrics/event51' },
 );
 export const createPageUrlItemIdsQuerie =
   itemIdQueryCreatorFactory('variables/evar22');
 
 export const createPageUrlItemIdsQuery = (
-  dateRange: DateRange,
-  settings: ReportSettings = {}
+  dateRange: DateRange<string>,
+  settings: ReportSettings = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -431,23 +429,23 @@ export const createPageUrlItemIdsQuery = (
 };
 
 export const createBatchedActivityMapQueries = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemIds?: string[],
-  settings: ReportSettings = {}
+  settings: ReportSettings = {},
 ) =>
   chunkMap(
     itemIds,
     (itemIdsBatch) => createActivityMapQuery(dateRange, itemIdsBatch, settings),
-    200
+    200,
   );
 
 export const createActivityMapQuery = (
-  dateRange: DateRange,
+  dateRange: DateRange<string>,
   itemids?: string[],
   settings: ReportSettings & {
     lang?: 'en' | 'fr';
     includeSearchInstances?: boolean;
-  } = {}
+  } = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -475,7 +473,7 @@ export const createActivityMapQuery = (
       },
     })
     .setGlobalFilters([
-      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` }
+      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` },
     ])
     .setSettings(querySettings)
     .build(false);

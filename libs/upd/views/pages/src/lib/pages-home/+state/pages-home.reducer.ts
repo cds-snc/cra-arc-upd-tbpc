@@ -26,29 +26,38 @@ export const pagesHomeInitialState: PagesHomeState = {
 
 const reducer = createReducer(
   pagesHomeInitialState,
-  on(PagesHomeActions.loadPagesHomeInit, (state) => ({
-    ...state,
-    loading: true,
-    loaded: false,
-    error: null,
-  })),
-  on(PagesHomeActions.loadPagesHomeSuccess, (state, { data }) => ({
-    data: data,
-    loading: false,
-    loaded: true,
-    error: null,
-  })),
-  on(PagesHomeActions.loadPagesHomeError, (state, { error }) => ({
-    ...state,
-    loading: false,
-    loaded: true,
-    error,
-  }))
+  on(
+    PagesHomeActions.loadPagesHomeInit,
+    (state): PagesHomeState => ({
+      ...state,
+      loading: true,
+      loaded: false,
+      error: null,
+    }),
+  ),
+  on(
+    PagesHomeActions.loadPagesHomeSuccess,
+    (state, { data }): PagesHomeState => ({
+      data: data,
+      loading: false,
+      loaded: true,
+      error: null,
+    }),
+  ),
+  on(
+    PagesHomeActions.loadPagesHomeError,
+    (state, { error }): PagesHomeState => ({
+      ...state,
+      loading: false,
+      loaded: true,
+      error,
+    }),
+  ),
 );
 
 export function pagesHomeReducer(
   state: PagesHomeState | undefined,
-  action: Action
+  action: Action,
 ) {
   return reducer(state, action);
 }

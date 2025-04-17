@@ -3,14 +3,14 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import chalk from 'chalk';
 import { wait } from '@dua-upd/utils-common';
-import {
+import type {
   AASearchTermMetrics,
   ActivityMapMetrics,
+  DateRange,
   IAAItemId,
   IOverall,
   IPageMetrics,
 } from '@dua-upd/types-common';
-import { DateRange } from '../types';
 import {
   AdobeAnalyticsClient,
   createActivityMapItemIdsQuery,
@@ -21,7 +21,6 @@ import {
   createOverallMetricsQuery,
   createPageMetricsQuery,
   PageMetricsQueryOptions,
-  toQueryFormat,
 } from './';
 
 dayjs.extend(utc);
@@ -53,7 +52,7 @@ export class AdobeAnalyticsService {
   ) {}
 
   async getOverallMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options?: {
       onComplete?: <U>(
         data: IOverall[]
@@ -81,7 +80,7 @@ export class AdobeAnalyticsService {
   }
 
   async getPageMetrics(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     options?: {
       onComplete?: (results: Partial<IPageMetrics>[]) => Promise<void>;
     } & PageMetricsQueryOptions
@@ -104,7 +103,7 @@ export class AdobeAnalyticsService {
     );
   }
 
-  async getInternalSearchItemIds({ start, end }: DateRange) {
+  async getInternalSearchItemIds({ start, end }: DateRange<string>) {
     const query = createInternalSearchItemIdsQuery(
       {
         start: toQueryFormat(start),
@@ -119,7 +118,7 @@ export class AdobeAnalyticsService {
   }
 
   async getOverallSearchTerms(
-    dateRange: DateRange,
+    dateRange: DateRange<string>,
     lang: 'en' | 'fr',
     options?: {
       onComplete?: (results: SearchTermResult[]) => Promise<void>;
@@ -149,7 +148,7 @@ export class AdobeAnalyticsService {
     );
   }
 
-  async getPageSearchTerms(dateRange: DateRange, itemIdDocs: IAAItemId[]) {
+  async getPageSearchTerms(dateRange: DateRange<string>, itemIdDocs: IAAItemId[]) {
     const itemIds = itemIdDocs.map(({ itemId }) => itemId);
 
     const queries = createBatchedInternalSearchQueries(dateRange, itemIds);
@@ -179,7 +178,7 @@ export class AdobeAnalyticsService {
     return (await Promise.all(queryPromises)).flat();
   }
 
-  async getActivityMapItemIds({ start, end }: DateRange) {
+  async getActivityMapItemIds({ start, end }: DateRange<string>) {
     const query = createActivityMapItemIdsQuery(
       {
         start: toQueryFormat(start),
@@ -193,7 +192,7 @@ export class AdobeAnalyticsService {
     return await this.client.executeQuery<IAAItemId>(query);
   }
 
-  async getPageActivityMap(dateRange: DateRange, itemIdDocs: IAAItemId[]) {
+  async getPageActivityMap(dateRange: DateRange<string>, itemIdDocs: IAAItemId[]) {
     const itemIds = itemIdDocs.map(({ itemId }) => itemId);
     const queries = createBatchedActivityMapQueries(dateRange, itemIds);
     const queryPromises: Promise<ActivityMapResult[]>[] = [];
@@ -220,4 +219,22 @@ export class AdobeAnalyticsService {
 
     return (await Promise.all(queryPromises)).flat();
   }
+}
+
+export function toQueryFormat(date: string | Date): string {
+  if (typeof date === 'string') {
+    if (!/\d{4}-\d{2}-\d{2}/.test(date)) {
+      throw new Error('Expected date in format: YYYY-MM-DD');
+    }
+
+    if (/T00:00:00\.000$|T23:59:59\.999$/.test(date)) {
+      return date;
+    }
+
+    return `${date}T00:00:00.000`;
+  }
+
+  const formattedDate = dayjs.utc(date).format('YYYY-MM-DD');
+
+  return `${formattedDate}T00:00:00.000`;
 }

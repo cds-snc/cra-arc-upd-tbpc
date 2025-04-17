@@ -2,7 +2,6 @@ import { ConsoleLogger, Inject, Injectable } from '@nestjs/common';
 import {
   AdobeAnalyticsClient,
   AdobeAnalyticsService,
-  DateRange,
   GoogleSearchConsoleService,
   SearchAnalyticsClient,
 } from '@dua-upd/external-data';
@@ -12,6 +11,7 @@ import { Model, Types } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Retry, today } from '@dua-upd/utils-common';
+import { DateRange } from '@dua-upd/types-common';
 import { assemblePipeline, PipelineConfig } from '../pipelines';
 
 dayjs.extend(utc);
@@ -27,7 +27,7 @@ export class OverallMetricsService {
     private searchAnalyticsService: GoogleSearchConsoleService,
     private logger: ConsoleLogger,
     @InjectModel(Overall.name, 'defaultConnection')
-    private overallMetricsModel: Model<OverallDocument>
+    private overallMetricsModel: Model<OverallDocument>,
   ) {}
 
   @Retry(4, 1000)
@@ -54,7 +54,7 @@ export class OverallMetricsService {
       };
 
       this.logger.log(
-        `\r\nFetching overall metrics from AA & GSC for dates: ${dateRange.start} to ${dateRange.end}\r\n`
+        `\r\nFetching overall metrics from AA & GSC for dates: ${dateRange.start} to ${dateRange.end}\r\n`,
       );
 
       const pipelineConfig = this.createOverallMetricsPipelineConfig(dateRange);
@@ -68,7 +68,7 @@ export class OverallMetricsService {
   }
 
   createOverallMetricsPipelineConfig(
-    dateRange: DateRange
+    dateRange: DateRange<string>,
   ): PipelineConfig<Overall> {
     const aaDataSource = () =>
       this.adobeAnalyticsService.getOverallMetrics(dateRange, {

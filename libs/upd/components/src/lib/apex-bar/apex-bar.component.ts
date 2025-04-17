@@ -30,6 +30,8 @@ export class ApexBarComponent implements OnInit {
   @Input() table: any;
   @Input() tableCols: ColumnConfig[] = [];
   @Input() tableExport = true;
+  @Input() allowHeaderWrap = false;
+  @Input() emptyMessage = 'nodata-available';
 
   @Input() set showPercent(value: {
     isPercent: boolean;
@@ -45,6 +47,10 @@ export class ApexBarComponent implements OnInit {
 
   @Input() set series(value: ApexAxisChartSeries) {
     this.apexStore.setSeries(value);
+  }
+
+  @Input() set height(value: number) {
+    this.apexStore.setHeight(value);
   }
 
   @Input() set xAxis(value: string[][] | string[]) {

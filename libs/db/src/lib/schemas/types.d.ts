@@ -1,4 +1,4 @@
-export declare type AccumulatorOperator = '$accumulator' | '$addToSet' | '$avg' | '$count' | '$first' | '$last' | '$max' | '$mergeObjects' | '$min' | '$push' | '$stdDevPop' | '$stdDevSamp' | '$sum';
+export declare type AccumulatorOperator = '$addToSet' | '$avg' | '$count' | '$first' | '$last' | '$max' | '$mergeObjects' | '$min' | '$push' | '$sum';
 export interface GscSearchTermMetrics {
     term: string;
     clicks: number;

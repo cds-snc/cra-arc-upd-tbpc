@@ -11,6 +11,7 @@ import {
 } from '@dua-upd/utils-common';
 import { DbService, PageMetrics } from '@dua-upd/db';
 import type {
+  DateRange,
   IAAItemId,
   IOverall,
   AASearchTermMetrics,
@@ -18,12 +19,10 @@ import type {
 import {
   AdobeAnalyticsService,
   BlobProxyService,
-  DateRange,
   InternalSearchResult,
-  queryDateFormat,
   singleDatesFromDateRange,
 } from '@dua-upd/external-data';
-import { writeLogFile } from '@dua-upd/node-utils';
+import { queryDateFormat, writeLogFile } from '@dua-upd/node-utils';
 
 dayjs.extend(utc);
 
@@ -298,7 +297,7 @@ export class InternalSearchTermsService {
     }
   }
 
-  async updateInternalSearchItemIds(dateRange: DateRange) {
+  async updateInternalSearchItemIds(dateRange: DateRange<string>) {
     try {
       this.logger.log(
         chalk.blueBright(
@@ -310,7 +309,7 @@ export class InternalSearchTermsService {
       const blobProxy = this.blobProxyService.createProxy({
         blobModel: 'aa_raw',
         filenameGenerator: (date: string) => `searchterms/itemIds_${date}.json`,
-        queryExecutor: async (dateRange: DateRange) =>
+        queryExecutor: async (dateRange: DateRange<string>) =>
           await this.adobeAnalyticsService.getInternalSearchItemIds(dateRange),
       });
 
@@ -330,7 +329,7 @@ export class InternalSearchTermsService {
     }
   }
 
-  async upsertOverallSearchTerms(dateRange?: DateRange) {
+  async upsertOverallSearchTerms(dateRange?: DateRange<string>) {
     // if no dateRange provided, set to "latest date from DB" to "yesterday"
     const latestDateResults = await this.db.collections.overall
       .findOne(
@@ -451,7 +450,7 @@ export class InternalSearchTermsService {
     }
   }
 
-  async upsertPageSearchTerms(dateRange?: DateRange) {
+  async upsertPageSearchTerms(dateRange?: DateRange<string>) {
     // if no dateRange provided, set to "latest date from DB" to "yesterday"
     const latestDateResult = () =>
       this.db.collections.pageMetrics
@@ -506,7 +505,7 @@ export class InternalSearchTermsService {
       filenameGenerator: (dates: string) =>
         `searchterms/searchterms-by-itemId_${dates}.json`,
       queryExecutor: async ([dateRange, itemIdDocs]: [
-        DateRange,
+        DateRange<string>,
         IAAItemId[],
       ]) =>
         await this.adobeAnalyticsService.getPageSearchTerms(

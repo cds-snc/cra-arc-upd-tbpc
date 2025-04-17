@@ -24,7 +24,7 @@
   <div class="row">
     <div class="col">
       <upd-apex-bar
-        [title]="'d3-tcbil'"
+        [title]="'d3-tcbel'"
         [series]="(apexCallDriversChart$ | async) || []"
         [xAxis]="[calldriversCols[1].header, calldriversCols[2].header]"
         [yAxis]="'Number of calls' | translate"
@@ -39,7 +39,7 @@
   <div class="row">
     <div class="col">
       <upd-charts
-        [title]="'d3-tcbil'"
+        [title]="'d3-tcbel'"
         [yAxisLabel]="'Number of calls (in thousands)'"
         [showXAxisLabel]="false"
         [showGridLines]="true"
@@ -60,7 +60,7 @@
     <div class="col">
       <upd-data-table-card
         [data]="(calldriverTopics$ | async) || []"
-        [cols]="(calldriverTopicsConfig$ | async) || []"
+        [cols]="calldriverTopicsCols"
         [filter]="true"
         [pagination]="true"
         [sort]="true"

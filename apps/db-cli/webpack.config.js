@@ -14,5 +14,12 @@ module.exports = composePlugins(withNx(), (config) => {
         },
       ],
     },
+    ignoreWarnings: [
+      new RegExp(
+        'Failed to parse source map|' +
+          'the request of a dependency is an expression|' +
+          "Module not found: Error: Can't resolve '(.\\/zstd|@mongodb-js)",
+      ),
+    ],
   });
 });

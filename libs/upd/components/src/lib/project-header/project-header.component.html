@@ -1,16 +1,41 @@
-<div *ngIf="data.length > 0" class="page_header back_link">
-  <span id="page_project">
-    <span class="material-icons align-top px-1">folder</span>
-    <ng-container *ngFor="let d of data; let i = index">
-      <a
-        *ngIf="config.typeParams"
-        [routerLink]="[config.typeParams.preLink, d[config.typeParams.link]]"
-        [queryParamsHandling]="'merge'"
-        >{{ d[config.field] }}</a
-      >
-      <ng-container *ngIf="!(i === data.length - 1)"
-        >,&NonBreakingSpace;</ng-container
-      >
-    </ng-container>
-  </span>
+<div
+  *ngIf="data.length > 0 || service().length > 0"
+  class="page_header mt-2 mb-4"
+>
+  @if (data.length > 0) {
+    <span id="page_project">
+      <!-- <span class="material-icons align-top px-1">folder</span> -->
+      <span class="align-top px-1">
+        <strong>
+          {{ (data.length > 1 ? 'Projects' : 'Project') | translate }}:
+        </strong>
+      </span>
+      <ng-container *ngFor="let d of data; let i = index">
+        <a
+          *ngIf="config.typeParams"
+          [routerLink]="[config.typeParams.preLink, d[config.typeParams.link]]"
+          [queryParamsHandling]="'merge'"
+          >{{ d[config.field] }}</a
+        >
+        <ng-container *ngIf="!(i === data.length - 1)"
+          >,&NonBreakingSpace;</ng-container
+        >
+      </ng-container>
+    </span>
+  }
+  @if (service().length > 0) {
+    <span id="page_project" class="d-block m-0 p-0">
+      <span class="align-top px-1">
+        <strong>
+          {{ (service().length > 1 ? 'Services' : 'Service') | translate }}:
+        </strong>
+      </span>
+      <ng-container *ngFor="let s of service(); let i = index">
+        {{ s }}
+        <ng-container *ngIf="!(i === service().length - 1)"
+          >,&NonBreakingSpace;</ng-container
+        >
+      </ng-container>
+    </span>
+  }
 </div>

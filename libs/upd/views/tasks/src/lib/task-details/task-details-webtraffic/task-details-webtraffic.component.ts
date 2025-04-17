@@ -81,7 +81,7 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
           },
           {
             field: 'visitsPercentChange',
-            header: this.i18n.service.translate('%-change', lang),
+            header: this.i18n.service.translate('change', lang),
             pipe: 'percent',
             type: 'comparison',
           },

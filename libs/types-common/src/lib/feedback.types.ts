@@ -1,11 +1,15 @@
 import type { IFeedback } from './schema.types';
 
-export type FeedbackWithScores = IFeedback & {
+export type FeedbackBase = Omit<IFeedback, 'tasks' | 'projects'> & {
+  tasks?: string;
+  owners?: string;
+  sections?: string;
+};
+
+export type FeedbackWithScores = FeedbackBase & {
   rank?: number;
   commentScore?: number;
   // pageScore?: number; // not using page score for now
-  owners?: string;
-  sections?: string;
 };
 
 export type WordRelevance = {
@@ -30,4 +34,12 @@ export type MostRelevantCommentsAndWords = {
 export type MostRelevantCommentsAndWordsByLang = {
   en: MostRelevantCommentsAndWords;
   fr: MostRelevantCommentsAndWords;
+};
+
+// to get around JSON.stringify string length/memory issues
+export type ChunkedMostRelevantCommentsAndWords = {
+  enComments: MostRelevantCommentsAndWords['comments'];
+  enWords: MostRelevantCommentsAndWords['words'];
+  frComments: MostRelevantCommentsAndWords['comments'];
+  frWords: MostRelevantCommentsAndWords['words'];
 };

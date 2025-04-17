@@ -25,8 +25,11 @@ import type {
   PagesHomeAggregatedData,
   ActivityMapMetrics,
   IProject,
+  PageStatus,
+  Direction,
 } from '@dua-upd/types-common';
 import {
+  $trunc,
   arrayToDictionary,
   dateRangeSplit,
   parseDateRangeString,
@@ -35,6 +38,7 @@ import {
 import type { InternalSearchTerm } from '@dua-upd/types-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
+import { FlowService } from '@dua-upd/api/flow';
 
 @Injectable()
 export class PagesService {
@@ -50,6 +54,7 @@ export class PagesService {
     private readabilityModel: Model<Readability>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private feedbackService: FeedbackService,
+    private flowService: FlowService,
   ) {}
 
   async listPages({ projection, populate }): Promise<Page[]> {
@@ -60,6 +65,20 @@ export class PagesService {
     }
 
     return await query.exec();
+  }
+
+  async getFlowData(
+    direction: Direction,
+    limit: number,
+    urls: string,
+    dateRange: string,
+  ) {
+    return await this.flowService.getFlowData(
+      direction,
+      limit,
+      JSON.parse(urls),
+      JSON.parse(dateRange),
+    );
   }
 
   async getPagesHomeData(dateRange: string): Promise<PagesHomeData> {
@@ -86,10 +105,25 @@ export class PagesService {
       end: endDate,
     };
 
-    const results = await this.db.views.pageVisits.getVisitsWithPageData(
-      queryDateRange,
-      this.pageModel,
-    );
+    const results = (await this.db.views.pages.find(
+      { dateRange: queryDateRange },
+      {
+        _id: '$page._id',
+        title: '$page.title',
+        url: '$page.url',
+        pageStatus: 1,
+        visits: 1,
+      },
+      {
+        sort: { visits: -1 },
+      },
+    )) as unknown as {
+      _id: Types.ObjectId;
+      title: string;
+      url: string;
+      pageStatus: PageStatus;
+      visits: number;
+    }[];
 
     await this.cacheManager.set(
       cacheKey,
@@ -129,6 +163,7 @@ export class PagesService {
         projects: 1,
         is_404: 1,
         redirect: 1,
+        altLangHref: 1,
       })
       .populate('tasks')
       .populate('projects')
@@ -234,6 +269,7 @@ export class PagesService {
     const readability = await this.readabilityModel
       .find({ page: new Types.ObjectId(params.id) })
       .sort({ date: -1 })
+      .lean()
       .exec();
 
     const mostRelevantCommentsAndWords =
@@ -253,6 +289,7 @@ export class PagesService {
     const numPreviousComments = await this.feedbackModel
       .countDocuments({
         date: { $gte: prevDateRangeStart, $lte: prevDateRangeEnd },
+        page: page._id,
       })
       .exec();
 
@@ -260,6 +297,15 @@ export class PagesService {
       !params.ipd && numPreviousComments
         ? percentChange(numComments, numPreviousComments)
         : null;
+
+    const alternatePageId = page.altLangHref
+      ? (
+          await this.pageModel
+            .findOne({ url: page.altLangHref }, { _id: 1 })
+            .lean()
+            .exec()
+        )?._id
+      : null;
 
     const results = {
       ...page,
@@ -302,6 +348,8 @@ export class PagesService {
       mostRelevantCommentsAndWords,
       numComments,
       numCommentsPercentChange,
+      hashes: [],
+      alternatePageId,
     } as PageDetailsData;
 
     await this.cacheManager.set(cacheKey, results);
@@ -485,9 +533,7 @@ export class PagesService {
           _id: 0,
           term: '$_id',
           clicks: 1,
-          position: {
-            $round: ['$position', 2],
-          },
+          position: $trunc('$position', 3),
         })
         .exec()) || [];
 

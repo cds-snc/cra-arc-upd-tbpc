@@ -41,6 +41,7 @@ services:
       AA_KEY_PATH: /run/secrets/secret.pem
       AA_KEY_POOL_PATH: /run/secrets/aa_creds_pool.json
       INSTANCE_ID: "prod-001"
+      NODE_OPTIONS: "--max-old-space-size=8192"
     depends_on:
       - mongodb
 
