@@ -31,9 +31,9 @@ class MongoParquet:
         self.remote_container = remote_container
         self.data_dir = data_dir
         # todo: later for s3: pass in some sort of cloud config that allows for multi-cloud
-        self.azure_storage_account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME", "")
-        self.azure_storage_account_key = os.getenv("AZURE_STORAGE_ACCOUNT_KEY", "")
-        self.azure_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
+        self.azure_storage_account_name = os.getenv("AZURE_DATA_ACCOUNT_NAME", "")
+        self.azure_storage_account_key = os.getenv("AZURE_DATA_ACCOUNT_KEY", "")
+        self.azure_connection_string = os.getenv("AZURE_DATA_CONNECTION_STRING", "")
         self.fs = AzureBlobFileSystem(connection_string=self.azure_connection_string)
         self.pl_storage_options = {
             "azure_storage_account_name": self.azure_storage_account_name,
