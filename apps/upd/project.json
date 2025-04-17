@@ -76,6 +76,7 @@
       "configurations": {
         "development": {
           "host": "127.0.0.1",
+          "port": 5432,
           "buildTarget": "upd:build:development",
           "hmr": true,
           "watch": true

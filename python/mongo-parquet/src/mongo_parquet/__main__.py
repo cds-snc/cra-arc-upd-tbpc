@@ -226,10 +226,12 @@ class MongoParquet:
 
         def read_parquet(filepath: str) -> pl.DataFrame:
             print(f"📥 Reading {filepath}...")
-            return pl.read_parquet(
-                f"az://{filepath}" if use_remote_storage else filepath,
-                storage_options=self.pl_storage_options if use_remote_storage else None,
-            )
+            
+            if use_remote_storage:
+              with self.fs.open(f"{filepath}", "rb") as f:
+                  return pl.read_parquet(f.read())
+
+            return pl.read_parquet(filepath)
 
         # --- Config for merged collections ---
         IMPORT_CONFIG = {
