@@ -12,7 +12,7 @@ const forwardArgs = Bun.argv.slice(forwardArgsIndex);
 const forwardArgsString = forwardArgs.length ? ` ${forwardArgs.join(' ')}` : '';
 
 try {
-  await $`bun run --tsconfig-override ../tsconfig.bun.json ./bun-scripts/${scriptName}.ts${forwardArgsString}`.catch(
+  await $`bun run --tsconfig-override ../tsconfig.bun.json ${{ raw: `./bun-scripts/${scriptName}.ts${forwardArgsString}` }}`.catch(
     (err) => {
       if (err.exitCode === 9) {
         process.exit(0);
