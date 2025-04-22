@@ -1,10 +1,6 @@
-version: '3.8'
-
 services:
   app:
-    build: 
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+    image: 'ghcr.io/lega0208/upd-new/codespaces-devcontainer-base:latest'
     volumes:
       - ..:/workspace:cached
 

@@ -1,0 +1,48 @@
+name: Build Devcontainer Image
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  REPO_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # - id: devcontainer-changed
+      #   run: |
+      #     test -z "$(git diff --name-only HEAD^ HEAD | grep "^.devcontainer/build")" || echo "config_changed=true" >> $GITHUB_OUTPUT
+      #   shell: bash
+
+      - name: Log in to the Container registry
+        # if: steps.devcontainer-changed.outputs.config_changed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pre-build dev container image
+        # if: steps.devcontainer-changed.outputs.config_changed == 'true'
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ env.REPO_NAME }}/codespaces-devcontainer-base
+          configFile: .devcontainer/build/devcontainer.json
+          cacheFrom: ghcr.io/${{ env.REPO_NAME }}/codespaces-devcontainer-base
+          push: always

@@ -3,5 +3,6 @@
     "json"
   ],
   "angular.enable-strict-mode-prompt": false,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "npm.packageManager": "bun"
 }

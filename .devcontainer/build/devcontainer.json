@@ -2,9 +2,12 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node-mongo
 {
   "name": "cra-arc-upd-tbpc",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
   "workspaceFolder": "/workspace",
+  "build": {
+    "context": "../../",
+    "dockerfile": "Dockerfile",
+    "cacheFrom": "ghcr.io/lega0208/upd-new/codespaces-devcontainer-base"
+  },
   "containerEnv": {
     "SHELL": "/bin/zsh"
   },
@@ -38,14 +41,22 @@
       }
     }
   },
+  "features": {
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest",
+      "tflint": "latest",
+      "terragrunt": "latest"
+    },
+    "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
+  },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [5432, 9000],
 
-  "remoteUser": "node",
-
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "bun install --ignore-scripts && npm run mongo-parquet:sync && npm run mongo-parquet:seed-mongo"
+  "remoteUser": "node"
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
