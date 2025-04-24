@@ -20,6 +20,7 @@ npm init -y
 npm install duckdb
 
 echo "Copying DuckDB node binding..."
+mkdir -p ../node_modules/duckdb/lib/binding
 cp node_modules/duckdb/lib/binding/duckdb.node ../node_modules/duckdb/lib/binding/
 
 
