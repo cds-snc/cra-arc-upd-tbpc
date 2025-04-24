@@ -15,11 +15,9 @@
     "vscode": {
       // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
-        "hashicorp.terraform",
         "github.copilot",
         "GitHub.copilot-chat",
         "github.vscode-github-actions",
-        "hashicorp.hcl",
         "Angular.ng-template",
         "aaron-bond.better-comments",
         "jasonlhy.hungry-delete",
@@ -45,8 +43,5 @@
   "remoteUser": "node",
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "bun install --ignore-scripts && npm run mongo-parquet:sync && npm run mongo-parquet:seed-mongo"
-
-  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "root"
+  "postCreateCommand": "bun install --ignore-scripts && .devcontainer/get-duckdb-node-binding.sh && npm run mongo-parquet:sync && npm run mongo-parquet:seed-mongo"
 }

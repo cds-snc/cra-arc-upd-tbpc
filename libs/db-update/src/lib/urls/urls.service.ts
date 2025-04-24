@@ -1079,7 +1079,7 @@ export class UrlsService {
 
     await htmlTable.appendLocalToRemote({
       orderBy: appendOrderBy,
-      rowGroupSize: 10000,
+      rowGroupSize: 2500,
       compressionLevel: 7,
     });
 
@@ -1209,7 +1209,7 @@ export class UrlsService {
         [htmlTable.table.url.name]: 'ASC',
         [htmlTable.table.date.name]: 'DESC',
       },
-      rowGroupSize: 5000,
+      rowGroupSize: 2500,
       compressionLevel: 7,
     });
     console.timeEnd('Remote DuckDB append time');

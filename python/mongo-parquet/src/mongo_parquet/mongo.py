@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongoarrow.monkey import patch_all
 from typing import Optional, overload
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict
 from .utils import ensure_dataframe, month_range, year_range
 
 
@@ -32,7 +32,7 @@ class MongoModel(abc.ABC):
 class MongoConverter:
     load_dotenv()
     
-    def __init__(self, uri=getenv("MONGO_URI")):
+    def __init__(self, uri=getenv("MONGO_URI", "mongodb://localhost:27017")):
         patch_all()
         self.client = MongoClient(f"{uri}?compressors=zstd")
         self.db = "upd-test"
@@ -178,7 +178,6 @@ class MongoConverter:
             df = self.find(model, start, end).with_columns(
                 pl.col("date").dt.year().alias("year")
             )
-            year = start.strftime("%Y")
             collection_path = (
                 collection_rename if collection_rename is not None else model.collection
             )
