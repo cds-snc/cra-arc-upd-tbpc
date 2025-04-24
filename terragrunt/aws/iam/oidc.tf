@@ -15,7 +15,7 @@ module "github_oidc_role" {
     }
   ]
 
-  tags = var.tags # Assuming tags are defined in variables.tf for this module
+  tags = var.tag
 }
 
 resource "aws_iam_policy" "s3_readonly_policy" {
@@ -43,19 +43,13 @@ resource "aws_iam_policy" "s3_readonly_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "s3_readonly_policy_attachment" {
-  # Need to construct the role name correctly based on the module's output or predictable naming
-  # The module likely outputs the role names or ARNs. Let's assume it outputs a map of names.
-  # We need to look up the specific role created.
-  # Adjusting this based on typical module patterns. Often the module outputs a map keyed by the input name.
   role       = module.github_oidc_role.roles[local.readonly_role_name].name
   policy_arn = aws_iam_policy.s3_readonly_policy.arn
 
   depends_on = [module.github_oidc_role]
 }
 
-# Output the role ARN for reference
 output "github_oidc_codespaces_readonly_role_arn" {
   description = "The ARN of the GitHub OIDC role for Codespaces read-only access."
-  # Adjusting based on typical module outputs
   value = module.github_oidc_role.roles[local.readonly_role_name].arn
 }
