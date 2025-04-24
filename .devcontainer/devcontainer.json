@@ -38,7 +38,7 @@
   },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [5432, 9000],
+  "forwardPorts": [8080, 9000],
 
   "remoteUser": "node",
 
