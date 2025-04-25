@@ -8,7 +8,7 @@ terraform {
 
 inputs = {
   # IAM/OIDC Inputs
-  repo_name   = "cra-arc-upd-tbpc"         # Provide the GitHub repo name (owner/repo)
+  repo_name   = "cra-arc-upd-tbpc"                 # Provide the GitHub repo name (owner/repo)
   bucket_name = "cra-arc-upd-tbpc-codespaces-data" # Reference the same bucket name
 
   billing_tag_value = "cra-arc-upd-tbpc"
