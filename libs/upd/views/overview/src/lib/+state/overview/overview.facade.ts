@@ -17,6 +17,7 @@ import type {
 import {
   avg,
   percentChange,
+  round,
   type UnwrapObservable,
 } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
@@ -146,6 +147,10 @@ export class OverviewFacade {
     map((improvedKpi) => improvedKpi?.successRates.difference || 0),
   );
 
+  improvedKpiSuccessRateDifferencePoints$ = this.improvedKpi$.pipe(
+    map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
+  );
+
   improvedKpiSuccessRateValidation$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates.validation || 0),
   );
@@ -168,6 +173,10 @@ export class OverviewFacade {
 
   improvedKpiTopSuccessRateDifference$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => improvedTopKpi?.topSuccessRates.difference || 0),
+  );
+
+  improvedKpiTopSuccessRateDifferencePoints$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => round(improvedTopKpi?.topSuccessRates.difference as number * 100, 0) || 0),
   );
 
   improvedKpiTopSuccessRateValidation$ = this.improvedTopKpi$.pipe(

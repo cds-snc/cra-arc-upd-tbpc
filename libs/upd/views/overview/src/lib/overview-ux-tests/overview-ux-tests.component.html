@@ -36,7 +36,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiSuccessRateDifference$ | async
+              value: improvedKpiSuccessRateDifferencePoints$ | async
             } as improvedKpi"
           >
             <span
@@ -45,7 +45,7 @@
               <i class="material-icons">{{
                 getTrendIconAndColor(improvedKpi.value ?? 0).iconName
               }}</i>
-              {{ improvedKpi.value | percent: undefined : currentLangSignal() }}
+              {{ improvedKpi.value | number: undefined : currentLangSignal() }} points
             </span>
             <br />
             {{
@@ -76,7 +76,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiTopSuccessRateDifference$ | async
+              value: improvedKpiTopSuccessRateDifferencePoints$ | async
             } as improvedTopKpi"
           >
             <span
@@ -88,8 +88,8 @@
                 getTrendIconAndColor(improvedTopKpi.value ?? 0).iconName
               }}</i>
               {{
-                improvedTopKpi.value | percent: undefined : currentLangSignal()
-              }}
+                improvedTopKpi.value | number: undefined : currentLangSignal()
+              }} points
             </span>
             <br />
             {{

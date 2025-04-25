@@ -53,3 +53,4 @@ jobs:
           directory: ./terragrunt/env/staging/${{ matrix.module }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           terragrunt: true
+
