@@ -6,6 +6,8 @@ locals {
 module "github_oidc_role" {
   source = "github.com/cds-snc/terraform-modules//gh_oidc_role?ref=v4.0.0"
 
+  billing_tag_value = var.billing_tag_value
+
   roles = [
     {
       name      = local.readonly_role_name
@@ -14,8 +16,8 @@ module "github_oidc_role" {
       claim = "repo:${var.repo_name}:ref:refs/heads/main" # Use input variable
     }
   ]
-
-  tags = var.tag
+  
+  # Removed tags parameter as it's not supported
 }
 
 resource "aws_iam_policy" "s3_readonly_policy" {

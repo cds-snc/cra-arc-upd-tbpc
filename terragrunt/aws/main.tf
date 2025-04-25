@@ -13,22 +13,23 @@ variable "tags" {
 variable "repo_name" {
   description = "The GitHub repository name (e.g., 'owner/repo') for OIDC configuration."
   type        = string
-}
+} 
 
 module "s3" {
   source = "./s3" # Path relative to this main.tf
 
-  bucket_name = var.bucket_name
-  tags        = var.tags
+  bucket_name       = var.bucket_name
+  tags              = var.tags
+  billing_tag_value = var.billing_tag_value # Pass billing_tag_value to S3 module
 }
 
 module "iam" {
   source = "./iam" # Path relative to this main.tf
 
-  tags        = var.tags
-  bucket_name = var.bucket_name # Pass bucket_name to IAM module
-  repo_name   = var.repo_name   # Pass repo_name to IAM module
-
+  tags             = var.tags
+  bucket_name      = var.bucket_name      # Pass bucket_name to IAM module
+  repo_name        = var.repo_name        # Pass repo_name to IAM module
+  billing_tag_value = var.billing_tag_value # Pass billing_tag_value to IAM module
 }
 
 output "s3_bucket_arn" {

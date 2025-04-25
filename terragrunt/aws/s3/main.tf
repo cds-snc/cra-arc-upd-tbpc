@@ -1,13 +1,13 @@
 module "s3_bucket" {
-  source = "github.com/cds-snc/terraform-modules//S3?ref=v1.4.0" # Using a specific version for stability
+  source = "github.com/cds-snc/terraform-modules//S3?ref=v10.4.1" # Using same version as OIDC module
 
-  bucket_name = var.bucket_name
-  tags        = var.tags
+  billing_tag_value = var.billing_tag_value # Added required argument
+  bucket_name       = var.bucket_name
+  tags              = var.tags
 
   # Add any other required or desired configurations for the S3 module here
   # For a basic bucket, defaults might be sufficient.
-  # Refer to https://github.com/cds-snc/terraform-modules/tree/main/S3 for options.
   versioning = {
-    enabled = true # Example: Enable versioning
+    enabled = true # Enable versioning
   }
 }

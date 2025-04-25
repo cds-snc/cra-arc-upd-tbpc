@@ -13,3 +13,8 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "billing_tag_value" {
+  description = "The value of the billing tag for the OIDC role."
+  type        = string
+}
