@@ -12,9 +12,4 @@ variable "tags" {
   description = "A map of tags to assign to IAM resources."
   type        = map(string)
   default     = {}
-}
-
-variable "billing_tag_value" {
-  description = "The value of the billing tag for the OIDC role."
-  type        = string
-}
+} 

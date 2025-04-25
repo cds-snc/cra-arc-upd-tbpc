@@ -11,7 +11,7 @@ module "github_oidc_role" {
     {
       name      = local.readonly_role_name
       repo_name = var.repo_name                               # Use input variable
-      claim     = "repo:${var.repo_name}:ref:refs/heads/main" # Use input variable
+      claim     = "ref:refs/heads/main" # Use input variable
     }
   ]
 }
