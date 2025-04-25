@@ -40,7 +40,7 @@ jobs:
       - name: Configure aws credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
-          role-to-assume: arn:aws:iam::992382783569:role/cra-arc-upd-tbpc-plan
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-plan
           role-session-name: TFPlan
           aws-region: ${{ env.AWS_REGION }}
 
