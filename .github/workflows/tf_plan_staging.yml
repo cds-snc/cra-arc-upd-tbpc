@@ -1,0 +1,61 @@
+name: Terraform Plan Staging
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "terragrunt/**"
+      - "!terragrunt/env/staging/**"
+      - ".github/workflows/tf_apply_staging.yml"
+
+env:
+  AWS_REGION: ca-central-1
+  TERRAFORM_VERSION: 1.11.2
+  TERRAGRUNT_VERSION: 0.75.6
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+jobs:
+  terraform-plan:
+    # Commenting out the matrix strategy since the directories don't exist yet
+    # strategy:
+    #   fail-fast: false
+    #   matrix:
+    #     include:
+    #       # List the environment directories under terragrunt/env/staging/
+    #       - module: s3
+    #       - module: iam
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-plan
+          role-session-name: TFPlan
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Commenting out the terraform plan step since the directories don't exist yet
+      # - name: Terraform plan
+      #   uses: cds-snc/terraform-plan@7d4ab0010e76b09dfc1d8a343d2c7ddaa2b4df4f # v3.3.2
+      #   with:
+      #     comment-delete: true
+      #     comment-title: "Staging: ${{ matrix.module }}"
+      #     directory: ./terragrunt/env/staging/${{ matrix.module }}
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     terragrunt: true
+
+      # Placeholder step to prevent workflow failure
+      - name: Placeholder - No Terraform modules to plan yet
+        run: echo "No Terraform modules to plan yet. Add modules to terragrunt/env/staging/ and uncomment the plan steps."
