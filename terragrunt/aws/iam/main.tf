@@ -1,6 +1,5 @@
 locals {
   readonly_role_name = "GHOIDCCodespacesReadOnlyRole"
-  # Removed bucket_name and repo_name, will use input variables instead
 }
 
 module "github_oidc_role" {
@@ -11,13 +10,10 @@ module "github_oidc_role" {
   roles = [
     {
       name      = local.readonly_role_name
-      repo_name = var.repo_name # Use input variable
-      # Assuming access is needed from the main branch, adjust if necessary
-      claim = "repo:${var.repo_name}:ref:refs/heads/main" # Use input variable
+      repo_name = var.repo_name                               # Use input variable
+      claim     = "repo:${var.repo_name}:ref:refs/heads/main" # Use input variable
     }
   ]
-
-  # Removed tags parameter as it's not supported
 }
 
 resource "aws_iam_policy" "s3_readonly_policy" {
@@ -41,7 +37,7 @@ resource "aws_iam_policy" "s3_readonly_policy" {
     ]
   })
 
-  tags = var.tags # Assuming tags are defined in variables.tf for this module
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "s3_readonly_policy_attachment" {
@@ -49,9 +45,4 @@ resource "aws_iam_role_policy_attachment" "s3_readonly_policy_attachment" {
   policy_arn = aws_iam_policy.s3_readonly_policy.arn
 
   depends_on = [module.github_oidc_role]
-}
-
-output "github_oidc_codespaces_readonly_role_arn" {
-  description = "The ARN of the GitHub OIDC role for Codespaces read-only access."
-  value       = module.github_oidc_role.roles[local.readonly_role_name].arn
 }

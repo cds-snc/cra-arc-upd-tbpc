@@ -27,8 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # List the environment directory under terragrunt/env/staging/
-          - module: s3_codespaces
+          # List the environment directories under terragrunt/env/staging/
+          - module: s3
+          - module: iam
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

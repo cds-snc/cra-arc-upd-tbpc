@@ -40,6 +40,10 @@ jobs:
           role-session-name: TFApply
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Apply s3_codespaces
-        working-directory: terragrunt/env/staging/s3_codespaces
+      - name: Apply s3
+        working-directory: terragrunt/env/staging/s3
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Apply iam
+        working-directory: terragrunt/env/staging/iam
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
