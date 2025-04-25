@@ -51,3 +51,13 @@ docker/certbot
 
 .nx/cache
 .nx/workspace-data
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfvars
+.terraform/
+
+# Terragrunt
+.terragrunt-cache/
