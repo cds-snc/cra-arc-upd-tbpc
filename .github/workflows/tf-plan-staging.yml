@@ -1,0 +1,50 @@
+name: Terraform Plan Staging
+on:
+  pull_request:
+    paths:
+      - "terragrunt/aws/**"
+      - "terragrunt/env/staging/**"
+      - "terragrunt/env/common/**"
+      - "terragrunt/env/root.hcl"
+      - ".github/workflows/tf-plan-staging.yml"
+
+env:
+  AWS_REGION: ca-central-1
+  TERRAFORM_VERSION: 1.11.4
+  TERRAGRUNT_VERSION: 0.77.22
+  TF_SUMMARIZE_VERSION: 0.3.14
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+jobs:
+  terraform-plan:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: setup terraform tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-upd-dashboard-plan
+          role-session-name: TFPlan
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform plan
+        uses: cds-snc/terraform-plan@28de868605a2499187505c82b4f199abd8877b26 # v3.4.2
+        with:
+          comment-delete: true
+          comment-title: "Staging"
+          directory: "terragrunt/env/staging"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          terragrunt: true
