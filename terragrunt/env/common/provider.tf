@@ -9,7 +9,7 @@ terraform {
   
   provider "aws" {
     region              = "ca-central-1" 
-    allowed_account_ids = [ var.accout_id ]
+    allowed_account_ids = [ var.account_id ]
   }
   
   provider "aws" {

@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "terragrunt/**"
-      - "!terragrunt/env/staging/**"
+      - "!terragrunt/env/production/**"
       - ".github/workflows/tf_apply_staging.yml"
 
 env:
@@ -40,15 +40,10 @@ jobs:
           role-session-name: TFApply
           aws-region: ${{ env.AWS_REGION }}
 
-      # Commenting out the apply steps since the directories don't exist yet
-      # - name: Apply s3
-      #   working-directory: terragrunt/env/staging/s3
-      #   run: terragrunt apply --terragrunt-non-interactive -auto-approve
+      - name: Apply s3
+        working-directory: terragrunt/env/staging/s3
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
-      # - name: Apply iam
-      #   working-directory: terragrunt/env/staging/iam
-      #   run: terragrunt apply --terragrunt-non-interactive -auto-approve
-
-      # Placeholder step to prevent workflow failure
-      - name: Placeholder - No Terraform modules to apply yet
-        run: echo "No Terraform modules to apply yet. Add modules to terragrunt/env/staging/ and uncomment the apply steps."
+      - name: Apply iam
+        working-directory: terragrunt/env/staging/iam
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve

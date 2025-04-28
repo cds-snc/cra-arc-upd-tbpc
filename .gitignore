@@ -41,6 +41,7 @@ Thumbs.db
 
 .angular
 .env
+.terragrunt-cache
 nx-cloud.env
 
 /keys
