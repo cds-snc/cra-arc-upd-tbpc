@@ -5,7 +5,7 @@ module "s3_bucket" {
   bucket_name       = var.bucket_name
   tags              = var.tags
 
-   versioning = {
+  versioning = {
     enabled = false # Enable versioning
   }
 }
