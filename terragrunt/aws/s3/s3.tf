@@ -4,4 +4,8 @@ module "s3_bucket" {
   billing_tag_value = var.billing_tag_value # Added required argument
   bucket_name       = var.bucket_name
   tags              = var.tags
+
+   versioning = {
+    enabled = false # Enable versioning
+  }
 }
