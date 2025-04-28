@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - "terragrunt/**"
-      - "!terragrunt/env/staging/**"
+      - "!terragrunt/env/production/**"
       - ".github/workflows/tf_apply_staging.yml"
 
 env:
@@ -53,4 +53,3 @@ jobs:
           directory: ./terragrunt/env/staging/${{ matrix.module }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           terragrunt: true
-

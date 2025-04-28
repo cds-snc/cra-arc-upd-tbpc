@@ -7,7 +7,7 @@ on:
       - main
     paths:
       - "terragrunt/**"
-      - "!terragrunt/env/staging/**"
+      - "!terragrunt/env/production/**"
       - ".github/workflows/tf_apply_staging.yml"
 
 env:
