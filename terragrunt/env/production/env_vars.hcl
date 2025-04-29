@@ -1,5 +1,5 @@
 inputs = {
-  account_id        = "211125499457"
+  account_id        = "" #update to prod account id
   env               = "production"
   product_name      = "cra_upd_dashboard"
   cost_center_code  = "cra-upd-dashboard"
