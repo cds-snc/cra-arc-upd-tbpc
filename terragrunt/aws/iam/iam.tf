@@ -17,7 +17,7 @@ module "github_oidc_role" {
 }
 
 resource "aws_iam_policy" "s3_readonly_policy" {
-  count       = var.environment == "staging" ? 1 : 0 # Only create in staging
+  count       = var.env == "staging" ? 1 : 0 # Only create in staging
   name        = "github-codespaces-s3-readonly-policy"
   description = "Policy allowing GitHub Codespaces read-only access to the specific S3 bucket"
 
