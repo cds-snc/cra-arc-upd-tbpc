@@ -42,7 +42,7 @@ resource "aws_iam_policy" "s3_readonly_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "s3_readonly_policy_attachment" {
-  count      = var.environment == "staging" ? 1 : 0 # Only create in staging
+  count      = var.env == "staging" ? 1 : 0 # Only create in staging
   role       = module.github_oidc_role.roles[local.readonly_role_name].name
   policy_arn = aws_iam_policy.s3_readonly_policy[0].arn # Reference the conditional resource
 
