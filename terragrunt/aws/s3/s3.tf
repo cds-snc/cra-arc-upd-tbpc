@@ -1,6 +1,6 @@
 module "s3_bucket" {
   source = "github.com/cds-snc/terraform-modules//S3?ref=v10.4.1" # Using same version as OIDC module
-  count  = var.env == "staging" ? 1 : 0                   # Only create in staging
+  count  = var.env == "staging" ? 1 : 0                           # Only create in staging
 
   billing_tag_value = var.billing_tag_value # Added required argument
   bucket_name       = var.bucket_name
