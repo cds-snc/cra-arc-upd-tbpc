@@ -17,6 +17,7 @@ module "github_oidc_role" {
 }
 
 resource "aws_iam_policy" "s3_readonly_policy" {
+  count       = var.environment == "staging" ? 1 : 0 # Only create in staging
   name        = "github-codespaces-s3-readonly-policy"
   description = "Policy allowing GitHub Codespaces read-only access to the specific S3 bucket"
 
@@ -41,8 +42,9 @@ resource "aws_iam_policy" "s3_readonly_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "s3_readonly_policy_attachment" {
+  count      = var.environment == "staging" ? 1 : 0 # Only create in staging
   role       = module.github_oidc_role.roles[local.readonly_role_name].name
-  policy_arn = aws_iam_policy.s3_readonly_policy.arn
+  policy_arn = aws_iam_policy.s3_readonly_policy[0].arn # Reference the conditional resource
 
   depends_on = [module.github_oidc_role]
 }
