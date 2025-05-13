@@ -28,8 +28,16 @@ jobs:
       matrix:
         include:
           # List the environment directories under terragrunt/env/staging/
-          - module: s3
+          - module: api_gateway
+          - module: database
+          - module: ecr
+          - module: ecs
+          - module: elasticache
           - module: iam
+          - module: network
+          - module: s3
+          - module: ssm
+          - module: web
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

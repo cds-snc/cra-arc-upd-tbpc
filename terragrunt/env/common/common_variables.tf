@@ -18,6 +18,11 @@ variable "product_name" {
   type        = string
 }
 
+variable "product_name_dashed" {
+  description = "The name of the product you are deploying. (with dashes, vs. underscores)"
+  type        = string
+}
+
 variable "domain" {
   description = "The domain name to deploy to"
   type        = string
@@ -36,4 +41,18 @@ variable "billing_code" {
 variable "billing_tag_value" {
   description = "The value we use to track billing"
   type        = string
+}
+
+variable "environment" {
+  description = "The environment variables to use for deployment"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  sensitive = true
+}
+variable "secrets" {
+  description = "The secrets to use for deployment"
+  type = map(string)
+  sensitive = true
 }
