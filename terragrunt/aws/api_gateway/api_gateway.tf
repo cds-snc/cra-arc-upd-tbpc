@@ -1,6 +1,6 @@
 resource "aws_apigatewayv2_api" "cra_upd_apigw_endpoint" {
-  name          = "${var.product_name_dashed}-apigw"
-  protocol_type = "HTTP"
+  name                         = "${var.product_name_dashed}-apigw"
+  protocol_type                = "HTTP"
   disable_execute_api_endpoint = true # Only allow access to the API Gateway through CloudFront
 }
 
@@ -17,9 +17,9 @@ resource "aws_apigatewayv2_integration" "cra_upd_apigw_integration" {
 }
 
 resource "aws_apigatewayv2_route" "cra_upd_apigw_route" {
-  api_id     = aws_apigatewayv2_api.cra_upd_apigw_endpoint.id
-  route_key  = "ANY /{proxy+}"
-  target     = "integrations/${aws_apigatewayv2_integration.cra_upd_apigw_integration.id}"
+  api_id    = aws_apigatewayv2_api.cra_upd_apigw_endpoint.id
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.cra_upd_apigw_integration.id}"
 }
 
 resource "aws_apigatewayv2_stage" "cra_upd_apigw_stage" {
