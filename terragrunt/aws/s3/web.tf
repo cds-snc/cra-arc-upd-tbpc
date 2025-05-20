@@ -10,7 +10,7 @@ resource "aws_s3_bucket_acl" "cra_upd_web_bucket_acl" {
   bucket = aws_s3_bucket.cra_upd_web_bucket.id
   acl    = "private"
 
-  depends_on = [ aws_s3_bucket_ownership_controls.cra_upd_web_bucket_ownership_controls ]
+  depends_on = [aws_s3_bucket_ownership_controls.cra_upd_web_bucket_ownership_controls]
 }
 
 resource "aws_s3_bucket_public_access_block" "cra_upd_web_bucket_access_block" {
