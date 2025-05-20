@@ -16,22 +16,20 @@ import {
 import { seconds } from '@dua-upd/utils-common';
 
 @Component({
-  selector: 'upd-did-you-know',
-  templateUrl: './did-you-know.component.html',
-  styleUrls: ['./did-you-know.component.scss'],
-  animations: [
-    trigger('fadeInOut', [
-      transition('* => *', [
-        animate(
-          '500ms',
-          keyframes([
-            style({ opacity: 0, offset: 0 }),
-            style({ opacity: 1, offset: 1 }),
-          ]),
-        ),
-      ]),
-    ]),
-  ],
+    selector: 'upd-did-you-know',
+    templateUrl: './did-you-know.component.html',
+    styleUrls: ['./did-you-know.component.scss'],
+    animations: [
+        trigger('fadeInOut', [
+            transition('* => *', [
+                animate('500ms', keyframes([
+                    style({ opacity: 0, offset: 0 }),
+                    style({ opacity: 1, offset: 1 }),
+                ])),
+            ]),
+        ]),
+    ],
+    standalone: false
 })
 export class DidYouKnowComponent implements OnInit {
   @Input() interval: number = seconds(10);

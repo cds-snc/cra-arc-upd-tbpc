@@ -35,10 +35,11 @@ import { sum } from '@dua-upd/utils-common';
 dayjs.extend(utc);
 
 @Component({
-  selector: 'upd-apex-spark-line',
-  templateUrl: './apex-spark-line.component.html',
-  styleUrls: ['./apex-spark-line.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-apex-spark-line',
+    templateUrl: './apex-spark-line.component.html',
+    styleUrls: ['./apex-spark-line.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ApexSparkLineComponent {
   private readonly i18n = inject(I18nFacade);

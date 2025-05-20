@@ -7,9 +7,10 @@ import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { PagesHomeFacade } from './+state/pages-home.facade';
 
 @Component({
-  selector: 'upd-pages-home',
-  templateUrl: './pages-home.component.html',
-  styleUrls: ['./pages-home.component.css'],
+    selector: 'upd-pages-home',
+    templateUrl: './pages-home.component.html',
+    styleUrls: ['./pages-home.component.css'],
+    standalone: false
 })
 export class PagesHomeComponent implements OnInit {
   private pagesHomeService = inject(PagesHomeFacade);

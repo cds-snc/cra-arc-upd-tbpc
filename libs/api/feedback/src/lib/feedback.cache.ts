@@ -28,9 +28,9 @@ function paramsToCacheKey(params: FeedbackParams) {
   const dateRangeEnd = params.dateRange.end.toISOString().slice(0, 10);
   const dateRange = `${dateRangeStart}-${dateRangeEnd}`;
 
-  const type = `:${params.type}` || '';
-  const id = `:${params.id}` || '';
-  const normalizationStrength = `:norm${params.b}` || '';
+  const type = params.type ? `:${params.type}` : '';
+  const id = params.id ? `:${params.id}` : '';
+  const normalizationStrength = params.b ? `:norm${params.b}` : '';
 
   return `${dateRange}${type}${id}${normalizationStrength}`;
 }

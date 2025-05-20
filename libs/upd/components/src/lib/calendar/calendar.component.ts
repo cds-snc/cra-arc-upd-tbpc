@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { Calendar } from 'primeng/calendar';
+import { DatePicker } from 'primeng/datepicker';
 import { dateRangeConfigs } from '@dua-upd/utils-common';
 
 dayjs.extend(utc);
@@ -29,13 +29,14 @@ export type DateRangePreset = {
 };
 
 @Component({
-  selector: 'upd-calendar',
-  templateUrl: './calendar.component.html',
-  styleUrls: ['./calendar.component.scss'],
-  encapsulation: ViewEncapsulation.None,
+    selector: 'upd-calendar',
+    templateUrl: './calendar.component.html',
+    styleUrls: ['./calendar.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CalendarComponent implements OnChanges {
-  @ViewChild('myCalendar') datePicker!: Calendar;
+  @ViewChild('myCalendar') datePicker!: DatePicker;
 
   @Input() granularity = 'day';
   @Input() showPreset = false;
@@ -91,8 +92,7 @@ export class CalendarComponent implements OnChanges {
         if (dates.length === 0 || dates.length === 2) {
           this.dateChange.emit(dates);
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
   }
 

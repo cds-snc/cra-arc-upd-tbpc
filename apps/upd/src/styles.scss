@@ -3,8 +3,8 @@
 @import url('./css/datatables.min.css');
 @import url('./css/upd-custom.css');
 @import url('./css/primeicons.css');
-@import url('primeng/resources/themes/saga-blue/theme.css');
-@import url('primeng/resources/primeng.min.css');
+// @import url('primeng/resources/themes/saga-blue/theme.css');
+// @import url('primeng/resources/primeng.min.css');
 
 .p-dropdown-items {
   margin: 0;
@@ -105,6 +105,10 @@
   border-collapse: collapse;
 }
 
+.p-datatable-tbody > tr > td > .p-column-title {
+  display: none;
+}
+
 div.apexcharts-tooltip.apexcharts-theme-light {
   flex-direction: column;
 }
@@ -136,18 +140,16 @@ div.apexcharts-tooltip.apexcharts-theme-light {
   transform: scale(0.89);
 }
 
-.event-annotation-legend > .apexcharts-legend-marker {
-  background: rgb(255, 255, 255) !important;
-  color: rgb(255, 255, 255);
-  height: 8px;
-  width: 8px;
-  left: 0;
+div.apexcharts-legend-series.event-annotation-legend > .apexcharts-legend-marker {
+  background-color: #fff !important;
+  height: 8px !important;
+  width: 8px !important;
+  border: 1px solid #000 !important;
+  border-radius: 50% !important;
+  margin: 0 8px 0 9px !important;
+  display: inline-block !important;
+  position: relative;
   top: -1px;
-  margin-right: 8px;
-  margin-left: 6px;
-  border-width: 1px;
-  border-color: rgb(0, 0, 0);
-  border-radius: 100%;
 }
 
 .event-annotation-legend > .apexcharts-legend-text {

@@ -18,9 +18,10 @@ type VisitsByDeviceColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-page-details-summary',
-  templateUrl: './pages-details-summary.component.html',
-  styleUrls: ['./pages-details-summary.component.css'],
+    selector: 'upd-page-details-summary',
+    templateUrl: './pages-details-summary.component.html',
+    styleUrls: ['./pages-details-summary.component.css'],
+    standalone: false
 })
 export class PagesDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);

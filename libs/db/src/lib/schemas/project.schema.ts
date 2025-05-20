@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
+import { model, Document, Schema as MSchema, Types } from 'mongoose';
 import type {
   AttachmentData,
   IPage,
@@ -12,19 +12,19 @@ export type ProjectDocument = Project & Document;
 
 @Schema()
 export class Project implements IProject {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ type: String, required: true, unique: true, index: true })
   title = '';
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'UxTest' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'UxTest' }] })
   ux_tests?: Types.ObjectId[] | IUxTest[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Page' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Page' }] })
   pages?: Types.ObjectId[] | IPage[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }] })
   tasks?: Types.ObjectId[] | ITask[];
 
   @Prop({ type: String })

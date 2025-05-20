@@ -1,16 +1,13 @@
-import { type mongo, Types } from 'mongoose';
+import { type mongo, Types, type UpdateOneModel } from 'mongoose';
 import { DbViewNew, type ViewConfig } from '../db.views.new';
 import type { FeedbackView, FeedbackViewSchema } from './feedback-view.schema';
 import type {
   DateRange,
   IFeedbackViewComment,
-  IFeedbackViewType,
   IFeedbackViewWord,
 } from '@dua-upd/types-common';
 import {
   arrayToDictionary,
-  logJson,
-  type Simplify,
 } from '@dua-upd/utils-common';
 import { DbService } from '../db.service';
 import { omit } from 'rambdax';
@@ -39,7 +36,7 @@ type RefreshContext = {
 };
 
 type RefreshWriteOp = {
-  updateOne: mongo.UpdateOneModel<FeedbackView> & { upsert: true };
+  updateOne: UpdateOneModel<FeedbackView> & { upsert: true };
 };
 
 export type FeedbackViewQuery = {
@@ -51,6 +48,7 @@ export type FeedbackViewQuery = {
 };
 
 export class FeedbackViewService extends DbViewNew<
+  FeedbackView,
   typeof FeedbackViewSchema,
   BaseDoc,
   RefreshContext
@@ -295,6 +293,6 @@ export class FeedbackViewService extends DbViewNew<
   }
 
   async clearNonExisting(): Promise<mongo.DeleteResult | null> {
-    return null;    
+    return null;
   }
 }

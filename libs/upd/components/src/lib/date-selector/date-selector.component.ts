@@ -11,8 +11,8 @@ export type DateRangeOption = {
 };
 
 @Component({
-  selector: 'upd-date-selector',
-  template: `
+    selector: 'upd-date-selector',
+    template: `
     <div class="row mb-4 mt-1 d-block">
       <upd-dropdown
         id="range-button"
@@ -36,7 +36,8 @@ export type DateRangeOption = {
       </span>
     </div>
   `,
-  styleUrls: ['./date-selector.component.css'],
+    styleUrls: ['./date-selector.component.css'],
+    standalone: false
 })
 export class DateSelectorComponent {
   private i18n: I18nFacade = inject(I18nFacade);

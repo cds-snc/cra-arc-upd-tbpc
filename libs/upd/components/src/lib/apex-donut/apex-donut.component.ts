@@ -13,11 +13,12 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
 
 @Component({
-  selector: 'upd-apex-donut',
-  templateUrl: './apex-donut.component.html',
-  styleUrls: ['./apex-donut.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ApexStore],
+    selector: 'upd-apex-donut',
+    templateUrl: './apex-donut.component.html',
+    styleUrls: ['./apex-donut.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [ApexStore],
+    standalone: false
 })
 export class ApexDonutComponent implements OnInit {
   private i18n = inject(I18nFacade);

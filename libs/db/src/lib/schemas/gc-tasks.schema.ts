@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, type Document, Types } from 'mongoose';
+import { model, type Document, Schema as MSchema, Types } from 'mongoose';
 import type { DateRange, IGCTasks, ITask } from '@dua-upd/types-common';
 import { dateRangeSplit } from '@dua-upd/utils-common/date';
 import { ModelWithStatics } from '@dua-upd/utils-common/types';
@@ -8,10 +8,10 @@ export type GcTasksDocument = GcTasks & Document;
 
 @Schema({ collection: 'gc_tasks' })
 export class GcTasks implements IGCTasks {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }] })
   tasks?: Types.ObjectId[] | ITask[];
 
   @Prop({ type: Date, required: true, index: true })
@@ -238,3 +238,30 @@ const avgMarginOfErrorExpr = (props: string[]) => ({
     props.length,
   ],
 });
+
+// new moe?
+// const marginOfErrorExpr = (prop: string) => ({
+//   $multiply: [
+//     1.96,
+//     {
+//       $sqrt: {
+//         $divide: [
+//           {
+//             $multiply: [`$${prop}`, { $subtract: [1, `$${prop}`] }],
+//           },
+//           '$total_entries',
+//         ],
+//       },
+//     },
+//   ],
+// });
+
+// const avgMarginOfErrorExpr = (props: string[]) => ({
+//   $cond: {
+//     if: { $gte: ['$total_entries', 30] },
+//     then: {
+//       $avg: props.map((prop) => marginOfErrorExpr(prop)),
+//     },
+//     else: 'N/A',
+//   },
+// });

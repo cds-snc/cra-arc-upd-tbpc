@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
+import { model, Document, Schema as MSchema, Types } from 'mongoose';
 import { UxTest } from './ux-test.schema';
 import { Page } from './page.schema';
 import { Project } from './project.schema';
@@ -20,7 +20,7 @@ const gcTaskMappingsTypeDef = {
 
 @Schema()
 export class Task implements ITask {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ required: true, unique: true, type: String, index: true })
@@ -50,13 +50,13 @@ export class Task implements ITask {
   @Prop({ type: [String] })
   user_type: string[] = [];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'UxTest' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'UxTest' }] })
   ux_tests?: Types.ObjectId[] | UxTest[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Project' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Project' }] })
   projects?: Types.ObjectId[] | Project[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Page' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Page' }] })
   pages?: Types.ObjectId[] | Page[];
 
   @Prop({ type: [gcTaskMappingsTypeDef] })

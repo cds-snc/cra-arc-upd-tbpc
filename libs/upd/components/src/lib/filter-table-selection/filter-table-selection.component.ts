@@ -3,9 +3,10 @@ import { TreeNode } from 'primeng/api';
 import { SelectedNode } from '../filter-table/filter-table.component';
 
 @Component({
-  selector: 'upd-filter-table-selection',
-  templateUrl: './filter-table-selection.component.html',
-  styleUrls: ['./filter-table-selection.component.scss'],
+    selector: 'upd-filter-table-selection',
+    templateUrl: './filter-table-selection.component.html',
+    styleUrls: ['./filter-table-selection.component.scss'],
+    standalone: false
 })
 export class FilterTableSelectionComponent {
   @Input() selectedNodes: SelectedNode[] = [];

@@ -19,7 +19,8 @@ import {
   Diff2HtmlUI,
 } from 'diff2html/lib/ui/js/diff2html-ui';
 import { createPatch } from 'diff';
-import { load, Cheerio, AnyNode } from 'cheerio/lib/slim';
+import { load, type Cheerio } from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import { Diff } from '@ali-tas/htmldiff-js';
 import { RadioOption } from '../radio/radio.component';
 import { I18nFacade } from '@dua-upd/upd/state';
@@ -45,10 +46,11 @@ interface PageConfig {
 }
 
 @Component({
-  selector: 'upd-page-version',
-  templateUrl: './page-version.component.html',
-  styleUrls: ['./page-version.component.scss'],
-  encapsulation: ViewEncapsulation.None,
+    selector: 'upd-page-version',
+    templateUrl: './page-version.component.html',
+    styleUrls: ['./page-version.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PageVersionComponent {
   i18n = inject(I18nFacade);
@@ -195,8 +197,7 @@ export class PageVersionComponent {
         } else {
           this.useDefaultSelection();
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
 
     effect(
@@ -208,8 +209,7 @@ export class PageVersionComponent {
         if (storedConfig) {
           this.restoreMainConfig(storedConfig);
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
 
     effect(
@@ -220,8 +220,7 @@ export class PageVersionComponent {
         this.createHtmlDiffContent(container);
 
         this.storeConfig();
-      },
-      { allowSignalWrites: true },
+      }
     );
 
     effect(
@@ -237,8 +236,7 @@ export class PageVersionComponent {
         } catch (error) {
           console.error('Error in live diff effect:', error);
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
   }
   private handleDocumentClick(event: MouseEvent): void {
@@ -634,7 +632,7 @@ export class PageVersionComponent {
 
         for (const element of ajaxElements) {
           const $el = $(element);
-          const tag = $el.prop('tagName').toLowerCase();
+          const tag = $el.prop('tagName')?.toLowerCase();
           const attributes = $el.attr();
 
           for (const [attr, ajaxUrl] of Object.entries(attributes || {})) {

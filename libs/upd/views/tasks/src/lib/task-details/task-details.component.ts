@@ -7,9 +7,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { globalColours, getOptimalTextcolour } from '@dua-upd/utils-common';
 
 @Component({
-  selector: 'upd-task-details',
-  templateUrl: './task-details.component.html',
-  styleUrls: ['./task-details.component.css'],
+    selector: 'upd-task-details',
+    templateUrl: './task-details.component.html',
+    styleUrls: ['./task-details.component.css'],
+    standalone: false
 })
 export class TaskDetailsComponent implements OnInit {
   private i18n = inject(I18nFacade);

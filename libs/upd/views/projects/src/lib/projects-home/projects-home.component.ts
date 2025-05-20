@@ -8,9 +8,10 @@ import { FR_CA } from '@dua-upd/upd/i18n';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
 
 @Component({
-  selector: 'upd-projects-home',
-  templateUrl: './projects-home.component.html',
-  styleUrls: ['./projects-home.component.css'],
+    selector: 'upd-projects-home',
+    templateUrl: './projects-home.component.html',
+    styleUrls: ['./projects-home.component.css'],
+    standalone: false
 })
 export class ProjectsHomeComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -13,7 +13,7 @@ export class ViewDataService {
   // "Global" mutex to avoid race conditions from concurrent access
   private readonly mutex = new Mutex();
 
-  constructor(private view: DbViewNew<any, any, any>) {}
+  constructor(private view: DbViewNew<any, any, any, any>) {}
 
   private async getDateRangeManager(dateRange: DateRange<Date>) {
     await this.mutex.lock();

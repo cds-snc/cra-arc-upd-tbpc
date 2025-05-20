@@ -8,9 +8,10 @@ import {
 } from '@angular/core';
 
 @Component({
-  selector: 'upd-arrow-connect',
-  templateUrl: './arrow-connect.component.html',
-  styleUrls: ['./arrow-connect.component.css'],
+    selector: 'upd-arrow-connect',
+    templateUrl: './arrow-connect.component.html',
+    styleUrls: ['./arrow-connect.component.css'],
+    standalone: false
 })
 export class ArrowConnectComponent {
   source = input<ElementRef<HTMLElement>>();
@@ -44,8 +45,7 @@ export class ArrowConnectComponent {
         } else {
           this.clearLine();
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
   }
 

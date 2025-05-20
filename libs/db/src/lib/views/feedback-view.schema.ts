@@ -37,7 +37,7 @@ export class FeedbackView implements IFeedbackView {
   lang: 'en' | 'fr';
 
   @Prop({ type: Date, default: () => new Date(), index: true })
-  lastUpdated?: Date;
+  lastUpdated: Date;
 }
 
 export const FeedbackViewSchema = SchemaFactory.createForClass(FeedbackView);

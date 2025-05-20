@@ -5,10 +5,7 @@ import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { duckDbTable } from './duckdb.table';
 
-export type DuckDBClientOptions = {
-  readOnly?: boolean;
-  logger?: boolean;
-};
+export type DuckDBClientOptions = { readOnly?: boolean; logger?: boolean };
 
 export const htmlSnapshotTable = pgTable('html', {
   url: text('url'),
@@ -27,7 +24,9 @@ export class DuckDbService implements BeforeApplicationShutdown {
   readonly remote = {
     html: duckDbTable(this.db, this.blob, {
       name: 'html',
-      remoteContainer: 'html-snapshots',
+      remoteContainer: process.env['DATA_BUCKET_NAME']
+        ? `${process.env['DATA_BUCKET_NAME']}/html-snapshots`
+        : 'html-snapshots',
       remoteContainerPath: 'hashes-html.parquet',
       tableCreationSql: `
           CREATE TABLE IF NOT EXISTS html (
@@ -68,12 +67,36 @@ export class DuckDbService implements BeforeApplicationShutdown {
   }
 
   async setupRemoteAuth() {
-    return await this.db.execute(`
-      CREATE SECRET blob_storage (
-          TYPE azure,
-          CONNECTION_STRING '${process.env['AZURE_STORAGE_CONNECTION_STRING']}'
-      );  
-    `);
+    const prefix = process.env['STORAGE_URI_PREFIX'];
+
+    if (!prefix) {
+      throw new Error('STORAGE_URI_PREFIX is not set');
+    }
+
+    if (prefix === 's3://') {
+      try {
+        await this.db.execute(`
+        CREATE OR REPLACE SECRET s3 (
+          TYPE s3,
+          PROVIDER credential_chain,
+          REGION 'ca-central-1'
+        ); 
+      `);
+      } catch (error) {
+        console.error('Error creating S3 secret:', error);
+      }
+    } else {
+      try {
+        await this.db.execute(`
+          CREATE SECRET blob_storage (
+            TYPE azure,
+            CONNECTION_STRING '${process.env['AZURE_STORAGE_CONNECTION_STRING']}'
+          );  
+        `);
+      } catch (error) {
+        console.error('Error creating Azure secret:', error);
+      }
+    }
   }
 
   async disconnect() {

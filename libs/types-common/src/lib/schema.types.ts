@@ -227,6 +227,7 @@ export interface IFeedbackView {
   refId: Types.ObjectId;
   dateRange: DateRange<Date>;
   lang: 'en' | 'fr';
+  lastUpdated: Date;
 }
 
 export interface IFeedbackViewWord extends IFeedbackView {
@@ -249,7 +250,6 @@ export interface IFeedbackViewComment extends IFeedbackView {
 }
 
 export type IFeedbackViewType = IFeedbackView &
-  // eslint-disable-next-line @typescript-eslint/ban-types
   (IFeedbackViewWord | IFeedbackViewComment);
 
 /*

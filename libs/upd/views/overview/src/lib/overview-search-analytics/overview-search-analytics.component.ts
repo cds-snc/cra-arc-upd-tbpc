@@ -12,9 +12,10 @@ type searchAssessmentColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-overview-search-analytics',
-  templateUrl: './overview-search-analytics.component.html',
-  styleUrls: ['./overview-search-analytics.component.css'],
+    selector: 'upd-overview-search-analytics',
+    templateUrl: './overview-search-analytics.component.html',
+    styleUrls: ['./overview-search-analytics.component.css'],
+    standalone: false
 })
 export class OverviewSearchAnalyticsComponent implements OnInit {
   private overviewService = inject(OverviewFacade);

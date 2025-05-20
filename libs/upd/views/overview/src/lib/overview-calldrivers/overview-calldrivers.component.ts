@@ -14,9 +14,10 @@ type callDriversColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-overview-calldrivers',
-  templateUrl: './overview-calldrivers.component.html',
-  styleUrls: ['./overview-calldrivers.component.css'],
+    selector: 'upd-overview-calldrivers',
+    templateUrl: './overview-calldrivers.component.html',
+    styleUrls: ['./overview-calldrivers.component.css'],
+    standalone: false
 })
 export class OverviewCalldriversComponent implements OnInit {
   private overviewService = inject(OverviewFacade);

@@ -5,9 +5,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
 
 @Component({
-  selector: 'upd-project-details-calldrivers',
-  templateUrl: './project-details-calldrivers.component.html',
-  styleUrls: ['./project-details-calldrivers.component.css'],
+    selector: 'upd-project-details-calldrivers',
+    templateUrl: './project-details-calldrivers.component.html',
+    styleUrls: ['./project-details-calldrivers.component.css'],
+    standalone: false
 })
 export class ProjectDetailsCalldriversComponent implements OnInit {
   private i18n = inject(I18nFacade);

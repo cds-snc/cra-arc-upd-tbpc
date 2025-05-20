@@ -1,5 +1,5 @@
 import { LoggerService } from '@nestjs/common';
-import * as cheerio from 'cheerio/lib/slim';
+import { load } from 'cheerio';
 import chalk from 'chalk';
 import {
   batchAwait,
@@ -96,7 +96,7 @@ export class HttpClient {
         '',
       );
 
-      const title = squishTrim(cheerio.load(rawTitle)('title').text());
+      const title = squishTrim(load(rawTitle)('title').text());
 
       if (title === 'Access Denied') {
         // there's a warning about a locally caught error,

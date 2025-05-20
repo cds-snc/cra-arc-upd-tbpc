@@ -14,12 +14,13 @@ export const createBaseConfig = (formatter: (val: number) => string) => ({
     position: 'bottom',
     fontSize: '14px',
     horizontalAlign: 'left',
+    clusterGroupedSeries: false,
     markers: {
+      shape: 'square',
       strokeWidth: 0.5,
-      width: 20,
-      height: 20,
+      size: 8,
       radius: 5,
-      offsetY: 5,
+      offsetX: -2,
     },
   },
   chart: {
@@ -33,6 +34,10 @@ export const createBaseConfig = (formatter: (val: number) => string) => ({
         download: '<span class="material-icons align-middle">download</span>',
       },
     },
+    zoom: {
+      enabled: true,
+      allowMouseWheelZoom: false,
+    }
   } as ApexChart,
   colors: [
     '#2E5EA7',
@@ -87,7 +92,7 @@ export const createBaseConfig = (formatter: (val: number) => string) => ({
       style: {
         fontSize: '16px',
       },
-      offsetX: -10
+      offsetX: -10,
     },
   } as ApexYAxis,
   tooltip: {

@@ -28,9 +28,10 @@ interface ColorThreshold {
 }
 
 @Component({
-  selector: 'upd-heatmap',
-  templateUrl: './heatmap.component.html',
-  styleUrls: ['./heatmap.component.scss'],
+    selector: 'upd-heatmap',
+    templateUrl: './heatmap.component.html',
+    styleUrls: ['./heatmap.component.scss'],
+    standalone: false
 })
 export class HeatmapComponent<T> {
   private i18n = inject(I18nFacade);

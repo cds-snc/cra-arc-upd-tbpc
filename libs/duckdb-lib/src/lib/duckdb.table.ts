@@ -111,7 +111,12 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
       .select(selectAll)
       .from(this.table as DrizzleTable<Table>);
 
-    const selectRemoteSql = this.selectRemote(selectAll);
+    const currentRemoteFilename = this.filename.replace(
+      /\.parquet$/,
+      '.current.parquet',
+    );
+
+    const newDataFilename = this.filename.replace(/\.parquet$/, '.new.parquet');
 
     const orderByClause = options?.orderBy
       ? `ORDER BY ${Object.entries(options.orderBy)
@@ -137,14 +142,35 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
       .filter(Boolean)
       .join(', ');
 
-    console.log(`Writing new ${this.filename} to local disk...`);
-
+    console.log(`Creating new ${newDataFilename}...`);
+    console.time('Creating new data file');
     await this.db.execute(
-      sql`COPY (
-        ${selectLocalSql} UNION ALL ${selectRemoteSql}
-        ${sql.raw(orderByClause)}
-      ) TO '${sql.raw(this.filename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})`,
+      sql`COPY (${selectLocalSql})
+      TO '${sql.raw(newDataFilename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})`,
     );
+    console.timeEnd('Creating new data file');
+
+    console.log(`Downloading ${this.filename} to ${currentRemoteFilename}`);
+    console.time('Downloading remote file to local disk');
+    await this.blob.blobModels.html_snapshots
+      ?.blob(this.filename)
+      .downloadToFile(currentRemoteFilename);
+    console.timeEnd('Downloading remote file to local disk');
+
+    console.log('Creating combined parquet...');
+    console.time('Creating combined parquet');
+    await this.db.execute(
+      sql`
+        COPY (
+          SELECT * FROM read_parquet([
+            '${sql.raw(currentRemoteFilename)}',
+            '${sql.raw(newDataFilename)}'
+          ])
+          ${sql.raw(orderByClause)}
+        ) TO '${sql.raw(this.filename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})
+      `,
+    );
+    console.timeEnd('Creating combined parquet');
 
     console.log(`Wrote new ${this.filename}, uploading to remote storage...`);
 
@@ -167,8 +193,10 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     );
 
     await rm(this.filename);
+    await rm(currentRemoteFilename);
+    await rm(newDataFilename);
 
-    console.log(`Deleted local copy of ${this.filename}`);
+    console.log(`Deleted local copies of ${this.filename}`);
 
     console.log(`Remote table update complete`);
   }

@@ -23,9 +23,10 @@ import { FR_CA } from '@dua-upd/upd/i18n';
 import { isNullish } from '@dua-upd/utils-common';
 
 @Component({
-  selector: 'upd-pages-details-readability',
-  templateUrl: './pages-details-readability.component.html',
-  styleUrls: ['./pages-details-readability.component.css'],
+    selector: 'upd-pages-details-readability',
+    templateUrl: './pages-details-readability.component.html',
+    styleUrls: ['./pages-details-readability.component.css'],
+    standalone: false
 })
 export class PagesDetailsReadabilityComponent implements OnInit {
   private i18n = inject(I18nFacade);
@@ -190,8 +191,7 @@ export class PagesDetailsReadabilityComponent implements OnInit {
         if (storedConfig) {
           this.updateSelection(storedConfig);
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
 
     effect(() => {

@@ -8,9 +8,10 @@ import { EN_CA } from '@dua-upd/upd/i18n';
 import { NavigationEnd, Router } from '@angular/router';
 
 @Component({
-  selector: 'upd-page-details',
-  templateUrl: './pages-details.component.html',
-  styleUrls: ['./pages-details.component.css'],
+    selector: 'upd-page-details',
+    templateUrl: './pages-details.component.html',
+    styleUrls: ['./pages-details.component.css'],
+    standalone: false
 })
 export class PagesDetailsComponent {
   private i18n = inject(I18nFacade);

@@ -13,13 +13,14 @@ import {
 } from '@ng-bootstrap/ng-bootstrap';
 import { ProgressBar, ProgressBarModule } from 'primeng/progressbar';
 import { CardComponent } from './card/card.component';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SliderModule } from 'primeng/slider';
-import { CalendarModule } from 'primeng/calendar';
+import { DatePickerModule } from 'primeng/datepicker';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TreeSelectModule } from 'primeng/treeselect';
-import { TabViewModule } from 'primeng/tabview';
+import { TabsModule } from 'primeng/tabs';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { PipesModule } from '@dua-upd/upd/pipes';
 import { DataCardComponent } from './data-card/data-card.component';
 import { DataTableComponent } from './data-table/data-table.component';
@@ -29,10 +30,12 @@ import { NavTabsComponent } from './nav-tabs/nav-tabs.component';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputIconModule } from 'primeng/inputicon';
+import { IconFieldModule } from 'primeng/iconfield';
 import { AlertComponent } from './alert/alert.component';
 import { AccordionComponent } from './accordion/accordion.component';
 import { ModalComponent } from './modal/modal.component';
@@ -79,19 +82,22 @@ import { PageVersionComponent } from './page-version/page-version.component';
     TableModule,
     ButtonModule,
     InputTextModule,
-    InputTextareaModule,
+    TextareaModule,
     CheckboxModule,
     RadioButtonModule,
-    TabViewModule,
+    TabsModule,
     InputSwitchModule,
+    InputIconModule,
+    IconFieldModule,
+    SelectModule,
+    DatePickerModule,
+    FloatLabelModule,
     NgbModule,
     I18nModule,
-    DropdownModule,
     FormsModule,
     MultiSelectModule,
     TreeSelectModule,
     SliderModule,
-    CalendarModule,
     InputNumberModule,
     PipesModule,
     NgApexchartsModule,
@@ -141,11 +147,16 @@ import { PageVersionComponent } from './page-version/page-version.component';
     TableModule,
     ButtonModule,
     InputTextModule,
-    InputTextareaModule,
+    TextareaModule,
     CheckboxModule,
     RadioButtonModule,
-    TabViewModule,
+    TabsModule,
     InputSwitchModule,
+    InputIconModule,
+    IconFieldModule,
+    SelectModule,
+    DatePickerModule,
+    FloatLabelModule,
     CalendarComponent,
     CardComponent,
     DataTableComponent,

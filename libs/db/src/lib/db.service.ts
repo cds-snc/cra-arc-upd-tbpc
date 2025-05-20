@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { type Connection, type FilterQuery, Model, mongo } from 'mongoose';
+import type {
+  AnyBulkWriteOperation,
+  Connection,
+  FilterQuery,
+  Model,
+  mongo,
+} from 'mongoose';
 import { uniq } from 'rambdax';
 import {
   CallDriver,
@@ -190,7 +196,7 @@ export class DbService {
       return;
     }
 
-    const bulkWriteOps: mongo.AnyBulkWriteOperation[] = [];
+    const bulkWriteOps: AnyBulkWriteOperation[] = [];
 
     const pages: Page[] = await this.pages
       .find({}, { url: 1, projects: 1, ux_tests: 1, tasks: 1 })
@@ -206,9 +212,7 @@ export class DbService {
         if (matchingPage) {
           bulkWriteOps.push({
             updateMany: {
-              filter: {
-                url: metricsUrl,
-              },
+              filter: { url: metricsUrl },
               update: {
                 $set: {
                   page: matchingPage._id,
@@ -223,12 +227,9 @@ export class DbService {
       }
 
       if (bulkWriteOps.length) {
-        const writeResults = await this.pageMetrics.bulkWrite(
-          bulkWriteOps as mongo.AnyBulkWriteOperation<PageMetrics>[],
-          {
-            ordered: false,
-          },
-        );
+        const writeResults = await this.pageMetrics.bulkWrite(bulkWriteOps, {
+          ordered: false,
+        });
         console.log('validateAllPageRefs writeResults:');
         logJson(writeResults);
       }
@@ -253,10 +254,7 @@ export class DbService {
       async (page) =>
         await this.pageMetrics
           .updateMany(
-            {
-              ...dateFilter,
-              url: page.url,
-            },
+            { ...dateFilter, url: page.url },
             {
               $set: {
                 page: page._id,
@@ -285,7 +283,7 @@ export class DbService {
       return;
     }
 
-    const bulkWriteOps: mongo.AnyBulkWriteOperation[] = [];
+    const bulkWriteOps: AnyBulkWriteOperation[] = [];
 
     // first check metrics without refs to see if we can add any
     const metricsWithNoRefs = pageMetrics.filter((metrics) => !metrics.page);
@@ -295,11 +293,7 @@ export class DbService {
 
       const pages: Page[] = await this.pages
         .find(
-          {
-            url: {
-              $in: uniqueUrls,
-            },
-          },
+          { url: { $in: uniqueUrls } },
           { url: 1, projects: 1, ux_tests: 1, tasks: 1 },
         )
         .lean()
@@ -314,10 +308,7 @@ export class DbService {
           if (matchingPage) {
             bulkWriteOps.push({
               updateMany: {
-                filter: {
-                  ...(filter as mongo.Filter<PageMetrics>),
-                  url,
-                },
+                filter: { ...filter, url },
                 update: {
                   $set: {
                     page: matchingPage._id,
@@ -341,11 +332,7 @@ export class DbService {
 
       const pages: Page[] = await this.pages
         .find(
-          {
-            url: {
-              $in: uniqueUrls,
-            },
-          },
+          { url: { $in: uniqueUrls } },
           { url: 1, projects: 1, ux_tests: 1, tasks: 1 },
         )
         .lean()
@@ -360,10 +347,7 @@ export class DbService {
           if (matchingPage) {
             bulkWriteOps.push({
               updateMany: {
-                filter: {
-                  ...(filter as mongo.Filter<PageMetrics>),
-                  url,
-                },
+                filter: { ...filter, url },
                 update: {
                   $set: {
                     page: matchingPage._id,
@@ -382,12 +366,9 @@ export class DbService {
     if (bulkWriteOps.length) {
       console.log(`${bulkWriteOps.length} bulkWriteOps`);
 
-      const writeResults = await this.pageMetrics.bulkWrite(
-        bulkWriteOps as mongo.AnyBulkWriteOperation<PageMetrics>[],
-        {
-          ordered: false,
-        },
-      );
+      const writeResults = await this.pageMetrics.bulkWrite(bulkWriteOps, {
+        ordered: false,
+      });
 
       console.log('validatePageRefs writeResults:');
       logJson(writeResults);
@@ -428,9 +409,7 @@ export class DbService {
             page: { $in: project.pages },
             projects: { $not: { $elemMatch: { $eq: project._id } } },
           },
-          {
-            $addToSet: { projects: project._id },
-          },
+          { $addToSet: { projects: project._id } },
         );
 
         console.log('updateResult: ', prettyJson(results));
@@ -459,9 +438,7 @@ export class DbService {
             page: { $in: task.pages },
             tasks: { $not: { $elemMatch: { $eq: task._id } } },
           },
-          {
-            $addToSet: { tasks: task._id },
-          },
+          { $addToSet: { tasks: task._id } },
         );
 
         console.log('updateResult: ', prettyJson(results));
@@ -490,9 +467,7 @@ export class DbService {
             page: { $in: uxTest.pages },
             ux_tests: { $not: { $elemMatch: { $eq: uxTest._id } } },
           },
-          {
-            $addToSet: { ux_tests: uxTest._id },
-          },
+          { $addToSet: { ux_tests: uxTest._id } },
         );
 
         console.log('updateResult: ', prettyJson(results));

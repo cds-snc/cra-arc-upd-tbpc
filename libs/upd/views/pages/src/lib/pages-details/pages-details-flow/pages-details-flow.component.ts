@@ -4,9 +4,10 @@ import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'upd-page-details-flow',
-  templateUrl: './pages-details-flow.component.html',
-  styleUrls: ['./pages-details-flow.component.css'],
+    selector: 'upd-page-details-flow',
+    templateUrl: './pages-details-flow.component.html',
+    styleUrls: ['./pages-details-flow.component.css'],
+    standalone: false
 })
 export class PagesDetailsFlowComponent {
   private i18n = inject(I18nFacade);

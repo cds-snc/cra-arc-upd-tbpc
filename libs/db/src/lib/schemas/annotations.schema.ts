@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
+import { model, Document, Schema as MSchema, Types } from 'mongoose';
 import { IAnnotations } from '@dua-upd/types-common';
 import type {
   AnnotationsAudienceType,
@@ -12,7 +12,7 @@ export type AnnotationsDocument = Annotations & Document;
 
 @Schema()
 export class Annotations implements IAnnotations {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ type: String, required: true, unique: true, index: true })
@@ -39,7 +39,7 @@ export class Annotations implements IAnnotations {
   @Prop({ type: [String] })
   data_affected?: AnnotationsDataAffectedType[] = [];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }] })
   tasks_affected?: Types.ObjectId[] | Task[];
 
   @Prop({ type: [String] })

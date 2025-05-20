@@ -10,9 +10,10 @@ import {
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
-  selector: 'upd-alert',
-  templateUrl: './alert.component.html',
-  styleUrls: ['./alert.component.scss'],
+    selector: 'upd-alert',
+    templateUrl: './alert.component.html',
+    styleUrls: ['./alert.component.scss'],
+    standalone: false
 })
 export class AlertComponent implements OnInit {
   @ViewChild('staticAlert', { static: false }) staticAlert!: NgbAlert;

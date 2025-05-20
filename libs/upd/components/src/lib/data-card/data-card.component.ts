@@ -105,10 +105,11 @@ const defaultKpiObjectiveCriteria: KpiObjectiveCriteria = (
 };
 
 @Component({
-  selector: 'upd-data-card',
-  templateUrl: './data-card.component.html',
-  styleUrls: ['./data-card.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-data-card',
+    templateUrl: './data-card.component.html',
+    styleUrls: ['./data-card.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class DataCardComponent {
   private numberPipe: LocaleNumberPipe = inject(LocaleNumberPipe);

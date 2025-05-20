@@ -8,11 +8,11 @@
     [(ngModel)]="selectedItem"
   ></p-radioButton>
   @if (displayTooltip) {
-    <label [for]="id + i" class="p-checkbox-label card-tooltip" placement="right" [ngbTooltip]="item.description | translate">
+    <label [for]="id + i" class="p-checkbox-label card-tooltip ms-2" placement="right" [ngbTooltip]="item.description | translate">
       {{ item.label | translate}}
     </label>
   } @else {
-    <label [for]="id + i" class="p-checkbox-label">
+    <label [for]="id + i" class="p-checkbox-label ms-2">
       {{ item.label | translate}}
     </label>
   }

@@ -2,9 +2,10 @@ import { Component, Input } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
-  selector: 'upd-data-table-card',
-  templateUrl: './data-table-card.component.html',
-  styleUrls: ['./data-table-card.component.css'],
+    selector: 'upd-data-table-card',
+    templateUrl: './data-table-card.component.html',
+    styleUrls: ['./data-table-card.component.css'],
+    standalone: false
 })
 export class DataTableCardComponent<T> {
   @Input() data: T[] = [];

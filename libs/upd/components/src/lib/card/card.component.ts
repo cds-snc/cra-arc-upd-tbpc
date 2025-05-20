@@ -3,8 +3,8 @@ import { NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
-  selector: 'upd-card',
-  template: `
+    selector: 'upd-card',
+    template: `
     <div class="card pt-2" [ngClass]="[cardHeight, styleClass]" tabindex="0">
       <div class="card-body card-pad pt-2 h-100">
         <div class="d-flex justify-content-between">
@@ -32,7 +32,8 @@ import type { ColumnConfig } from '@dua-upd/types-common';
       </div>
     </div>
   `,
-  providers: [NgbPopoverConfig],
+    providers: [NgbPopoverConfig],
+    standalone: false
 })
 export class CardComponent {
   private popoverConfig: NgbPopoverConfig;

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
+import { model, Document, Schema as MSchema, Types } from 'mongoose';
 import { Page } from './page.schema';
 import { Project } from './project.schema';
 import { Task } from './task.schema';
@@ -9,7 +9,7 @@ export type UxTestDocument = UxTest & Document;
 
 @Schema({ collection: 'ux_tests' })
 export class UxTest implements IUxTest {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ required: true, type: String })
@@ -18,13 +18,13 @@ export class UxTest implements IUxTest {
   @Prop({ required: true, unique: true, type: String, index: true })
   airtable_id = '';
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'UxTest' })
+  @Prop({ required: true, type: MSchema.Types.ObjectId, ref: 'UxTest' })
   project: Types.ObjectId | Project = new Types.ObjectId('');
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Page' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Page' }] })
   pages?: Types.ObjectId[] | Page[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }], index: true })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }], index: true })
   tasks?: Types.ObjectId[] | Task[];
 
   @Prop({ type: String })

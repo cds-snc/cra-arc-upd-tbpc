@@ -3,6 +3,7 @@ import { pick } from 'rambdax';
 import { batchAwait, createUpdateQueue, days } from '@dua-upd/utils-common';
 import type {
   AggregateOptions,
+  AnyBulkWriteOperation,
   FilterQuery,
   Model,
   mongo,
@@ -10,6 +11,7 @@ import type {
   ProjectionType,
   QueryOptions,
   Schema,
+  UpdateOneModel,
 } from 'mongoose';
 import { DateRange } from '@dua-upd/types-common';
 import { ViewDataService } from './views/view.data.service';
@@ -27,7 +29,8 @@ export type ViewConfig<SchemaT> = {
 };
 
 export abstract class DbViewNew<
-  SchemaT extends Schema<{ lastUpdated?: Date }>,
+  SchemaInner extends { lastUpdated?: Date },
+  SchemaT extends Schema<SchemaInner>,
   BaseDoc extends Record<string, unknown>,
   RefreshContext extends Record<string, unknown>,
 > {
@@ -81,12 +84,8 @@ export abstract class DbViewNew<
     baseDoc: BaseDoc,
     ctx: RefreshContext,
   ): Promise<
-    | {
-        updateOne: mongo.UpdateOneModel<DocT<SchemaT>> & { upsert: true };
-      }
-    | {
-        updateOne: mongo.UpdateOneModel<DocT<SchemaT>> & { upsert: true };
-      }[]
+    | { updateOne: UpdateOneModel<DocT<SchemaT>> & { upsert: true } }
+    | { updateOne: UpdateOneModel<DocT<SchemaT>> & { upsert: true } }[]
   >;
 
   /**
@@ -111,7 +110,7 @@ export abstract class DbViewNew<
       );
     }
 
-    const bulkWriteQueue = createUpdateQueue<mongo.AnyBulkWriteOperation>(
+    const bulkWriteQueue = createUpdateQueue<AnyBulkWriteOperation>(
       this.refreshBatchSize,
       async (ops) => {
         try {
@@ -179,18 +178,10 @@ export abstract class DbViewNew<
 
   async getLastUpdated(dateRange: DateRange<Date>) {
     return (
-      await this._model
-        .findOne(
-          {
-            dateRange,
-          },
-          {
-            dateRange: 1,
-            lastUpdated: 1,
-          },
-        )
+      (await this._model
+        .findOne({ dateRange }, { dateRange: 1, lastUpdated: 1 })
         .lean()
-        .exec()
+        .exec()) as { lastUpdated: Date } | null
     )?.lastUpdated as Date | null;
   }
 
@@ -217,12 +208,12 @@ export abstract class DbViewNew<
    * @param silenceWarning Whether to silence the warning about top-level MongoDB operators
    * @returns
    */
-  async find(
+  async find<ReturnT = DocT<SchemaT>>(
     filter?: FilterQuery<DocT<SchemaT>>,
     projection: ProjectionType<DocT<SchemaT>> = {},
     options: QueryOptions<DocT<SchemaT>> = {},
     silenceWarning = false,
-  ) {
+  ): Promise<ReturnT[] | null> {
     if (
       !silenceWarning &&
       Object.keys(filter).find((key) => key.startsWith('$'))
@@ -240,7 +231,10 @@ export abstract class DbViewNew<
 
     await this.refreshIfStale(refreshFilter as FilterQuery<DocT<SchemaT>>);
 
-    return this._model.find(filter, projection, options).lean().exec();
+    return this._model
+      .find(filter, projection, options)
+      .lean<ReturnT[] | null>()
+      .exec();
   }
 
   /**
@@ -254,7 +248,7 @@ export abstract class DbViewNew<
    * @param silenceWarning Whether to silence the warning about top-level MongoDB operators
    * @returns
    */
-  async findOne(
+  async findOne<ReturnT = DocT<SchemaT>>(
     filter: FilterQuery<DocT<SchemaT>>,
     projection: ProjectionType<DocT<SchemaT>> = {},
     options: QueryOptions<DocT<SchemaT>> = {},
@@ -275,7 +269,10 @@ export abstract class DbViewNew<
 
     await this.refreshIfStale(filter);
 
-    return this._model.findOne(filter, projection, options).lean().exec();
+    return this._model
+      .findOne(filter, projection, options)
+      .lean<ReturnT>()
+      .exec();
   }
 
   /**
@@ -325,9 +322,7 @@ export abstract class DbViewNew<
    * @returns The number of documents deleted
    */
   async clearUnusedDateRanges(dateRanges: DateRange<Date>[]) {
-    const dbDateRanges = await this._model
-      .distinct<DateRange<Date>>('dateRange')
-      .exec();
+    const dbDateRanges = await this._model.distinct('dateRange').exec();
 
     const dateRangeStrings = dateRanges.map((dateRange) =>
       JSON.stringify(dateRange),
@@ -337,7 +332,7 @@ export abstract class DbViewNew<
       .map((dateRange) =>
         dateRangeStrings.includes(JSON.stringify(dateRange)) ? null : dateRange,
       )
-      .filter((dateRange) => dateRange !== null);
+      .filter((dateRange) => dateRange !== null) as DateRange<Date>[];
 
     if (!dateRangesToDelete.length) {
       return 0;

@@ -10,8 +10,8 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { PageStatus, ProjectStatus } from '@dua-upd/types-common';
 
 @Component({
-  selector: 'upd-data-table-exports',
-  template: `
+    selector: 'upd-data-table-exports',
+    template: `
     <upd-dropdown
       [options]="exportOptions"
       [id]="'exports-' + id"
@@ -22,8 +22,9 @@ import { PageStatus, ProjectStatus } from '@dua-upd/types-common';
     >
     </upd-dropdown>
   `,
-  styles: [],
-  providers: [NgbPopoverConfig],
+    styles: [],
+    providers: [NgbPopoverConfig],
+    standalone: false
 })
 export class DataTableExportsComponent<T> {
   private i18n = inject(I18nFacade);

@@ -19,7 +19,7 @@
         "assets": ["apps/upd/src/favicon.ico", "apps/upd/src/assets"],
         "styles": ["apps/upd/src/styles.scss"],
         "scripts": [],
-        "verbose": true,
+        "verbose": false,
         "serviceWorker": true,
         "ngswConfigPath": "apps/upd/ngsw-config.json"
       },
@@ -64,7 +64,7 @@
           },
           "namedChunks": true,
           "vendorChunk": true,
-          "verbose": true,
+          "verbose": false,
           "buildLibsFromSource": true,
           "serviceWorker": false
         }

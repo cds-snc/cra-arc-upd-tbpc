@@ -15,9 +15,10 @@ type ReferrerTypeColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-page-details-search-analytics',
-  templateUrl: './pages-details-search-analytics.component.html',
-  styleUrls: ['./pages-details-search-analytics.component.css'],
+    selector: 'upd-page-details-search-analytics',
+    templateUrl: './pages-details-search-analytics.component.html',
+    styleUrls: ['./pages-details-search-analytics.component.css'],
+    standalone: false
 })
 export class PagesDetailsSearchAnalyticsComponent {
   private i18n = inject(I18nFacade);

@@ -2,7 +2,7 @@
 import chalk from 'chalk';
 import { existsSync, mkdir } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
-import { Types, type mongo } from 'mongoose';
+import { Types, type AnyBulkWriteOperation, type mongo } from 'mongoose';
 import { difference, filterObject, omit, uniq } from 'rambdax';
 import { utils, writeFile as writeXlsx } from 'xlsx';
 import {
@@ -30,7 +30,7 @@ import {
   prettyJson,
   round,
 } from '@dua-upd/utils-common';
-import { IFeedback, IPage, IReadability, IUrl } from '@dua-upd/types-common';
+import type { IFeedback, IPage, IReadability, IUrl } from '@dua-upd/types-common';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { RunScriptCommand } from '../run-script.command';
 import { startTimer } from './utils/misc';
@@ -188,7 +188,7 @@ export async function addUrlTitlesToAllTitles(db: DbService) {
     .lean()
     .exec();
 
-  const writeOps: mongo.AnyBulkWriteOperation<IUrl>[] = urls.map((url) => ({
+  const writeOps: AnyBulkWriteOperation<IUrl>[] = urls.map((url) => ({
     updateOne: {
       filter: { _id: url._id },
       update: {
@@ -216,7 +216,7 @@ export async function cleanUrlsTitles(db: DbService) {
       .trim()
       .replaceAll(/\s+/g, ' ');
 
-  const writeOps: mongo.AnyBulkWriteOperation<IUrl>[] = urls.map((url) => ({
+  const writeOps: AnyBulkWriteOperation<IUrl>[] = urls.map((url) => ({
     updateOne: {
       filter: { _id: url._id },
       update: {
@@ -322,7 +322,7 @@ export async function repairUrlTitles(db: DbService) {
         latest_snapshot: { $exists: true },
         hashes: { $not: { $size: 0 } },
       },
-      (urlWithBlob): mongo.AnyBulkWriteOperation<IUrl> => {
+      (urlWithBlob): AnyBulkWriteOperation<IUrl> => {
         const htmlData = processHtml(urlWithBlob.blobContent);
 
         if (!htmlData) {
@@ -361,11 +361,11 @@ export async function repairUrlTitles(db: DbService) {
         };
       },
     )
-  ).filter(Boolean) as mongo.AnyBulkWriteOperation<IUrl>[];
+  ).filter(Boolean) as AnyBulkWriteOperation<IUrl>[];
 
   const results = await db.collections.urls.bulkWrite(testUrlWithBlob);
 
-  console.log(`modified: ${results.nModified}`);
+  console.log(`modified: ${results.modifiedCount}`);
 
   console.timeEnd('repairUrlTitles');
 }
@@ -428,7 +428,7 @@ export async function updatePageTitlesFromUrls(db: DbService) {
 
   const currentPageTitlesDict = arrayToDictionary(currentPageTitles, '_id');
 
-  const pageTitleChanges: mongo.AnyBulkWriteOperation<Page>[] = pagesTitles
+  const pageTitleChanges: AnyBulkWriteOperation<Page>[] = pagesTitles
     .filter(
       ({ _id, title }) => currentPageTitlesDict[_id.toString()].title !== title,
     )
@@ -447,7 +447,7 @@ export async function updatePageTitlesFromUrls(db: DbService) {
     ordered: false,
   });
 
-  console.log(`modified: ${results.nModified}`);
+  console.log(`modified: ${results.modifiedCount}`);
 }
 
 export async function populateAllTitles(db: DbService) {
@@ -475,7 +475,7 @@ export async function populateAllTitles(db: DbService) {
 
   const urls = await db.collections.urls.find({}, {}).lean().exec();
 
-  const bulkWriteOps: mongo.AnyBulkWriteOperation<IUrl>[] = urls
+  const bulkWriteOps: AnyBulkWriteOperation<IUrl>[] = urls
     .filter(
       (url) =>
         (!url.all_titles && url.title) ||
@@ -654,7 +654,7 @@ export async function fixActivityMapTitles(db: DbService) {
     .exec();
 
   // cool variable name right?
-  const ensureTitlesInAllTitlesBulkWriteOps: mongo.AnyBulkWriteOperation<IUrl>[] =
+  const ensureTitlesInAllTitlesBulkWriteOps: AnyBulkWriteOperation<IUrl>[] =
     urls.map(({ _id, title }) => ({
       updateOne: {
         filter: { _id },
@@ -1048,7 +1048,7 @@ export async function populateFeedbackWords(db: DbService) {
 
   const idsNoLongerHavingWords = difference(idsWithWords, newIdsWithWords);
 
-  const wordRemoveOps: mongo.AnyBulkWriteOperation<IFeedback>[] =
+  const wordRemoveOps: AnyBulkWriteOperation<IFeedback>[] =
     idsNoLongerHavingWords.map((_id) => ({
       updateOne: {
         filter: { _id },
@@ -1060,7 +1060,7 @@ export async function populateFeedbackWords(db: DbService) {
       },
     }));
 
-  const updateOps: mongo.AnyBulkWriteOperation<IFeedback>[] =
+  const updateOps: AnyBulkWriteOperation<IFeedback>[] =
     feedbackWithWords.map(({ _id, words }) => ({
       updateOne: {
         filter: { _id },
@@ -1116,7 +1116,7 @@ export async function updatePageSections() {
 
   const atDict = arrayToDictionary(airtableList, 'url');
 
-  const pagesWriteOps: mongo.AnyBulkWriteOperation<PagesList>[] = pages
+  const pagesWriteOps: AnyBulkWriteOperation<PagesList>[] = pages
     .map((page) => {
       if (
         (atDict[page.url] && atDict[page.url].sections !== page.sections) ||
@@ -1161,7 +1161,7 @@ export async function setPageSectionsFromList(db: DbService) {
     .lean()
     .exec();
 
-  const updateOps: mongo.AnyBulkWriteOperation<IPage>[] =
+  const updateOps: AnyBulkWriteOperation<IPage>[] =
     pagesListWithSections.map(({ url, sections, owners }) => ({
       updateOne: {
         filter: { url },
@@ -1595,9 +1595,9 @@ export async function thirty30Report() {
     let index = 0;
 
     for (const [taskId, data] of Object.entries(dataObject)) {
-      const taskTitle =
-        `${index}-${tasksDict[taskId]?.task_title}` ||
-        `Task-${index}-${taskId}`;
+      const taskTitle = tasksDict[taskId]?.task_title
+        ? `${index}-${tasksDict[taskId]?.task_title}`
+        : `Task-${index}-${taskId}`;
       sheetData.push({
         sheetName: getValidSheetName(taskTitle, suffix),
         data: Object.values(data) as Record<string, unknown>[],

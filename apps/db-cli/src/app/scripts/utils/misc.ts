@@ -27,7 +27,7 @@ function getModuleRef<T extends { moduleRef: ModuleRef }>(_this: T): ModuleRef {
   return (<T>_this).moduleRef;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type TypeOrToken = string | symbol | Function | Type;
 
 export function inject<T extends TypeOrToken, U = T extends string ? never : T>(

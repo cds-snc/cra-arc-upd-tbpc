@@ -7,9 +7,10 @@ import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { combineLatest } from 'rxjs';
 
 @Component({
-  selector: 'upd-project-details-webtraffic',
-  templateUrl: './project-details-webtraffic.component.html',
-  styleUrls: ['./project-details-webtraffic.component.css'],
+    selector: 'upd-project-details-webtraffic',
+    templateUrl: './project-details-webtraffic.component.html',
+    styleUrls: ['./project-details-webtraffic.component.css'],
+    standalone: false
 })
 export class ProjectDetailsWebtrafficComponent implements OnInit {
   private i18n = inject(I18nFacade);

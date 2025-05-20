@@ -213,11 +213,11 @@ export class BlobClient {
       this.setCompression(config.compression);
     }
 
-    if (!this.path) {
-      throw Error(
-        'Expected a non-empty path in BlobsConfig, but none was provided.',
-      );
-    }
+    // if (!this.path) {
+    //   throw Error(
+    //     'Expected a non-empty path in BlobsConfig, but none was provided.',
+    //   );
+    // }
   }
 
   get url() {

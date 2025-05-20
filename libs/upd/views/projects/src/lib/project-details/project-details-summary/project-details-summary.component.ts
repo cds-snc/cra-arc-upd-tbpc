@@ -26,10 +26,11 @@ type DocumentsColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-project-details-summary',
-  templateUrl: './project-details-summary.component.html',
-  styleUrls: ['./project-details-summary.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-project-details-summary',
+    templateUrl: './project-details-summary.component.html',
+    styleUrls: ['./project-details-summary.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ProjectDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -5,9 +5,10 @@ import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
 
 @Component({
-  selector: 'upd-task-details-search-analytics',
-  templateUrl: './task-details-search-analytics.component.html',
-  styleUrls: ['./task-details-search-analytics.component.css'],
+    selector: 'upd-task-details-search-analytics',
+    templateUrl: './task-details-search-analytics.component.html',
+    styleUrls: ['./task-details-search-analytics.component.css'],
+    standalone: false
 })
 export class TaskDetailsSearchAnalyticsComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -3,9 +3,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 
 @Component({
-  selector: 'upd-task-details-details',
-  templateUrl: './task-details-details.component.html',
-  styleUrls: ['./task-details-details.component.css'],
+    selector: 'upd-task-details-details',
+    templateUrl: './task-details-details.component.html',
+    styleUrls: ['./task-details-details.component.css'],
+    standalone: false
 })
 export class TaskDetailsDetailsComponent {
   private i18n = inject(I18nFacade);

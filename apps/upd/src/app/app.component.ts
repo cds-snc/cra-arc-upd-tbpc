@@ -10,7 +10,8 @@ import {
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { I18nFacade } from '@dua-upd/upd/state';
 import packageJson from 'package.json';
-import { PrimeNGConfig, Translation } from 'primeng/api';
+import type { Translation } from 'primeng/api';
+import { PrimeNG } from 'primeng/config';
 import { filter, map, mergeMap } from 'rxjs';
 import { fader } from './app.animations';
 import { SwUpdateService } from './sw-update.service';
@@ -20,6 +21,7 @@ import { SwUpdateService } from './sw-update.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
   animations: [fader],
+  standalone: false,
 })
 export class AppComponent {
   i18n = inject(I18nFacade);
@@ -27,7 +29,7 @@ export class AppComponent {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   titleService = inject(Title);
-  primeNgConfig = inject(PrimeNGConfig);
+  primeNgConfig = inject(PrimeNG);
 
   primeNgConfigSignal = toSignal(this.i18n.service.observeKey('primeng'));
 
@@ -45,9 +47,7 @@ export class AppComponent {
       mergeMap((route: ActivatedRoute) => route.data),
       map((data): string => data['title'] ?? 'Usability Performance Dashboard'),
     ),
-    {
-      initialValue: 'Usability Performance Dashboard',
-    },
+    { initialValue: 'Usability Performance Dashboard' },
   );
 
   en = EN_CA;

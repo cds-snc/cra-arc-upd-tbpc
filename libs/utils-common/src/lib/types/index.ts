@@ -68,3 +68,13 @@ export type GetTableProps<
 export type ModelWithStatics<T, Statics> = Model<T> & {
   [key in keyof Statics]: Statics[key];
 };
+
+/**
+ * Ensures that the given object is not empty
+ */
+export type NotEmpty<T> = keyof T extends never ? never : T;
+
+/**
+ * Ensures that the given object is empty
+ */
+export type Empty<T> = keyof T extends never ? T : never;
