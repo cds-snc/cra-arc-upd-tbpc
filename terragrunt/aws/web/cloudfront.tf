@@ -1,6 +1,6 @@
 locals {
-  cloudfront_web_origin_id      = "upd_web"
-  cloudfront_api_origin_id      = "upd_api"
+  cloudfront_web_origin_id = "upd_web"
+  cloudfront_api_origin_id = "upd_api"
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
@@ -42,8 +42,8 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   }
 
   origin {
-    domain_name              = var.web_bucket_domain
-    origin_id                = local.cloudfront_web_origin_id
+    domain_name = var.web_bucket_domain
+    origin_id   = local.cloudfront_web_origin_id
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path
     }

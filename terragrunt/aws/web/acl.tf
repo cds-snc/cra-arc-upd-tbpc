@@ -3,7 +3,7 @@ resource "aws_wafv2_ip_set" "cra_upd_waf_ip_set" {
   description        = "CRA UPD IP address allow list"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses = var.cloudfront_waf_allowed_ips
+  addresses          = var.cloudfront_waf_allowed_ips
 
   provider = aws.us-east-1
 }
