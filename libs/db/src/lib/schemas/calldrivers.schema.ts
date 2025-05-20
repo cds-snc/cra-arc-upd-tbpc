@@ -1,5 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { type Document, Types, Model, mongo, FilterQuery } from 'mongoose';
+import {
+  type Document,
+  Schema as MSchema,
+  Types,
+  type Model,
+  type mongo,
+  type FilterQuery,
+  type AnyBulkWriteOperation,
+} from 'mongoose';
 import type {
   CallsByTasks,
   CallsByTopic,
@@ -20,7 +28,7 @@ export type CallDriverDocument = CallDriver & Document;
 
 @Schema()
 export class CallDriver implements ICallDriver {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ type: String })
@@ -59,10 +67,10 @@ export class CallDriver implements ICallDriver {
   @Prop({ type: Number })
   selfserve_na?: number;
 
-  @Prop({ type: [Types.ObjectId], index: true })
+  @Prop({ type: [MSchema.Types.ObjectId], index: true })
   tasks?: Types.ObjectId[];
 
-  @Prop({ type: [Types.ObjectId], index: true })
+  @Prop({ type: [MSchema.Types.ObjectId], index: true })
   projects?: Types.ObjectId[];
 
   static async getCallsByTopicFromIds(
@@ -70,9 +78,7 @@ export class CallDriver implements ICallDriver {
     documentIds: Types.ObjectId[],
   ): Promise<CallsByTopic[]> {
     return this.aggregate()
-      .match({
-        _id: { $in: documentIds },
-      })
+      .match({ _id: { $in: documentIds } })
       .project({
         _id: 0,
         tpc_id: 1,
@@ -128,10 +134,7 @@ export class CallDriver implements ICallDriver {
       : {};
 
     const matchFilter: FilterQuery<CallDriver> = {
-      date: {
-        $gte: startDate,
-        $lte: endDate,
-      },
+      date: { $gte: startDate, $lte: endDate },
       ...(idFilter || {}),
     };
 
@@ -181,22 +184,10 @@ export class CallDriver implements ICallDriver {
     documentIds: Types.ObjectId[],
   ): Promise<{ enquiry_line: string; calls: number }[]> {
     return this.aggregate()
-      .match({
-        _id: { $in: documentIds },
-      })
-      .project({
-        enquiry_line: 1,
-        calls: 1,
-      })
-      .group({
-        _id: '$enquiry_line',
-        calls: { $sum: '$calls' },
-      })
-      .project({
-        _id: 0,
-        calls: 1,
-        enquiry_line: '$_id',
-      })
+      .match({ _id: { $in: documentIds } })
+      .project({ enquiry_line: 1, calls: 1 })
+      .group({ _id: '$enquiry_line', calls: { $sum: '$calls' } })
+      .project({ _id: 0, calls: 1, enquiry_line: '$_id' })
       .sort({ enquiry_line: 'asc' })
       .exec();
   }
@@ -219,30 +210,15 @@ export class CallDriver implements ICallDriver {
       : {};
 
     const matchFilter: FilterQuery<CallDriver> = {
-      date: {
-        $gte: startDate,
-        $lte: endDate,
-      },
+      date: { $gte: startDate, $lte: endDate },
       ...(idFilter || {}),
     };
 
     return this.aggregate<{ enquiry_line: string; calls: number }>()
       .match(matchFilter)
-      .project({
-        date: 1,
-        enquiry_line: 1,
-        calls: 1,
-        ...projection,
-      })
-      .group({
-        _id: '$enquiry_line',
-        calls: { $sum: '$calls' },
-      })
-      .project({
-        _id: 0,
-        calls: 1,
-        enquiry_line: '$_id',
-      })
+      .project({ date: 1, enquiry_line: 1, calls: 1, ...projection })
+      .group({ _id: '$enquiry_line', calls: { $sum: '$calls' } })
+      .project({ _id: 0, calls: 1, enquiry_line: '$_id' })
       .sort({ enquiry_line: 'asc' })
       .exec();
   }
@@ -259,14 +235,8 @@ export class CallDriver implements ICallDriver {
         date: { $gte: startDate, $lte: endDate },
         tpc_id: { $in: tpcIds },
       })
-      .group({
-        _id: '$tpc_id',
-        calls: { $sum: '$calls' },
-      })
-      .project({
-        _id: 0,
-        calls: 1,
-      })
+      .group({ _id: '$tpc_id', calls: { $sum: '$calls' } })
+      .project({ _id: 0, calls: 1 })
       .exec();
   }
 
@@ -284,15 +254,8 @@ export class CallDriver implements ICallDriver {
         calls: { $sum: '$calls' },
       })
       .unwind('$tasks')
-      .group({
-        _id: '$tasks',
-        calls: { $sum: '$calls' },
-      })
-      .project({
-        _id: 0,
-        task: '$_id',
-        calls: 1,
-      })
+      .group({ _id: '$tasks', calls: { $sum: '$calls' } })
+      .project({ _id: 0, task: '$_id', calls: 1 })
       .exec();
   }
 
@@ -359,8 +322,8 @@ export class CallDriver implements ICallDriver {
           change: !previousData?.calls
             ? null
             : percentChange(currentData.calls, previousData.calls),
-            difference: currentData.calls - (previousData?.calls ?? 0),
-      };
+          difference: currentData.calls - (previousData?.calls ?? 0),
+        };
       })
       .sort((a, b) => (b.calls ?? 0) - (a.calls ?? 0));
   }
@@ -387,9 +350,7 @@ export class CallDriver implements ICallDriver {
           as: 'task',
         },
       },
-      {
-        $unwind: '$task',
-      },
+      { $unwind: '$task' },
       {
         $group: {
           _id: '$task._id',
@@ -397,13 +358,7 @@ export class CallDriver implements ICallDriver {
           calls: { $sum: '$calls' },
         },
       },
-      {
-        $project: {
-          _id: 0,
-          title: 1,
-          calls: 1,
-        },
-      },
+      { $project: { _id: 0, title: 1, calls: 1 } },
     ]).exec();
   }
 
@@ -444,7 +399,7 @@ export class CallDriver implements ICallDriver {
           update: { tasks, projects },
         },
       };
-    }) satisfies mongo.AnyBulkWriteOperation<CallDriver>[];
+    }) satisfies AnyBulkWriteOperation<CallDriver>[];
 
     if (bulkWriteOps.length) {
       return this.bulkWrite(bulkWriteOps, { ordered: false });

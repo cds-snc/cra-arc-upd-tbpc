@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'upd-accordion',
-  template: `
+    selector: 'upd-accordion',
+    template: `
     <div ngbAccordion [class]="flash" [ngClass]="styleClass">
       <div ngbAccordionItem [collapsed]="!expanded">
         <h2 ngbAccordionHeader [ngClass]="headerClass">
@@ -19,7 +19,8 @@ import { Component, Input } from '@angular/core';
       </div>
     </div>
   `,
-  styleUrls: ['./accordion.component.scss'],
+    styleUrls: ['./accordion.component.scss'],
+    standalone: false
 })
 export class AccordionComponent {
   @Input() title = 'view-data-table';

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Types } from 'mongoose';
+import { model, Document, Schema as MSchema, Types } from 'mongoose';
 import { IGCTasksMappings } from '@dua-upd/types-common';
 import { Task } from './task.schema';
 
@@ -7,7 +7,7 @@ export type GCTasksMappingsDocument = GCTasksMappings & Document;
 
 @Schema({ collection: 'gc_tasks_mappings' })
 export class GCTasksMappings implements IGCTasksMappings {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ type: String, required: true, unique: true, index: true })
@@ -19,7 +19,7 @@ export class GCTasksMappings implements IGCTasksMappings {
   @Prop({ type: String, required: true })
   title_fr: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }], index: true })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }], index: true })
   tasks?: Types.ObjectId[] | Task[];
 
   @Prop({ type: Date })

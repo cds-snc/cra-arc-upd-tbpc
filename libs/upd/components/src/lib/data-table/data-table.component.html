@@ -8,7 +8,9 @@
   [customSort]="true"
   [rowsPerPageOptions]="[5, 10, 25, 50, 100]"
   [loading]="loading"
-  styleClass="p-datatable-striped p-datatable-sm border"
+  stripedRows
+  size="small"
+  styleClass="border"
   [paginator]="pagination"
   currentPageReportTemplate="{{
     'dt-paginator'
@@ -22,6 +24,7 @@
   (selectionChange)="onSelectionChange($event)"
   (sortFunction)="customSort($event)"
   [(selection)]="selectedRows"
+  [resizableColumns]="resizableColumns"
 >
   <ng-template *ngIf="filter || captionTitle || exports" pTemplate="caption">
     <div>
@@ -31,13 +34,17 @@
         </ng-container>
         <div class="searh-url-field">
           <span *ngIf="filter" class="p-input-icon-left p-ml-auto">
-            <i class="pi pi-search"></i>
-            <input
-              pInputText
-              type="text"
-              (input)="dt.filterGlobal(getEventValue($event), 'contains')"
-              placeholder="{{ placeholderText | translate }}"
-            />
+            <p-iconfield iconPosition="left" class="ml-auto">
+              <p-inputicon>
+                <i class="pi pi-search"></i>
+              </p-inputicon>
+              <input
+                pInputText
+                type="text"
+                (input)="dt.filterGlobal(getEventValue($event), 'contains')"
+                placeholder="{{ placeholderText | translate }}"
+              />
+            </p-iconfield>
           </span>
         </div>
         <div class="d-flex">
@@ -65,19 +72,22 @@
               >
                 <span
                   ><span class="pi pi-cog"></span>
-                  {{ 'change-columns' | translate }} </span
+                  @if (selectedColumns().length) {
+                    {{ 'change-columns' | translate }}
+                  }</span
                 >&NonBreakingSpace;
                 @if (selectedColumns().length) {
                   <span
-                    class="badge h-100 align-self-center text-center bg-primary"
-                    style="padding: 0.25em 0.32em"
-                    >{{ selectedColumns().length }}</span
+                    class="badge bg-primary d-flex align-items-center justify-content-center"
+                    style="padding: 0.25em 0.5em; height: 1.8rem"
+                  >
+                    {{ selectedColumns().length }}</span
                   >
                 }
               </div>
             </ng-template>
 
-            <ng-template let-group pTemplate="group">
+            <ng-template let-group #group>
               <strong>{{ group.label | translate }}</strong>
             </ng-template>
           </p-multiSelect>
@@ -110,7 +120,9 @@
 
   <ng-template pTemplate="header" let-columns>
     <tr>
-      <th *ngIf="checkboxes" style="min-width: 2rem; width: 2rem">&nbsp;</th>
+      <th *ngIf="checkboxes || expandable" style="min-width: 2rem; width: 2rem">
+        &nbsp;
+      </th>
 
       @for (col of columns; track col.field) {
         <th
@@ -126,7 +138,7 @@
             [ngStyle]="{ 'white-space': allowHeaderWrap ? 'normal' : 'nowrap' }"
           >
             <span
-              class="p-column-title datatable-headers"
+              class="p-column-title datatable-headers me-2"
               [class.card-tooltip]="col.tooltip"
               [ngbTooltip]="col.tooltip | translate"
               placement="top"
@@ -212,11 +224,29 @@
     </tr>
   </ng-template>
 
-  <ng-template pTemplate="body" let-rowData let-columns="columns">
+  <ng-template
+    pTemplate="body"
+    let-rowData
+    let-columns="columns"
+    let-expanded="expanded"
+  >
     <tr>
       @if (checkboxes) {
         <td>
           <p-tableCheckbox [value]="rowData" class="ps-2" />
+        </td>
+      }
+
+      @if (expandable) {
+        <td>
+          <button
+            type="button"
+            pButton
+            pRipple
+            [pRowToggler]="rowData"
+            class="p-button-text p-button-rounded p-button-plain"
+            [icon]="expanded ? 'pi pi-minus' : 'pi pi-plus'"
+          ></button>
         </td>
       }
       @for (col of columns; track col.field) {
@@ -228,9 +258,9 @@
               kpi &&
               (rowData[col.field] >= 0.8 ||
                 (col.secondaryField?.field === 'change' &&
-                  rowData[col.secondaryField?.field] >= 20))
+                  rowData[col.secondaryField?.field] >= 20)),
           }"
-          class="{{ col.columnClass || '' }}"
+          class="text-wrap {{ col.columnClass || '' }}"
         >
           <span
             class="p-column-title datatable-headers"

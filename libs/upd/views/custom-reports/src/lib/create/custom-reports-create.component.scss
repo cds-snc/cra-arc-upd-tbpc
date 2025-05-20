@@ -49,14 +49,14 @@ li[role='presentation'].p-highlight a {
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview .p-tabview-nav {
+  .p-tabs .p-tabpanel[data-p-active="true"] {
     background: #f8f9f8;
   }
 }
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  .p-tab .p-tab-nav li .p-tab-nav-link {
     background: #f8f9f8;
     font-weight: normal;
     padding: 0.5rem 1rem;
@@ -65,14 +65,14 @@ li[role='presentation'].p-highlight a {
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview .p-tabview-nav li .p-tabview-nav-link:hover {
+  .p-tab .p-tab-nav li .p-tab-nav-link:hover {
     background-color: #e3f2fd;
   }
 }
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview .p-tabview-nav li .p-tabview-nav-link:active {
+  .p-tab .p-tab-nav li .p-tab-nav-link:active {
     border-bottom-width: 4px;
   }
 }
@@ -90,24 +90,38 @@ li[role='presentation'].p-highlight a {
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview-nav-content ul {
+  .p-tab-nav-content ul {
     padding-left: 0;
+  }
+}
+.p-tablist-tab-list {
+  background: #f8f9f8;
+}
+
+.p-tablist-content {
+  padding-bottom: 20px;
+}
+
+.report-tabs {
+  .p-tabpanels {
+    background: none;
+    padding: 0;
   }
 }
 
 .add-pages-card,
 .report-tabs {
-  .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  .p-tab .p-tab-nav li.p-highlight .p-tab-nav-link {
     border-color: #2e5ea7;
   }
 }
 
-.report-tabs .p-tabview .p-tabview-panels {
+.report-tabs .p-tabs .p-tabpanel[data-p-active="true"] {
   background-color: #f8f9f8;
   padding: 0;
 }
 
-.add-pages-card .p-tabview .p-tabview-panels {
+.add-pages-card .p-tabs .p-tabpanel[data-p-active="true"]  {
   background-color: #ffffff;
   padding: 16px;
 }
@@ -157,3 +171,22 @@ li[role='presentation'].p-highlight a {
 #remove_all.btn-outline-primary:hover {
   color: red !important;
 }
+
+.p-tablist-active-bar {
+  height: 4px !important;
+  background-color: #2e5ea7 !important;
+}
+
+.p-tab-active {
+  color: #4070b8 !important;
+  border-color: none !important;
+}
+
+// .add-pages-card,
+// .report-tabs {
+//   .p-tabs .p-tabpanel[data-p-active="true"]  {
+//     background: #f8f9f8;
+//     font-weight: normal;
+//     padding: 14px;
+//   }
+// }

@@ -10,9 +10,10 @@ import { EN_CA } from '@dua-upd/upd/i18n';
 import { combineLatest } from 'rxjs';
 
 @Component({
-  selector: 'upd-task-details-feedback',
-  templateUrl: './task-details-feedback.component.html',
-  styleUrls: ['./task-details-feedback.component.css'],
+    selector: 'upd-task-details-feedback',
+    templateUrl: './task-details-feedback.component.html',
+    styleUrls: ['./task-details-feedback.component.css'],
+    standalone: false
 })
 export class TaskDetailsFeedbackComponent implements OnInit {
   private i18n = inject(I18nFacade);

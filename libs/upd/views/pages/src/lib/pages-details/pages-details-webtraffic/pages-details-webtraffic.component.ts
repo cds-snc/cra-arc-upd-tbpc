@@ -21,9 +21,10 @@ type ActivityMapColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-page-details-webtraffic',
-  templateUrl: './pages-details-webtraffic.component.html',
-  styleUrls: ['./pages-details-webtraffic.component.css'],
+    selector: 'upd-page-details-webtraffic',
+    templateUrl: './pages-details-webtraffic.component.html',
+    styleUrls: ['./pages-details-webtraffic.component.css'],
+    standalone: false
 })
 export class PagesDetailsWebtrafficComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -22,15 +22,19 @@
     <ng-container *ngIf="title$ | async as title">
       {{ title }}
     </ng-container>
-
+  
     <span class="h5 d-inline-block mb-0 align-top ms-1">
       <ng-container *ngIf="status$ | async as status">
-        <upd-project-status-label [projectStatus]="status || 'Unknown'">
+        <upd-project-status-label
+          class="d-inline-block"
+          [projectStatus]="status || 'Unknown'">
         </upd-project-status-label>
       </ng-container>
-
+  
       <ng-container *ngIf="cops$ | async as cops">
-        <upd-project-status-label [styleClass]="'ms-2'" [projectType]="'COPS'">
+        <upd-project-status-label
+          class="d-inline-block ms-2"
+          [projectType]="'COPS'">
         </upd-project-status-label>
       </ng-container>
     </span>

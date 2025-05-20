@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import type { Document, FilterQuery, Model, mongo } from 'mongoose';
+import type { AnyBulkWriteOperation, Document, FilterQuery, Model } from 'mongoose';
 import { Types } from 'mongoose';
 import type {
   DateRange,
@@ -76,7 +76,7 @@ export class Feedback implements IFeedback {
     this: Model<Feedback>,
     pages: Pick<IPage, '_id' | 'url' | 'tasks' | 'projects'>[],
   ) {
-    const bulkWriteOps: mongo.AnyBulkWriteOperation<IFeedback>[] = pages.map(
+    const bulkWriteOps: AnyBulkWriteOperation<IFeedback>[] = pages.map(
       (page) => ({
         updateMany: {
           filter: { url: page.url },

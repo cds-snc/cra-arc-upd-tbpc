@@ -2,25 +2,26 @@ import { Component, Input } from '@angular/core';
 import { ProjectStatus, PageStatus, ProjectType } from '@dua-upd/types-common';
 
 @Component({
-  selector: 'upd-project-status-label',
-  template: `
+    selector: 'upd-project-status-label',
+    template: `
     <span
       *ngIf="projectStatus"
-      class="badge {{ styleClass }}  {{ projectStatusClassMap[projectStatus] }}"
+      class="badge {{ styleClass }}  {{ projectStatusClassMap[projectStatus] }} d-block"
       >{{ projectStatus | translate }}</span
     >
     <span
       *ngIf="pageStatus"
-      class="badge w-100 {{ styleClass }}  {{ pageStatusClassMap[pageStatus] }}"
+      class="badge w-100 {{ styleClass }}  {{ pageStatusClassMap[pageStatus] }} d-block"
       >{{ pageStatus | translate }}</span
     >
     <span
       *ngIf="projectType"
-      class="badge {{ styleClass }} {{ projectTypeClassMap[projectType] }}"
+      class="badge {{ styleClass }} {{ projectTypeClassMap[projectType] }} d-block"
       >{{ projectType | translate }}</span
     >
   `,
-  styleUrls: ['./project-status-label.component.scss'],
+    styleUrls: ['./project-status-label.component.scss'],
+    standalone: false
 })
 export class ProjectStatusLabelComponent {
   @Input() projectStatus: ProjectStatus | null = null;

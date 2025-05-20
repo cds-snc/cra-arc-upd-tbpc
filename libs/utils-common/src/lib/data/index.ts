@@ -21,7 +21,6 @@ export type DbEntity = {
 };
 
 // Taken from https://github.com/sindresorhus/type-fest/blob/main/source/simplify.d.ts
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
 
 /**

@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http';
 import { BrowserModule, Title } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
@@ -25,6 +26,9 @@ import {
 } from '@dua-upd/upd/state';
 import { environment } from '../environments/environment';
 import { SwUpdateService } from './sw-update.service';
+import { providePrimeNG } from 'primeng/config';
+import { definePreset } from '@primeng/themes';
+import Aura from '@primeng/themes/aura';
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent, SidebarComponent],
@@ -60,6 +64,7 @@ import { SwUpdateService } from './sw-update.service';
     }),
   ],
   providers: [
+    provideAnimationsAsync(),
     Title,
     DateSelectionFacade,
     I18nService,
@@ -67,6 +72,35 @@ import { SwUpdateService } from './sw-update.service';
     { provide: APP_BASE_HREF, useValue: '/' },
     SwUpdateService,
     provideHttpClient(withInterceptorsFromDi()),
+    providePrimeNG({
+      theme: {
+          preset: definePreset(Aura, {
+            semantic: {
+                primary: {
+                    50: '{blue.50}',
+                    100: '{blue.100}',
+                    200: '{blue.200}',
+                    300: '{blue.300}',
+                    400: '{blue.400}',
+                    500: '{blue.500}',
+                    600: '{blue.600}',
+                    700: '{blue.700}',
+                    800: '{blue.800}',
+                    900: '{blue.900}',
+                    950: '{blue.950}'
+                }
+            }
+        }),
+          // preset: Lara, // based on bootstrap
+          options: {
+              prefix: 'p',
+              darkModeSelector: 'class',
+              cssLayer: {
+                name: 'primeng',
+              }
+          }
+      }
+  })
   ],
 })
 export class AppModule {}

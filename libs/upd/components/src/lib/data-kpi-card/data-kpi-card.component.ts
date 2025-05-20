@@ -12,9 +12,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { combineLatest, map, of } from 'rxjs';
 
 @Component({
-  selector: 'upd-data-kpi-card',
-  templateUrl: './data-kpi-card.component.html',
-  styleUrls: ['./data-kpi-card.component.scss'],
+    selector: 'upd-data-kpi-card',
+    templateUrl: './data-kpi-card.component.html',
+    styleUrls: ['./data-kpi-card.component.scss'],
+    standalone: false
 })
 export class DataKpiCardComponent implements OnInit, OnChanges {
   private i18n = inject(I18nFacade);

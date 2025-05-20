@@ -127,171 +127,171 @@ export const testBlobb = async (
 };
 
 
-export const exportTempTimeSeries = async (db: DbService) => {
-  const uniqueDates = (await db.collections.pageMetrics.distinct<Date>('date'))
-    .sort((a, b) => a.getTime() - b.getTime())
-    .filter((date) => dayjs(date).isAfter('2019-12-31'));
+// export const exportTempTimeSeries = async (db: DbService) => {
+//   const uniqueDates = (await db.collections.pageMetrics.distinct<Date>('date'))
+//     .sort((a, b) => a.getTime() - b.getTime())
+//     .filter((date) => dayjs(date).isAfter('2019-12-31'));
 
-  const totalDates = uniqueDates.length;
+//   const totalDates = uniqueDates.length;
 
-  console.log(`Exporting data for ${totalDates} dates`);
+//   console.log(`Exporting data for ${totalDates} dates`);
 
-  const timer = new TimingUtility(totalDates);
+//   const timer = new TimingUtility(totalDates);
 
-  for (const date of uniqueDates) {
+//   for (const date of uniqueDates) {
 
-    const pipeline = db.collections.pageMetrics
-      .aggregate()
-      .match({ date })
-      .addFields({
-        meta: {
-          url: '$url',
-          page: '$page',
-          projects: {
-            $cond: {
-              if: {
-                $eq: [{ $size: { $ifNull: ['$projects', []] } }, 0],
-              },
-              then: '$$REMOVE',
-              else: '$projects',
-            },
-          },
-          tasks: {
-            $cond: {
-              if: {
-                $eq: [{ $size: { $ifNull: ['$tasks', []] } }, 0],
-              },
-              then: '$$REMOVE',
-              else: '$tasks',
-            },
-          },
-          ux_tests: {
-            $cond: {
-              if: {
-                $eq: [{ $size: { $ifNull: ['$ux_tests', []] } }, 0],
-              },
-              then: '$$REMOVE',
-              else: '$ux_tests',
-            },
-          },
-        },
-      })
-      .project({
-        date: 1,
-        meta: 1,
-        dyf_submit: 1,
-        dyf_yes: 1,
-        dyf_no: 1,
-        views: 1,
-        visits: 1,
-        visitors: 1,
-        average_time_spent: { $ifNull: [{ $round: ['$average_time_spent', 2] }, 0] },
-        bouncerate: { $ifNull: [{ $round: ['$bouncerate', 2] }, 0] },
-        rap_initiated: 1,
-        rap_completed: 1,
-        nav_menu_initiated: 1,
-        rap_cant_find: 1,
-        rap_login_error: 1,
-        rap_other: 1,
-        rap_sin: 1,
-        rap_info_missing: 1,
-        rap_securekey: 1,
-        rap_other_login: 1,
-        rap_gc_key: 1,
-        rap_info_wrong: 1,
-        rap_spelling: 1,
-        rap_access_code: 1,
-        rap_link_not_working: 1,
-        rap_404: 1,
-        rap_blank_form: 1,
-        fwylf_cant_find_info: 1,
-        fwylf_other: 1,
-        fwylf_hard_to_understand: 1,
-        fwylf_error: 1,
-        visits_geo_ab: 1,
-        visits_geo_bc: 1,
-        visits_geo_mb: 1,
-        visits_geo_nb: 1,
-        visits_geo_nl: 1,
-        visits_geo_ns: 1,
-        visits_geo_nt: 1,
-        visits_geo_nu: 1,
-        visits_geo_on: 1,
-        visits_geo_outside_canada: 1,
-        visits_geo_pe: 1,
-        visits_geo_qc: 1,
-        visits_geo_sk: 1,
-        visits_geo_us: 1,
-        visits_geo_yt: 1,
-        visits_referrer_other: 1,
-        visits_referrer_searchengine: 1,
-        visits_referrer_social: 1,
-        visits_referrer_typed_bookmarked: 1,
-        visits_device_other: 1,
-        visits_device_desktop: 1,
-        visits_device_mobile: 1,
-        visits_device_tablet: 1,
-        gsc_total_clicks: 1,
-        gsc_total_ctr: { $ifNull: [{ $round: ['$gsc_total_ctr', 2] }, 0] },
-        gsc_total_impressions: { $ifNull: [{ $round: ['$gsc_total_impressions', 2] }, 0] },
-        gsc_total_position: { $ifNull: [{ $round: ['$gsc_total_position', 2] }, 0] },
-        gsc_searchterms: {
-          $cond: {
-            if: {
-              $eq: [{ $size: { $ifNull: ['$gsc_searchterms', []] } }, 0],
-            },
-            then: '$$REMOVE',
-            else: {
-              $map: {
-                input: '$gsc_searchterms',
-                as: 'searchterm',
-                in: {
-                  clicks: '$$searchterm.clicks',
-                  ctr: { $round: ['$$searchterm.ctr', 2] },
-                  impressions: '$$searchterm.impressions',
-                  position: { $round: ['$$searchterm.position', 2] },
-                  term: '$$searchterm.term',
-                },
-              },
-            },
-          },
-        },
-        aa_searchterms: {
-          $cond: {
-            if: {
-              $eq: [{ $size: { $ifNull: ['$aa_searchterms', []] } }, 0],
-            },
-            then: '$$REMOVE',
-            else: {
-              $map: {
-                input: '$aa_searchterms',
-                as: 'searchterm',
-                in: {
-                  term: '$$searchterm.term',
-                  clicks: '$$searchterm.clicks',
-                  position: '$$searchterm.position',
-                },
-              },
-            },
-          },
-        },
-      })
-      .pipeline();
+//     const pipeline = db.collections.pageMetrics
+//       .aggregate()
+//       .match({ date })
+//       .addFields({
+//         meta: {
+//           url: '$url',
+//           page: '$page',
+//           projects: {
+//             $cond: {
+//               if: {
+//                 $eq: [{ $size: { $ifNull: ['$projects', []] } }, 0],
+//               },
+//               then: '$$REMOVE',
+//               else: '$projects',
+//             },
+//           },
+//           tasks: {
+//             $cond: {
+//               if: {
+//                 $eq: [{ $size: { $ifNull: ['$tasks', []] } }, 0],
+//               },
+//               then: '$$REMOVE',
+//               else: '$tasks',
+//             },
+//           },
+//           ux_tests: {
+//             $cond: {
+//               if: {
+//                 $eq: [{ $size: { $ifNull: ['$ux_tests', []] } }, 0],
+//               },
+//               then: '$$REMOVE',
+//               else: '$ux_tests',
+//             },
+//           },
+//         },
+//       })
+//       .project({
+//         date: 1,
+//         meta: 1,
+//         dyf_submit: 1,
+//         dyf_yes: 1,
+//         dyf_no: 1,
+//         views: 1,
+//         visits: 1,
+//         visitors: 1,
+//         average_time_spent: { $ifNull: [{ $round: ['$average_time_spent', 2] }, 0] },
+//         bouncerate: { $ifNull: [{ $round: ['$bouncerate', 2] }, 0] },
+//         rap_initiated: 1,
+//         rap_completed: 1,
+//         nav_menu_initiated: 1,
+//         rap_cant_find: 1,
+//         rap_login_error: 1,
+//         rap_other: 1,
+//         rap_sin: 1,
+//         rap_info_missing: 1,
+//         rap_securekey: 1,
+//         rap_other_login: 1,
+//         rap_gc_key: 1,
+//         rap_info_wrong: 1,
+//         rap_spelling: 1,
+//         rap_access_code: 1,
+//         rap_link_not_working: 1,
+//         rap_404: 1,
+//         rap_blank_form: 1,
+//         fwylf_cant_find_info: 1,
+//         fwylf_other: 1,
+//         fwylf_hard_to_understand: 1,
+//         fwylf_error: 1,
+//         visits_geo_ab: 1,
+//         visits_geo_bc: 1,
+//         visits_geo_mb: 1,
+//         visits_geo_nb: 1,
+//         visits_geo_nl: 1,
+//         visits_geo_ns: 1,
+//         visits_geo_nt: 1,
+//         visits_geo_nu: 1,
+//         visits_geo_on: 1,
+//         visits_geo_outside_canada: 1,
+//         visits_geo_pe: 1,
+//         visits_geo_qc: 1,
+//         visits_geo_sk: 1,
+//         visits_geo_us: 1,
+//         visits_geo_yt: 1,
+//         visits_referrer_other: 1,
+//         visits_referrer_searchengine: 1,
+//         visits_referrer_social: 1,
+//         visits_referrer_typed_bookmarked: 1,
+//         visits_device_other: 1,
+//         visits_device_desktop: 1,
+//         visits_device_mobile: 1,
+//         visits_device_tablet: 1,
+//         gsc_total_clicks: 1,
+//         gsc_total_ctr: { $ifNull: [{ $round: ['$gsc_total_ctr', 2] }, 0] },
+//         gsc_total_impressions: { $ifNull: [{ $round: ['$gsc_total_impressions', 2] }, 0] },
+//         gsc_total_position: { $ifNull: [{ $round: ['$gsc_total_position', 2] }, 0] },
+//         gsc_searchterms: {
+//           $cond: {
+//             if: {
+//               $eq: [{ $size: { $ifNull: ['$gsc_searchterms', []] } }, 0],
+//             },
+//             then: '$$REMOVE',
+//             else: {
+//               $map: {
+//                 input: '$gsc_searchterms',
+//                 as: 'searchterm',
+//                 in: {
+//                   clicks: '$$searchterm.clicks',
+//                   ctr: { $round: ['$$searchterm.ctr', 2] },
+//                   impressions: '$$searchterm.impressions',
+//                   position: { $round: ['$$searchterm.position', 2] },
+//                   term: '$$searchterm.term',
+//                 },
+//               },
+//             },
+//           },
+//         },
+//         aa_searchterms: {
+//           $cond: {
+//             if: {
+//               $eq: [{ $size: { $ifNull: ['$aa_searchterms', []] } }, 0],
+//             },
+//             then: '$$REMOVE',
+//             else: {
+//               $map: {
+//                 input: '$aa_searchterms',
+//                 as: 'searchterm',
+//                 in: {
+//                   term: '$$searchterm.term',
+//                   clicks: '$$searchterm.clicks',
+//                   position: '$$searchterm.position',
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       })
+//       .pipeline();
 
-    pipeline.push({
-      $merge: {
-        into: 'temp_timeseries',
-        on: '_id',
-      }
-    } as PipelineStage);
+//     pipeline.push({
+//       $merge: {
+//         into: 'temp_timeseries',
+//         on: '_id',
+//       }
+//     } as PipelineStage);
 
-    const results = await db.collections.pageMetrics.aggregate(pipeline);
+//     const results = await db.collections.pageMetrics.aggregate(pipeline);
 
-    // logJson(results);
+//     // logJson(results);
 
-    timer.logIteration(`Inserted metrics for ${date.toISOString().slice(0, 10)}`);
-  }
-};
+//     timer.logIteration(`Inserted metrics for ${date.toISOString().slice(0, 10)}`);
+//   }
+// };
 
 export async function testHttp() {
   const test = await fetch('https://www.canada.ca/en/revenue-agency/services/tax/individuals/life-events/what-when-someone-died/final-return/complete-final-return-steps/common-types-income-a-final-return/federal-non-refundable-tax-credits/line-34900-donations-gifts.html')

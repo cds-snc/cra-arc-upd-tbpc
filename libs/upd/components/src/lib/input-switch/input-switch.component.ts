@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
-  selector: 'upd-input-switch',
-  templateUrl: './input-switch.component.html',
-  styleUrls: ['./input-switch.component.scss'],
+    selector: 'upd-input-switch',
+    templateUrl: './input-switch.component.html',
+    styleUrls: ['./input-switch.component.scss'],
+    standalone: false
 })
 export class InputSwitchComponent {
   @Input() id?: string;

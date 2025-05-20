@@ -40,6 +40,7 @@ import {
   feedbackKpiObjectiveCriteria,
   defaultKpiObjectiveStatusConfig,
 } from './kpi-objectives';
+import { isNullish } from '@dua-upd/utils-common';
 
 export interface ChartOptions {
   chart: ApexChart;
@@ -123,7 +124,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
   readonly setCurrent = this.updater((state, value: number): ChartOptions => {
     return {
       ...state,
-      series: [Math.abs(value) * 100] || [],
+            series: !isNullish(value) ? [Math.abs(value) * 100] : [],
     };
   });
 

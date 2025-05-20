@@ -1,6 +1,6 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import type { Model, mongo } from 'mongoose';
+import type { AnyBulkWriteOperation, Model } from 'mongoose';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Overall, Page, PageMetrics, PagesList } from '@dua-upd/db';
@@ -167,7 +167,7 @@ export class DataIntegrityService {
       ),
     );
 
-    const updates: mongo.AnyBulkWriteOperation<IPage>[] = pageUrlsToClean.map(
+    const updates: AnyBulkWriteOperation<IPage>[] = pageUrlsToClean.map(
       ({ _id, url }) => ({
         updateOne: {
           filter: { _id },

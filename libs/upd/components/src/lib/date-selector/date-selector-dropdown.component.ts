@@ -3,8 +3,8 @@ import { of } from 'rxjs';
 import type { DateRangePeriod } from '@dua-upd/upd/state';
 
 @Component({
-  selector: 'upd-date-selector-dropdown',
-  template: `
+    selector: 'upd-date-selector-dropdown',
+    template: `
     <div ngbDropdown class="d-inline-block">
       <button
         class="btn bg-white border border-1 dropdown-toggle"
@@ -29,7 +29,8 @@ import type { DateRangePeriod } from '@dua-upd/upd/state';
       </div>
     </div>
   `,
-  styleUrls: ['./date-selector.component.css'],
+    styleUrls: ['./date-selector.component.css'],
+    standalone: false
 })
 export class DateSelectorDropdownComponent {
   @Input() selectedPeriod = of('');

@@ -3,10 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AirtableClient } from '@dua-upd/external-data';
 import {
   GCTasksMappings,
-  GCTasksMappingsDocument,
+  type GCTasksMappingsDocument,
   Task,
 } from '@dua-upd/db';
-import { Model, Types, mongo } from 'mongoose';
+import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
 import {
   Retry,
   arrayToDictionary,
@@ -47,13 +47,11 @@ export class GCTasksMappingsService {
     }));
 
     // Create a bulk write
-    const bulkWriteOps: mongo.AnyBulkWriteOperation<GCTasksMappings>[] =
+    const bulkWriteOps: AnyBulkWriteOperation<GCTasksMappings>[] =
       gcTasksMappings.map((gcTasksMapping) => ({
         updateOne: {
           filter: { airtable_id: gcTasksMapping.airtable_id },
-          update: {
-            $set: gcTasksMapping,
-          },
+          update: { $set: gcTasksMapping },
           upsert: true,
         },
       }));
@@ -75,14 +73,12 @@ export class GCTasksMappingsService {
     );
 
     // Update tasks with the new mappings
-    const taskUpdateOps: mongo.AnyBulkWriteOperation<Task>[] = Object.entries(
+    const taskUpdateOps: AnyBulkWriteOperation<Task>[] = Object.entries(
       gcTasksByTmfTask,
     ).map(([taskId, gcTasks]) => ({
       updateOne: {
         filter: { _id: new Types.ObjectId(taskId) },
-        update: {
-          $set: { gc_tasks: gcTasks.map(omit(['tasks'])) },
-        },
+        update: { $set: { gc_tasks: gcTasks.map(omit(['tasks'])) } },
       },
     }));
 

@@ -29,12 +29,13 @@ interface SelectedItem {
 }
 
 @Component({
-  selector: 'upd-filter-table',
-  templateUrl: './filter-table.component.html',
-  styleUrls: ['./filter-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [FilterTableStore],
-  encapsulation: ViewEncapsulation.None,
+    selector: 'upd-filter-table',
+    templateUrl: './filter-table.component.html',
+    styleUrls: ['./filter-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [FilterTableStore],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class FilterTableComponent<T extends object> implements OnInit {
   private i18n = inject(I18nFacade);
@@ -48,10 +49,9 @@ export class FilterTableComponent<T extends object> implements OnInit {
 
     const d = [this._data, this.cols] as [T[], ColumnConfig<T>[]];
     this.filterTableStore.setData(d);
-    this.i18n.currentLang$.subscribe((lang) => {
+    const lang = this.i18n.currentLang();
       this.filterTableStore.setLabels(lang);
       this.updateNodeLabels(lang);
-    });
   }
 
   get data() {

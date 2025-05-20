@@ -12,11 +12,12 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
 
 @Component({
-  selector: 'upd-apex-bar',
-  templateUrl: './apex-bar.component.html',
-  styleUrls: ['./apex-bar.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ApexStore],
+    selector: 'upd-apex-bar',
+    templateUrl: './apex-bar.component.html',
+    styleUrls: ['./apex-bar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [ApexStore],
+    standalone: false
 })
 export class ApexBarComponent implements OnInit {
   private i18n = inject(I18nFacade);

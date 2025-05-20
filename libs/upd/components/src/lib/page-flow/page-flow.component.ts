@@ -14,9 +14,10 @@ import { ColumnConfig, Direction, PageFlowData } from '@dua-upd/types-common';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
-  selector: 'upd-page-flow',
-  templateUrl: './page-flow.component.html',
-  styleUrl: './page-flow.component.css',
+    selector: 'upd-page-flow',
+    templateUrl: './page-flow.component.html',
+    styleUrl: './page-flow.component.css',
+    standalone: false
 })
 export class PageFlowComponent {
   private http = inject(HttpClient);
@@ -148,8 +149,7 @@ export class PageFlowComponent {
             this.isInit.set(false);
           }
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
 
     effect(
@@ -170,8 +170,7 @@ export class PageFlowComponent {
         ) {
           this.setCurrentFlowData();
         }
-      },
-      { allowSignalWrites: true },
+      }
     );
   }
 

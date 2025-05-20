@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 {
-  "name": "Base config",
-  "dockerComposeFile": "docker-compose.yml",
+  "name": "Base config + Terraform & AWS CLI",
+  "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
   "containerEnv": {
@@ -14,6 +14,8 @@
     "vscode": {
       // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
+        "hashicorp.terraform",
+        "hashicorp.hcl",
         "github.copilot",
         "GitHub.copilot-chat",
         "github.vscode-github-actions",
@@ -33,6 +35,17 @@
         "typescript.tsdk": "node_modules/typescript/lib",
         "npm.packageManager": "bun"
       }
+    }
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest",
+      "tflint": "latest",
+      "terragrunt": "latest"
     }
   },
 

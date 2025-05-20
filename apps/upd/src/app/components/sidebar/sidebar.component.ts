@@ -6,9 +6,10 @@ import { FR_CA } from '@dua-upd/upd/i18n';
 import { Store } from '@ngrx/store';
 
 @Component({
-  selector: 'upd-sidebar',
-  templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css'],
+    selector: 'upd-sidebar',
+    templateUrl: './sidebar.component.html',
+    styleUrls: ['./sidebar.component.css'],
+    standalone: false
 })
 export class SidebarComponent {
   i18n = inject(I18nFacade);

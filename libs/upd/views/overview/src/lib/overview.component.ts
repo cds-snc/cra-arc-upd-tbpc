@@ -9,9 +9,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { OverviewFacade } from './+state/overview/overview.facade';
 
 @Component({
-  selector: 'upd-overview',
-  templateUrl: './overview.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-overview',
+    templateUrl: './overview.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class OverviewComponent implements OnInit {
   private overviewService = inject(OverviewFacade);

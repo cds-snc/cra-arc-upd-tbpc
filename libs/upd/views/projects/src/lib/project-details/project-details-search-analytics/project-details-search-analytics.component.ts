@@ -12,9 +12,10 @@ type VisitsByPageColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-project-details-search-analytics',
-  templateUrl: './project-details-search-analytics.component.html',
-  styleUrls: ['./project-details-search-analytics.component.css'],
+    selector: 'upd-project-details-search-analytics',
+    templateUrl: './project-details-search-analytics.component.html',
+    styleUrls: ['./project-details-search-analytics.component.css'],
+    standalone: false
 })
 export class ProjectDetailsSearchAnalyticsComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -15,9 +15,10 @@ export interface RadioOption<T> {
 }
 
 @Component({
-  selector: 'upd-radio',
-  templateUrl: './radio.component.html',
-  styleUrls: ['./radio.component.scss'],
+    selector: 'upd-radio',
+    templateUrl: './radio.component.html',
+    styleUrls: ['./radio.component.scss'],
+    standalone: false
 })
 export class RadioComponent<
   T extends { value: string; label: string; description: string },

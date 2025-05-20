@@ -11,10 +11,11 @@ import { combineLatest } from 'rxjs';
 import { EN_CA } from '@dua-upd/upd/i18n';
 
 @Component({
-  selector: 'upd-project-details',
-  templateUrl: './project-details.component.html',
-  styleUrls: ['./project-details.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-project-details',
+    templateUrl: './project-details.component.html',
+    styleUrls: ['./project-details.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ProjectDetailsComponent implements OnInit {
   private i18n = inject(I18nFacade);

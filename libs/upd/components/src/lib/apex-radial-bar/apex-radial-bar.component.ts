@@ -1,118 +1,77 @@
-import type {
-  ApexAnnotations,
-  ApexAxisChartSeries,
-  ApexChart,
-  ApexDataLabels,
-  ApexFill,
-  ApexForecastDataPoints,
-  ApexGrid,
-  ApexLegend,
-  ApexMarkers,
-  ApexNoData,
-  ApexNonAxisChartSeries,
-  ApexPlotOptions,
-  ApexResponsive,
-  ApexStates,
-  ApexStroke,
-  ApexTheme,
-  ApexTitleSubtitle,
-  ApexTooltip,
-  ApexXAxis,
-  ApexYAxis,
-  ChartType,
-} from 'ng-apexcharts';
-import { ChartComponent } from 'ng-apexcharts';
 import {
   ChangeDetectionStrategy,
   Component,
-  inject,
   Input,
-  OnChanges,
-  SimpleChanges,
   ViewChild,
+  effect,
+  inject,
+  input,
 } from '@angular/core';
-import type { ColumnConfig } from '@dua-upd/types-common';
-import { I18nFacade } from '@dua-upd/upd/state';
-import { EN_CA, LocaleId } from '@dua-upd/upd/i18n';
-import { KpiObjectiveStatus } from '../data-card/data-card.component';
+import { ChartComponent } from 'ng-apexcharts';
+import type {
+  ApexChart,
+  ApexOptions,
+  ApexPlotOptions,
+  ApexResponsive,
+  ChartType,
+} from 'ng-apexcharts';
 import { formatPercent } from '@angular/common';
-import {
-  defaultKpiObjectiveStatusConfig,
-  defaultKpiObjectiveCriteria,
-} from './kpi-objectives';
+
+import { EN_CA, LocaleId } from '@dua-upd/upd/i18n';
+import { I18nFacade } from '@dua-upd/upd/state';
+import { defaultKpiObjectiveCriteria, defaultKpiObjectiveStatusConfig } from './kpi-objectives';
+import type { ColumnConfig } from '@dua-upd/types-common';
+import { KpiObjectiveStatus } from '../data-card/data-card.component';
+
 import fr from 'apexcharts/dist/locales/fr.json';
 import en from 'apexcharts/dist/locales/en.json';
-
-type ChartOptions = {
-  annotations?: ApexAnnotations;
-  chart?: ApexChart;
-  colors?: string[];
-  dataLabels?: ApexDataLabels;
-  fill?: ApexFill;
-  forecastDataPoints?: ApexForecastDataPoints;
-  grid?: ApexGrid;
-  labels?: string[];
-  legend?: ApexLegend;
-  markers?: ApexMarkers;
-  noData?: ApexNoData;
-  plotOptions?: ApexPlotOptions;
-  responsive?: ApexResponsive[];
-  series: ApexAxisChartSeries | ApexNonAxisChartSeries;
-  states?: ApexStates;
-  stroke?: ApexStroke;
-  subtitle?: ApexTitleSubtitle;
-  theme?: ApexTheme;
-  title?: ApexTitleSubtitle;
-  tooltip?: ApexTooltip;
-  xaxis?: ApexXAxis;
-  yaxis?: ApexYAxis | ApexYAxis[];
-};
 
 @Component({
   selector: 'upd-apex-radial-bar',
   templateUrl: './apex-radial-bar.component.html',
   styleUrls: ['./apex-radial-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
-export class ApexRadialBarComponent implements OnChanges {
-  private i18n = inject(I18nFacade);
+export class ApexRadialBarComponent {
+  private readonly i18n = inject(I18nFacade);
 
   @ViewChild('chart', { static: false }) chart!: ChartComponent;
+
   @Input() secondaryTitleCols: ColumnConfig = { field: '', header: '' };
   @Input() secondaryTitleData: Record<string, number | string>[] = [];
   @Input() title = '';
   @Input() titleTooltip = '';
-  @Input() current = 0;
-  @Input() comparison = 0;
-  @Input() comparisonMode= 0;
-  @Input() labels: string[] = [];
-  @Input() seriesLabel = 'visits';
-  @Input() kpiObjectiveCriteria = defaultKpiObjectiveCriteria;
   @Input() modal = '';
   @Input() keyword = 'calls';
-  @Input() postValue = '';
-  @Input() preLabel = '';
+  @Input() seriesLabel = 'visits';
   @Input() valueLabel = 0;
-  type: ChartType = 'radialBar';
+  @Input() preLabel = '';
+  @Input() postValue = '';
+  @Input() kpiObjectiveCriteria = defaultKpiObjectiveCriteria;
 
-  chartOptions: Partial<ChartOptions> = {
-    chart: {
-      height: 350,
-      type: this.type,
-      locales: [fr, en],
-      defaultLocale: 'en',
-      // toolbar: {
-      //   show: true,
-      // },
-    },
-    stroke: {
-      lineCap: 'round',
-    },
+  current = input<number>(0);
+  comparison = input<number>(0);
+  comparisonMode = input<number>(0);
+  labels = input<string[]>([]);
+
+  readonly type: ChartType = 'radialBar';
+
+  readonly chartConfig: ApexChart = {
+    height: 350,
+    width: 325,
+    type: this.type,
+    locales: [fr, en],
+    defaultLocale: 'en',
+  };
+
+  chartOptions: Partial<ApexOptions> = {
+    chart: this.chartConfig,
+    stroke: { lineCap: 'round' },
     dataLabels: {
       enabled: true,
-      formatter: function (value, { seriesIndex, dataPointIndex, w }) {
-        return w.config.series[seriesIndex].name + ':  ' + value;
-      },
+      formatter: (value, { seriesIndex, w }) =>
+        `${w.config.series[seriesIndex]?.name || ''}: ${value}`,
     },
     plotOptions: {
       radialBar: {
@@ -138,188 +97,106 @@ export class ApexRadialBarComponent implements OnChanges {
             fontWeight: 'bold',
             fontFamily: 'Noto Sans',
             color: '#333',
-            formatter: function (val) {
-              return val + '%';
-            },
+            formatter: (val: number) => `${val}%`,
           },
         },
       },
     },
-    responsive: [
-      {
-        breakpoint: 1600,
-        options: {
-          chart: {
-            height: 300,
-          },
-          plotOptions: {
-            radialBar: {
-              dataLabels: {
-                name: {
-                  fontSize: '16px',
-                },
-                value: {
-                  offsetY: -55,
-                  fontSize: '26px',
-                },
+    responsive: this.getResponsiveOptions(),
+  };
+
+  constructor() {
+    effect(() => {
+      const curr = this.current();
+      const comp = this.comparison();
+      const labelList = this.labels();
+      const lang = this.i18n.currentLang();
+      const locale = lang === EN_CA ? 'en' : 'fr';
+
+      const kpi: KpiObjectiveStatus = this.kpiObjectiveCriteria(curr, comp);
+      const colour = defaultKpiObjectiveStatusConfig[kpi]?.colour || '#000000';
+
+      const postValueFunction = (data: number): string => {
+        const value = formatPercent(data / 100, locale);
+        return this.postValue
+          ? `${value} ${this.i18n.service.translate(this.postValue, `${locale}-CA` as LocaleId)}`
+          : value;
+      };
+
+      const labelText =
+        labelList.length === 1
+          ? labelList
+          : this.preLabel && this.valueLabel
+            ? [
+                `${this.i18n.service.translate(this.preLabel, `${locale}-CA` as LocaleId)} ${formatPercent(this.valueLabel, locale)}`,
+              ]
+            : comp !== 0
+              ? [formatPercent(comp, locale)]
+              : [''];
+
+      this.chartOptions = {
+        ...this.chartOptions,
+        series: [Math.abs(curr * 100)],
+        fill: { colors: [colour] },
+        labels: labelText,
+        plotOptions: {
+          radialBar: {
+            ...this.chartOptions.plotOptions?.radialBar,
+            dataLabels: {
+              ...this.chartOptions.plotOptions?.radialBar?.dataLabels,
+              name: {
+                ...this.chartOptions.plotOptions?.radialBar?.dataLabels?.name,
+                color: 'black',
+              },
+              value: {
+                ...this.chartOptions.plotOptions?.radialBar?.dataLabels?.value,
+                formatter: postValueFunction,
               },
             },
           },
         },
+      };
+    });
+  }
+
+  get hasData(): boolean {
+    const series = this.chartOptions.series;
+    return Array.isArray(series) && series.every(val => typeof val === 'number' && !isNaN(val));
+  }
+
+  private getResponsiveOptions(): ApexResponsive[] {
+    return [
+      {
+        breakpoint: 1600,
+        options: { chart: { height: 300 }, plotOptions: this.resizePlotOptions('16px', '26px', -55) },
       },
       {
         breakpoint: 1400,
-        options: {
-          chart: {
-            height: 250,
-          },
-          plotOptions: {
-            radialBar: {
-              dataLabels: {
-                name: {
-                  fontSize: '16px',
-                },
-                value: {
-                  offsetY: -40,
-                  fontSize: '26px',
-                },
-              },
-            },
-          },
-        },
+        options: { chart: { height: 250 }, plotOptions: this.resizePlotOptions('16px', '26px', -40) },
       },
       {
         breakpoint: 1300,
-        options: {
-          chart: {
-            height: 200,
-          },
-          plotOptions: {
-            radialBar: {
-              dataLabels: {
-                name: {
-                  fontSize: '12px',
-                },
-                value: {
-                  offsetY: -40,
-                  fontSize: '20px',
-                },
-              },
-            },
-          },
-        },
+        options: { chart: { height: 200 }, plotOptions: this.resizePlotOptions('12px', '20px', -40) },
       },
       {
         breakpoint: 1100,
-        options: {
-          chart: {
-            height: 170,
-          },
-          plotOptions: {
-            radialBar: {
-              dataLabels: {
-                name: {
-                  fontSize: '10px',
-                },
-                value: {
-                  offsetY: -30,
-                  fontSize: '20px',
-                },
-              },
-            },
-          },
-        },
+        options: { chart: { height: 170 }, plotOptions: this.resizePlotOptions('10px', '20px', -30) },
       },
       {
         breakpoint: 992,
-        options: {
-          chart: {
-            height: 350,
-          },
-          plotOptions: {
-            radialBar: {
-              dataLabels: {
-                name: {
-                  fontSize: '18px',
-                },
-                value: {
-                  offsetY: -55,
-                  fontSize: '32px',
-                },
-              },
-            },
-          },
+        options: { chart: { height: 350 }, plotOptions: this.resizePlotOptions('18px', '28px', -55) },
+      },
+    ];
+  }
+
+  private resizePlotOptions(nameSize: string, valueSize: string, offsetY: number): ApexPlotOptions {
+    return {
+      radialBar: {
+        dataLabels: {
+          name: { fontSize: nameSize },
+          value: { fontSize: valueSize, offsetY },
         },
       },
-    ],
-  };
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['current'] || changes['comparison'] || changes['labels']) {
-      this.i18n.currentLang$.subscribe((lang) => {
-        const locale = lang === EN_CA ? 'en' : 'fr';
-
-        let kpi: KpiObjectiveStatus = 'none';
-        let colour = '#000000';
-        kpi =
-          typeof this.current === 'number'
-            ? this.kpiObjectiveCriteria(this.current, this.comparison || 0)
-            : 'none';
-        colour = defaultKpiObjectiveStatusConfig[kpi].colour || '';
-        const current = typeof this.current === 'number' ? this.current : 0;
-        const comparison =
-          typeof this.comparison === 'number'
-            ? formatPercent(this.comparison, locale) || '0'
-            : '0';
-
-        const postValueFunction = (data: number) => {
-          return this.postValue
-            ? `${formatPercent(
-                data / 100,
-                locale,
-              )} ${this.i18n.service.translate(
-                this.postValue,
-                (locale + '-CA') as LocaleId,
-              )}`
-            : `${formatPercent(data / 100, locale)}`;
-        };
-
-        this.chartOptions = {
-          ...this.chartOptions,
-          series: [Math.abs(this.current * 100)],
-          fill: { colors: [colour] },
-          labels:
-            this.labels.length === 1
-              ? this.labels
-              : this.preLabel && this.valueLabel
-              ? [
-                  `${this.i18n.service.translate(
-                    this.preLabel,
-                    (locale + '-CA') as LocaleId,
-                  )} ${formatPercent(this.valueLabel, locale)}`,
-                ]
-              : this.comparison !== 0
-              ? [comparison]
-              : [''],
-          plotOptions: {
-            radialBar: {
-              ...this.chartOptions.plotOptions?.radialBar,
-              dataLabels: {
-                ...this.chartOptions.plotOptions?.radialBar?.dataLabels,
-                name: {
-                  ...this.chartOptions.plotOptions?.radialBar?.dataLabels?.name,
-                  color: 'black',
-                },
-                value: {
-                  ...this.chartOptions.plotOptions?.radialBar?.dataLabels
-                    ?.value,
-                  formatter: postValueFunction,
-                },
-              },
-            },
-          },
-        };
-      });
-    }
+    };
   }
 }

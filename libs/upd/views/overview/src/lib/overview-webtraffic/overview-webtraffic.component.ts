@@ -5,9 +5,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { combineLatest } from 'rxjs';
 
 @Component({
-  selector: 'upd-overview-webtraffic',
-  templateUrl: './overview-webtraffic.component.html',
-  styleUrls: ['./overview-webtraffic.component.css'],
+    selector: 'upd-overview-webtraffic',
+    templateUrl: './overview-webtraffic.component.html',
+    styleUrls: ['./overview-webtraffic.component.css'],
+    standalone: false
 })
 export class OverviewWebtrafficComponent implements OnInit {
   private overviewService = inject(OverviewFacade);

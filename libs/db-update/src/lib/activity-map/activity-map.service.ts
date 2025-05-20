@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isBetween from 'dayjs/plugin/isBetween';
-import { Types, mongo } from 'mongoose';
+import { Types, type AnyBulkWriteOperation } from 'mongoose';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { DbService, PageMetrics } from '@dua-upd/db';
 import type {
@@ -34,9 +34,7 @@ interface ActivityMapEntry {
   itemId: string;
 }
 
-export type ActivityMap = ActivityMapEntry & {
-  pages: Types.ObjectId[];
-};
+export type ActivityMap = ActivityMapEntry & { pages: Types.ObjectId[] };
 
 @Injectable()
 export class ActivityMapService {
@@ -133,22 +131,15 @@ export class ActivityMapService {
           activityMapResultsWithRefs as ActivityMap[],
         );
 
-        const bulkWriteOps: mongo.AnyBulkWriteOperation<PageMetrics>[] = [];
+        const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
         for (const { activity_map, pages } of cleanActivityMap) {
           for (const page of pages) {
             bulkWriteOps.push({
               updateOne: {
-                filter: {
-                  date: dayjs.utc(dateRange.start).toDate(),
-                  page,
-                },
+                filter: { date: dayjs.utc(dateRange.start).toDate(), page },
                 update: {
-                  $addToSet: {
-                    activity_map: {
-                      $each: activity_map,
-                    },
-                  },
+                  $addToSet: { activity_map: { $each: activity_map } },
                 },
               },
             });
@@ -213,10 +204,7 @@ export class ActivityMapService {
 
       const pages = urls ? { pages: urls.map((url) => url.page) } : {};
 
-      return {
-        ...itemId,
-        ...pages,
-      };
+      return { ...itemId, ...pages };
     });
   }
 
@@ -237,10 +225,7 @@ export class ActivityMapService {
 
         if (!itemIdDoc?.pages?.length) return activityMapEntry;
 
-        return {
-          ...activityMapEntry,
-          pages: itemIdDoc.pages,
-        };
+        return { ...activityMapEntry, pages: itemIdDoc.pages };
       })
       .filter((activityMapEntry) => 'pages' in activityMapEntry);
   }
@@ -295,10 +280,7 @@ export function fixOutboundLinks(activityMapEntries: ActivityMap[]) {
         const match = outboundLinkRegex.exec(activityMapItem.link);
 
         if (match) {
-          return {
-            ...activityMapItem,
-            link: match[1],
-          };
+          return { ...activityMapItem, link: match[1] };
         }
 
         return activityMapItem;

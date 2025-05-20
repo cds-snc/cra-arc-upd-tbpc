@@ -10,7 +10,7 @@
 
     table td.p-datepicker-today > span {
       background: none;
-      color: initial; // Use 'initial' instead of 'none' for color properties
+      color: initial;
       border: initial;
     }
   }
@@ -88,4 +88,22 @@ span.calendar-item:has(.in-range),
   &:hover {
     background: none !important;
   }
+}
+
+.p-datepicker-day-selected-range {
+  background: none !important;
+  background-color: none !important;
+  color: none !important;
+}
+
+.p-datepicker-day-selected {
+  background: none !important;
+  background-color: none;
+  color: none;
+}
+
+.p-datepicker-day-selected:hover {
+  background: none !important;
+  background-color: none;
+  color: none;
 }

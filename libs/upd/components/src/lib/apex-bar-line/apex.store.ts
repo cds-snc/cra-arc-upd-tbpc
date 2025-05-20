@@ -347,7 +347,7 @@ export function getTooltipHtml(
           .map(
             (ann) => `
       <div class="apexcharts-tooltip-series-group apexcharts-active d-flex" style="order: 99;">
-        <span class="apexcharts-tooltip-marker annotation"></span>
+        <span class="apexcharts-tooltip-marker annotation" style="border: 1px solid black; border-radius: 50%; height: 8px; width: 8px"></span>
         <div class="apexcharts-tooltip-text" style="font-family: 'Noto Sans', sans-serif; font-size: 0.7rem">
           <div class="apexcharts-tooltip-y-group">
             <span class="apexcharts-tooltip-text-y-label"><strong>${eventText}:</strong> ${ann.text}: </span>
@@ -367,20 +367,27 @@ export function getTooltipHtml(
     .map((series, i) => seriesTooltipHtml(series, i, locale))
     .join('');
 
+  const hasAnnotation = Boolean(annotationHtml);
+  const annotationDivider = hasAnnotation
+    ? `<hr style="order: 98;" class="my-1" />`
+    : '';
+
+  const annotationSection = hasAnnotation
+    ? `${annotationDivider}${annotationHtml}`
+    : '';
+
   return `
-    <div
-      class="apexcharts-tooltip-title apexcharts-active d-flex"
-      style="font-family: 'Noto Sans',sans-serif; font-size: 0.8rem"
-    >
-      ${title}
-    </div>
-
-    ${seriesHtml}
-
-    <hr style="order: 98;" class="my-1" />
-
-    ${annotationHtml}
-  `;
+      <div
+        class="apexcharts-tooltip-title apexcharts-active d-flex"
+        style="font-family: 'Noto Sans', sans-serif; font-size: 0.8rem"
+      >
+        ${title}
+      </div>
+    
+      ${seriesHtml}
+    
+      ${annotationSection}
+    `;
 }
 
 // date formatting utils

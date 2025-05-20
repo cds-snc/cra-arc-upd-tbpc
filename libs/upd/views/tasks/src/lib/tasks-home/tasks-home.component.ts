@@ -5,9 +5,10 @@ import type { UnwrapObservable } from '@dua-upd/utils-common';
 import { TasksHomeFacade } from './+state/tasks-home.facade';
 
 @Component({
-  selector: 'upd-tasks-home',
-  templateUrl: './tasks-home.component.html',
-  styleUrls: ['./tasks-home.component.css'],
+    selector: 'upd-tasks-home',
+    templateUrl: './tasks-home.component.html',
+    styleUrls: ['./tasks-home.component.css'],
+    standalone: false
 })
 export class TasksHomeComponent implements OnInit {
   private readonly tasksHomeService = inject(TasksHomeFacade);

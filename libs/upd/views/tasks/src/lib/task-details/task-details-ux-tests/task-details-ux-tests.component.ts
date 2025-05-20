@@ -11,9 +11,10 @@ type DocumentsColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-task-details-ux-tests',
-  templateUrl: './task-details-ux-tests.component.html',
-  styleUrls: ['./task-details-ux-tests.component.css'],
+    selector: 'upd-task-details-ux-tests',
+    templateUrl: './task-details-ux-tests.component.html',
+    styleUrls: ['./task-details-ux-tests.component.css'],
+    standalone: false
 })
 export class TaskDetailsUxTestsComponent implements OnInit {
   private i18n = inject(I18nFacade);

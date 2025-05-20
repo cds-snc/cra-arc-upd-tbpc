@@ -2,7 +2,7 @@ import { ConsoleLogger, Injectable } from '@nestjs/common';
 import chalk from 'chalk';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { Types, mongo } from 'mongoose';
+import { Types, type AnyBulkWriteOperation } from 'mongoose';
 import {
   arrayToDictionary,
   logJson,
@@ -140,7 +140,7 @@ export class InternalSearchTermsService {
           ),
         );
 
-        const updateOps: mongo.AnyBulkWriteOperation[] = partialsToInsert.map(
+        const updateOps: AnyBulkWriteOperation<IAAItemId>[] = partialsToInsert.map(
           (itemId) => ({
             updateOne: {
               filter: { itemId: itemId.itemId },
@@ -161,7 +161,7 @@ export class InternalSearchTermsService {
         );
 
         await this.db.collections.aaItemIds.bulkWrite(
-          updateOps as mongo.AnyBulkWriteOperation<IAAItemId>[],
+          updateOps,
         );
       }
     }
@@ -215,7 +215,7 @@ export class InternalSearchTermsService {
           ),
         );
 
-        const updateOps: mongo.AnyBulkWriteOperation[] = itemIdsToInsert.map(
+        const updateOps: AnyBulkWriteOperation<IAAItemId>[] = itemIdsToInsert.map(
           (itemId) => ({
             updateOne: {
               filter: { itemId: itemId.itemId },
@@ -236,7 +236,7 @@ export class InternalSearchTermsService {
         );
 
         await this.db.collections.aaItemIds.bulkWrite(
-          updateOps as mongo.AnyBulkWriteOperation<IAAItemId>[],
+          updateOps,
         );
       }
     }
@@ -607,7 +607,7 @@ export class InternalSearchTermsService {
       // lookup table by url for duplicates
       const pageMetricsUrlDict = arrayToDictionary(pageMetricsToMatch, 'url');
 
-      const bulkWriteOps: mongo.AnyBulkWriteOperation[] = [];
+      const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
       // will be easier to do if we separate with dups from without dups
       const searchResultsWithoutDups = resultsWithRefs.filter(
@@ -743,7 +743,7 @@ export class InternalSearchTermsService {
       console.log(bulkWriteOps.length);
 
       const bulkWriteResults = await this.db.collections.pageMetrics.bulkWrite(
-        bulkWriteOps as mongo.AnyBulkWriteOperation<PageMetrics>[],
+        bulkWriteOps,
         {
           ordered: false,
         },

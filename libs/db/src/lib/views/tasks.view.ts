@@ -1,10 +1,11 @@
 import {
-  AggregateOptions,
-  mongo,
-  ProjectionType,
-  QueryOptions,
+  type AggregateOptions,
+  type ProjectionType,
+  type QueryOptions,
   Types,
   type FilterQuery,
+  type UpdateOneModel,
+  type mongo,
 } from 'mongoose';
 import { difference, omit, pick } from 'rambdax';
 import type { TasksView, TasksViewSchema } from './tasks-view.schema';
@@ -33,6 +34,7 @@ import { DbService } from '../db.service';
 import { DbViewNew, type ViewConfig } from '../db.views.new';
 import { topLevelMetricsGrouping } from './metrics';
 import { TaskMetricsStore } from './metrics.store';
+import type { PagesView } from './pages-view.schema';
 
 export type TasksViewConfig = ViewConfig<typeof TasksViewSchema>;
 
@@ -59,10 +61,11 @@ type RefreshContext = {
 };
 
 type RefreshWriteOp = {
-  updateOne: mongo.UpdateOneModel<ITaskView> & { upsert: true };
+  updateOne: UpdateOneModel<ITaskView> & { upsert: true };
 };
 
 export class TasksViewService extends DbViewNew<
+  TasksView,
   typeof TasksViewSchema,
   BaseDoc,
   RefreshContext
@@ -195,7 +198,7 @@ export class TasksViewService extends DbViewNew<
         tasks: task._id,
       }),
       this.db.views.pages
-        .find(
+        .find<Omit<PagesView, 'tasks' | 'projects'>>(
           {
             tasks: task._id,
             dateRange: dateRange,
@@ -556,20 +559,20 @@ export class TasksViewService extends DbViewNew<
   }
 
   // overriding inherited methods for cleaner types
-  override find<T = TasksView>(
+  override find<ReturnT = TasksView>(
     filter?: FilterQuery<TasksView>,
     projection: ProjectionType<TasksView> = {},
     options: QueryOptions<TasksView> = {},
-  ): Promise<T[]> {
-    return super.find(filter, projection, options) as Promise<T[]>;
+  ): Promise<ReturnT[] | null> {
+    return super.find<ReturnT>(filter, projection, options);
   }
 
-  override findOne(
+  override findOne<ReturnT = TasksView>(
     filter?: FilterQuery<TasksView>,
     projection: ProjectionType<TasksView> = {},
     options: QueryOptions<TasksView> = {},
-  ): Promise<TasksView> {
-    return super.findOne(filter, projection, options);
+  ): Promise<ReturnT | null> {
+    return super.findOne<ReturnT>(filter, projection, options);
   }
 
   override aggregate<T>(
@@ -977,13 +980,13 @@ export class TasksViewService extends DbViewNew<
     );
   }
 
-  async clearNonExisting() {
+  async clearNonExisting(): Promise<mongo.DeleteResult | null> {
     const taskIds = await this.db.collections.tasks
-      .distinct<Types.ObjectId>('_id')
+      .distinct('_id')
       .then((ids) => ids.map((id) => id.toString()));
 
     const viewTaskIds = await this._model
-      .distinct<Types.ObjectId>('task._id')
+      .distinct('task._id')
       .then((ids) => ids.map((id) => id.toString()));
 
     const nonExistingIds = difference(viewTaskIds, taskIds);

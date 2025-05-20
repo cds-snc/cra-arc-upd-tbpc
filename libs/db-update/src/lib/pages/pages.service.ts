@@ -1,6 +1,6 @@
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, mongo } from 'mongoose';
+import type { Model, AnyBulkWriteOperation } from 'mongoose';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import type { PageDocument } from '@dua-upd/db';
@@ -37,7 +37,7 @@ export class PageUpdateService {
 
     this.logger.log(`Setting lang for ${pagesToUpdate.length} pages...`);
 
-    const bulkWriteOps: mongo.AnyBulkWriteOperation<Page>[] = pagesToUpdate
+    const bulkWriteOps: AnyBulkWriteOperation<Page>[] = pagesToUpdate
       .map(({ _id, url }) => ({
         updateOne: {
           filter: { _id },

@@ -9,9 +9,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'upd-page-details-feedback',
-  templateUrl: './pages-details-feedback.component.html',
-  styleUrls: ['./pages-details-feedback.component.css'],
+    selector: 'upd-page-details-feedback',
+    templateUrl: './pages-details-feedback.component.html',
+    styleUrls: ['./pages-details-feedback.component.css'],
+    standalone: false
 })
 export class PagesDetailsFeedbackComponent {
   private pageDetailsService = inject(PagesDetailsFacade);

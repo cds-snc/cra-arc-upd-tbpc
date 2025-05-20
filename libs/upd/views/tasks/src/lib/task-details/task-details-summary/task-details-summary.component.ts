@@ -16,10 +16,11 @@ import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { combineLatest, map } from 'rxjs';
 
 @Component({
-  selector: 'upd-task-details-summary',
-  templateUrl: './task-details-summary.component.html',
-  styleUrls: ['./task-details-summary.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-task-details-summary',
+    templateUrl: './task-details-summary.component.html',
+    styleUrls: ['./task-details-summary.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TaskDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -16,9 +16,10 @@ type VisitsByPageColType = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-project-details-feedback',
-  templateUrl: './project-details-feedback.component.html',
-  styleUrls: ['./project-details-feedback.component.css'],
+    selector: 'upd-project-details-feedback',
+    templateUrl: './project-details-feedback.component.html',
+    styleUrls: ['./project-details-feedback.component.css'],
+    standalone: false
 })
 export class ProjectDetailsFeedbackComponent implements OnInit {
   private i18n = inject(I18nFacade);

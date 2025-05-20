@@ -28,10 +28,11 @@ type DocumentsColTypes = GetTableProps<
 >;
 
 @Component({
-  selector: 'upd-project-details-ux-tests',
-  templateUrl: './project-details-ux-tests.component.html',
-  styleUrls: ['./project-details-ux-tests.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'upd-project-details-ux-tests',
+    templateUrl: './project-details-ux-tests.component.html',
+    styleUrls: ['./project-details-ux-tests.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class ProjectDetailsUxTestsComponent implements OnInit {
   private i18n = inject(I18nFacade);

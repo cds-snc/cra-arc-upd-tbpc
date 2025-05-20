@@ -1,15 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { model, Document, Model, Types } from 'mongoose';
+import { model, Document, Model, Schema as MSchema, Types } from 'mongoose';
 import type { IReadability } from '@dua-upd/types-common';
 
 export type ReadabilityDocument = Readability & Document;
 
 @Schema({ collection: 'readability' })
 export class Readability implements IReadability {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
-  @Prop({ type: Types.ObjectId, required: true, index: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true, index: true })
   page: Types.ObjectId;
 
   @Prop({ type: String, required: true, index: true })

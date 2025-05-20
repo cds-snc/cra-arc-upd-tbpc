@@ -47,7 +47,8 @@ export class FilterTableStore<T extends object> extends ComponentStore<
           column.field === 'what_would_improve_comment' ||
           column.field === 'reason_not_complete_comment' ||
           column.field === 'url' ||
-          column.field === 'gc_task_other'
+          column.field === 'gc_task_other' ||
+          column.field === 'tmf_rank'
         ) {
           continue;
         }

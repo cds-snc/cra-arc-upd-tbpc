@@ -1,7 +1,7 @@
 import { BlobModel } from '@dua-upd/blob-storage';
 import { wait } from '@dua-upd/utils-common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, FilterQuery, Model, ProjectionType, Types } from 'mongoose';
+import { Document, FilterQuery, Model, ProjectionType, Schema as MSchema, Types } from 'mongoose';
 import type { IUrl, UrlHash } from '@dua-upd/types-common';
 
 export type UrlDocument = Url & Document;
@@ -15,7 +15,7 @@ export type MapBlobsArgs<T extends MapBlobsFunc> =
 
 @Schema({ collection: 'urls' })
 export class Url implements IUrl {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id = new Types.ObjectId();
 
   @Prop({ type: String, required: true, unique: true })
@@ -27,7 +27,7 @@ export class Url implements IUrl {
   @Prop({ type: [String], index: true })
   all_titles?: string[];
 
-  @Prop({ type: Types.ObjectId, sparse: true })
+  @Prop({ type: MSchema.Types.ObjectId, sparse: true })
   page?: Types.ObjectId;
 
   @Prop({ type: Object })

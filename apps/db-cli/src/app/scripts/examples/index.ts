@@ -398,7 +398,7 @@ export const benchCompression = async () => {
 
     compressTimer('compress');
 
-    const compressedSize = Buffer.from(compressed).byteLength;
+    const compressedSize = Buffer.from(compressed.buffer).byteLength;
     const compressedSizeMB = bytesToMbs(compressedSize);
 
     const compressionRatio = (

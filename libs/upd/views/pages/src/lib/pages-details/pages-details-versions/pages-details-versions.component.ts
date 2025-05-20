@@ -5,9 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { UrlHash } from '@dua-upd/types-common';
 
 @Component({
-  selector: 'upd-page-details-versions',
-  templateUrl: './pages-details-versions.component.html',
-  styleUrls: ['./pages-details-versions.component.css'],
+    selector: 'upd-page-details-versions',
+    templateUrl: './pages-details-versions.component.html',
+    styleUrls: ['./pages-details-versions.component.css'],
+    standalone: false
 })
 export class PagesDetailsVersionsComponent implements OnInit {
   private i18n = inject(I18nFacade);

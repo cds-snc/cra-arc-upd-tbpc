@@ -7,11 +7,10 @@ import {
 import { I18nModule } from '@dua-upd/upd/i18n';
 
 @Component({
-  standalone: true,
-  selector: 'upd-range',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [I18nModule],
-  template: `
+    selector: 'upd-range',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [I18nModule],
+    template: `
     <div class="d-inline-flex flex-column">
       @if (label()) {
         <label [for]="id()" class="form-label mb-0">{{
@@ -33,7 +32,7 @@ import { I18nModule } from '@dua-upd/upd/i18n';
       </span>
     </div>
   `,
-  styles: ``,
+    styles: ``
 })
 export class RangeSliderComponent {
   label = input<string>();

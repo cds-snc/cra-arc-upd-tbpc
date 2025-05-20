@@ -5,9 +5,10 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 
 @Component({
-  selector: 'upd-task-details-calldrivers',
-  templateUrl: './task-details-calldrivers.component.html',
-  styleUrls: ['./task-details-calldrivers.component.css'],
+    selector: 'upd-task-details-calldrivers',
+    templateUrl: './task-details-calldrivers.component.html',
+    styleUrls: ['./task-details-calldrivers.component.css'],
+    standalone: false
 })
 export class TaskDetailsCalldriversComponent implements OnInit {
   private i18n = inject(I18nFacade);

@@ -6,36 +6,29 @@
   [data]="secondaryTitleData"
 >
   <div class="radialBar">
-    <apx-chart
-      *ngIf="chartOptions.chart"
-      #chart
-      [series]="chartOptions.series || []"
-      [labels]="chartOptions.labels || []"
-      [legend]="chartOptions.legend || {}"
-      [chart]="chartOptions.chart"
-      [yaxis]="chartOptions.yaxis || []"
-      [xaxis]="chartOptions.xaxis || {}"
-      [stroke]="chartOptions.stroke || {}"
-      [plotOptions]="chartOptions.plotOptions || {}"
-      [markers]="chartOptions.markers || {}"
-      [fill]="chartOptions.fill || {}"
-      [colors]="chartOptions.colors || []"
-      [dataLabels]="chartOptions.dataLabels || {}"
-      [tooltip]="chartOptions.tooltip || {}"
-      [responsive]="chartOptions.responsive || []"
-    ></apx-chart>
+    @if (hasData && chartOptions.chart) {
+      <apx-chart
+        #chart
+        [series]="chartOptions.series || []"
+        [labels]="chartOptions.labels || []"
+        [legend]="chartOptions.legend || {}"
+        [chart]="chartConfig"
+        [stroke]="chartOptions.stroke || {}"
+        [plotOptions]="chartOptions.plotOptions || {}"
+        [markers]="chartOptions.markers || {}"
+        [fill]="chartOptions.fill || {}"
+        [colors]="chartOptions.colors || []"
+        [dataLabels]="chartOptions.dataLabels || {}"
+        [tooltip]="chartOptions.tooltip || {}"
+        [responsive]="chartOptions.responsive || []"
+      ></apx-chart>
+    }
   </div>
-  <!-- <div class="button">
-    <upd-modal>
-      <ng-content></ng-content>
-    </upd-modal>
-  </div> -->
 
   <div class="d-flex justify-content-between position-relative mt-2">
     <ng-content></ng-content>
     <div class="d-flex justify-content-end" *ngIf="modal">
-      <upd-modal [modalTitle]="title" [modalContent]="modal">
-      </upd-modal>
+      <upd-modal [modalTitle]="title" [modalContent]="modal"> </upd-modal>
     </div>
   </div>
 

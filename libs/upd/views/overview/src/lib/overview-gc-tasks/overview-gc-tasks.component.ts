@@ -2,9 +2,10 @@ import { Component, inject } from '@angular/core';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 
 @Component({
-  selector: 'upd-overview-gc-tasks',
-  templateUrl: './overview-gc-tasks.component.html',
-  styleUrls: ['./overview-gc-tasks.component.css'],
+    selector: 'upd-overview-gc-tasks',
+    templateUrl: './overview-gc-tasks.component.html',
+    styleUrls: ['./overview-gc-tasks.component.css'],
+    standalone: false
 })
 export class OverviewGCTasksComponent {
   private overviewService = inject(OverviewFacade);

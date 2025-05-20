@@ -1,7 +1,7 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import chalk from 'chalk';
-import { Model, Types, type mongo } from 'mongoose';
+import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
 import { Command, CommandRunner, InquirerService } from 'nest-commander';
 import { DataIntegrityService } from '@dua-upd/data-integrity';
 import {
@@ -57,9 +57,7 @@ export const assemblePipeline = <T>(
 
   if (mergeBeforeInsert) {
     return async () => {
-      const dataSourceResults: {
-        [Key in keyof typeof dataSources]?: T[];
-      } = {};
+      const dataSourceResults: { [Key in keyof typeof dataSources]?: T[] } = {};
 
       // execute in parallel and wait for all to finish
       const dataSourcePromises = Object.fromEntries(
@@ -206,10 +204,7 @@ export class PopulateCommand extends CommandRunner {
 
       await this.prepareDb();
 
-      const dateRange = {
-        start: startDate,
-        end: endDate,
-      };
+      const dateRange = { start: startDate, end: endDate };
 
       if (metricsOrSearchTerms === 'metrics') {
         const pipelineConfig =
@@ -249,10 +244,7 @@ export class PopulateCommand extends CommandRunner {
 
       await this.prepareDb();
 
-      const dateRange = {
-        start: startDate,
-        end: endDate,
-      };
+      const dateRange = { start: startDate, end: endDate };
 
       if (metricsOrSearchTerms === 'metrics') {
         const pipelineConfig = this.createPageMetricsPipelineConfig(dateRange);
@@ -298,13 +290,9 @@ export class PopulateCommand extends CommandRunner {
       insertFn: async (data) => {
         const bulkInsertOps = data.map((record) => ({
           updateOne: {
-            filter: {
-              date: record.date,
-            },
+            filter: { date: record.date },
             update: {
-              $setOnInsert: {
-                _id: new Types.ObjectId(),
-              },
+              $setOnInsert: { _id: new Types.ObjectId() },
               $set: record,
             },
             upsert: true,
@@ -333,29 +321,20 @@ export class PopulateCommand extends CommandRunner {
         );
         console.log(data.length);
 
-        const bulkInsertOps: mongo.AnyBulkWriteOperation[] = data.map(
-          (record) => ({
-            updateOne: {
-              filter: {
-                url: record.url,
-                date: record.date,
-              },
-              update: {
-                $setOnInsert: {
-                  _id: new Types.ObjectId(),
-                },
-                $set: record,
-              },
-              upsert: true,
+        const bulkInsertOps: AnyBulkWriteOperation[] = data.map((record) => ({
+          updateOne: {
+            filter: { url: record.url, date: record.date },
+            update: {
+              $setOnInsert: { _id: new Types.ObjectId() },
+              $set: record,
             },
-          }),
-        );
+            upsert: true,
+          },
+        }));
 
         return await Promise.resolve(bulkInsertOps).then((bulkInsertOps) =>
           this.pageMetricsModel
-            .bulkWrite(bulkInsertOps, {
-              ordered: false,
-            })
+            .bulkWrite(bulkInsertOps, { ordered: false })
             .then((bulkWriteResults) =>
               console.log(
                 `[${
@@ -411,10 +390,7 @@ export class PopulateCommand extends CommandRunner {
     };
 
     return {
-      dataSources: {
-        aaData: aaDataSource,
-        gscData: gscDataSource,
-      },
+      dataSources: { aaData: aaDataSource, gscData: gscDataSource },
       insertWithHooks: true,
       insertFn: () => Promise.resolve(null),
       onComplete: async () => {
@@ -428,10 +404,7 @@ export class PopulateCommand extends CommandRunner {
 
         if (uniqueUrlsArray.length !== 0) {
           await this.dbService.validatePageMetricsRefs({
-            date: {
-              $gte: dateRange.start,
-              $lte: dateRange.end,
-            },
+            date: { $gte: dateRange.start, $lte: dateRange.end },
           });
         }
 

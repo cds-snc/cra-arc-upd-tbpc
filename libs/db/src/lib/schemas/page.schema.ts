@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 // need mongo import or TS will complain about missing types
 import type { Document, FilterQuery, mongo } from 'mongoose';
-import { Types } from 'mongoose';
+import { Schema as MSchema, Types } from 'mongoose';
 import type { IProject, ITask, IUxTest } from '@dua-upd/types-common';
 import {
   type ModelWithStatics,
@@ -12,7 +12,7 @@ export type PageDocument = Page & Document;
 
 @Schema()
 export class Page {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ required: true, type: String, index: true, unique: true })
@@ -51,13 +51,13 @@ export class Page {
   @Prop({ type: Date })
   lastModified?: Date;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Task' }] })
   tasks?: Types.ObjectId[] | ITask[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Project' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'Project' }] })
   projects?: Types.ObjectId[] | IProject[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'UxTest' }] })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'UxTest' }] })
   ux_tests?: Types.ObjectId[] | IUxTest[];
 
   // overloads

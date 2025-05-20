@@ -35,9 +35,9 @@ export const compressString = async (
     case 'brotli':
       return Buffer.from(compressBrotli(new Uint8Array(stringBuffer)));
     case 'zstd':
-      return Buffer.from(await compressZstd(stringBuffer));
+      return Buffer.from((await compressZstd(stringBuffer)).buffer);
     default:
-      return Buffer.from(await compressZstd(stringBuffer));
+      return Buffer.from((await compressZstd(stringBuffer)).buffer);
   }
 };
 

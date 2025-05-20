@@ -7,9 +7,11 @@ import {
 } from '@angular/core';
 import { formatNumber, formatDate, formatPercent } from '@angular/common';
 import { I18nModule, I18nService, type LocaleId } from '@dua-upd/upd/i18n';
-import { val } from 'cheerio/lib/api/attributes';
 
-@Pipe({ name: 'localeNumber', pure: false })
+@Pipe({
+    name: 'localeNumber', pure: false,
+    standalone: false
+})
 export class LocaleNumberPipe implements PipeTransform {
   private i18n = inject(I18nService);
 
@@ -20,7 +22,10 @@ export class LocaleNumberPipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'localeDate', pure: false })
+@Pipe({
+    name: 'localeDate', pure: false,
+    standalone: false
+})
 export class LocaleDatePipe implements PipeTransform {
   private i18n = inject(I18nService);
   private _ref = inject(ChangeDetectorRef, { host: true });
@@ -36,7 +41,10 @@ export class LocaleDatePipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'localePercent', pure: false })
+@Pipe({
+    name: 'localePercent', pure: false,
+    standalone: false
+})
 export class LocalePercentPipe implements PipeTransform {
   private i18n = inject(I18nService);
 
@@ -47,7 +55,10 @@ export class LocalePercentPipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'localeTemplate', pure: false })
+@Pipe({
+    name: 'localeTemplate', pure: false,
+    standalone: false
+})
 export class LocaleTemplatePipe implements PipeTransform {
   private i18n = inject(I18nService);
 
@@ -84,7 +95,10 @@ export class LocaleTemplatePipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'translateArray', pure: true })
+@Pipe({
+    name: 'translateArray', pure: true,
+    standalone: false
+})
 export class TranslateArrayPipe implements PipeTransform {
   private i18n = inject(I18nService);
 
@@ -95,14 +109,20 @@ export class TranslateArrayPipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'arrayToText', pure: true })
+@Pipe({
+    name: 'arrayToText', pure: true,
+    standalone: false
+})
 export class ArrayToTextPipe implements PipeTransform {
   transform(values: string[]): string {
     return values.join(', ');
   }
 }
 
-@Pipe({ name: 'truncate', pure: true })
+@Pipe({
+    name: 'truncate', pure: true,
+    standalone: false
+})
 export class TruncatePipe implements PipeTransform {
   transform(value: string, limit = 160): string {
     if (value.length > limit) {
@@ -112,7 +132,10 @@ export class TruncatePipe implements PipeTransform {
   }
 }
 
-@Pipe({ name: 'secondsToMinutes', pure: true })
+@Pipe({
+    name: 'secondsToMinutes', pure: true,
+    standalone: false
+})
 export class SecondsToMinutesPipe implements PipeTransform {
   transform(value: number): string {
     value = Math.round(value);

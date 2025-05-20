@@ -1,4 +1,9 @@
-import { mongo, Types, UpdateQuery } from 'mongoose';
+import {
+  type mongo,
+  Types,
+  UpdateQuery,
+  type AnyBulkWriteOperation,
+} from 'mongoose';
 import { keys, union } from 'rambdax';
 import { CustomReportsMetrics, DbService } from '@dua-upd/db';
 import { queryDateFormat } from '@dua-upd/node-utils';
@@ -50,20 +55,10 @@ export function deriveDataPoints(
   };
 
   if (grouped) {
-    return [
-      {
-        ...commonOutput,
-        urls,
-        metrics,
-      },
-    ];
+    return [{ ...commonOutput, urls, metrics }];
   }
 
-  return urls.map((url) => ({
-    ...commonOutput,
-    url,
-    metrics,
-  }));
+  return urls.map((url) => ({ ...commonOutput, url, metrics }));
 }
 
 /**
@@ -96,12 +91,7 @@ export function decomposeConfig(config: ReportConfig<Date>) {
     breakdownDimension || (grouped ? 'none' : 'url_last_255');
 
   const toQueryConfig = (dateRange: AAQueryDateRange, urls: string[]) =>
-    ({
-      dateRange,
-      metricNames,
-      dimensionName,
-      urls,
-    }) as AAQueryConfig;
+    ({ dateRange, metricNames, dimensionName, urls }) as AAQueryConfig;
 
   const chunkedUrls = chunkMap(urls, (url) => url, 50);
 
@@ -131,19 +121,10 @@ export function dataPointToBulkInsert(
 
   const dates =
     granularity === 'day'
-      ? {
-          startDate: new Date(startDate),
-        }
-      : {
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-        };
+      ? { startDate: new Date(startDate) }
+      : { startDate: new Date(startDate), endDate: new Date(endDate) };
 
-  const datesGroupedGranularity = {
-    ...dates,
-    grouped,
-    granularity,
-  };
+  const datesGroupedGranularity = { ...dates, grouped, granularity };
 
   const filter = grouped
     ? {
@@ -153,16 +134,9 @@ export function dataPointToBulkInsert(
         },
         ...datesGroupedGranularity,
       }
-    : {
-        url,
-        ...datesGroupedGranularity,
-      };
+    : { url, ...datesGroupedGranularity };
 
-  const _urls = grouped
-    ? {
-        urls,
-      }
-    : { url };
+  const _urls = grouped ? { urls } : { url };
 
   return {
     updateOne: {
@@ -173,13 +147,11 @@ export function dataPointToBulkInsert(
           ..._urls,
           ...datesGroupedGranularity,
         },
-        $set: {
-          ...metrics,
-        },
+        $set: { ...metrics },
       },
       upsert: true,
     },
-  } satisfies mongo.AnyBulkWriteOperation<CustomReportsMetrics>;
+  } satisfies AnyBulkWriteOperation<CustomReportsMetrics>;
 }
 
 export function getStrategy(config: ReportConfig<unknown>) {
@@ -223,7 +195,7 @@ export interface NoDimensionQueryResultsProcessor<ParsedData>
     dataPoints: ReportDataPoint[],
     query: AAQueryConfig,
     queryResults: AAResponseBody,
-  ): mongo.AnyBulkWriteOperation<CustomReportsMetrics>[];
+  ): AnyBulkWriteOperation<CustomReportsMetrics>[];
 }
 
 export type DimensionQueryResultsProcessor<ParsedData> =
@@ -312,9 +284,7 @@ export const withDimensionStrategy: DimensionQueryResultsProcessor<
   },
   // this is more or less unnecessary now, should probably get rid of it eventually
   dataPointToMetrics({ breakdownDimension }, dimensionMetrics) {
-    return {
-      [`metrics_by.${breakdownDimension}`]: dimensionMetrics,
-    };
+    return { [`metrics_by.${breakdownDimension}`]: dimensionMetrics };
   },
   toDbUpdates(dataPoints, query, queryResults) {
     const parsedData = this.parseQueryResults(query, queryResults);

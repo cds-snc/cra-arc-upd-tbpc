@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, model, Types } from 'mongoose';
+import { Document, model, Schema as MSchema, Types } from 'mongoose';
 
 import type { AttachmentData } from '@dua-upd/types-common';
 
@@ -11,7 +11,7 @@ export type ReportsDocument = Reports & Document;
   toObject: { getters: true },
 })
 export class Reports {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({ type: String })

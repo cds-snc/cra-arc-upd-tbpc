@@ -4,6 +4,7 @@
     "outDir": "../../dist/out-tsc",
     "declaration": true,
     "types": [],
+    "moduleResolution": "bundler",
     "target": "es2021"
   },
   "include": ["**/*.ts"],

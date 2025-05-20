@@ -6,7 +6,7 @@ import type {
 } from '@dua-upd/types-common';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types, mongo } from 'mongoose';
+import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
 import { DbService, Overall, Page, PageMetrics, PagesList } from '@dua-upd/db';
 import type {
   OverallDocument,
@@ -256,7 +256,7 @@ export class DbUpdateService {
 
     this.logger.log('Adding references to page metrics...');
 
-    const bulkWriteOps: mongo.AnyBulkWriteOperation<PageMetrics>[] =
+    const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] =
       pagesToCreate.map((page) => ({
         updateMany: {
           filter: {
@@ -442,7 +442,7 @@ export class DbUpdateService {
         .lean()
         .exec();
 
-      const bulkWriteOps: mongo.AnyBulkWriteOperation<Page>[] = pagesList.map(
+      const bulkWriteOps: AnyBulkWriteOperation<Page>[] = pagesList.map(
         (page) => ({
           updateOne: {
             filter: {

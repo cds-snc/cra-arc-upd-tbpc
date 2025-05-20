@@ -1,6 +1,6 @@
 services:
   app:
-    image: 'ghcr.io/lega0208/upd-new/codespaces-devcontainer-base:latest'
+    image: 'ghcr.io/cds-snc/cra-arc-upd-tbpc/codespaces-devcontainer-base:latest'
     volumes:
       - ..:/workspace:cached
 

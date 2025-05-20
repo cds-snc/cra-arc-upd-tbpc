@@ -6,9 +6,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
 
 @Component({
-  selector: 'upd-data-table-styles',
-  templateUrl: './data-table-styles.component.html',
-  styleUrls: ['./data-table-styles.component.scss'],
+    selector: 'upd-data-table-styles',
+    templateUrl: './data-table-styles.component.html',
+    styleUrls: ['./data-table-styles.component.scss'],
+    standalone: false
 })
 export class DataTableStylesComponent implements OnInit {
   private secondsToMinutesPipe = inject(SecondsToMinutesPipe);

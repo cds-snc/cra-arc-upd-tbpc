@@ -18,10 +18,10 @@
       position: 'absolute',
       right: 0,
       left: 'auto',
-      width: '30vw'
+      width: '30vw',
     }"
   >
-    <ng-template pTemplate="value">
+    <ng-template #value>
       <div
         class="d-flex justify-content-between align-items-bottom content-end"
         #rightPanel
@@ -33,13 +33,11 @@
         "
       >
         <span
-          ><span class="pi pi-filter"></span>
-          {{ 'Filter' | translate }}
-        </span
+          ><span class="pi pi-filter"></span> {{ 'Filter' | translate }} </span
         >&NonBreakingSpace;
         <span
-          class="badge h-100 align-self-center text-center"
-          style="padding: 0.25em 0.32em"
+          class="badge h-100 d-flex align-items-center justify-content-center"
+          style="padding: 0.25em 0.5em; height: 1.8rem"
           [ngClass]="nodeSelectionCount === 0 ? 'bg-unknown' : 'bg-primary'"
           >{{ nodeSelectionCount }}</span
         >

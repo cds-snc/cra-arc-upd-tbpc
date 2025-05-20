@@ -18,9 +18,10 @@ import { OverviewFacade } from '../+state/overview/overview.facade';
 import { round } from '@dua-upd/utils-common';
 
 @Component({
-  selector: 'upd-overview-feedback',
-  templateUrl: './overview-feedback.component.html',
-  styleUrls: ['./overview-feedback.component.css'],
+    selector: 'upd-overview-feedback',
+    templateUrl: './overview-feedback.component.html',
+    styleUrls: ['./overview-feedback.component.css'],
+    standalone: false
 })
 export class OverviewFeedbackComponent {
   private overviewService = inject(OverviewFacade);

@@ -38,18 +38,19 @@ export class QueryService {
       const limit = collection === 'pageMetrics' ? 1000 : undefined;
 
       if (collection === 'pages') {
-        results[key] = (
-          await this.db.views.pages.find(
-            {
-              dateRange: lastWeekDateRange,
-            },
-            { url: '$page.url', page: 1, title: '$page.title', visits: 1 },
-            { sort: { visits: -1 } },
-          )
-        ).map((page) => ({
-          _id: page.page._id,
-          ...omit(['_id', 'page'], page),
-        }));
+        results[key] =
+          (
+            await this.db.views.pages.find(
+              {
+                dateRange: lastWeekDateRange,
+              },
+              { url: '$page.url', page: 1, title: '$page.title', visits: 1 },
+              { sort: { visits: -1 } },
+            )
+          )?.map((page) => ({
+            _id: page.page._id,
+            ...omit(['_id', 'page'], page),
+          })) || [];
 
         continue;
       }
@@ -211,7 +212,7 @@ export class QueryService {
         const selectedProjects: CustomReportsFeedback['selectedProjects'] =
           projectsFilter.map((projectId: string) => {
             const project = projectsDict[projectId];
-            
+
             if (!project) {
               return { _id: '', title: '', pages: [] };
             }

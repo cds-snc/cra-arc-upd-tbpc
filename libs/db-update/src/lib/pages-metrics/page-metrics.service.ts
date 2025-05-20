@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import { Model, Types, mongo } from 'mongoose';
+import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
 import { today } from '@dua-upd/utils-common';
 import { DateRange, IPageMetrics } from '@dua-upd/types-common';
 import {
@@ -56,14 +56,9 @@ export class PageMetricsService {
 
       bulkInsertOps.push({
         updateOne: {
-          filter: {
-            url: pageMetric.url,
-            date: pageMetric.date,
-          },
+          filter: { url: pageMetric.url, date: pageMetric.date },
           update: {
-            $setOnInsert: {
-              _id: pageMetric._id,
-            },
+            $setOnInsert: { _id: pageMetric._id },
             $set: pageMetricNoId,
           },
           upsert: true,
@@ -123,17 +118,12 @@ export class PageMetricsService {
         );
         console.log(data.length);
 
-        const bulkInsertOps: mongo.AnyBulkWriteOperation[] = data.map(
+        const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = data.map(
           (record) => ({
             updateOne: {
-              filter: {
-                url: record.url,
-                date: record.date,
-              },
+              filter: { url: record.url, date: record.date },
               update: {
-                $setOnInsert: {
-                  _id: new Types.ObjectId(),
-                },
+                $setOnInsert: { _id: new Types.ObjectId() },
                 $set: record,
               },
               upsert: true,
@@ -143,13 +133,8 @@ export class PageMetricsService {
 
         return await Promise.resolve(bulkInsertOps).then((bulkInsertOps) =>
           this.pageMetricsModel
-            .bulkWrite(
-              bulkInsertOps as mongo.AnyBulkWriteOperation<PageMetrics>[],
-              {
-                ordered: false,
-              },
-            )
-            .then((bulkWriteResults) =>
+            .bulkWrite(bulkInsertOps, { ordered: false })
+            .then(() =>
               console.log(
                 `[${
                   datasourceName || 'datasource'
@@ -195,10 +180,7 @@ export class PageMetricsService {
     };
 
     return {
-      dataSources: {
-        aaData: aaDataSource,
-        gscData: gscDataSource,
-      },
+      dataSources: { aaData: aaDataSource, gscData: gscDataSource },
       insertWithHooks: true,
       insertFn: () => Promise.resolve(null),
       onComplete: async () => {
@@ -209,10 +191,7 @@ export class PageMetricsService {
         );
 
         await this.dbService.validatePageMetricsRefs({
-          date: {
-            $gte: dateRange.start,
-            $lte: dateRange.end,
-          },
+          date: { $gte: dateRange.start, $lte: dateRange.end },
         });
 
         console.log(
