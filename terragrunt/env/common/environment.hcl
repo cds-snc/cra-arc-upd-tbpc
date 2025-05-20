@@ -2,6 +2,7 @@ inputs = {
   secrets = {
     for val in [
       "AA_CREDS_POOL",
+      "AIRTABLE_TOKEN",
       "AW_CLIENT_ID",
       "AW_CLIENT_SECRET",
       "AW_ORGANIZATION_ID",
@@ -10,19 +11,19 @@ inputs = {
       "AW_REPORTSUITE_ID",
       "DOCDB_USERNAME",
       "DOCDB_PASSWORD",
-      "NOTIFY_API_KEY",
-      "AIRTABLE_TOKEN",
       "FEEDBACK_API_HOST",
       "FEEDBACK_API_USERNAME",
       "FEEDBACK_API_PASSWORD",
       "GSC_EMAIL",
       "GSC_KEY",
+      "NOTIFY_API_KEY",
+      "NOTIFY_EMAIL",
+      "NOTIFY_EMAIL_2",
     ] : val => get_env(val)
   }
 
   env = [
     for val in [
-      "AIRTABLE_BASE_ANNOTATIONS",
       "AIRTABLE_BASE_ANNOTATIONS",
       "AIRTABLE_BASE_GCTASKSMAPPINGS",
       "AIRTABLE_BASE_TASKS_INVENTORY",
@@ -52,8 +53,6 @@ inputs = {
       "AIRTABLE_BASE_DCD_2025_Q4",
       "NOTIFY_TEMPLATE_ID_EN",
       "NOTIFY_TEMPLATE_ID_FR",
-      "NOTIFY_EMAIL",
-      "NOTIFY_EMAIL_2",
       "STORAGE_URI_PREFIX",
       ] : {
       name : val,
