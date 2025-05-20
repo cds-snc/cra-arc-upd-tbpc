@@ -73,6 +73,19 @@ jobs:
   terraform-plan:
     strategy:
       fail-fast: false
+      matrix:
+        include:
+          # List the environment directories under terragrunt/env/staging/
+          - module: api_gateway
+          - module: database
+          - module: ecr
+          - module: ecs
+          - module: elasticache
+          - module: iam
+          - module: network
+          - module: s3
+          - module: ssm
+          - module: web
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,8 +105,7 @@ jobs:
         uses: cds-snc/terraform-plan@e710cb1446e5dfe69a0182603fb06b5282d7eb07 # v3.4.3
         with:
           comment-delete: true
-          comment-title: 'Staging: `terragrunt plan -all`'
-          directory: ./terragrunt/env/staging
+          comment-title: "Staging: ${{ matrix.module }}"
+          directory: ./terragrunt/env/staging/${{ matrix.module }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           terragrunt: true
-          terraform-plan: -all
