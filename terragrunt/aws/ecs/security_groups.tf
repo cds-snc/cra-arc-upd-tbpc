@@ -23,7 +23,7 @@ resource "aws_security_group_rule" "cra_upd_sg_rule_ingress_lb_to_ecs" {
 resource "aws_security_group" "cra_upd_loadbalancer_sg" {
   description = "LoadBalancer Security Group for CRA UPD"
   name        = "cra-upd-loadbalancer-sg"
-  vpc_id      = var.vpc_id 
+  vpc_id      = var.vpc_id
 }
 
 resource "aws_security_group_rule" "cra_upd_sg_rule_ingress_vpc_to_lb" {

@@ -50,7 +50,7 @@ module "api_ecs" {
   container_environment               = local.container_environment
   container_secrets                   = var.container_secrets
   container_read_only_root_filesystem = false
-  container_health_check              = {
+  container_health_check = {
     "command" : [
       "CMD-SHELL",
       "curl -f http://localhost:9000/api/_healthcheck || exit 1"
@@ -68,19 +68,19 @@ module "api_ecs" {
   task_exec_role_policy_documents = [
     data.aws_iam_policy_document.cra_upd_ssm_read_policy_doc.json
   ]
-  
+
   # Forward logs to Sentinel?
   # sentinel_forwarder           = true
   # sentinel_forwarder_layer_arn = "arn:aws:lambda:ca-central-1:283582579564:layer:aws-sentinel-connector-layer:199"
 
   # Networking
-  lb_target_group_arn            = aws_lb_target_group.cra_upd_ecs_lb_target_group.arn
-  subnet_ids                     = var.vpc_private_subnet_ids
-  security_group_ids             = [aws_security_group.cra_upd_ecs_sg.id, var.docdb_egress_sg_id, var.elasticache_egress_sg_id]
+  lb_target_group_arn = aws_lb_target_group.cra_upd_ecs_lb_target_group.arn
+  subnet_ids          = var.vpc_private_subnet_ids
+  security_group_ids  = [aws_security_group.cra_upd_ecs_sg.id, var.docdb_egress_sg_id, var.elasticache_egress_sg_id]
 
   billing_tag_value = var.billing_tag_value
 
-  depends_on = [ aws_lb_listener.cra_upd_ecs_alb_listener ]
+  depends_on = [aws_lb_listener.cra_upd_ecs_alb_listener]
 }
 
 resource "aws_cloudwatch_log_group" "cra_upd_cloudwatch_group" {

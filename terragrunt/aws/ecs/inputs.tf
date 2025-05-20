@@ -49,10 +49,10 @@ variable "data_bucket_name" {
 }
 
 variable "container_secrets" {
-  description  = "The secrets and associated ARNs to be used in the ECS task definition"
-  type         = list(object({
-    name       = string
-    valueFrom  = string
+  description = "The secrets and associated ARNs to be used in the ECS task definition"
+  type = list(object({
+    name      = string
+    valueFrom = string
   }))
 }
 
