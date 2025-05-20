@@ -85,6 +85,7 @@ jobs:
           - module: iam
           - module: network
           - module: s3
+          - module: s3_web_files
           - module: ssm
           - module: web
     runs-on: ubuntu-latest
