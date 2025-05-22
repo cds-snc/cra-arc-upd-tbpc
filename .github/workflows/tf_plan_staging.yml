@@ -1,4 +1,4 @@
-name: Terraform Plan Staging
+name: Terraform Plan - Staging
 
 on:
   workflow_dispatch:
@@ -72,6 +72,7 @@ permissions:
 
 jobs:
   terraform-plan:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     strategy:
       fail-fast: false
       matrix:
@@ -97,7 +98,7 @@ jobs:
         uses: cds-snc/terraform-tools-setup@v1
 
       - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-plan
           role-session-name: TFPlan
@@ -107,7 +108,7 @@ jobs:
         uses: cds-snc/terraform-plan@e710cb1446e5dfe69a0182603fb06b5282d7eb07 # v3.4.3
         with:
           comment-delete: true
-          comment-title: "Staging: ${{ matrix.module }}"
+          comment-title: 'Staging: ${{ matrix.module }}'
           directory: ./terragrunt/env/staging/${{ matrix.module }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           terragrunt: true

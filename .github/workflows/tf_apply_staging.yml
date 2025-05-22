@@ -1,4 +1,4 @@
-name: 'Terraform apply staging'
+name: 'Terraform apply - Staging'
 
 on:
   workflow_dispatch:
@@ -73,8 +73,9 @@ permissions:
   statuses: write
 
 jobs:
-  # set up job groups to deploy resources in parallel while also ensuring dependencies are met
+  # set up job groups to deploy resources in parallel where possible, while ensuring dependencies are met
   terragrunt-apply-group1:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +93,7 @@ jobs:
         uses: cds-snc/terraform-tools-setup@v1
 
       - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
           role-session-name: TFApply-group1
@@ -103,6 +104,7 @@ jobs:
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
   terragrunt-apply-group2:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     needs: terragrunt-apply-group1
     strategy:
       fail-fast: false
@@ -120,7 +122,7 @@ jobs:
         uses: cds-snc/terraform-tools-setup@v1
 
       - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
           role-session-name: TFApply-group2
@@ -131,6 +133,7 @@ jobs:
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
   terragrunt-apply-group3:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     needs: terragrunt-apply-group2
     runs-on: ubuntu-latest
     steps:
@@ -141,9 +144,9 @@ jobs:
         uses: cds-snc/terraform-tools-setup@v1
 
       - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
-          role-to-assume: arn:aws:iam::992382783569:role/ai-answers-apply
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
           role-session-name: TFApply-group3
           aws-region: ${{ env.AWS_REGION }}
 
