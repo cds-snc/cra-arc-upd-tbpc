@@ -3,6 +3,7 @@ on: [issues, pull_request, workflow_dispatch]
 jobs:
   sync-labels:
     runs-on: ubuntu-latest
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     name: Sync repository labels
     steps:
       - uses: cds-snc/labels@v1
