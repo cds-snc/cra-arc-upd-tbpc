@@ -60,8 +60,8 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
   async backupRemote() {
     const container = (
-      await this.blob.container(this.remoteContainer)
-    ).getClient();
+      await this.blob.container?.(this.remoteContainer)
+    )?.getClient();
 
     const backupFilePath = this.remoteBackupPath.replace(
       /\.parquet$/,
@@ -69,14 +69,16 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     );
     console.log(`Backing up ${this.remotePath} to ${backupFilePath}`);
 
-    const blobClient = container.getBlobClient(this.remoteContainerPath);
-    const backupBlobClient = container.getBlobClient(backupFilePath);
+    const blobClient = container?.getBlobClient(this.remoteContainerPath);
+    const backupBlobClient = container?.getBlobClient(backupFilePath);
 
-    const copyPoller = await backupBlobClient
-      .getBlockBlobClient()
-      .beginCopyFromURL(blobClient.url);
+    const copyPoller = blobClient?.url
+      ? await backupBlobClient
+          ?.getBlockBlobClient()
+          .beginCopyFromURL(blobClient?.url)
+      : null;
 
-    await copyPoller.pollUntilDone();
+    await copyPoller?.pollUntilDone();
 
     console.log(`Backup complete: ${this.remoteBackupPath}`);
   }
@@ -176,11 +178,11 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     const uploadStreamBufferSize = 8 * 1024 * 1024; // 8MB buffer size
 
-    const storageClient = (await this.blob.container(this.remoteContainer))
-      .getClient()
-      .getBlockBlobClient(this.remoteContainerPath);
+    const storageClient = (await this.blob.container?.(this.remoteContainer))
+      ?.getClient()
+      ?.getBlockBlobClient(this.remoteContainerPath);
 
-    await storageClient.uploadStream(
+    await storageClient?.uploadStream(
       createReadStream(this.filename, {
         highWaterMark: uploadStreamBufferSize,
       }),
