@@ -1,4 +1,5 @@
 resource "aws_security_group" "cra_upd_docdb_sg" {
+  name        = "cra-upd-docdb-sg"
   description = "Ingress to DocumentDB Security Group"
   vpc_id      = var.vpc_id
 
@@ -12,6 +13,7 @@ resource "aws_security_group" "cra_upd_docdb_sg" {
 }
 
 resource "aws_security_group" "cra_upd_docdb_egress_sg" {
+  name        = "cra-upd-docdb-egress-sg"
   description = "Allow egress to DocumentDB"
   vpc_id      = var.vpc_id
 }

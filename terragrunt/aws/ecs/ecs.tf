@@ -36,7 +36,6 @@ module "api_ecs" {
   # and prevents the Terraform from undoing deployments.
   service_use_latest_task_def = true
 
-
   # Scaling
   enable_autoscaling       = true
   desired_count            = 1
@@ -75,8 +74,9 @@ module "api_ecs" {
 
   # Networking
   lb_target_group_arn = aws_lb_target_group.cra_upd_ecs_lb_target_group.arn
-  subnet_ids          = var.vpc_private_subnet_ids
-  security_group_ids  = [aws_security_group.cra_upd_ecs_sg.id, var.docdb_egress_sg_id, var.elasticache_egress_sg_id]
+  # Use a single subnet if instance count is 1, otherwise the load balancer will have networking issues
+  subnet_ids         = var.ecs_instance_count == 1 ? [var.vpc_private_subnet_ids[0]] : var.vpc_private_subnet_ids
+  security_group_ids = [aws_security_group.cra_upd_ecs_sg.id, var.docdb_egress_sg_id, var.elasticache_egress_sg_id]
 
   billing_tag_value = var.billing_tag_value
 

@@ -56,6 +56,12 @@ variable "container_secrets" {
   }))
 }
 
+variable "ecs_instance_count" {
+  description = "The number of ECS instances to be used in the ECS cluster"
+  type        = number
+  default     = 1
+}
+
 variable "ecs_cpu" {
   description = "The CPU units to be used in the ECS task definition"
   type        = number

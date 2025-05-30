@@ -1,5 +1,5 @@
-variable "apigw_endpoint_url" {
-  description = "API Gateway Endpoint URL for the CRA UPD app"
+variable "apigw_endpoint_domain" {
+  description = "API Gateway Endpoint Domain for the CRA UPD app"
   type        = string
 }
 

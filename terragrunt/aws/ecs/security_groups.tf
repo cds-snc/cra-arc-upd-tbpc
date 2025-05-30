@@ -1,4 +1,5 @@
 resource "aws_security_group" "cra_upd_ecs_sg" {
+  name        = "cra-upd-ecs-sg"
   description = "ECS Security Group for CRA UPD"
   vpc_id      = var.vpc_id
   egress {
@@ -21,8 +22,8 @@ resource "aws_security_group_rule" "cra_upd_sg_rule_ingress_lb_to_ecs" {
 }
 
 resource "aws_security_group" "cra_upd_loadbalancer_sg" {
-  description = "LoadBalancer Security Group for CRA UPD"
   name        = "cra-upd-loadbalancer-sg"
+  description = "LoadBalancer Security Group for CRA UPD"
   vpc_id      = var.vpc_id
 }
 

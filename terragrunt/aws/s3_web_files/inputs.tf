@@ -7,3 +7,8 @@ variable "web_resources_build_path" {
   description = "The path to the web resources build directory."
   type        = string
 }
+
+variable "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution."
+  type        = string
+}

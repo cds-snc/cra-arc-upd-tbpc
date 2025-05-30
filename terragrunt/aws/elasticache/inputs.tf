@@ -8,6 +8,11 @@ variable "vpc_private_subnet_ids" {
   type        = list(any)
 }
 
+variable "vpc_cidr_block" {
+  description = "The cidr block of the VPC"
+  type        = string
+}
+
 variable "elasticache_node_type" {
   description = "The instance type of the ElastiCache cluster"
   type        = string

@@ -50,7 +50,7 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   }
 
   origin {
-    domain_name = var.apigw_endpoint_url
+    domain_name = var.apigw_endpoint_domain
     origin_id   = local.cloudfront_api_origin_id
 
     custom_origin_config {
@@ -63,48 +63,106 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
 
   ordered_cache_behavior {
     path_pattern           = "/api/*"
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST"]
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = local.cloudfront_api_origin_id
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
-    #* Will likely want to revisit caching for API calls
-    # CachingDisabled managed policy ID:
-    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    cache_policy_id = aws_cloudfront_cache_policy.cra_upd_api_cache_policy.id
 
     # AllViewerExceptHostHeader managed policy ID:
     origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+
+    # Managed-CORS-With-Preflight
+    response_headers_policy_id = "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.cloudfront_web_origin_id
     compress         = true
 
-    forwarded_values {
-      query_string = false
+    # origin_request_policy_id = aws_cloudfront_origin_request_policy.cra_upd_s3_request_policy.id
+    cache_policy_id = aws_cloudfront_cache_policy.cra_upd_s3_cache_policy.id
 
-      cookies {
-        forward = "none"
-      }
-    }
+    # CORS-S3Origin managed policy ID:
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
 
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 300
-    max_ttl                = 1200
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.cra_upd_cf_viewer_request_function.arn
+    }
   }
 
+  # TODO: Use custom domain certificate
   viewer_certificate {
-    cloudfront_default_certificate = false
-    acm_certificate_arn            = aws_acm_certificate.cra_upd_cloudfront_acm.arn
-    minimum_protocol_version       = "TLSv1.2_2021"
+    cloudfront_default_certificate = true
   }
 }
 
-#! Outputs the cloudfront domain name for testing- remove this after
+resource "aws_cloudfront_cache_policy" "cra_upd_s3_cache_policy" {
+  name        = "cra_upd_s3_cache_policy"
+  comment     = "The cache policy for the S3 web bucket origin"
+  min_ttl     = 1
+  default_ttl = 300
+  max_ttl     = 1200
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+  }
+}
+
+resource "aws_cloudfront_cache_policy" "cra_upd_api_cache_policy" {
+  name        = "cra_upd_api_cache_policy"
+  comment     = "The cache policy for the API Gateway origin"
+  min_ttl     = 1
+  default_ttl = 120
+  max_ttl     = 31536000
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = false
+  }
+}
+
+resource "aws_cloudfront_function" "cra_upd_cf_viewer_request_function" {
+  name    = "url-rewrite-function"
+  runtime = "cloudfront-js-2.0"
+  comment = "Rewrites URLs to enable SPA routing"
+  publish = true
+  code    = file("${path.module}/url-rewriter.js")
+}
+
+#! Outputs the cloudfront domain name - remove this after custom domain is set up
 output "cloudfront_distribution_domain_name" {
   value       = aws_cloudfront_distribution.cra_upd_cf_distribution.domain_name
   description = "Cloudfront distribution domain name"

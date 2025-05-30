@@ -12,7 +12,7 @@ dependencies {
 
 dependency "network" {
   config_path                             = "../network"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     vpc_id                 = ""
@@ -23,7 +23,7 @@ dependency "network" {
 
 dependency "ecr" {
   config_path                             = "../ecr"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     ecr_repository_url = ""
@@ -32,7 +32,7 @@ dependency "ecr" {
 
 dependency "docdb" {
   config_path                             = "../database"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     docdb_endpoint     = ""
@@ -42,7 +42,7 @@ dependency "docdb" {
 
 dependency "elasticache" {
   config_path                             = "../elasticache"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     elasticache_endpoint     = ""
@@ -52,7 +52,7 @@ dependency "elasticache" {
 
 dependency "s3" {
   config_path                             = "../s3"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     data_bucket_arn  = ""
@@ -62,7 +62,7 @@ dependency "s3" {
 
 dependency "ssm" {
   config_path                             = "../ssm"
-  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show"]
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
     ssm_secret_arns = []

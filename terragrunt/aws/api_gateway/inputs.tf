@@ -13,12 +13,18 @@ variable "vpc_cidr_block" {
   type        = string
 }
 
-variable "loadbalancer_arn" {
-  description = "The ARN of the load balancer"
+variable "loadbalancer_listener_arn" {
+  description = "The ARN of the load balancer listener"
   type        = string
 }
 
 variable "loadbalancer_sg_id" {
   description = "The security group id of the load balancer"
   type        = string
+}
+
+variable "ecs_instance_count" {
+  description = "The number of ECS instances being run"
+  type        = number
+  default     = 1
 }

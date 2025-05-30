@@ -6,4 +6,5 @@ inputs = {
   cost_center_code    = "cra-upd-dashboard"
   billing_tag_value   = "CraUpdDashboard"
   domain              = "cra-arc.staging.cdssandbox.xyz"
+  ecs_instance_count  = 1
 }

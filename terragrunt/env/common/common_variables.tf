@@ -53,6 +53,6 @@ variable "environment" {
 }
 variable "secrets" {
   description = "The secrets to use for deployment"
-  type = map(string)
-  sensitive = true
+  type        = map(string)
+  sensitive   = true
 }

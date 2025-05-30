@@ -1,11 +1,3 @@
-
-
-resource "aws_elasticache_cluster" "cra_upd_elasticache" {
-  cluster_id           = "cra-upd-elasticache"
-  replication_group_id = aws_elasticache_replication_group.cra_upd_elasticache_replication_group.id
-  apply_immediately    = true
-}
-
 resource "aws_elasticache_replication_group" "cra_upd_elasticache_replication_group" {
   engine                     = "valkey"
   engine_version             = "7.2"

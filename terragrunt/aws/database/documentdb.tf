@@ -21,7 +21,7 @@ module "cra_upd_documentdb" {
 
   parameters = [
     {
-      apply_method = "immediate"
+      apply_method = "pending-reboot"
       name         = "tls"
       value        = "enabled"
     },
@@ -32,10 +32,6 @@ module "cra_upd_documentdb" {
     {
       name  = "profiler"
       value = "disabled" # most queries will be considered "slow operations", so we'll disable this
-    },
-    {
-      name  = "tls"
-      value = "enabled"
     },
     {
       name  = "ttl_monitor"

@@ -8,7 +8,7 @@ resource "aws_apigatewayv2_api" "cra_upd_apigw_endpoint" {
 resource "aws_apigatewayv2_integration" "cra_upd_apigw_integration" {
   api_id           = aws_apigatewayv2_api.cra_upd_apigw_endpoint.id
   integration_type = "HTTP_PROXY"
-  integration_uri  = var.loadbalancer_arn
+  integration_uri  = var.loadbalancer_listener_arn
 
   integration_method     = "ANY"
   connection_type        = "VPC_LINK"
