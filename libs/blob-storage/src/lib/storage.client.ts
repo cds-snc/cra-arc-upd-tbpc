@@ -44,40 +44,33 @@ export type BlobType = 'block' | 'append';
  * or managing container clients.
  */
 export class StorageClient {
-  private readonly baseClient: BlobServiceClient;
+  private readonly baseClient: BlobServiceClient | null = null;
 
   constructor() {
     const connectionString = getConnectionString();
 
-    if (!connectionString) {
-      throw Error('Azure Storage Connection string not found.');
-    }
+    // if (!connectionString) {
+    //   throw Error('Azure Storage Connection string not found.');
+    // }
 
     try {
       this.baseClient =
         BlobServiceClient.fromConnectionString(connectionString);
     } catch (err) {
-      throw Error('Failed to initialize Azure Storage client.', { cause: err });
+      // throw Error('Failed to initialize Azure Storage client.', { cause: err });
+      console.error('Failed to initialize Azure Storage client.');
     }
   }
 
   async container(containerName: string) {
+    try {
+      
     const containerClient = this.baseClient.getContainerClient(containerName);
 
-    // const response = await containerClient.createIfNotExists();
-
-    // if (response.errorCode && response.errorCode !== 'ContainerAlreadyExists') {
-    //   throw Error(
-    //     `Got errorCode ${
-    //       response.errorCode
-    //     } when running createIfNotExists() for container "${containerName}".\r\n${prettyJson(
-    //       response,
-    //     )}`,
-    //     { cause: response },
-    //   );
-    // }
-
     return new StorageContainer(containerClient);
+    } catch (_) {
+      return null;
+    }
   }
 
   async listContainers() {

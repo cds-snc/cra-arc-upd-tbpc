@@ -29,7 +29,7 @@ export type RegisteredBlobModel = BlobModels[number];
 
 @Injectable()
 export class BlobStorageService {
-  private storageClient = new StorageClient();
+  private storageClient: StorageClient | null = new StorageClient();
 
   private readonly blobDefinitions: Record<
     RegisteredBlobModel,
@@ -87,11 +87,11 @@ export class BlobStorageService {
     for (const [modelName, blobDefinition] of Object.entries(
       this.blobDefinitions,
     ) as [RegisteredBlobModel, BlobDefinition][]) {
-      const container = await this.storageClient.container(
+      const container = await this.storageClient?.container(
         blobDefinition.containerName,
       );
 
-      this.blobModels[modelName] = container.createBlobsClient({
+      this.blobModels[modelName] = container?.createBlobsClient({
         path: blobDefinition.path,
         overwrite: blobDefinition['overwrite'],
         compression: blobDefinition['compression'],
