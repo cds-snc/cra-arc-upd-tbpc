@@ -761,68 +761,34 @@ async function getProjects(
         .exec()
     )[0] || defaultData;
 
-  const projectsData = await projectModel
+  const projectsData = await uxTestsModel
     .aggregate<OverviewProject>()
-    .lookup({
-      from: 'ux_tests',
-      let: { project_id: '$_id' },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $eq: ['$project', '$$project_id'],
-            },
-          },
+    .group({
+      _id: '$project',
+      cops: { $max: '$cops' },
+      startDate: { $min: '$date' },
+      launchDate: { $max: '$launch_date' },
+      avgSuccessRate: { $avg: '$success_rate' },
+      uxTests: {
+        $push: {
+          success_rate: '$success_rate',
+          date: '$date',
+          test_type: '$test_type',
+          task: '$tasks',
+          title: '$title',
         },
-        {
-          $group: {
-            _id: null,
-            cops: {
-              $max: '$cops',
-            },
-            startDate: {
-              $min: '$date',
-            },
-            launchDate: {
-              $max: '$launch_date',
-            },
-            avgSuccessRate: {
-              $avg: '$success_rate',
-            },
-            uxTests: {
-              $push: {
-                success_rate: '$success_rate',
-                date: '$date',
-                test_type: '$test_type',
-                task: '$tasks',
-                title: '$title',
-              },
-            },
-            statuses: {
-              $addToSet: '$status',
-            },
-            totalUsers: {
-              $sum: '$total_users',
-            },
-            testType: {
-              $addToSet: '$test_type',
-            },
-          },
-        },
-        {
-          $addFields: {
-            status: projectStatusSwitchExpression,
-          },
-        },
-      ],
-      as: 'tests_aggregated',
+      },
+      statuses: { $addToSet: '$status' },
+      totalUsers: { $sum: '$total_users' },
+      testType: { $addToSet: '$test_type' },
     })
-    .unwind('$tests_aggregated')
-    .replaceRoot({
-      $mergeObjects: ['$$ROOT', '$tests_aggregated', { _id: '$_id' }],
+    .addFields({
+      status: projectStatusSwitchExpression,
     })
     .project({
-      title: 1,
+      title: {
+        $arrayElemAt: ['$uxTests.title', 0],
+      },
       cops: 1,
       startDate: 1,
       launchDate: 1,
@@ -831,6 +797,9 @@ async function getProjects(
       totalUsers: 1,
       testType: 1,
       uxTests: 1,
+    })
+    .sort({
+      _id: 1,
     })
     .exec();
 
@@ -1152,7 +1121,17 @@ async function getOverviewMetrics(
         doc: { $push: '$$ROOT' },
       })
       .replaceRoot({
-        $mergeObjects: [{ $first: '$doc' }, '$$ROOT'],
+        $mergeObjects: [
+          {
+            $ifNull: [
+              {
+                $arrayElemAt: ['$doc', 0],
+              },
+              {},
+            ],
+          },
+          '$$ROOT',
+        ],
       })
       .project({
         query: '$_id.query',

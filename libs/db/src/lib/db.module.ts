@@ -113,13 +113,16 @@ export class DbModule {
 
     // Settings for DocumentDB
     const config: MongooseModuleOptions =
-      production && process.env.MONGO_USERNAME
+      production && (process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME)
         ? {
             ssl: true,
-            tlsCAFile: process.env.MONGO_TLS_CA_FILE,
+            tlsCAFile:
+              process.env.DB_TLS_CA_FILE || process.env.MONGO_TLS_CA_FILE,
             auth: {
-              username: process.env.MONGO_USERNAME,
-              password: process.env.MONGO_PASSWORD,
+              username:
+                process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME,
+              password:
+                process.env.DOCDB_PASSWORD || process.env.MONGO_PASSWORD,
             },
             replicaSet: 'rs0',
             readPreference: 'secondaryPreferred',
