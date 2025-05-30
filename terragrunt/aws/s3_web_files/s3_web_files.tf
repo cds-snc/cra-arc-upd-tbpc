@@ -39,6 +39,8 @@ resource "aws_s3_object" "cra_upd_web_resources" {
 }
 
 resource "terraform_data" "clear_cloudfront_cache" {
+  count = length(local.files_with_content_types) == 0 ? 0 : 1
+
   lifecycle {
     replace_triggered_by = [
       aws_s3_object.cra_upd_web_resources
