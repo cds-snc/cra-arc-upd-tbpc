@@ -25,8 +25,8 @@ locals {
 module "api_ecs" {
   source = "github.com/cds-snc/terraform-modules//ecs?ref=v10.4.4"
 
-  cluster_name = "${var.product_name_dashed}-cluster"
-  service_name = "${var.product_name_dashed}-app-service"
+  cluster_name = "${var.product_name}-cluster"
+  service_name = "${var.product_name}-app-service"
 
   task_cpu    = var.ecs_cpu
   task_memory = var.ecs_memory
@@ -84,11 +84,11 @@ module "api_ecs" {
 }
 
 resource "aws_cloudwatch_log_group" "cra_upd_cloudwatch_group" {
-  name              = "/aws/ecs/${var.product_name_dashed}-cluster"
+  name              = "/aws/ecs/${var.product_name}-cluster"
   retention_in_days = 30
 }
 
 resource "aws_cloudwatch_log_stream" "cra_upd_cloudwatch_stream" {
-  name           = "${var.product_name_dashed}-log-stream"
+  name           = "${var.product_name}-log-stream"
   log_group_name = aws_cloudwatch_log_group.cra_upd_cloudwatch_group.name
 }

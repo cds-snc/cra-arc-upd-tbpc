@@ -1,6 +1,6 @@
 module "cra_upd_vpc" {
   source            = "github.com/cds-snc/terraform-modules//vpc?ref=v10.4.4"
-  name              = var.product_name_dashed
+  name              = var.product_name
   billing_tag_value = var.billing_tag_value
 
   # Enable 2 availability zones for subnets as this is requirement for the DocumentDB database

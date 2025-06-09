@@ -1,7 +1,7 @@
 module "cra_upd_data_s3_bucket" {
   source = "github.com/cds-snc/terraform-modules//S3?ref=v10.4.4"
 
-  bucket_name       = "${var.product_name_dashed}-data-${var.env}"
+  bucket_name       = "${var.product_name}-data-${var.env}"
   billing_tag_value = var.billing_tag_value
 }
 

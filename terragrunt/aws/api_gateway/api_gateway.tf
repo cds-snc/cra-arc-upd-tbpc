@@ -1,5 +1,5 @@
 resource "aws_apigatewayv2_api" "cra_upd_apigw_endpoint" {
-  name                         = "${var.product_name_dashed}-apigw"
+  name                         = "${var.product_name}-apigw"
   protocol_type                = "HTTP"
   disable_execute_api_endpoint = true # Only allow access to the API Gateway through CloudFront
 }

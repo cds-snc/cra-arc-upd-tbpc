@@ -7,7 +7,6 @@ locals {
 
 inputs = {
   product_name              = "${local.vars.inputs.product_name}"
-  product_name_dashed       = "${local.vars.inputs.product_name_dashed}"
   account_id                = "${local.vars.inputs.account_id}"
   domain                    = "${local.vars.inputs.domain}"
   env                       = "${local.vars.inputs.env}"
@@ -32,19 +31,19 @@ generate "common_variables" {
   contents  = file("./common/common_variables.tf")
 }
 
-remote_state {
-  backend = "s3"
-  generate = {
-    path      = "backend.tf"
-    if_exists = "overwrite_terragrunt"
-  }
-  config = {
-    encrypt             = true
-    bucket              = "${local.vars.inputs.cost_center_code}-tf"
-    dynamodb_table      = "terraform-state-lock-dynamo"
-    region              = "ca-central-1"
-    key                 = "${path_relative_to_include()}/terraform.tfstate"
-    s3_bucket_tags      = { CostCentre : local.vars.inputs.cost_center_code }
-    dynamodb_table_tags = { CostCentre : local.vars.inputs.cost_center_code }
-  }
-}
+# remote_state {
+#   backend = "s3"
+#   generate = {
+#     path      = "backend.tf"
+#     if_exists = "overwrite_terragrunt"
+#   }
+#   config = {
+#     encrypt             = true
+#     bucket              = "${local.vars.inputs.cost_center_code}-tf"
+#     dynamodb_table      = "terraform-state-lock-dynamo"
+#     region              = "ca-central-1"
+#     key                 = "${path_relative_to_include()}/terraform.tfstate"
+#     s3_bucket_tags      = { CostCentre : local.vars.inputs.cost_center_code }
+#     dynamodb_table_tags = { CostCentre : local.vars.inputs.cost_center_code }
+#   }
+# }

@@ -18,11 +18,6 @@ variable "product_name" {
   type        = string
 }
 
-variable "product_name_dashed" {
-  description = "The name of the product you are deploying. (with dashes, vs. underscores)"
-  type        = string
-}
-
 variable "domain" {
   description = "The domain name to deploy to"
   type        = string
