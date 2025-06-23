@@ -186,7 +186,7 @@ export class ProjectsService {
           .group({
             _id: '$project',
             statuses: {
-              $addToSet: { $ifNull: ['$status', 'Unknown', '$status'] },
+              $addToSet: { $ifNull: ['$status', 'Unknown'] },
             },
             date: { $min: '$date' },
           })
@@ -246,68 +246,42 @@ export class ProjectsService {
           .exec()
       )[0] || defaultData;
 
-    const projectsData = await this.projectsModel
+    const projectsData = await this.uxTestsModel
       .aggregate<ProjectsHomeProject>()
-      .lookup({
-        from: 'ux_tests',
-        let: { project_id: '$_id' },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $eq: ['$project', '$$project_id'],
-              },
-            },
+      .group({
+        _id: '$project',
+        cops: { $max: '$cops' },
+        startDate: { $min: '$date' },
+        launchDate: { $max: '$launch_date' },
+        avgSuccessRate: { $avg: '$success_rate' },
+        uxTests: {
+          $push: {
+            success_rate: '$success_rate',
+            date: '$date',
+            test_type: '$test_type',
+            title: '$title',
           },
-          {
-            $group: {
-              _id: null,
-              cops: {
-                $max: '$cops',
-              },
-              startDate: {
-                $min: '$date',
-              },
-              launchDate: {
-                $max: '$launch_date',
-              },
-
-              uxTests: {
-                $push: {
-                  success_rate: '$success_rate',
-                  date: '$date',
-                  test_type: '$test_type',
-                },
-              },
-              avgSuccessRate: {
-                $avg: '$success_rate',
-              },
-              statuses: {
-                $addToSet: { $ifNull: ['$status', 'Unknown', '$status'] },
-              },
-            },
-          },
-          {
-            $addFields: {
-              status: projectStatusSwitchExpression,
-            },
-          },
-        ],
-        as: 'tests_aggregated',
+        },
+        statuses: { $addToSet: { $ifNull: ['$status', 'Unknown'] } },
       })
-      .unwind('$tests_aggregated')
-      .replaceRoot({
-        $mergeObjects: ['$$ROOT', '$tests_aggregated', { _id: '$_id' }],
+      .addFields({
+        status: projectStatusSwitchExpression,
       })
       .project({
-        title: 1,
+        title: {
+          $arrayElemAt: ['$uxTests.title', 0],
+        },
         cops: 1,
         startDate: 1,
         launchDate: 1,
         avgSuccessRate: 1,
         status: 1,
         uxTests: 1,
-      });
+      })
+      .sort({
+        _id: 1,
+      })
+      .exec();
 
     const completedCOPS = projectsData.filter(
       (data) => data.cops && data.status === 'Complete',
@@ -357,7 +331,9 @@ export class ProjectsService {
     }
 
     type ProjectedTask = { _id: string; title: string };
-    type ProjectedUxTest = Omit<IUxTest, 'project' | 'pages'> & { tasks: ProjectedTask[] };
+    type ProjectedUxTest = Omit<IUxTest, 'project' | 'pages'> & {
+      tasks: ProjectedTask[];
+    };
     type ProjectedProject = Omit<IProject, 'pages' | 'tasks' | 'ux_tests'> & {
       tasks: ProjectedTask[];
       ux_tests: ProjectedUxTest[];

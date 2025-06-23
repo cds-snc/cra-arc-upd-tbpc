@@ -37,3 +37,17 @@ variable "billing_tag_value" {
   description = "The value we use to track billing"
   type        = string
 }
+
+variable "environment" {
+  description = "The environment variables to use for deployment"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  sensitive = true
+}
+variable "secrets" {
+  description = "The secrets to use for deployment"
+  type        = map(string)
+  sensitive   = true
+}

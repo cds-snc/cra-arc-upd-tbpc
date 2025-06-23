@@ -1,5 +1,6 @@
 locals {
   vars = read_terragrunt_config("../env_vars.hcl")
+  env  = read_terragrunt_config("../../common/environment.hcl")
 }
 
 # DO NOT CHANGE ANYTHING BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -13,13 +14,15 @@ inputs = {
   billing_code              = "${local.vars.inputs.cost_center_code}"
   billing_tag_value         = "${local.vars.inputs.billing_tag_value}"
   cbs_satellite_bucket_name = "cbs-satellite-${local.vars.inputs.account_id}"
+  secrets                   = local.env.inputs.secrets
+  # runtime environment variables
+  environment = local.env.inputs.env
 }
 
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite"
   contents  = file("./common/provider.tf")
-
 }
 
 generate "common_variables" {

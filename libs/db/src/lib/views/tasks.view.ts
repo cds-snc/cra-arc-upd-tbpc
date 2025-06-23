@@ -933,26 +933,33 @@ export class TasksViewService extends DbViewNew<
     };
 
     const [data, comparisonData] = await Promise.all([
-      this.find<ProjectedTask>({ dateRange }, projection).then((results) =>
-        results
-          .sort((a, b) => {
-            const aIfActive = a.status === 'Inactive' ? 0 : a.tmf_ranking_index;
-            const bIfActive = b.status === 'Inactive' ? 0 : b.tmf_ranking_index;
-            return bIfActive - aIfActive;
-          })
-          .map((task, i) => ({
-            ...task,
-            tmf_rank: i + 1,
-            top_task: i < 50,
-            secure_portal: !!task.channel.find(
-              (channel) => channel === 'Fully online - portal',
-            ),
-            ux_testing: !!task.ux_tests?.find(
-              (test) => !isNullish(test.success_rate),
-            ),
-          })),
-      ),
-      this.find<ProjectedTask>({ dateRange: comparisonDateRange }, projection),
+      this.aggregate<ProjectedTask>({ dateRange })
+        .project(projection)
+        .exec()
+        .then((results) =>
+          results
+            .sort((a, b) => {
+              const aIfActive =
+                a.status === 'Inactive' ? 0 : a.tmf_ranking_index;
+              const bIfActive =
+                b.status === 'Inactive' ? 0 : b.tmf_ranking_index;
+              return bIfActive - aIfActive;
+            })
+            .map((task, i) => ({
+              ...task,
+              tmf_rank: i + 1,
+              top_task: i < 50,
+              secure_portal: !!task.channel.find(
+                (channel) => channel === 'Fully online - portal',
+              ),
+              ux_testing: !!task.ux_tests?.find(
+                (test) => !isNullish(test.success_rate),
+              ),
+            })),
+        ),
+      this.aggregate<ProjectedTask>({ dateRange: comparisonDateRange })
+        .project(projection)
+        .exec(),
     ]);
 
     const comparisonProps = [

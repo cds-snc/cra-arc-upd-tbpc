@@ -5,6 +5,7 @@ import {
 } from '@mongodb-js/zstd';
 import * as brotli from 'brotli-wasm';
 import { createHash } from 'node:crypto';
+import { createGunzip } from 'node:zlib';
 
 const compressBrotli = brotli.compress;
 const decompressBrotli = brotli.decompress;
@@ -69,3 +70,16 @@ export const md5Hash = (target: string | object) =>
   createHash('md5')
     .update(typeof target === 'string' ? target : JSON.stringify(target))
     .digest('hex');
+
+export const gunzip = (buffer: Buffer) =>
+  new Promise<Buffer>((resolve, reject) => {
+    const gunzip = createGunzip();
+    const chunks: Buffer[] = [];
+
+    gunzip.on('data', (chunk) => chunks.push(chunk));
+    gunzip.on('end', () => resolve(Buffer.concat(chunks)));
+    gunzip.on('error', (err) => reject(err));
+
+    gunzip.write(buffer);
+    gunzip.end();
+  });
