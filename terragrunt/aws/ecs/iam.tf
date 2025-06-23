@@ -22,9 +22,7 @@ data "aws_iam_policy_document" "cra_upd_ssm_read_policy_doc" {
     sid    = "AllowSSMParameterAccess"
     effect = "Allow"
     actions = [
-      "ssm:GetParameter",
-      "ssm:GetParameters",
-      "ssm:GetParametersByPath"
+      "ssm:GetParameter*",
     ]
     resources = local.secrets_arns
   }

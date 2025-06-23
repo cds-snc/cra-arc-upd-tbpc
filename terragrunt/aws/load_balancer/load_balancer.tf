@@ -27,13 +27,6 @@ resource "aws_lb_target_group" "cra_upd_ecs_lb_target_group" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
-
-  target_group_health {
-    dns_failover {
-      minimum_healthy_targets_count      = 1
-      minimum_healthy_targets_percentage = 1
-    }
-  }
 }
 
 resource "aws_lb_listener" "cra_upd_ecs_alb_listener" {

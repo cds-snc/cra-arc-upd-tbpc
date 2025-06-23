@@ -8,7 +8,7 @@ resource "aws_elasticache_replication_group" "cra_upd_elasticache_replication_gr
   node_type                  = var.elasticache_node_type
   num_cache_clusters         = 1
   cluster_mode               = "disabled"
-  at_rest_encryption_enabled = false
+  at_rest_encryption_enabled = true
   transit_encryption_enabled = false
   subnet_group_name          = aws_elasticache_subnet_group.cra_upd_elasticache_subnet_group.name
   security_group_ids         = [aws_security_group.cra_upd_elasticache_sg.id]

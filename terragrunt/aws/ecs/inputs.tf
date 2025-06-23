@@ -13,6 +13,21 @@ variable "vpc_cidr_block" {
   type        = string
 }
 
+variable "loadbalancer_sg_id" {
+  description = "The security group id of the Application Load Balancer"
+  type        = string
+}
+
+variable "loadbalancer_egress_sg_id" {
+  description = "The security group id that allows egress to the Application Load Balancer"
+  type        = string
+}
+
+variable "loadbalancer_target_group_arn" {
+  description = "The ARN of the Application Load Balancer target group"
+  type        = string
+}
+
 variable "ecr_repository_url" {
   description = "The URL of the ECR repository"
   type        = string

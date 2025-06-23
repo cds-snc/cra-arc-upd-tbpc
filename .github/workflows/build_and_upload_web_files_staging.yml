@@ -71,7 +71,7 @@ jobs:
       - name: Configure aws credentials using OIDC
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
-          role-to-assume: arn:aws:iam::211125499457:role/S3WebReadWriteRole
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
           role-session-name: TFApply-uploadWebFiles
           aws-region: ${{ env.AWS_REGION }}
 

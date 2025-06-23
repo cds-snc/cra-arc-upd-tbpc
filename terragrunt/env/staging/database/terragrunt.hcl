@@ -3,7 +3,7 @@ terraform {
 }
 
 dependencies {
-  paths = ["../network"]
+  paths = ["../network", "../ssm"]
 }
 
 dependency "network" {
@@ -14,6 +14,15 @@ dependency "network" {
     vpc_id                 = ""
     vpc_private_subnet_ids = [""]
     vpc_cidr_block         = "10.0.0.0/16"
+  }
+}
+
+dependency "ssm" {
+  config_path                             = "../ssm"
+  mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
+  mock_outputs_merge_with_state           = true
+  mock_outputs = {
+    ssm_secret_arns = []
   }
 }
 

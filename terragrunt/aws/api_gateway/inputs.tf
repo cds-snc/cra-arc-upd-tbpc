@@ -23,6 +23,11 @@ variable "loadbalancer_sg_id" {
   type        = string
 }
 
+variable "loadbalancer_egress_sg_id" {
+  description = "The security group id that allows egress to the Application Load Balancer"
+  type        = string
+}
+
 variable "ecs_instance_count" {
   description = "The number of ECS instances being run"
   type        = number

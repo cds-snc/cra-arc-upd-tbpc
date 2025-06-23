@@ -17,15 +17,15 @@ dependency "network" {
   }
 }
 
-dependency "ecs" {
-  config_path                             = "../ecs"
+dependency "load_balancer" {
+  config_path                             = "../load_balancer"
   mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
-    ecs_sg_id                     = ""
-    ecs_loadbalancer_sg_id        = ""
-    ecs_loadbalancer_arn          = ""
-    ecs_loadbalancer_listener_arn = ""
+    ecs_loadbalancer_sg_id         = ""
+    ecs_load_balancer_egress_sg_id = ""
+    ecs_loadbalancer_arn           = ""
+    ecs_loadbalancer_listener_arn  = ""
   }
 }
 
@@ -33,9 +33,10 @@ inputs = {
   vpc_id                    = dependency.network.outputs.vpc_id
   vpc_private_subnet_ids    = dependency.network.outputs.vpc_private_subnet_ids
   vpc_cidr_block            = dependency.network.outputs.vpc_cidr_block
-  loadbalancer_arn          = dependency.ecs.outputs.ecs_loadbalancer_arn
-  loadbalancer_listener_arn = dependency.ecs.outputs.ecs_loadbalancer_listener_arn
-  loadbalancer_sg_id        = dependency.ecs.outputs.ecs_loadbalancer_sg_id
+  loadbalancer_arn          = dependency.load_balancer.outputs.ecs_loadbalancer_arn
+  loadbalancer_listener_arn = dependency.load_balancer.outputs.ecs_loadbalancer_listener_arn
+  loadbalancer_sg_id        = dependency.load_balancer.outputs.ecs_loadbalancer_sg_id
+  loadbalancer_egress_sg_id = dependency.load_balancer.outputs.ecs_loadbalancer_egress_sg_id
 }
 
 include "root" {
