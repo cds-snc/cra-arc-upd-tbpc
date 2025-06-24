@@ -80,7 +80,7 @@ jobs:
           # List the environment directories under terragrunt/env/staging/
           # - module: api_gateway
           # - module: database
-          # - module: ecr
+          - module: ecr
           # - module: ecs
           # - module: elasticache
           # - module: iam
