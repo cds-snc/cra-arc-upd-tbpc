@@ -1,22 +1,12 @@
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
 
 terraform {
-  source = "../../../aws/s3"
+  source = "../../../aws//s3"
 }
 
 inputs = {
-  bucket_name = "cra-arc-upd-tbpc-codespaces-data"
-
-  # Required for the S3 module
-  billing_tag_value = "cra-arc-upd-tbpc"
-
-  # Tags
-  tags = {
-    Environment = "staging"
-    Project     = "cra-arc-upd-tbpc"
-    ManagedBy   = "Terraform"
-    Purpose     = "Codespaces Data"
-  }
+  data_bucket_expiration_days     = 7
+  data_bucket_noncurrent_versions = 7
 }

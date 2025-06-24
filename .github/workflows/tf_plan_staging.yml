@@ -83,9 +83,8 @@ jobs:
           - module: ecr
           # - module: ecs
           # - module: elasticache
-          # - module: iam
-          # - module: network
-          # - module: s3
+          - module: network
+          - module: s3
           # - module: s3_web_files
           - module: ssm
           # - module: web
