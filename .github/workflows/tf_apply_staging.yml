@@ -80,7 +80,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - module: ecr
+          - module: ecr
           # - module: network
           # - module: s3
           - module: ssm
