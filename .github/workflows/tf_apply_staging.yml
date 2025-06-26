@@ -81,8 +81,8 @@ jobs:
       matrix:
         include:
           - module: ecr
-          # - module: network
-          # - module: s3
+          - module: network
+          - module: s3
           - module: ssm
     runs-on: ubuntu-latest
     steps:
@@ -112,7 +112,6 @@ jobs:
   #       include:
   #         - module: database
   #         - module: elasticache
-  #         - module: iam
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout
