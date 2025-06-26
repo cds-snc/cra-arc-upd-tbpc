@@ -103,33 +103,33 @@ jobs:
         working-directory: terragrunt/env/staging/${{ matrix.module }}
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
-  # terragrunt-apply-group2:
-  #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
-  #   needs: terragrunt-apply-group1
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - module: database
-  #         - module: elasticache
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+  terragrunt-apply-group2:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    needs: terragrunt-apply-group1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: database
+          - module: elasticache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Setup Terraform Tools
-  #       uses: cds-snc/terraform-tools-setup@v1
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
 
-  #     - name: Configure aws credentials using OIDC
-  #       uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
-  #       with:
-  #         role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
-  #         role-session-name: TFApply-group2
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group2
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Apply ${{ matrix.module }}
-  #       working-directory: terragrunt/env/staging/${{ matrix.module }}
-  #       run: terragrunt apply --terragrunt-non-interactive -auto-approve
+      - name: Apply ${{ matrix.module }}
+        working-directory: terragrunt/env/staging/${{ matrix.module }}
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
   # terragrunt-apply-group3:
   #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
