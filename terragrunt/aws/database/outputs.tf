@@ -11,6 +11,7 @@ output "docdb_cluster_arn" {
 output "docdb_endpoint" {
   description = "The document db cluster endpoint"
   value       = module.cra_upd_documentdb.docdb_endpoint
+  sensitive   = true
 }
 
 output "docdb_sg_id" {
