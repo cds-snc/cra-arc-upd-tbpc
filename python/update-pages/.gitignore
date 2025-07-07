@@ -1,0 +1,14 @@
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+*.ipynb
+*.csv
+*.txt
+
+*.parquet
+sample/
+.venv/
+.env

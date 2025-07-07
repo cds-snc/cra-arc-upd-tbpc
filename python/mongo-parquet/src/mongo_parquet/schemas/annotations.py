@@ -2,12 +2,13 @@ import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_
-from pymongoarrow.types import ObjectIdType
-from ..mongo import MongoModel
+from . import MongoCollection, ParquetModel
+from ..sampling import SamplingContext
 
 
-class Annotations(MongoModel):
+class Annotations(ParquetModel):
     collection: str = "annotations"
+    parquet_filename: str = "annotations.parquet"
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -28,6 +29,15 @@ class Annotations(MongoModel):
     )
 
     def transform(self, df: pl.DataFrame) -> pl.DataFrame:
-        return df.with_columns(
-            pl.col("_id").bin.encode("hex")
-        ).sort("event_date")
+        return df.with_columns(pl.col("_id").bin.encode("hex")).sort("event_date")
+
+    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+        return df.with_columns(pl.col("_id").str.decode("hex"))
+
+    def get_sampling_filter(self, _: SamplingContext) -> dict:
+        return self.filter or {}
+
+
+class AnnotationsModel(MongoCollection):
+    collection = "annotations"
+    primary_model = Annotations()

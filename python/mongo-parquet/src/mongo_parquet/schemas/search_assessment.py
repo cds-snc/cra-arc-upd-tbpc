@@ -2,12 +2,13 @@ import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, int32, bool_
-from pymongoarrow.types import ObjectIdType
-from ..mongo import MongoModel
+from . import MongoCollection, ParquetModel
+from ..sampling import SamplingContext
 
 
-class SearchAssessment(MongoModel):
+class SearchAssessment(ParquetModel):
     collection: str = "search_assessment"
+    parquet_filename: str = "search_assessment.parquet"
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -24,8 +25,17 @@ class SearchAssessment(MongoModel):
     )
 
     def transform(self, df: pl.DataFrame) -> pl.DataFrame:
-        return (
-            df.with_columns(pl.col("_id").bin.encode("hex"))
-              .sort("date", descending=True)
-              .head(200)
-        )
+        return df.with_columns(pl.col("_id").bin.encode("hex")).sort("_id")
+
+    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+        return df.with_columns(pl.col("_id").str.decode("hex"))
+
+    def get_sampling_filter(self, _: SamplingContext) -> dict:
+        return self.filter or {}
+
+
+class SearchAssessmentModel(MongoCollection):
+    collection = "search_assessment"
+    primary_model = SearchAssessment()
+
+

@@ -1,13 +1,19 @@
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
-from pyarrow import string, timestamp, list_, float64, int32
-from pymongoarrow.types import ObjectIdType
-from ..mongo import MongoModel
+from pyarrow import int64, timestamp, float64, int32
+from . import MongoCollection, ParquetModel
+from .overall_aa_searchterms_en import OverallAASearchTermsEn
+from .overall_aa_searchterms_fr import OverallAASearchTermsFr
+from .overall_gsc_searchterms import OverallGSCSearchTerms
+from .utils import get_sample_date_range_filter
+from ..sampling import SamplingContext
+from copy import deepcopy
 
 
-class OverallMetrics(MongoModel):
+class OverallMetrics(ParquetModel):
     collection: str = "overall_metrics"
+    parquet_filename: str = "overall_metrics.parquet"
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -21,9 +27,9 @@ class OverallMetrics(MongoModel):
             "fwylf_error": int32(),
             "fwylf_hard_to_understand": int32(),
             "fwylf_other": int32(),
-            "gsc_total_clicks": int32(),
+            "gsc_total_clicks": int64(),
             "gsc_total_ctr": float64(),
-            "gsc_total_impressions": int32(),
+            "gsc_total_impressions": int64(),
             "gsc_total_position": float64(),
             "nav_menu_initiated": int32(),
             "rap_404": int32(),
@@ -74,4 +80,30 @@ class OverallMetrics(MongoModel):
     def transform(self, df: pl.DataFrame) -> pl.DataFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
+            pl.col("average_time_spent").round(4).cast(pl.Float32),
+            pl.col("bouncerate").round(4).cast(pl.Float32),
         ).sort("date")
+
+    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+        return df.with_columns(
+            pl.col("_id").str.decode("hex"),
+        )
+
+    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+        filter = deepcopy(self.filter or {})
+
+        date_range_filter = get_sample_date_range_filter(sampling_context)
+
+        filter.update(date_range_filter)
+
+        return filter
+
+
+class OverallMetricsModel(MongoCollection):
+    collection = "overall_metrics"
+    primary_model = OverallMetrics()
+    secondary_models = [
+        OverallAASearchTermsEn(),
+        OverallAASearchTermsFr(),
+        OverallGSCSearchTerms(),
+    ]

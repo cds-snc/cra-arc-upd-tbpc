@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { BlobModel, StorageClient } from './storage.client';
+import {
+  BlobModel,
+  StorageClient,
+  type StorageProvider,
+} from './storage.client';
+import { normalize } from 'node:path/posix';
 import { CompressionAlgorithm } from '@dua-upd/node-utils';
 
-export interface BlobDefinition {
+export type BlobDefinition = {
   containerName: string;
   path?: string;
   overwrite?: boolean;
   compression?: CompressionAlgorithm;
-}
+};
 
 /*
  * Use this variable as the primary Blob Model "registry".
@@ -29,7 +34,7 @@ export type RegisteredBlobModel = BlobModels[number];
 
 @Injectable()
 export class BlobStorageService {
-  private storageClient = new StorageClient();
+  private _storageClient: StorageClient | null = null;
 
   private readonly blobDefinitions: Record<
     RegisteredBlobModel,
@@ -69,7 +74,7 @@ export class BlobStorageService {
     html_snapshots_backup: {
       path: 'backup',
       containerName: 'html-snapshots',
-    }
+    },
   } as const;
 
   readonly blobModels: Record<RegisteredBlobModel, BlobModel | null> = {
@@ -83,16 +88,44 @@ export class BlobStorageService {
     html_snapshots_backup: null,
   };
 
+  get storageClient() {
+    return this._storageClient;
+  }
+
+  setStorageProvider(storageProvider: StorageProvider) {
+    this._storageClient = new StorageClient(storageProvider);
+    return this;
+  }
+
   private async configureBlobs(): Promise<BlobStorageService> {
     for (const [modelName, blobDefinition] of Object.entries(
       this.blobDefinitions,
     ) as [RegisteredBlobModel, BlobDefinition][]) {
-      const container = await this.storageClient.container(
-        blobDefinition.containerName,
-      );
+      const trueContainer =
+        this.storageClient.storageType === 's3'
+          ? process.env['DATA_BUCKET_NAME']
+          : blobDefinition.containerName;
 
-      this.blobModels[modelName] = container.createBlobsClient({
-        path: blobDefinition.path,
+      if (
+        this.storageClient.storageType === 's3' &&
+        !process.env['DATA_BUCKET_NAME']
+      ) {
+        throw new Error(
+          `storageType is 's3' but DATA_BUCKET_NAME is not defined`,
+        );
+      }
+
+      const truePath =
+        this.storageClient.storageType === 's3'
+          ? normalize(
+              `${blobDefinition.containerName}/${blobDefinition.path ?? ''}`,
+            )
+          : normalize(`${blobDefinition.path ?? ''}`);
+
+      const container = await this._storageClient?.container(trueContainer);
+
+      this.blobModels[modelName] = container?.createBlobsClient({
+        path: truePath,
         overwrite: blobDefinition['overwrite'],
         compression: blobDefinition['compression'],
       });
@@ -101,11 +134,13 @@ export class BlobStorageService {
     return this;
   }
 
-  static async init() {
-    return await new BlobStorageService().configureBlobs();
+  static async init(storageProvider: StorageProvider) {
+    return await new BlobStorageService()
+      .setStorageProvider(storageProvider)
+      .configureBlobs();
   }
 
   async container(containerName: string) {
-    return this.storageClient.container(containerName);
+    return this._storageClient.container(containerName);
   }
 }

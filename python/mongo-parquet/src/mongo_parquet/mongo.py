@@ -1,41 +1,66 @@
-import abc
 import os
-import time
-from datetime import datetime
-from os import getenv, path, makedirs
 import polars as pl
-from pymongoarrow.api import Schema, find_polars_all, aggregate_polars_all
-from dotenv import load_dotenv
+from pymongoarrow.api import (
+    find_polars_all,
+    aggregate_polars_all,
+)
 from pymongo import MongoClient
 from pymongoarrow.monkey import patch_all
-from typing import Optional, overload
-from pydantic import ConfigDict
-from .utils import ensure_dataframe, month_range, year_range
+from typing import Optional
+import urllib.parse
+
+from .schemas import MongoCollection, ParquetModel
+from .utils import ensure_dataframe
+
+patch_all()
 
 
-class MongoModel(abc.ABC):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    
-    collection: str
-    schema: Schema
-    filter: Optional[dict] = None
-    projection: Optional[dict] = None
-    start: Optional[datetime] = None
-    end: Optional[datetime] = None
-    pipeline: Optional[list] = None
+class MongoConfig:
+    def __init__(
+        self,
+        db_name: str,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        tls_ca_file: Optional[str] = None,
+    ):
+        self.db_name = db_name
+        self.host = host or os.getenv("DB_HOST", "localhost")
+        self.port = port or int(os.getenv("DB_PORT", 27017))
+        self.username = (
+            username or os.getenv("DOCDB_USERNAME") or os.getenv("MONGO_USERNAME")
+        )
+        self.password = (
+            password or os.getenv("DOCDB_PASSWORD") or os.getenv("MONGO_PASSWORD")
+        )
+        self.tls_ca_file = (
+            tls_ca_file or os.getenv("DB_TLS_CA_FILE") or os.getenv("MONGO_TLS_CA_FILE")
+        )
+        self.connection_string = self.create_connection_string()
+        print(f"Connecting to MongoDB host: {self.host}")
 
-    @abc.abstractmethod
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
-        pass
+    def create_connection_string(self) -> str:
+        """
+        Create a MongoDB connection string based on the provided configuration.
+        """
+        if self.username and self.password:
+            tls_ca_file_param = (
+                f"&tlsCAFile={urllib.parse.quote(self.tls_ca_file, safe='')}"
+                if self.tls_ca_file
+                else ""
+            )
+            query_params = f"?tls=true{tls_ca_file_param}&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+            return f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/{query_params}"
+
+        return f"mongodb://{self.host}:{self.port}/"
 
 
-class MongoConverter:
-    load_dotenv()
-    
-    def __init__(self, uri=getenv("MONGO_URI", "mongodb://localhost:27017")):
+class MongoArrowClient:
+    def __init__(self, client: MongoClient, db_name: str):
         patch_all()
-        self.client = MongoClient(f"{uri}?compressors=zstd")
-        self.db = "upd-test"
+        self.client = client
+        self.db = client[db_name]
 
     """
   Find all documents in the given collection that match the given query.
@@ -47,43 +72,24 @@ class MongoConverter:
   :return: A DataFrame with the results of the query.
   """
 
-    @overload
-    def find(self, model: MongoModel) -> pl.DataFrame: ...
-
-    @overload
-    def find(
-        self, model: MongoModel, start: datetime, end: datetime
-    ) -> pl.DataFrame: ...
-
     def find(
         self,
-        model: MongoModel,
-        start: Optional[datetime] = None,
-        end: Optional[datetime] = None,
+        model: ParquetModel,
+        filter: Optional[dict] = None,
     ) -> pl.DataFrame:
-        start = start or model.start
-        end = end or model.end
-
+        # * note: pipelines currently don't support sample filtering
+        # * and need filtering to be done in the pipeline
         if model.pipeline:
             results = aggregate_polars_all(
-                self.client[self.db][model.collection],
+                self.db[model.collection],
                 model.pipeline,
                 schema=model.schema,
                 projection=model.projection,
             )
         else:
-            query = (
-                {"date": {"$gte": start, "$lte": end}}
-                if start and end
-                else {}
-            )
-
-            if model.filter:
-                query.update(model.filter)
-
             results = find_polars_all(
-                self.client[self.db][model.collection],
-                query,
+                self.db[model.collection],
+                filter or model.filter,  # sample filter needs to be passed explicitly
                 schema=model.schema,
                 projection=model.projection,
             )
@@ -95,141 +101,26 @@ class MongoConverter:
 
         return results
 
-    def save(
+    def insert_many(
         self,
-        model: MongoModel,
-        collection_rename: Optional[str] = None,
-        output_dir: Optional[str] = None
+        model: MongoCollection,
+        df: pl.DataFrame,
     ):
-        if collection_rename is not None:
-            print(f"Processing {model.collection} as {collection_rename}")
-        else:
-            print(f"Processing {model.collection}")
+        """
+        Insert data into the MongoDB collection.
 
-        os.makedirs(output_dir or "sample", exist_ok=True)
+        :param model: The model representing the MongoDB collection.
+        :param df: The DataFrame containing the data to insert.
+        """
+        print(f"Preparing data for insertion into {model.collection} collection...")
+        records = model.prepare_for_insert(df)
 
-        df = self.find(model)
+        print(f"Inserting data into {model.collection} collection...")
+        self.db[model.collection].insert_many(records)
+        print(f"Inserted {len(records)} records into {model.collection} collection.")
 
-        collection_path = (
-            collection_rename if collection_rename is not None else model.collection
-        )
 
-        filepath = f"{output_dir}/{collection_path}.parquet"
-
-        print(f"Writing {filepath}")
-
-        df.write_parquet(filepath, compression_level=9)
-
-        print("Done")
-
-    def save_months_partitioned(
-        self,
-        model: MongoModel,
-        range_start: str,
-        range_end: str,
-        collection_rename: Optional[str] = None,
-        output_dir="../data",
-        delay_secs: int = 5,
-    ):
-        ranges_iter = month_range(range_start, range_end)
-
-        for start, end in ranges_iter:
-            print(
-                f"Processing {start.strftime('%Y-%m-%d')} - {end.strftime('%Y-%m-%d')}"
-            )
-            start_time = datetime.now()
-            df = self.find(model, start, end)
-            year = start.strftime("%Y")
-            month = start.strftime("%m")
-            collection_path = (
-                collection_rename if collection_rename is not None else model.collection
-            )
-            dirpath = f"{output_dir}/{collection_path}/year={year}/month={month}"
-            filepath = f"{dirpath}/data.parquet"
-
-            if not path.exists(dirpath):
-                makedirs(dirpath)
-
-            print(f"Writing to {filepath}")
-            df.write_parquet(filepath, compression_level=9)
-            print(f"Done in {datetime.now() - start_time}")
-            del df
-            print(f"waiting {delay_secs} seconds")
-
-            time.sleep(delay_secs)
-            print("")
-
-    def save_last_year_present_partitioned(
-        self,
-        model: MongoModel,
-        range_start: str,
-        range_end: str,
-        collection_rename: Optional[str] = None,
-        output_dir="data",
-        delay_secs: int = 5,
-    ):
-        ranges_iter = year_range(range_start, range_end)
-
-        for start, end in ranges_iter:
-            print(
-                f"Processing {start.strftime('%Y-%m-%d')} - {end.strftime('%Y-%m-%d')}"
-            )
-            start_time = datetime.now()
-            df = self.find(model, start, end).with_columns(
-                pl.col("date").dt.year().alias("year")
-            )
-            collection_path = (
-                collection_rename if collection_rename is not None else model.collection
-            )
-            dirpath = f"{output_dir}/{collection_path}/"
-            filepath = f"{dirpath}/data.parquet"
-
-            if not path.exists(dirpath):
-                makedirs(dirpath)
-
-            print(f"Writing to {filepath}")
-            df.write_parquet(filepath, compression_level=9)
-            print(f"Done in {datetime.now() - start_time}")
-            del df
-            print(f"waiting {delay_secs} seconds")
-
-            time.sleep(delay_secs)
-            print("")
-
-    def save_years_partitioned(
-        self,
-        model: MongoModel,
-        range_start: str,
-        range_end: str,
-        collection_rename: Optional[str] = None,
-        output_dir="../data",
-        delay_secs: int = 5,
-    ):
-        ranges_iter = year_range(range_start, range_end)
-
-        for start, end in ranges_iter:
-            print(
-                f"Processing {start.strftime('%Y-%m-%d')} - {end.strftime('%Y-%m-%d')}"
-            )
-            start_time = datetime.now()
-            df = self.find(model, start, end).with_columns(
-                pl.col("date").dt.year().alias("year")
-            )
-            year = start.strftime("%Y")
-            collection_path = (
-                collection_rename if collection_rename is not None else model.collection
-            )
-            dirpath = f"{output_dir}/{collection_path}/year={year}"
-            filepath = f"{dirpath}/data.parquet"
-
-            if not path.exists(dirpath):
-                makedirs(dirpath)
-
-            print(f"Writing to {filepath}")
-            df.write_parquet(filepath, compression_level=9)
-            print(f"Done in {datetime.now() - start_time}")
-            del df
-            print(f"waiting {delay_secs} seconds")
-
-            time.sleep(delay_secs)
-            print("")
+__all__ = [
+    "MongoConfig",
+    "MongoArrowClient",
+]

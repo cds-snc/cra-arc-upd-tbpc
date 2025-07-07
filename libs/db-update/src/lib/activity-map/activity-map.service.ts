@@ -5,7 +5,7 @@ import utc from 'dayjs/plugin/utc';
 import isBetween from 'dayjs/plugin/isBetween';
 import { Types, type AnyBulkWriteOperation } from 'mongoose';
 import { BlobStorageService } from '@dua-upd/blob-storage';
-import { DbService, PageMetrics } from '@dua-upd/db';
+import { AAItemId, DbService, PageMetrics } from '@dua-upd/db';
 import type {
   ActivityMapMetrics,
   DateRange,
@@ -131,19 +131,40 @@ export class ActivityMapService {
           activityMapResultsWithRefs as ActivityMap[],
         );
 
-        const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
+        const groupedByPage: Record<string, Record<string, number>> = {};
 
         for (const { activity_map, pages } of cleanActivityMap) {
           for (const page of pages) {
-            bulkWriteOps.push({
-              updateOne: {
-                filter: { date: dayjs.utc(dateRange.start).toDate(), page },
-                update: {
-                  $addToSet: { activity_map: { $each: activity_map } },
-                },
-              },
-            });
+            const pageId = page.toString();
+            if (!groupedByPage[pageId]) {
+              groupedByPage[pageId] = {};
+            }
+
+            for (const { link, clicks } of activity_map) {
+              groupedByPage[pageId][link] =
+                (groupedByPage[pageId][link] || 0) + clicks;
+            }
           }
+        }
+
+        const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
+
+        for (const [pageId, linkClicks] of Object.entries(groupedByPage)) {
+          const mergedActivityMap: ActivityMapMetrics[] = Object.entries(
+            linkClicks,
+          ).map(([link, clicks]) => ({ link, clicks }));
+
+          bulkWriteOps.push({
+            updateOne: {
+              filter: {
+                date: dayjs.utc(dateRange.start).toDate(),
+                page: new Types.ObjectId(pageId),
+              },
+              update: {
+                $set: { activity_map: mergedActivityMap },
+              },
+            },
+          });
         }
 
         if (bulkWriteOps.length) {
@@ -201,10 +222,14 @@ export class ActivityMapService {
 
     return itemIds.map((itemId) => {
       const urls = urlsDict[itemId.value];
+      const pagesFromUrls = urls ? urls.map((url) => url.page) : [];
+      const currentPages = itemId.pages || (itemId.page ? [itemId.page] : []);
+      const uniquePages = [...new Set([...currentPages, ...pagesFromUrls])];
 
-      const pages = urls ? { pages: urls.map((url) => url.page) } : {};
-
-      return { ...itemId, ...pages };
+      return {
+        ...itemId,
+        ...(uniquePages.length ? { pages: uniquePages } : {}),
+      };
     });
   }
 
@@ -234,31 +259,78 @@ export class ActivityMapService {
     const existingItemIds = await this.db.collections.aaItemIds.find({
       type: 'activityMapTitle',
     });
-
     const existingItemIdsDict = arrayToDictionary(existingItemIds, 'itemId');
 
     const newItems = itemIds
       .filter(
         (item) =>
-          !existingItemIdsDict[item.itemId] && !item.value.match('https://'),
+          !existingItemIdsDict[item.itemId] &&
+          !item.value.match(/^https?:\/\//),
       )
-      .map((itemId) => ({
-        ...itemId,
+      .map((item) => ({
+        ...item,
         _id: new Types.ObjectId(),
         type: 'activityMapTitle' as const,
       }));
+
+    const itemIdsWithPageRefs = await this.addPageRefsToItemIds(itemIds);
+
+    const existingNeedingUpdate = itemIdsWithPageRefs.filter((item) => {
+      const existing = existingItemIdsDict[item.itemId];
+      if (!existing) return false;
+
+      const dbPages = new Set(
+        Array.isArray(existing.pages)
+          ? existing.pages.map((p) => p.toString())
+          : existing.pages
+            ? [String(existing.pages)]
+            : [],
+      );
+
+      const newPages = Array.isArray(item.pages)
+        ? item.pages.map((p) => p.toString())
+        : item.pages
+          ? [String(item.pages)]
+          : [];
+
+      return newPages.some((p) => !dbPages.has(p));
+    });
 
     if (newItems.length) {
       this.logger.log(
         chalk.blueBright('Finding valid Page references and inserting...'),
       );
       const itemIdsWithPageRefs = await this.addPageRefsToItemIds(newItems);
-
       await this.db.collections.aaItemIds.insertMany(itemIdsWithPageRefs);
 
       this.logger.log(`Inserted ${newItems.length} new itemIds`);
     } else {
       this.logger.log('No new itemIds to insert');
+    }
+
+    const bulkWriteOps: AnyBulkWriteOperation<AAItemId>[] = [];
+
+    for (const item of existingNeedingUpdate) {
+      bulkWriteOps.push({
+        updateOne: {
+          filter: { itemId: item.itemId, type: 'activityMapTitle' },
+          update: {
+            $set: { pages: item.pages },
+          },
+        },
+      });
+    }
+
+    if (bulkWriteOps.length) {
+      await this.db.collections.aaItemIds.bulkWrite(bulkWriteOps, {
+        ordered: false,
+      });
+
+      this.logger.log(
+        `Updated ${bulkWriteOps.length} itemId records with new pages`,
+      );
+    } else {
+      this.logger.log('No existing itemId records need page updates');
     }
   }
 }

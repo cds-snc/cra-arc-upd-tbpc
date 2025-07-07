@@ -7,6 +7,7 @@ wheels/
 *.ipynb
 
 *.parquet
+data/
 sample/
 .venv/
 .env

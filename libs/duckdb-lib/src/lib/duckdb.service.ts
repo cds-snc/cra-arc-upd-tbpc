@@ -4,6 +4,7 @@ import { Database, OPEN_READONLY, OPEN_READWRITE } from 'duckdb-async';
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { duckDbTable } from './duckdb.table';
+import { DuckDbExtensionsManager } from './duckdb.utils';
 
 export type DuckDBClientOptions = { readOnly?: boolean; logger?: boolean };
 
@@ -24,10 +25,11 @@ export class DuckDbService implements BeforeApplicationShutdown {
   readonly remote = {
     html: duckDbTable(this.db, this.blob, {
       name: 'html',
-      remoteContainer: process.env['DATA_BUCKET_NAME']
-        ? `${process.env['DATA_BUCKET_NAME']}/html-snapshots`
-        : 'html-snapshots',
-      remoteContainerPath: 'hashes-html.parquet',
+      remoteContainer: process.env['DATA_BUCKET_NAME'] || 'html-snapshots',
+      remoteContainerPath:
+        this.blob.storageClient?.storageType === 's3'
+          ? 'html-snapshots/hashes-html.parquet'
+          : 'hashes-html.parquet',
       tableCreationSql: `
           CREATE TABLE IF NOT EXISTS html (
             url TEXT,
@@ -64,6 +66,23 @@ export class DuckDbService implements BeforeApplicationShutdown {
     const duckDb = drizzle(client, { logger: options?.logger ?? false });
 
     return new DuckDbService(client, duckDb, blob, options);
+  }
+
+  async setupRemoteExtensions() {
+    const extensionsManager = new DuckDbExtensionsManager(this.db);
+
+    const prefix = process.env['STORAGE_URI_PREFIX'];
+
+    if (!prefix) {
+      throw new Error('STORAGE_URI_PREFIX is not set');
+    }
+
+    if (prefix === 's3://') {
+      await extensionsManager.installExtension('httpfs');
+      await extensionsManager.installExtension('aws');
+    } else {
+      await extensionsManager.installExtension('azure');
+    }
   }
 
   async setupRemoteAuth() {

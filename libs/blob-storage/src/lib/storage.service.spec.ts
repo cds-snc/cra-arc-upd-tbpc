@@ -6,7 +6,12 @@ describe('StorageService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BlobStorageService],
+      providers: [
+        {
+          provide: BlobStorageService.name,
+          useFactory: async () => await BlobStorageService.init('azure'),
+        },
+      ],
     }).compile();
 
     service = module.get<BlobStorageService>(BlobStorageService);

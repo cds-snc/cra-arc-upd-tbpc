@@ -59,9 +59,7 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
   }
 
   async backupRemote() {
-    const container = (
-      await this.blob.container(this.remoteContainer)
-    ).getClient();
+    const container = await this.blob.container(this.remoteContainer);
 
     const backupFilePath = this.remoteBackupPath.replace(
       /\.parquet$/,
@@ -69,14 +67,24 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     );
     console.log(`Backing up ${this.remotePath} to ${backupFilePath}`);
 
-    const blobClient = container.getBlobClient(this.remoteContainerPath);
-    const backupBlobClient = container.getBlobClient(backupFilePath);
+    const blobClient = container
+      ?.createBlobsClient({
+        overwrite: true,
+        path: this.remoteContainer,
+      })
+      .blob(this.remoteContainerPath);
+    const backupBlobClient = container
+      ?.createBlobsClient({
+        overwrite: true,
+        path: this.remoteContainer,
+      })
+      .blob(backupFilePath);
 
-    const copyPoller = await backupBlobClient
-      .getBlockBlobClient()
-      .beginCopyFromURL(blobClient.url);
+    if (!blobClient?.url) {
+      throw new Error(`Blob client for ${this.remotePath} not found`);
+    }
 
-    await copyPoller.pollUntilDone();
+    await backupBlobClient?.copyFromUrl(blobClient?.url);
 
     console.log(`Backup complete: ${this.remoteBackupPath}`);
   }
@@ -176,16 +184,22 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     const uploadStreamBufferSize = 8 * 1024 * 1024; // 8MB buffer size
 
-    const storageClient = (await this.blob.container(this.remoteContainer))
-      .getClient()
-      .getBlockBlobClient(this.remoteContainerPath);
+    const container = await this.blob.container(this.remoteContainer);
+    if (!container) {
+      throw new Error(`Container ${this.remoteContainer} not found`);
+    }
 
-    await storageClient.uploadStream(
+    const storageClient = container
+      .createBlobsClient({
+        overwrite: true,
+        path: this.remoteContainer,
+      })
+      .blob(this.remoteContainerPath);
+
+    await storageClient?.uploadStream(
       createReadStream(this.filename, {
         highWaterMark: uploadStreamBufferSize,
       }),
-      uploadStreamBufferSize,
-      Math.ceil(Math.floor(availableParallelism() / 1.25)),
     );
 
     console.log(

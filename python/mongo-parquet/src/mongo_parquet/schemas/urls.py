@@ -1,15 +1,16 @@
-# The `Urls` class defines a model for interacting with a MongoDB collection named "urls" and includes
-# schema definitions and transformation methods for working with data in that collection.
+from typing import List, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import bool_, string, timestamp, list_, struct
-from pymongoarrow.types import ObjectIdType
-from ..mongo import MongoModel
+from . import MongoCollection, ParquetModel
+from ..sampling import SamplingContext
+from ..utils import array_to_object, convert_objectids
 
 
-class Urls(MongoModel):
+class Urls(ParquetModel):
     collection: str = "urls"
+    parquet_filename: str = "urls.parquet"
     filter: dict | None = None
     projection: dict | None = {
         "_id": 1,
@@ -20,8 +21,16 @@ class Urls(MongoModel):
         "links": 1,
         "langHrefs": 1,
         "is_404": 1,
-        "metadata": {"$objectToArray": "$metadata"},
-        "langHrefs": {"$objectToArray": "$langHrefs"},
+        "metadata": {
+            "$map": {
+                "input": {"$objectToArray": "$metadata"},
+                "as": "item",
+                "in": {
+                    "k": "$$item.k",
+                    "v": {"$toString": "$$item.v"},
+                },
+            }
+        },
         "all_titles": 1,
         "latest_snapshot": 1,
         "last_checked": 1,
@@ -39,23 +48,21 @@ class Urls(MongoModel):
                     {
                         "k": string(),
                         "v": string(),
-                    }
+                    }.items()
                 )
             ),
-            "langHrefs": list_(
-                struct(
-                    {
-                        "k": string(),
-                        "v": string(),
-                    }
-                )
+            "langHrefs": struct(
+                {
+                    "en": string(),
+                    "fr": string(),
+                }.items()
             ),
             "hashes": list_(
                 struct(
                     {
                         "date": timestamp("ms"),
                         "hash": string(),
-                    }
+                    }.items()
                 )
             ),
             "links": list_(
@@ -63,7 +70,7 @@ class Urls(MongoModel):
                     {
                         "href": string(),
                         "text": string(),
-                    }
+                    }.items()
                 )
             ),
             "all_titles": list_(string()),
@@ -78,3 +85,47 @@ class Urls(MongoModel):
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
         )
+
+    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+        return df.with_columns(
+            pl.col("_id").str.decode("hex"),
+            pl.col("page").str.decode("hex"),
+        )
+
+    def get_sampling_filter(self, _: SamplingContext) -> dict:
+        return self.filter or {}
+
+
+class UrlsModel(MongoCollection):
+    collection = "urls"
+    primary_model = Urls()
+
+    @override
+    def prepare_for_insert(self, df: pl.DataFrame) -> List[dict]:
+        records = []
+
+        col_names = self.combined_schema().to_arrow().names
+
+        for row in df.sort("_id").to_dicts():
+            record = {}
+            for k, v in row.items():
+                if k == "metadata":
+                    v = array_to_object(v)
+                    continue
+                if v is None and k not in self.default_values:
+                    continue
+                elif v is None and k in self.default_values:
+                    record[k] = self.default_values[k]
+
+                if k in self.objectid_fields:
+                    record[k] = convert_objectids(v)
+                else:
+                    record[k] = v
+
+            for col in col_names:
+                if col not in record and col in self.default_values:
+                    record[col] = self.default_values[col]
+
+            records.append(record)
+
+        return records

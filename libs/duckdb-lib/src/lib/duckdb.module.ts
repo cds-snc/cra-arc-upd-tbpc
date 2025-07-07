@@ -14,6 +14,7 @@ import { BlobStorageModule, BlobStorageService } from '@dua-upd/blob-storage';
           readOnly: false,
           logger: false,
         });
+        await duckDb.setupRemoteExtensions();
         await duckDb.setupRemoteAuth();
         return duckDb;
       },
