@@ -112,6 +112,7 @@ jobs:
         include:
           - module: database
           - module: elasticache
+          - module: load_balancer
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
