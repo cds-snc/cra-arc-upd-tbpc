@@ -81,7 +81,7 @@ jobs:
           # - module: api_gateway
           - module: database
           - module: ecr
-          # - module: ecs
+          - module: ecs
           - module: elasticache
           - module: network
           - module: s3
