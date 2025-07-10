@@ -78,7 +78,7 @@ jobs:
       matrix:
         include:
           # List the environment directories under terragrunt/env/staging/
-          # - module: api_gateway
+          - module: api_gateway
           - module: database
           - module: ecr
           - module: ecs
