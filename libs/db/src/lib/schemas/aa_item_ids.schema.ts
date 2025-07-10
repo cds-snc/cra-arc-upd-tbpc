@@ -18,7 +18,7 @@ export class AAItemId implements IAAItemId {
   @Prop({ type: [MSchema.Types.ObjectId], index: true })
   pages?: Types.ObjectId[];
 
-  @Prop({ type: String, required: true, unique: true, index: true })
+  @Prop({ type: String, required: true, index: true })
   itemId!: string;
 
   @Prop({ type: String, required: true, index: true })
@@ -26,3 +26,5 @@ export class AAItemId implements IAAItemId {
 }
 
 export const AAItemIdSchema = SchemaFactory.createForClass(AAItemId);
+
+AAItemIdSchema.index({ itemId: 1, type: 1 }, { unique: true });

@@ -34,10 +34,10 @@ def main():
 
     start_time = datetime.now() 
     # Set the Airtable credentials and table names
-    base_id = os.getenv("BASE_ID", "")
-    current_table_name = os.getenv("CURRENT_TABLE_NAME", "")
-    
-    api_key= os.getenv("AIRTABLE_API", "")
+    base_id = os.getenv("AIRTABLE_BASE_PAGES", "")
+    current_table_name = os.getenv("CURRENT_TABLE_NAME", "Published CRA pages")
+
+    api_key= os.getenv("AIRTABLE_TOKEN", "")
 
     patterns = [
         (r"(fug-data)-(\d{2})-(\d{2})-(\d{4})\.txt", "mdy"),

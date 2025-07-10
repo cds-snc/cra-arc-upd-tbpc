@@ -14,6 +14,7 @@
     "db-updater": "npm run db-cli update",
     "db-repair": "npm run db-cli db-repair",
     "db-repopulate": "npm run db-cli repopulate",
+    "db-populate": "npm run db-cli populate",
     "db-script": "node -r @swc-node/register apps/db-cli/src/main.ts run-script",
     "deploy": "git pull && cd docker && docker-compose pull && docker-compose up -d",
     "deploy:local": "git pull && cd docker && docker compose -f docker-compose.local.yml build && docker compose -f docker-compose.local.yml up -d",
