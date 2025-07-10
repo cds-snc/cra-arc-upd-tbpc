@@ -1,7 +1,5 @@
 resource "aws_route53_zone" "cra_upd_hosted_zone" {
   name = var.domain
-  
-  provider = aws.dns
 }
 
 resource "aws_route53_record" "cra_upd_cloudfront_alias" {
@@ -14,8 +12,6 @@ resource "aws_route53_record" "cra_upd_cloudfront_alias" {
     zone_id                = aws_cloudfront_distribution.cra_upd_cf_distribution.hosted_zone_id
     evaluate_target_health = false
   }
-  
-  provider = aws.dns
 }
 
 resource "aws_acm_certificate" "cra_upd_cloudfront_acm" {
@@ -46,8 +42,6 @@ resource "aws_route53_record" "cra_upd_cert_validation_record" {
   records         = [each.value.record]
   type            = each.value.type
   ttl             = 60
-
-  provider = aws.dns
 }
 
 resource "aws_acm_certificate_validation" "cra_upd_cert_validation" {
