@@ -18,7 +18,9 @@ import {
   avg,
   percentChange,
   round,
+  getArraySelectedAbsoluteChange,
   type UnwrapObservable,
+  logJson,
 } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import * as OverviewActions from './overview.actions';
@@ -38,6 +40,7 @@ import {
   selectVisitsByDayChartData,
   selectVisitsByDayChartTable,
 } from './overview.selectors';
+import { data } from 'cheerio/dist/commonjs/api/attributes';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -770,7 +773,7 @@ export class OverviewFacade {
     map((data) =>
       data?.dateRangeData?.gcTasksData.map((d) => {
         const data_reliability = evaluateDataReliability(d.margin_of_error);
-        const baseData = { ...d, data_reliability };
+        const baseData = { ...d, data_reliability, gc_task_theme: `${d.gc_task}-${d.theme}` };
 
         return data_reliability === 'Insufficient data'
           ? {
@@ -789,7 +792,7 @@ export class OverviewFacade {
     map((data) =>
       data?.comparisonDateRangeData?.gcTasksData.map((d) => {
         const data_reliability = evaluateDataReliability(d.margin_of_error);
-        const baseData = { ...d, data_reliability };
+        const baseData = { ...d, data_reliability, gc_task_theme: `${d.gc_task}-${d.theme}` };
 
         return data_reliability === 'Insufficient data'
           ? {
@@ -802,6 +805,23 @@ export class OverviewFacade {
           : baseData;
       }),
     ),
+  );
+ 
+  gcTasksTableWithComparison$ = combineLatest([
+    this.gcTasksTable$,
+    this.comparisonGcTasksTable$,
+  ]).pipe(
+    map(([gcTasksTableData,gcTasksTableComparisonData]) => {
+      if (!gcTasksTableData || !gcTasksTableComparisonData) return [];
+      
+      return getArraySelectedAbsoluteChange(
+        ['able_to_complete','ease','satisfaction'],
+        'gc_task_theme',
+        gcTasksTableData,
+        gcTasksTableComparisonData,
+        { suffix: '_difference' },
+      );
+    })
   );
 
   gcTasksCompletionAvg$ = this.gcTasksTable$.pipe(
@@ -915,6 +935,15 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
+      upGoodDownBad: true,
+      indicator: true,
+      useArrows: true,
+      showTextColours: true,
+      secondaryField: {
+        field: 'able_to_complete_difference',
+        pipe: 'number',
+      },
+      width: '160px',
     },
     {
       field: 'ease',
@@ -922,6 +951,15 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
+      upGoodDownBad: true,
+      indicator: true,
+      useArrows: true,
+      showTextColours: true,
+      secondaryField: {
+        field: 'ease_difference',
+        pipe: 'number',
+      },
+      width: '160px',
     },
     {
       field: 'satisfaction',
@@ -929,6 +967,15 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
+      upGoodDownBad: true,
+      indicator: true,
+      useArrows: true,
+      showTextColours: true,
+      secondaryField: {
+        field: 'satisfaction_difference',
+        pipe: 'number',
+      },
+      width: '160px',
     },
     {
       field: 'margin_of_error',
