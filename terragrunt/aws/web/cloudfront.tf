@@ -103,9 +103,3 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
     minimum_protocol_version       = "TLSv1.2_2021"
   }
 }
-
-#! Outputs the cloudfront domain name for testing- remove this after
-output "cloudfront_distribution_domain_name" {
-  value       = aws_cloudfront_distribution.cra_upd_cf_distribution.domain_name
-  description = "Cloudfront distribution domain name"
-}
