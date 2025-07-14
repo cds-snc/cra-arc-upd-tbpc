@@ -158,6 +158,6 @@ jobs:
         working-directory: terragrunt/env/staging/api_gateway
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
 
-      # - name: Apply web
-      #   working-directory: terragrunt/env/staging/web
-      #   run: terragrunt apply --terragrunt-non-interactive -auto-approve
+      - name: Apply web
+        working-directory: terragrunt/env/staging/web
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve

@@ -88,7 +88,7 @@ jobs:
           - module: s3
           # - module: s3_web_files
           - module: ssm
-          # - module: web
+          - module: web
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
