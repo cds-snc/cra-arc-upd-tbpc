@@ -30,6 +30,7 @@ resource "aws_s3_bucket_policy" "cra_upd_web_bucket_policy" {
 
 resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   enabled             = true
+  aliases             = [var.domain]
   default_root_object = "index.html"
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
