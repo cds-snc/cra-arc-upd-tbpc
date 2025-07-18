@@ -10,7 +10,7 @@ import { OverviewFacade } from '../+state/overview/overview.facade';
 export class OverviewGCTasksComponent {
   private overviewService = inject(OverviewFacade);
 
-  gcTasksTable$ = this.overviewService.gcTasksTable$;
+  gcTasksTable$ = this.overviewService.gcTasksTableWithComparison$;
   gcTasksTableConfig$ = this.overviewService.gcTasksTableConfig$;
 
   gcTasksCommentsTable$ = this.overviewService.gcTasksCommentsTable$;
