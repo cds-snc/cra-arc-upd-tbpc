@@ -6,8 +6,10 @@
 **/.swc
 **/tools
 **/tmp
+.nx
 docker/certbot/conf/keys
 logs
+scripts
 
 **/__pycache__/
 *.py[oc]
