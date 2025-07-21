@@ -21,6 +21,14 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
 jobs:
   build:
     name: Nx Cloud - Build web - Main Job
