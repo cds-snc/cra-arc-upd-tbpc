@@ -86,7 +86,7 @@ jobs:
           - module: load_balancer
           - module: network
           - module: s3
-          # - module: s3_web_files
+          - module: s3_web_files
           - module: ssm
           - module: web
     runs-on: ubuntu-latest
