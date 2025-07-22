@@ -1,6 +1,7 @@
 name: Create and publish a Docker image
 
 on:
+  workflow_dispatch:
   pull_request_target:
     types:
       - closed
@@ -8,8 +9,17 @@ on:
       - main
 
 env:
-  REGISTRY: ghcr.io
-  REPO_NAME: ${{ github.repository }}
+  GITHUB_SHA: ${{ github.sha }}
+  AWS_REGION: ca-central-1
+  GHCR_REPO: ghcr.io/${{ github.repository }}
+  WEB_TAGS: >-
+    ${{
+      github.repository == 'cds-snc/cra-arc-upd-tbpc' && (
+        'ghcr.io/${{ github.repository }}/web:latest'
+      ) || (
+      '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging:latest'
+      )
+    }}
 
 jobs:
   cache-deps:
@@ -42,17 +52,40 @@ jobs:
     needs: cache-deps
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      id-token: write
+      contents: write
       packages: write
 
     steps:
+      - name: Audit DNS requests
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        uses: cds-snc/dns-proxy-action@main
+        env:
+          DNS_PROXY_FORWARDTOSENTINEL: 'true'
+          DNS_PROXY_LOGANALYTICSWORKSPACEID: ${{ secrets.LOG_ANALYTICS_WORKSPACE_ID }}
+          DNS_PROXY_LOGANALYTICSSHAREDKEY: ${{ secrets.LOG_ANALYTICS_WORKSPACE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Configure aws credentials using OIDC
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
+          role-session-name: ECRPush
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+
       - name: Log in to the Container registry
+        if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -66,28 +99,76 @@ jobs:
           file: docker/performance_base/Dockerfile
           target: web
           push: true
-          tags: ghcr.io/${{ env.REPO_NAME }}/web:latest
+          tags: ${{ env.WEB_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (nginx)
+        if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/performance_base/Dockerfile
           target: nginx
           push: true
-          tags: ghcr.io/${{ env.REPO_NAME }}/nginx:latest
+          tags: ${{ env.GHCR_REPO }}/nginx:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (db-updater)
+        if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/performance_base/Dockerfile
           target: db-updater
           push: true
-          tags: ghcr.io/${{ env.REPO_NAME }}/db-updater:latest
+          tags: ${{ env.GHCR_REPO }}/db-updater:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Restart ECS
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        run: |
+          aws ecs update-service --cluster cra-upd-dashboard-cluster --service cra-upd-dashboard-app-service --force-new-deployment > /dev/null 2>&1
+
+      # Allow this step to fail so we can handle success/failure and report it to slack. By default it waits for 10 minutes
+      - name: Wait for ECS Stability
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        id: ecs_wait
+        continue-on-error: true
+        run: |
+          echo "Wait for 15 minutes for ECS to stabilize.."
+          sleep 300 # Sleep for 5 minutes. The ecs wait command waits for an additional 10 minutes
+          aws ecs wait services-stable \
+            --cluster cra-upd-dashboard-cluster \
+            --services cra-upd-dashboard-app-service
+
+      # todo: add this back in once we have a stable deployment
+      # # Slack notification on failed ECS wait
+      # - name: Slack Notify Failure
+      #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && steps.ecs_wait.outcome == 'failure'
+      #   run: |
+      #     curl -X POST -H 'Content-type: application/json' \
+      #     --data '{"text": "❌ ECS deployment for cra-upd-dashboard (staging) failed to stabilize."}' \
+      #     ${{ secrets.SLACK_NOTIFY_WEBHOOK }}
+
+      - name: Report deployment to Sentinel
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && steps.ecs_wait.outcome == 'success'
+        uses: cds-snc/sentinel-forward-data-action@main
+        with:
+          input_data: '{"product": "cra-upd-dashboard", "version": "${{ github.sha }}", "repository": "${{ github.repository }}", "environment": "staging"}'
+          log_type: CDS_Product_Deployment_Data
+          log_analytics_workspace_id: ${{ secrets.LOG_ANALYTICS_WORKSPACE_ID }}
+          log_analytics_workspace_key: ${{ secrets.LOG_ANALYTICS_WORKSPACE_KEY }}
+
+      - name: Docker generate SBOM
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        uses: cds-snc/security-tools/.github/actions/generate-sbom@34794baf2af592913bb5b51d8df4f8d0acc49b6f # v3.2.0
+        env:
+          TRIVY_DB_REPOSITORY: ${{ vars.TRIVY_DB_REPOSITORY }}
+        with:
+          docker_image: ${{ env.WEB_TAGS }}
+          dockerfile_path: './Dockerfile'
+          sbom_name: 'cra-upd-dashboard'
+          token: '${{ secrets.GITHUB_TOKEN }}'
