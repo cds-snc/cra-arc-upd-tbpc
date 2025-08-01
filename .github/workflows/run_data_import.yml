@@ -1,0 +1,21 @@
+name: Run Data Import ECS Task
+on:
+  workflow_dispatch: # Only run on manual triggering of the workflow
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+jobs:
+  run-data-import:
+    uses: ./.github/workflows/run_ecs_task.yml
+    with:
+      aws_region: ca-central-1
+      aws_account_id: 211125499457
+      aws_role_name: cra-arc-upd-tbpc-apply
+      aws_role_session_name: cra-upd-data-import-staging-session
+      task_name: cra-upd-dashboard-data-import

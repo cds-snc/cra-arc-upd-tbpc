@@ -1,0 +1,63 @@
+name: Run ECS Task
+description: |
+  This reusable workflow runs a pre-defined one-off ECS task using the specified parameters.
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        description: 'AWS Region'
+        required: true
+        type: string
+        default: 'ca-central-1'
+      aws_account_id:
+        description: 'AWS Account ID'
+        required: true
+        type: string
+      aws_role_name:
+        description: 'AWS Role Name'
+        required: true
+        type: string
+      aws_role_session_name:
+        description: 'AWS Role Session Name'
+        required: true
+        type: string
+      task_name:
+        description: 'ECS Task Name'
+        required: true
+        type: string
+      cluster_name:
+        description: 'ECS Cluster Name'
+        required: false
+        type: string
+      service_name:
+        description: 'ECS Service Name'
+        required: false
+        type: string
+
+env:
+  TASK_NAME: ${{ inputs.task_name }}
+  CLUSTER_NAME: ${{ inputs.cluster_name }}
+  SERVICE_NAME: ${{ inputs.service_name }}
+
+jobs:
+  run-ecs-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          aws-region: ${{ inputs.aws_region }}
+          role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.aws_role_name }}
+          role-session-name: ${{ inputs.aws_role_session_name }}
+      - name: Run ECS Task
+        working-directory: ${{ github.workspace }}/ecs-tasks
+        shell: bash
+        run: |
+          ./run-ecs-task.sh \
+            "${{ env.TASK_NAME }}" \
+            "${{ env.CLUSTER_NAME }}" \
+            "${{ env.SERVICE_NAME }}"
