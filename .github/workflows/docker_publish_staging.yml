@@ -2,9 +2,7 @@ name: Create and publish Docker images
 
 on:
   workflow_dispatch:
-  pull_request_target:
-    types:
-      - closed
+  push:
     branches:
       - main
 
@@ -24,7 +22,6 @@ env:
 
 jobs:
   cache-deps:
-    if: github.event.pull_request.merged == true
     name: Pull request merge - Validate npm cache for main branch
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +46,6 @@ jobs:
         run: npm ci
 
   build-and-push-image:
-    if: github.event.pull_request.merged == true
     needs: cache-deps
     runs-on: ubuntu-latest
     permissions:
