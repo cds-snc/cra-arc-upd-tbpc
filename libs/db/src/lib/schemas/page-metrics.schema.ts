@@ -63,14 +63,13 @@ export const PageMetricsSchema = SchemaFactory.createForClass(PageMetrics);
 PageMetricsSchema.index({ date: 1, url: 1 }, { unique: true });
 PageMetricsSchema.index(
   { date: 1, page: 1 },
-  { background: true, partialFilterExpression: { page: { $exists: true } } },
+  { partialFilterExpression: { page: { $exists: true } } },
 );
 
 PageMetricsSchema.index(
   { date: 1, tasks: 1 },
   {
     name: 'date_1_tasks_exists',
-    background: true,
     partialFilterExpression: { 'tasks.0': { $exists: true } },
   },
 );
@@ -79,55 +78,16 @@ PageMetricsSchema.index(
   { date: 1, projects: 1 },
   {
     name: 'date_1_projects_exists',
-    background: true,
     partialFilterExpression: { 'projects.0': { $exists: true } },
   },
 );
+
 PageMetricsSchema.index(
   { date: -1 },
   {
     name: 'activitymap_date_desc',
-    background: true,
     partialFilterExpression: {
       'activity_map.0': { $exists: true },
-    },
-  },
-);
-PageMetricsSchema.index(
-  { date: 1, url: 1 },
-  {
-    name: 'activitymap_date_url',
-    background: true,
-    partialFilterExpression: {
-      'activity_map.0': { $exists: true },
-    },
-  },
-);
-PageMetricsSchema.index(
-  { date: 1, page: 1 },
-  {
-    name: 'activitymap_date_page',
-    background: true,
-    partialFilterExpression: {
-      'activity_map.0': { $exists: true },
-    },
-  },
-);
-
-// This index is specifically for maintaining references when updating airtable data.
-// It's a partial index that includes only documents with tasks/projects/ux_tests arrays that aren't empty,
-//  which makes it much faster when querying for them (and might even help for regular data fetching)
-PageMetricsSchema.index(
-  { date: 1 },
-  {
-    name: 'date_airtable',
-    background: true,
-    partialFilterExpression: {
-      $or: [
-        { 'tasks.0': { $exists: true } },
-        { 'projects.0': { $exists: true } },
-        { 'ux_tests.0': { $exists: true } },
-      ],
     },
   },
 );

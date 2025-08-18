@@ -10,7 +10,10 @@
  */
 
 import type { Readable } from 'stream';
-import type { S3ClientConfig } from '@aws-sdk/client-s3';
+import type {
+  PutObjectCommandOutput,
+  S3ClientConfig,
+} from '@aws-sdk/client-s3';
 import {
   S3Client,
   ListObjectsV2Command,
@@ -34,26 +37,26 @@ import {
 } from '@dua-upd/node-utils';
 import { RegisteredBlobModel } from './storage.service';
 import { normalize } from 'path/posix';
+import type {
+  IStorageClient,
+  IStorageContainer,
+  IStorageModel,
+  IStorageBlob,
+  IStorageProperties,
+  StorageProvider,
+} from './storage.interfaces';
 
 /**
  * The base client for connecting to S3 storage. Wraps the official AWS S3 client.
  * Used to initialize a client with the proper credentials and for creating
  * or managing bucket clients.
  */
-export class S3StorageClient {
+export class S3StorageClient implements IStorageClient<S3Bucket> {
   private readonly baseClient: S3Client;
 
-  constructor(credentials?: S3ClientConfig['credentials']) {
-    if (
-      !credentials &&
-      !process.env.AWS_ACCESS_KEY_ID &&
-      !process.env.AWS_SECRET_ACCESS_KEY
-    ) {
-      throw new Error(
-        'No AWS credentials provided. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables or pass credentials',
-      );
-    }
+  readonly storageType: StorageProvider = 's3';
 
+  constructor(credentials?: S3ClientConfig['credentials']) {
     const region =
       process.env.AWS_REGION ||
       process.env.AWS_DEFAULT_REGION ||
@@ -127,7 +130,7 @@ export type S3ObjectConfig = {
  * Wrapper for S3 Bucket clients. Used for creating instances of `S3ObjectModel`.
  * Maps to Azure's AzureStorageContainer functionality.
  */
-export class S3Bucket {
+export class S3Bucket implements IStorageContainer<S3StorageClient> {
   constructor(
     private readonly client: S3Client,
     public readonly bucketName: string,
@@ -212,7 +215,7 @@ export class S3Bucket {
  *
  * Maps to Azure's BlobModel functionality.
  */
-export class S3ObjectModel {
+export class S3ObjectModel implements IStorageModel<S3StorageClient> {
   private readonly container: S3Bucket;
 
   constructor(private readonly config: S3ObjectConfig) {
@@ -234,7 +237,7 @@ export class S3ObjectModel {
  * Prepends the configured "object type" path and streamlines the functionality
  * to be easier to use and hiding unneeded functionality.
  */
-export class S3ObjectClient {
+export class S3ObjectClient implements IStorageBlob {
   private readonly path: string = '';
   private readonly container: S3Bucket;
   private overwrite = false;
@@ -252,7 +255,7 @@ export class S3ObjectClient {
     const objectPath = this.path
       ? normalize(`${this.path}/${objectName}`)
       : objectName;
-      
+
     this.objectKey = objectPath;
     this.name = objectPath;
     this.filename = objectName;
@@ -281,7 +284,7 @@ export class S3ObjectClient {
     }
   }
 
-  async getProperties() {
+  async getProperties(): Promise<IStorageProperties> {
     const command = new HeadObjectCommand({
       Bucket: this.container.bucketName,
       Key: this.objectKey,
@@ -295,7 +298,6 @@ export class S3ObjectClient {
         etag: response.ETag,
         contentType: response.ContentType,
         metadata: response.Metadata || {},
-        // Map other properties as needed to maintain Azure compatibility
       };
     } catch (error) {
       throw new Error(`Failed to get object properties: ${error}`);
@@ -379,8 +381,6 @@ export class S3ObjectClient {
     }
 
     try {
-      // For S3, we need to handle external URLs differently
-      // This is a simplified implementation - you might need to fetch and upload
       const response = await fetch(sourceUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -394,18 +394,14 @@ export class S3ObjectClient {
         Body: new Uint8Array(data),
       });
 
-      return await this.container.getClient().send(command);
+      await this.container.getClient().send(command);
     } catch (err) {
-      console.error(chalk.red('Error copying from url to storage:'));
-      console.error((<Error>err).stack);
-      return;
+      console.error(chalk.red('Error copying from url to storage'));
+      throw err;
     }
   }
 
-  async copyFromUrlIfDifferent(
-    sourceUrl: string,
-    fileSizeBytes: number,
-  ): Promise<any> {
+  async copyFromUrlIfDifferent(sourceUrl: string, fileSizeBytes: number) {
     if (await this.sizesAreDifferent(fileSizeBytes)) {
       console.log(`File is new or updated. Uploading: ${this.filename}`);
       return await this.copyFromUrl(sourceUrl);

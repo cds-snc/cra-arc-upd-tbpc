@@ -315,9 +315,9 @@ export class DbUpdateService {
       .exec();
 
     this.logger.log('Syncing feedback references');
-    await this.db.collections.feedback.syncReferences(pages);
+    const syncResult = await this.db.collections.feedback.syncReferences(pages);
 
-    this.logger.log('Successfully synced feedback references.');
+    this.logger.log(`Successfully synced ${syncResult} feedback references. `);
   }
 
   async upsertPageMetrics(pageMetrics: PageMetrics[]) {

@@ -1,5 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import type { AnyBulkWriteOperation, Document, FilterQuery, Model } from 'mongoose';
+import type {
+  AnyBulkWriteOperation,
+  Document,
+  FilterQuery,
+  Model,
+} from 'mongoose';
 import { Types } from 'mongoose';
 import type {
   DateRange,
@@ -19,6 +24,7 @@ import {
   $trunc,
 } from '@dua-upd/utils-common';
 import { omit } from 'rambdax';
+import { batchWrite } from '../utils';
 
 export type FeedbackDocument = Feedback & Document;
 
@@ -75,23 +81,25 @@ export class Feedback implements IFeedback {
   static async syncReferences(
     this: Model<Feedback>,
     pages: Pick<IPage, '_id' | 'url' | 'tasks' | 'projects'>[],
-  ) {
-    const bulkWriteOps: AnyBulkWriteOperation<IFeedback>[] = pages.map(
-      (page) => ({
-        updateMany: {
-          filter: { url: page.url },
-          update: {
-            $set: {
-              page: page._id,
-              tasks: page.tasks as Types.ObjectId[],
-              projects: page.projects as Types.ObjectId[],
-            },
+  ): Promise<number> {
+    const bulkWriteOps = pages.map((page) => ({
+      updateMany: {
+        filter: { url: page.url },
+        update: {
+          $set: {
+            page: page._id,
+            tasks: page.tasks as Types.ObjectId[],
+            projects: page.projects as Types.ObjectId[],
           },
         },
-      }),
-    );
+      },
+    })) satisfies AnyBulkWriteOperation<IFeedback>[];
 
-    await this.bulkWrite(bulkWriteOps, { ordered: false });
+    if (bulkWriteOps.length) {
+      return batchWrite(this, bulkWriteOps, { batchSize: 10, ordered: false });
+    }
+
+    return 0;
   }
 
   static async getComments(
@@ -245,12 +253,12 @@ export class Feedback implements IFeedback {
     };
 
     const results = await this.aggregate<{ date: Date; sum: number }>()
+      .match(matchFilter)
       .project({
         date: 1,
         url: 1,
         ...projection,
       })
-      .match(matchFilter)
       .group({
         _id: '$date',
         sum: { $sum: 1 },
@@ -260,7 +268,6 @@ export class Feedback implements IFeedback {
         date: '$_id',
         sum: 1,
       })
-      .sort({ date: 1 })
       .exec();
 
     const dateDict = arrayToDictionary(results, 'date');

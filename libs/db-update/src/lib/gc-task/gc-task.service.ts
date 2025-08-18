@@ -77,7 +77,7 @@ export class GcTaskService {
     const params = {
       [startDateProperty]: start.format('YYYY-MM-DD'),
       [endDateProperty]: dayjs.utc(end).format('YYYY-MM-DD'),
-      ['institution']: 'CRA',
+      ['institution']: 'CRA / ARC',
     };
 
     url.search = new URLSearchParams(params).toString();

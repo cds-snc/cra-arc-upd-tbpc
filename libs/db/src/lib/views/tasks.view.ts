@@ -194,18 +194,31 @@ export class TasksViewService extends DbViewNew<
       this.db.collections.callDrivers.getCallsByEnquiryLine(dateRange, {
         tasks: task._id,
       }),
-      this.db.collections.callDrivers.getCallsByTopic(dateRange, {
-        tasks: task._id,
-      }),
+      this.db.collections.callDrivers.getCallsByTopic(
+        dateRange,
+        {
+          tasks: task._id,
+        },
+        task.title,
+      ),
       this.db.views.pages
         .find<Omit<PagesView, 'tasks' | 'projects'>>(
           {
-            tasks: task._id,
             dateRange: dateRange,
+            tasks: task._id,
           },
           {
-            tasks: 0,
-            projects: 0,
+            page: 1,
+            tasks: 1,
+            pageStatus: 1,
+            visits: 1,
+            dyf_yes: 1,
+            dyf_no: 1,
+            numComments: 1,
+            gsc_total_clicks: 1,
+            gsc_total_impressions: 1,
+            gsc_total_ctr: 1,
+            gsc_total_position: 1,
           },
         )
         .then(
@@ -457,7 +470,6 @@ export class TasksViewService extends DbViewNew<
             date: '$_id',
             calls: 1,
           })
-          .sort({ date: 1 })
           .exec()
           .then((calldrivers) =>
             arrayToDictionary(
@@ -489,6 +501,12 @@ export class TasksViewService extends DbViewNew<
                 dyfYes: number;
               }>()
               .match(filter)
+              .project({
+                date: 1,
+                visits: 1,
+                dyf_no: 1,
+                dyf_yes: 1,
+              })
               .group({
                 _id: '$date',
                 visits: { $sum: '$visits' },

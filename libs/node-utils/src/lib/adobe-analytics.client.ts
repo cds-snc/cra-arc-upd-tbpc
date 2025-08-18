@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import type { AuthParams } from './adobe-analytics.types';
 
-export { AnalyticsCoreAPI } from '@adobe/aio-lib-analytics';
+export type { AnalyticsCoreAPI } from '@adobe/aio-lib-analytics';
 
 export const defaultAuthParams = (): AuthParams => {
   const authParams = {

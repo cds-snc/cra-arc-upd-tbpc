@@ -4,6 +4,7 @@ mongo_parquet package
 This package provides utilities for working with MongoDB and converting data to Parquet format.
 """
 
+from pymongo.collection import Collection
 from .io import MongoParquetIO
 from .mongo import MongoConfig
 from .sampling import SamplingContext
@@ -61,6 +62,17 @@ class MongoParquet:
         """
         self.sampling_context.update_context(callable)
 
+    def should_export(self, model: MongoCollection) -> bool:
+        """
+        Check whether the collection has data to export
+
+        :param model: The MongoDB collection model.
+        :return: True if the collection should be exported, False otherwise.
+        """
+        collection: Collection = self.io.db.db[model.collection]
+        data = collection.find_one()
+        return data is not None
+
     def export_from_mongo(
         self,
         sample: Optional[bool] = None,
@@ -81,6 +93,10 @@ class MongoParquet:
 
             if exclude and model.collection in exclude:
                 print(f"Skipping {model.collection} (in exclude list)")
+                continue
+
+            if not self.should_export(model):
+                print(f"Collection {model.collection} has no data, skipping export.")
                 continue
 
             self.io.export_to_parquet(

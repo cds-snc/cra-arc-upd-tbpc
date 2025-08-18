@@ -165,6 +165,42 @@ export class DbService {
     private connection: Connection,
   ) {}
 
+  async ensureIndexes() {
+    for (const collection in this.collections) {
+      console.log(`Ensuring indexes for collection: ${collection}`);
+      await this.collections[collection].ensureIndexes();
+    }
+
+    for (const view in this.views) {
+      console.log(`Ensuring indexes for view: ${view}`);
+      await this.views[view].model.ensureIndexes();
+    }
+  }
+
+  async batchWrite<ModelT extends Model<any>>(
+    model: ModelT,
+    operations: AnyBulkWriteOperation[],
+    options?: { batchSize: number } & mongo.BulkWriteOptions,
+  ): Promise<number> {
+    // assume all operations are the same
+    if (operations.length === 0) {
+      return 0;
+    }
+
+    let totalModifiedCount = 0;
+
+    const batchSize = options?.batchSize || 1;
+
+    while (operations.length !== 0) {
+      const batch = operations.splice(0, batchSize);
+
+      const result = await model.bulkWrite(batch, options);
+      totalModifiedCount += result.modifiedCount || 0;
+    }
+
+    return totalModifiedCount;
+  }
+
   @AsyncLogTiming
   async validatePageMetricsRefs(filter: FilterQuery<PageMetrics> = {}) {
     return await this.simplifiedValidatePageRefs(filter);
@@ -479,45 +515,4 @@ export class DbService {
 
     console.log('Finished adding missing refs to pages_metrics.');
   }
-  
-  // @AsyncLogTiming
-  // async syncPageMetricsTimeSeries() {
-  //   const mostRecentTimeSeries = (
-  //     await this.pageMetricsTS
-  //       .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
-  //       .exec()
-  //   )?.date;
-
-  //   const mostRecentPageMetrics = (
-  //     await this.pageMetrics
-  //       .findOne<{ date: Date }>({}, { date: 1 }, { sort: { date: -1 } })
-  //       .exec()
-  //   )?.date;
-
-  //   if (!mostRecentPageMetrics) {
-  //     throw Error('No data found in the `pages_metrics` collection');
-  //   }
-
-  //   if (!mostRecentTimeSeries) {
-  //     throw Error(
-  //       'No time series data found in pageMetricsTS collection.\n' +
-  //         'This is not a good way to populate the collection from scratch, mongodump/mongorestore should be used instead.',
-  //     );
-  //   }
-
-  //   const uniqueDates = await this.pageMetrics
-  //     .distinct<Date>('date', { date: { $gt: mostRecentTimeSeries } })
-  //     .exec();
-
-  //   uniqueDates.sort((a, b) => a.getTime() - b.getTime());
-
-  //   for (const date of uniqueDates) {
-  //     const metrics = await this.pageMetrics.toTimeSeries({
-  //       start: date,
-  //       end: date,
-  //     });
-
-  //     await this.pageMetricsTS.insertMany(metrics);
-  //   }
-  // }
 }

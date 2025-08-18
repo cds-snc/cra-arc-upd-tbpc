@@ -1,6 +1,5 @@
 import { LogLevel } from '@nestjs/common';
-import { BlobClient, BlobModel } from '@dua-upd/blob-storage';
-import { prettyJson } from '@dua-upd/utils-common';
+import type { IStorageBlob, IStorageModel } from '@dua-upd/blob-storage';
 import { CustomLogger } from './logger.custom';
 
 // "Targets" in this context means:
@@ -12,13 +11,13 @@ export interface BlobLoggerConfig {
   logLevelTargets: LogLevelTargets;
 }
 export interface ClassBlobLoggerConfig extends BlobLoggerConfig {
-  blobModel: BlobModel;
+  blobModel: IStorageModel<any>;
 }
 
 export class BlobLogger extends CustomLogger {
-  private blobModel: BlobModel;
+  private blobModel: IStorageModel<any>;
   private logLevelTargets: LogLevelTargets;
-  private targetBlobs: { [key in LogLevel]?: BlobClient } = {};
+  private targetBlobs: { [key in LogLevel]?: IStorageBlob } = {};
 
   constructor(config: ClassBlobLoggerConfig) {
     super(config.context);
@@ -34,7 +33,7 @@ export class BlobLogger extends CustomLogger {
   setLogLevelTargets(logLevelTargets: LogLevelTargets) {
     this.logLevelTargets = logLevelTargets;
 
-    const newTargetBlobs: { [key in LogLevel]?: BlobClient } = {};
+    const newTargetBlobs: { [key in LogLevel]?: IStorageBlob } = {};
 
     for (const [level, target] of Object.entries(this.logLevelTargets)) {
       newTargetBlobs[level] = this.blobModel.blob(target, 'append');

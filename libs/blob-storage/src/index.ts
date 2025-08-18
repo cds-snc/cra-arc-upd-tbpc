@@ -1,7 +1,7 @@
-export * from './lib/storage.client';
 export * from './lib/storage.service';
 export * from './lib/storage.module';
 export * from './lib/storage.utils';
+export * from './lib/storage.interfaces';
 
 // Export specific classes with aliases to avoid conflicts
 export {

@@ -74,8 +74,8 @@ export class AirtableService {
         return false;
       }
 
-      const normalizedA = JSON.stringify(a?.map((id) => id.toString()));
-      const normalizedB = JSON.stringify(b?.map((id) => id.toString()));
+      const normalizedA = JSON.stringify(a?.map((id) => id.toString()).sort());
+      const normalizedB = JSON.stringify(b?.map((id) => id.toString()).sort());
 
       return normalizedA === normalizedB;
     };
@@ -438,14 +438,20 @@ export class AirtableService {
       }),
     );
 
+    const existingMetricsPageIds = new Set(
+      (await this.pageMetricsModel.distinct('page')).map((id) => id.toString()),
+    );
+
     // unset refs on metrics
     const metricsUnsetRefsOps: AnyBulkWriteOperation<PageMetrics>[] =
-      removedPages.map((page) => ({
-        updateMany: {
-          filter: { page: page._id },
-          update: { $unset: { tasks: '', projects: '', ux_tests: '' } },
-        },
-      }));
+      removedPages
+        .filter((page) => existingMetricsPageIds.has(page._id.toString()))
+        .map((page) => ({
+          updateMany: {
+            filter: { page: page._id },
+            update: { $unset: { tasks: '', projects: '', ux_tests: '' } },
+          },
+        }));
 
     // update pages
     const pageUpdateOps: AnyBulkWriteOperation<Page>[] = pages.map((page) => ({
@@ -471,16 +477,19 @@ export class AirtableService {
 
     this.logger.log('Writing Pages to db');
 
-    await this.pageModel.bulkWrite(pageUpdateOps);
+    await this.pageModel.bulkWrite(pageUpdateOps, { ordered: false });
 
     if (pageRemoveOps.length) {
       this.logger.log(`${removedPages.length} Pages removed from airtable:`);
+
       const removedPagesData = await this.pageModel
         .find({ _id: { $in: removedPages } }, { url: 1 })
         .lean()
         .exec();
+
       logJson(removedPagesData);
-      this.logger.log(`removing references`);
+
+      this.logger.log(`removing references from deleted pages`);
 
       await this.pageModel.bulkWrite(pageRemoveOps);
 
@@ -490,6 +499,7 @@ export class AirtableService {
         metricsUnsetRefsOps,
         { ordered: false },
       );
+
       this.logger.log(
         `Removed references from ${metricsWriteResults.modifiedCount} metrics documents`,
       );
@@ -542,175 +552,150 @@ export class AirtableService {
     console.log('pages have changed: ', pagesChanged);
 
     if (forceVerifyMetricsRefs || pagesChanged) {
+      let numPagesWithChangedRefs = 0;
+      let totalModifiedDocs = 0;
+
       // update metrics refs
       this.logger.log('Syncing pages_metrics references');
 
+      const distinctUrls =
+        (await this.pageMetricsModel.distinct('url').lean().exec()) || [];
+
+      const distinctUrlsSet = new Set(distinctUrls);
+
       // set refs on metrics using page ids
-      const metricsSetRefsOps: AnyBulkWriteOperation<PageMetrics>[] = pages.map(
-        (page) => ({
-          updateMany: {
-            filter: { page: page._id },
-            update: {
-              $set: {
-                tasks: page.tasks || [],
-                projects: page.projects || [],
-                ux_tests: page.ux_tests || [],
-              },
+      for (const page of pages.filter((page) =>
+        distinctUrlsSet.has(page.url),
+      )) {
+        console.log(`Syncing metrics for page: ${page._id} (${page.url})`);
+        // Assuming all refs for individual pages are the same,
+        // but this may not be a safe assumption!
+        const currentRefs = (await this.pageMetricsModel
+          .findOne(
+            {
+              url: page.url,
             },
-          },
-        }),
-      );
+            {
+              url: 1,
+              page: 1,
+              tasks: 1,
+              projects: 1,
+              ux_tests: 1,
+            },
+          )
+          .lean()
+          .exec()) as {
+          url: string;
+          page: Types.ObjectId;
+          tasks?: Types.ObjectId[];
+          projects?: Types.ObjectId[];
+          ux_tests?: Types.ObjectId[];
+        } | null;
 
-      if (metricsSetRefsOps.length) {
-        this.logger.log(
-          `Setting metrics references for ${metricsSetRefsOps.length} pages`,
-        );
+        if (!currentRefs) {
+          this.logger.warn(
+            `No current refs found for page ${page._id} (${page.url})`,
+          );
+          continue;
+        }
 
-        const metricsSetRefsResults = await this.pageMetricsModel.bulkWrite(
-          metricsSetRefsOps,
-          { ordered: false },
-        );
+        const mapToString = (arr: Types.ObjectId[]) =>
+          arr.map((id) => id.toString());
 
-        this.logger.log(
-          `Added references to ${metricsSetRefsResults.modifiedCount} metrics documents`,
-        );
-      }
+        const refsAreDifferent = <T extends unknown[]>(
+          existingRefs?: Types.ObjectId[] | null,
+          newRefs?: T | null,
+        ) =>
+          existingRefs?.length !== newRefs?.length ||
+          difference(
+            mapToString(existingRefs || []),
+            mapToString((newRefs || []) as Types.ObjectId[]),
+          ).length > 0;
 
-      // set refs on metrics using url if page ref is missing
-      const metricsAddMissingRefsOps: AnyBulkWriteOperation<PageMetrics>[] =
-        pages.map((page) => ({
-          updateMany: {
-            filter: { page: null, url: page.url },
-            update: {
+        if (
+          !currentRefs.page.equals(page._id) ||
+          refsAreDifferent(currentRefs.tasks, page.tasks) ||
+          refsAreDifferent(currentRefs.projects, page.projects) ||
+          refsAreDifferent(currentRefs.ux_tests, page.ux_tests)
+        ) {
+          console.log(`Refs have changed for page: ${page.url}`);
+          numPagesWithChangedRefs++;
+
+          try {
+            console.time(`${page.url} updated.`);
+
+            const updateResults = await this.pageMetricsModel.updateMany(
+              { url: page.url },
+              {
+                $set: {
+                  page: page._id,
+                  tasks: page.tasks,
+                  projects: page.projects,
+                  ux_tests: page.ux_tests,
+                },
+              },
+            );
+
+            console.log(
+              `Refs updated for ${updateResults.modifiedCount} documents.`,
+            );
+            totalModifiedDocs += updateResults.modifiedCount;
+            console.timeEnd(`${page.url} updated.`);
+          } catch (error) {
+            console.error('Error trying to update refs with:');
+            logJson({
               $set: {
-                page: page._id,
                 tasks: page.tasks,
                 projects: page.projects,
                 ux_tests: page.ux_tests,
               },
-            },
-          },
-        }));
-
-      if (metricsAddMissingRefsOps.length) {
-        this.logger.log(
-          `Adding missing references to metrics documents for ${metricsAddMissingRefsOps.length} pages`,
-        );
-
-        const metricsAddMissingRefsResults =
-          await this.pageMetricsModel.bulkWrite(metricsAddMissingRefsOps, {
-            ordered: false,
-          });
-
-        this.logger.log(
-          `Added references to ${metricsAddMissingRefsResults.modifiedCount} metrics documents`,
-        );
+            });
+          }
+        }
       }
 
-      // remove dangling refs
-      // todo: collect urls and try to associate with existing pages
-      //        -> if no match, create new page? (will need some sane validation and can use that to remove garbage)
+      console.log(`Updated references for ${numPagesWithChangedRefs} pages`);
+      console.log(`${totalModifiedDocs} documents modified in total`);
 
       // get ids of non-airtable pages
-      const dbPageIds = (
-        await this.pageModel.distinct('_id', {
-          airtable_id: { $exists: false },
-        })
-      ).map((id) => id.toString());
+      const dbPageIds = (await this.pageModel.distinct('_id')).map((id) =>
+        id.toString(),
+      );
 
       const metricsPageIds = (await this.pageMetricsModel.distinct('page'))
         ?.filter((id) => id)
         .map((id) => id.toString());
 
       // find any page refs for pages that don't exist anymore
-      const danglingPageIds = difference(
-        metricsPageIds,
-        pages.map((page) => page._id.toString()).concat(dbPageIds),
-      );
+      const danglingPageIds = difference(metricsPageIds, dbPageIds);
 
       if (danglingPageIds.length) {
         this.logger.log(
           `Removing references from metrics documents for ${danglingPageIds.length} dangling page references:`,
         );
 
-        const metricsRemoveRefsOps: AnyBulkWriteOperation<PageMetrics>[] =
-          danglingPageIds.map((pageId) => ({
-            updateMany: {
-              filter: { page: new Types.ObjectId(pageId) },
-              update: {
+        let totalRemoveRefModifiedCount = 0;
+
+        for (const pageId of danglingPageIds) {
+          this.logger.log(`Removing dangling page ref for ${pageId}`);
+
+          console.time(`Removed dangling page ref for ${pageId}`);
+
+          const metricsRemoveRefsResults =
+            await this.pageMetricsModel.updateMany(
+              { page: new Types.ObjectId(pageId) },
+              {
                 $unset: { page: '', tasks: '', projects: '', ux_tests: '' },
               },
-            },
-          }));
+            );
 
-        const metricsRemoveRefsResults = await this.pageMetricsModel.bulkWrite(
-          metricsRemoveRefsOps,
-          { ordered: false },
-        );
+          console.timeEnd(`Removed dangling page ref for ${pageId}`);
 
-        this.logger.log(
-          `Removed page references from ${metricsRemoveRefsResults.modifiedCount} metrics documents`,
-        );
-      }
-
-      // find airtable refs that should be removed:
-      // get page ids of metrics with airtable refs and compare to current airtable pages
-      const metricsTaskPageIds = await this.pageMetricsModel.distinct('page', {
-        // the date property is only for triggering the use of a specific index
-        // for more details see the definition of the index called "date_airtable" (as of writing this comment)
-        //  in libs/db/src/lib/schemas/page_metrics.schema.ts
-        date: { $exists: true },
-        // have to do tasks/projects/tests separately or the index doesn't get used, for whatever reason
-        'tasks.0': { $exists: true },
-      });
-
-      const metricsProjectPageIds = await this.pageMetricsModel.distinct(
-        'page',
-        { date: { $exists: true }, 'projects.0': { $exists: true } },
-      );
-
-      const metricsUxTestPageIds = await this.pageMetricsModel.distinct(
-        'page',
-        { date: { $exists: true }, 'ux_tests.0': { $exists: true } },
-      );
-
-      const metricsAirtablePageIds = uniq(
-        [
-          ...metricsTaskPageIds,
-          ...metricsProjectPageIds,
-          ...metricsUxTestPageIds,
-        ].map((id) => id.toString()),
-      );
-
-      const danglingAirtableRefIds = difference(
-        metricsAirtablePageIds,
-        pages.map((page) => page._id.toString()),
-      );
-
-      if (danglingAirtableRefIds.length) {
-        this.logger.log(
-          `Removing references from metrics documents for ${danglingAirtableRefIds.length} dangling airtable references:`,
-        );
-
-        const metricsRemoveRefsOps: AnyBulkWriteOperation<PageMetrics>[] =
-          danglingAirtableRefIds.map((pageId) => ({
-            updateMany: {
-              filter: { page: new Types.ObjectId(pageId) },
-              update: {
-                // unset airtable refs *but not page ref*, because we checked above for dangling *page* refs
-                // (as opposed to airtable refs)
-                $unset: { tasks: '', projects: '', ux_tests: '' },
-              },
-            },
-          }));
-
-        const metricsRemoveRefsResults = await this.pageMetricsModel.bulkWrite(
-          metricsRemoveRefsOps,
-          { ordered: false },
-        );
+          totalRemoveRefModifiedCount += metricsRemoveRefsResults.modifiedCount;
+        }
 
         this.logger.log(
-          `Removed airtable references from ${metricsRemoveRefsResults.modifiedCount} metrics documents`,
+          `Removed page references from ${totalRemoveRefModifiedCount} metrics documents`,
         );
       }
     }
@@ -806,33 +791,30 @@ export class AirtableService {
 
     for (const project of projectsWithAttachments) {
       const promise = Promise.all(
-        project.attachments.map(({ url, filename, size }) => {
+        project.attachments.map(async ({ url, filename, size }) => {
           const blobClient =
             this.blobService.blobModels.project_attachments.blob(filename);
 
-          const response = blobClient.copyFromUrlIfDifferent(url, size);
+          try {
+            await blobClient.copyFromUrlIfDifferent(url, size);
 
-          return (response || Promise.resolve()).then((response) => ({
-            response,
-            blobClient,
-          }));
+            return {
+              blobFilename: blobClient.filename,
+              blobUrl: blobClient.url,
+            };
+          } catch (err) {
+            this.logger.error(
+              `An error occurred uploading attachment: ${filename}`,
+            );
+
+            throw err;
+          }
         }),
       )
         .then((results) => {
-          for (const result of results) {
-            const fileName = result.blobClient.filename;
-            const blobUrl = result.blobClient.url;
-
-            if (result.response) {
-              if (result.response.copyStatus !== 'success') {
-                this.logger.warn(
-                  `File ${fileName} has a copy status of ${result.response.copyStatus}`,
-                );
-              }
-            }
-
+          for (const { blobFilename, blobUrl } of results) {
             const attachmentIndex = project.attachments.findIndex(
-              ({ filename }) => filename === fileName,
+              ({ filename }) => filename === blobFilename,
             );
 
             project.attachments[attachmentIndex].storage_url = blobUrl;
@@ -887,11 +869,7 @@ export class AirtableService {
             const blobClient =
               this.blobService.blobModels.reports.blob(filename);
 
-            const response = await blobClient.copyFromUrlIfDifferent(url, size);
-
-            if (response && response.copyStatus !== 'success') {
-              throw new Error(`Error copying file: ${filename}`);
-            }
+            await blobClient.copyFromUrlIfDifferent(url, size);
 
             attachments[i].storage_url = blobClient.url;
           }

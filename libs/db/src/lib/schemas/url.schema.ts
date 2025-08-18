@@ -1,7 +1,14 @@
-import { BlobModel } from '@dua-upd/blob-storage';
+import type { IStorageModel } from '@dua-upd/blob-storage';
 import { wait } from '@dua-upd/utils-common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, FilterQuery, Model, ProjectionType, Schema as MSchema, Types } from 'mongoose';
+import {
+  Document,
+  FilterQuery,
+  Model,
+  ProjectionType,
+  Schema as MSchema,
+  Types,
+} from 'mongoose';
 import type { IUrl, UrlHash } from '@dua-upd/types-common';
 
 export type UrlDocument = Url & Document;
@@ -63,28 +70,28 @@ export class Url implements IUrl {
 
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
-    blobClient: BlobModel,
-    mapFunc: T
+    blobClient: IStorageModel<any>,
+    mapFunc: T,
   ): Promise<(ReturnType<T> | void)[]>;
 
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
-    blobClient: BlobModel,
+    blobClient: IStorageModel<any>,
     filter: FilterQuery<Url>,
-    mapFunc: T
+    mapFunc: T,
   ): Promise<(ReturnType<T> | void)[]>;
 
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
-    blobClient: BlobModel,
+    blobClient: IStorageModel<any>,
     filter: FilterQuery<Url>,
     projection: ProjectionType<Url>,
-    mapFunc: T
+    mapFunc: T,
   ): Promise<(ReturnType<T> | void)[]>;
 
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
-    blobClient: BlobModel,
+    blobClient: IStorageModel<any>,
     ...args: MapBlobsArgs<T>
   ): Promise<(ReturnType<T> | void)[]> {
     const filter =
@@ -114,7 +121,7 @@ export class Url implements IUrl {
         .downloadToString()
         .then(
           (blobContent) =>
-            mapFunc({ ...url, blobContent }) as Promise<ReturnType<T>>
+            mapFunc({ ...url, blobContent }) as Promise<ReturnType<T>>,
         );
 
       promises.push(promise);
@@ -126,12 +133,12 @@ export class Url implements IUrl {
 
 export const UrlSchema = SchemaFactory.createForClass(Url);
 
-UrlSchema.index({ 'links.text': 1 }, { background: true });
-UrlSchema.index({ 'links.href': 1 }, { background: true });
-UrlSchema.index({ last_checked: -1 }, { background: true });
-UrlSchema.index({ last_modified: -1 }, { background: true });
-UrlSchema.index({ 'hashes.hash': 1 }, { background: true });
-UrlSchema.index({ 'hashes.date': 1 }, { background: true });
+UrlSchema.index({ 'links.text': 1 });
+UrlSchema.index({ 'links.href': 1 });
+UrlSchema.index({ last_checked: -1 });
+UrlSchema.index({ last_modified: -1 });
+UrlSchema.index({ 'hashes.hash': 1 });
+UrlSchema.index({ 'hashes.date': 1 });
 
 UrlSchema.static('mapBlobs', Url.mapBlobs);
 

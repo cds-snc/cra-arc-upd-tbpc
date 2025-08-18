@@ -66,69 +66,6 @@ export class PageMetricsTS {
   bouncerate = 0;
 
   @Prop({ type: Number })
-  rap_initiated = 0;
-
-  @Prop({ type: Number })
-  rap_completed = 0;
-
-  @Prop({ type: Number })
-  nav_menu_initiated = 0;
-
-  @Prop({ type: Number })
-  rap_cant_find = 0;
-
-  @Prop({ type: Number })
-  rap_login_error = 0;
-
-  @Prop({ type: Number })
-  rap_other = 0;
-
-  @Prop({ type: Number })
-  rap_sin = 0;
-
-  @Prop({ type: Number })
-  rap_info_missing = 0;
-
-  @Prop({ type: Number })
-  rap_securekey = 0;
-
-  @Prop({ type: Number })
-  rap_other_login = 0;
-
-  @Prop({ type: Number })
-  rap_gc_key = 0;
-
-  @Prop({ type: Number })
-  rap_info_wrong = 0;
-
-  @Prop({ type: Number })
-  rap_spelling = 0;
-
-  @Prop({ type: Number })
-  rap_access_code = 0;
-
-  @Prop({ type: Number })
-  rap_link_not_working = 0;
-
-  @Prop({ type: Number })
-  rap_404 = 0;
-
-  @Prop({ type: Number })
-  rap_blank_form = 0;
-
-  @Prop({ type: Number })
-  fwylf_cant_find_info = 0;
-
-  @Prop({ type: Number })
-  fwylf_other = 0;
-
-  @Prop({ type: Number })
-  fwylf_hard_to_understand = 0;
-
-  @Prop({ type: Number })
-  fwylf_error = 0;
-
-  @Prop({ type: Number })
   visits_geo_ab = 0;
 
   @Prop({ type: Number })
@@ -228,21 +165,21 @@ export class PageMetricsTS {
 
 export const PageMetricsTSSchema = SchemaFactory.createForClass(PageMetricsTS);
 
-PageMetricsTSSchema.index({ date: -1, 'meta.url': 1 }, { background: true, unique: true });
+PageMetricsTSSchema.index({ date: -1, 'meta.url': 1 }, { unique: true });
 PageMetricsTSSchema.index(
   { date: -1, 'meta.page': 1 },
-  { background: true, partialFilterExpression: { 'meta.page': { $exists: true } } }
+  { partialFilterExpression: { 'meta.page': { $exists: true } } }
 );
 PageMetricsTSSchema.index(
   { date: -1, 'meta.projects': 1 },
-  { background: true, partialFilterExpression: { 'meta.projects': { $exists: true } } }
+  { partialFilterExpression: { 'meta.projects': { $exists: true } } }
 );
 PageMetricsTSSchema.index(
   { date: -1, 'meta.tasks': 1 },
-  { background: true, partialFilterExpression: { 'meta.tasks': { $exists: true } } }
+  { partialFilterExpression: { 'meta.tasks': { $exists: true } } }
 );
 PageMetricsTSSchema.index(
   { date: -1, 'meta.ux_tests': 1 },
-  { background: true, partialFilterExpression: { 'meta.ux_tests': { $exists: true } } }
+  { partialFilterExpression: { 'meta.ux_tests': { $exists: true } } }
 );
 

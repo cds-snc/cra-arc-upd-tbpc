@@ -33,6 +33,14 @@ import {
   decompressString,
 } from '@dua-upd/node-utils';
 import { RegisteredBlobModel } from './storage.service';
+import type {
+  IStorageClient,
+  IStorageContainer,
+  IStorageModel,
+  IStorageBlob,
+  IStorageProperties,
+  StorageProvider
+} from './storage.interfaces';
 
 export type AzureBlobType = 'block' | 'append';
 
@@ -41,8 +49,10 @@ export type AzureBlobType = 'block' | 'append';
  * Used to initialize a client with the proper credentials and for creating
  * or managing container clients.
  */
-export class AzureStorageClient {
+export class AzureStorageClient implements IStorageClient<ContainerClient> {
   private readonly baseClient: BlobServiceClient;
+
+  readonly storageType: StorageProvider = 'azure';
 
   constructor(connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING) {
     if (!connectionString) {
@@ -105,7 +115,9 @@ export type BlobsConfig = {
  * @param baseClient An instance of the base BlobServiceClient from the official Blob Storage SDK.
  * @param container The ContainerClient to wrap, from the official Blob Storage SDK.
  */
-export class AzureStorageContainer {
+export class AzureStorageContainer
+  implements IStorageContainer<ContainerClient>
+{
   constructor(private container: ContainerClient) {}
 
   createBlobsClient(config: Omit<BlobsConfig, 'container'>): BlobModel {
@@ -150,7 +162,7 @@ export class AzureStorageContainer {
  * It's primary purpose is to take a BlobsConfig and generate `BlobClient`s
  * using the provided config.
  */
-export class BlobModel {
+export class BlobModel implements IStorageModel<ContainerClient> {
   private readonly container: AzureStorageContainer;
 
   constructor(private readonly config: BlobsConfig) {
@@ -172,7 +184,7 @@ export class BlobModel {
  * Prepends the configured "blob type" path and streamlines the functionality
  * to be easier to use and hiding unneeded functionality.
  */
-export class BlobClient {
+export class BlobClient implements IStorageBlob {
   private readonly path: string = '';
   private readonly container: AzureStorageContainer;
   private overwrite = false;
@@ -193,7 +205,9 @@ export class BlobClient {
     this.overwrite = !!config.overwrite;
     this.blobType = blobType;
 
-    const blobPath = this.path ? normalize(`${this.path}/${blobName}`) : blobName;
+    const blobPath = this.path
+      ? normalize(`${this.path}/${blobName}`)
+      : blobName;
 
     if (blobType === 'append') {
       this.client = this.container.getClient().getAppendBlobClient(blobPath);
@@ -223,8 +237,15 @@ export class BlobClient {
     return this.client.exists();
   }
 
-  async getProperties() {
-    return this.client.getProperties();
+  async getProperties(): Promise<IStorageProperties> {
+    const props = await this.client.getProperties();
+    return {
+      lastModified: props.lastModified,
+      contentLength: props.contentLength,
+      etag: props.etag,
+      contentType: props.contentType,
+      metadata: props.metadata || {},
+    };
   }
 
   async getSize() {
@@ -290,18 +311,20 @@ export class BlobClient {
     }
 
     try {
-      return await this.client.syncCopyFromURL(sourceUrl);
+      const response = await this.client.syncCopyFromURL(sourceUrl);
+
+      if (response.copyStatus !== 'success') {
+        throw Error(
+          `Error copying from url to storage (error code ${response.errorCode})`,
+        );
+      }
     } catch (err) {
-      console.error(chalk.red('Error copying from url to storage:'));
-      console.error((<Error>err).stack);
-      return;
+      console.error(chalk.red('Error copying from url to storage'));
+      throw err;
     }
   }
 
-  async copyFromUrlIfDifferent(
-    sourceUrl: string,
-    fileSizeBytes: number,
-  ): Promise<BlobBeginCopyFromURLResponse | void> {
+  async copyFromUrlIfDifferent(sourceUrl: string, fileSizeBytes: number) {
     if (await this.sizesAreDifferent(fileSizeBytes)) {
       console.log(`File is new or updated. Uploading: ${this.filename}`);
       return await this.copyFromUrl(sourceUrl);

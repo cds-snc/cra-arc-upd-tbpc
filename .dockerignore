@@ -18,8 +18,8 @@ scripts
 **/*.egg-info
 **/*.ipynb
 
-python/mongo-parquet/src/data
-python/mongo-parquet/src/sample
+**/python/mongo-parquet/src/data
+**/python/mongo-parquet/src/sample
 **/*.parquet
 **/.venv/
 **/.env

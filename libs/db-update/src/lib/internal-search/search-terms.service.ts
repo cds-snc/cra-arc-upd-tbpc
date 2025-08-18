@@ -90,10 +90,7 @@ export class InternalSearchTermsService {
           },
         })
         .group({
-          _id: '$url_first247',
-          page: {
-            $push: '$_id',
-          },
+          _id: '$url_first247', page: { $push: '$_id', },
           count: {
             $sum: 1,
           },
@@ -104,7 +101,7 @@ export class InternalSearchTermsService {
         .project({
           _id: 0,
           page: {
-            $first: '$page',
+            $arrayElemAt: ['$page', 0],
           },
           url_first247: '$_id',
         })

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, override
+from typing import List, Optional, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import bool_, string, struct, timestamp, list_
@@ -14,6 +14,7 @@ class Pages(ParquetModel):
     collection: str = "pages"
     parquet_filename: str = "pages.parquet"
     filter: dict | None = None
+    use_aggregation: Optional[bool] = True
     projection: dict | None = {
         "_id": 1,
         "url": 1,
@@ -110,6 +111,7 @@ class PagesModel(MongoCollection):
             for k, v in row.items():
                 if k == "metadata":
                     v = array_to_object(v)
+                    record[k] = v
                     continue
                 if v is None and k not in self.default_values:
                     continue

@@ -70,6 +70,7 @@ export class PageMetricsService {
   }
 
   async updatePageMetrics() {
+    this.logger.log('Starting page metrics updates...');
     // get dates required for query
     const latestDateResults = await this.pageMetricsModel
       .findOne({}, { date: 1 })

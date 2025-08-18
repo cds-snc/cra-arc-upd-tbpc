@@ -60,6 +60,7 @@ services:
       AA_KEY_PATH: /run/secrets/secret.pem
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/service-account-credentials.json
       DB_HOST: "localhost"
+      NODE_OPTIONS: "--max-old-space-size=8192"
 #    depends_on:
 #      - mongodb
 

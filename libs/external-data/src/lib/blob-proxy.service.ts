@@ -1,9 +1,9 @@
 import { BlobLogger } from '@dua-upd/logger';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import {
-  BlobModel,
+  type IStorageModel,
   BlobStorageService,
-  RegisteredBlobModel,
+  type RegisteredBlobModel,
 } from '@dua-upd/blob-storage';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class BlobProxyService {
     @Inject(BlobStorageService.name)
     private readonly blobStorageService: BlobStorageService,
     @Optional() @Inject('ENV') private production = false,
-    @Optional() @Inject('DB_UPDATE_LOGGER') private blobLogger: BlobLogger
+    @Optional() @Inject('DB_UPDATE_LOGGER') private blobLogger: BlobLogger,
   ) {
     if (this.blobLogger && !this.production) {
       this.blobLogger.disableBlobLogging();
@@ -20,11 +20,11 @@ export class BlobProxyService {
   }
 
   createProxy<QueryParams, Metadata, ReturnType>(
-    config: BlobProxyConfig<QueryParams, Metadata, ReturnType>
+    config: BlobProxyConfig<QueryParams, Metadata, ReturnType>,
   ) {
     return new BlobProxy<QueryParams, Metadata, ReturnType>(
       this.blobStorageService,
-      config
+      config,
     );
   }
 }
@@ -37,12 +37,12 @@ export type BlobProxyConfig<QueryParams, Metadata, ReturnType> = {
 
 export class BlobProxy<QueryParams, Metadata, ReturnType> {
   blobService: BlobStorageService;
-  blobModel: BlobModel;
+  blobModel: IStorageModel<any>;
   config: BlobProxyConfig<QueryParams, Metadata, ReturnType>;
 
   constructor(
     blobService: BlobStorageService,
-    config: BlobProxyConfig<QueryParams, Metadata, ReturnType>
+    config: BlobProxyConfig<QueryParams, Metadata, ReturnType>,
   ) {
     this.blobService = blobService;
     this.config = config;
@@ -51,7 +51,7 @@ export class BlobProxy<QueryParams, Metadata, ReturnType> {
 
   async exec(
     queryParams: QueryParams,
-    metadata: Metadata
+    metadata: Metadata,
   ): Promise<ReturnType[]> {
     const { filenameGenerator, queryExecutor } = this.config;
 

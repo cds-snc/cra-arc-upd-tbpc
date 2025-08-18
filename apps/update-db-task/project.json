@@ -1,0 +1,64 @@
+{
+  "name": "update-db-task",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/update-db-task/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "swc",
+        "outputPath": "dist/apps/update-db-task",
+        "main": "apps/update-db-task/src/main.ts",
+        "tsConfig": "apps/update-db-task/tsconfig.app.json",
+        "generateIndexHtml": false,
+        "runtimeChunk": false,
+        "webpackConfig": "apps/update-db-task/webpack.config.js",
+        "generatePackageJson": true,
+        "optimization": false,
+        "externalDependencies": "all",
+        "inspect": false,
+        "sourceMap": true,
+        "watch": false
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/update-db-task/src/environments/environment.ts",
+              "with": "apps/update-db-task/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "update-db-task:build",
+        "runBuildTargetDependencies": false,
+        "watch": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "update-db-task:build:development"
+        },
+        "production": {
+          "buildTarget": "update-db-task:build:production"
+        }
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

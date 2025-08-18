@@ -86,6 +86,21 @@ class MongoArrowClient:
                 schema=model.schema,
                 projection=model.projection,
             )
+
+        elif model.use_aggregation:
+            pipeline = []
+
+            if filter or model.filter:
+                pipeline.append({"$match": filter or model.filter})
+
+            pipeline.append({"$project": model.projection})
+
+            results = aggregate_polars_all(
+                self.db[model.collection],
+                pipeline,
+                schema=model.schema,
+            )
+
         else:
             results = find_polars_all(
                 self.db[model.collection],

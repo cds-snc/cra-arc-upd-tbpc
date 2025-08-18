@@ -9,6 +9,8 @@ import {
   FeedbackSchema,
   CallDriverSchema,
   UrlSchema,
+  GCTasksMappingsSchema,
+  CustomReportsRegistrySchema,
 } from '@dua-upd/db';
 import { ApexOptions } from 'apexcharts';
 import { writeFile } from 'node:fs/promises';
@@ -26,15 +28,18 @@ class Db {
   readonly feedback = model('Feedback', FeedbackSchema);
   readonly calldrivers = model('CallDriver', CallDriverSchema);
   readonly urls = model('Url', UrlSchema);
+  readonly gcTasksMappings = model('GCTasksMappings', GCTasksMappingsSchema);
+  readonly customReports = model('CustomReportsRegistry', CustomReportsRegistrySchema);
 
   async connect(prod = false) {
+    const connectionString = `mongodb://${!prod ? 'localhost' : process.env['DB_HOST']}:27017/upd-test`;
+
+    console.log(`Connecting to MongoDB at ${connectionString}`);
+
     if (!this.connection) {
-      this.connection = await connect(
-        `mongodb://${!prod ? 'localhost' : process.env['DB_HOST']}:27017/upd-test`,
-        {
-          compressors: ['zstd', 'snappy', 'zlib'],
-        },
-      );
+      this.connection = await connect(connectionString, {
+        compressors: ['zstd', 'snappy', 'zlib'],
+      });
 
       return this;
     }

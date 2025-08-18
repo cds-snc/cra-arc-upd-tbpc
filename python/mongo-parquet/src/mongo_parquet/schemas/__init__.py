@@ -19,6 +19,7 @@ class ParquetModel(abc.ABC):
     """Partial schema to be combined with the primary"""
     filter: Optional[dict] = None
     projection: Optional[dict] = None
+    use_aggregation: Optional[bool] = None
     start: Optional[datetime] = None
     end: Optional[datetime] = None
     pipeline: Optional[list] = None

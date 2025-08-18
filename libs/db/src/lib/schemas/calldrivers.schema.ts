@@ -23,6 +23,7 @@ import {
   dateRangeSplit,
 } from '@dua-upd/utils-common';
 import { Task } from './task.schema';
+import { batchWrite } from '../utils';
 
 export type CallDriverDocument = CallDriver & Document;
 
@@ -123,34 +124,30 @@ export class CallDriver implements ICallDriver {
       | { page: Types.ObjectId }
       | { tasks: Types.ObjectId }
       | { projects: Types.ObjectId },
+    setTaskTitle?: string,
   ): Promise<CallsByTopic[]> {
     const [startDate, endDate] =
       typeof dateRange === 'string'
         ? dateRangeSplit(dateRange)
         : [dateRange.start, dateRange.end];
 
-    const projection = idFilter
-      ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
-      : {};
-
     const matchFilter: FilterQuery<CallDriver> = {
       date: { $gte: startDate, $lte: endDate },
       ...(idFilter || {}),
     };
 
-    return this.aggregate()
-      .project({
-        date: 1,
-        tpc_id: 1,
-        enquiry_line: 1,
-        topic: 1,
-        subtopic: 1,
-        sub_subtopic: 1,
-        calls: 1,
-        tasks: 1,
-        ...projection,
-      })
-      .match(matchFilter)
+    const pipeline = this.aggregate<CallsByTopic>().match(matchFilter);
+
+    if (!setTaskTitle) {
+      pipeline.lookup({
+        from: 'tasks',
+        localField: 'tasks.0',
+        foreignField: '_id',
+        as: 'tasks',
+      });
+    }
+
+    return pipeline
       .group({
         _id: '$tpc_id',
         topic: { $first: '$topic' },
@@ -160,12 +157,6 @@ export class CallDriver implements ICallDriver {
         tasks: { $first: '$tasks' },
         calls: { $sum: '$calls' },
       })
-      .lookup({
-        from: 'tasks',
-        localField: 'tasks',
-        foreignField: '_id',
-        as: 'tasks',
-      })
       .project({
         _id: 0,
         tpc_id: '$_id',
@@ -173,10 +164,11 @@ export class CallDriver implements ICallDriver {
         enquiry_line: 1,
         subtopic: 1,
         sub_subtopic: 1,
-        tasks: '$tasks.title',
+        tasks: setTaskTitle || '$tasks.title',
         calls: 1,
       })
-      .exec();
+      .exec()
+      .then((callsByTopic) => callsByTopic || []);
   }
 
   static async getCallsByEnquiryLineFromIds(
@@ -365,7 +357,7 @@ export class CallDriver implements ICallDriver {
   static async syncTaskReferences(
     this: CallDriverModel,
     tasksModel: Model<Task>,
-  ): Promise<mongo.BulkWriteResult | undefined> {
+  ): Promise<number> {
     const tasks = await tasksModel
       .find({ tpc_ids: { $ne: [] } }, { projects: 1, tpc_ids: 1 })
       .lean()
@@ -402,7 +394,7 @@ export class CallDriver implements ICallDriver {
     }) satisfies AnyBulkWriteOperation<CallDriver>[];
 
     if (bulkWriteOps.length) {
-      return this.bulkWrite(bulkWriteOps, { ordered: false });
+      return batchWrite(this, bulkWriteOps, { batchSize: 10, ordered: false });
     }
   }
 }

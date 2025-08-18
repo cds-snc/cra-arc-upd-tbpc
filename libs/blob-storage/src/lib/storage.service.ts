@@ -1,17 +1,26 @@
+import type { ContainerClient } from '@azure/storage-blob';
 import { Injectable } from '@nestjs/common';
-import {
-  BlobModel,
-  StorageClient,
-  type StorageProvider,
-} from './storage.client';
 import { normalize } from 'node:path/posix';
 import { CompressionAlgorithm } from '@dua-upd/node-utils';
+import { S3StorageClient, type S3Bucket } from './s3.storage.client';
+import { AzureStorageClient } from './azure.storage.client';
+import type {
+  IStorageClient,
+  IStorageModel,
+  StorageProvider,
+} from './storage.interfaces';
 
 export type BlobDefinition = {
   containerName: string;
   path?: string;
   overwrite?: boolean;
   compression?: CompressionAlgorithm;
+};
+
+export type StorageClientOptions = {
+  azureConnectionString?: string;
+  s3AccessKeyId?: string;
+  s3SecretAccessKey?: string;
 };
 
 /*
@@ -34,7 +43,8 @@ export type RegisteredBlobModel = BlobModels[number];
 
 @Injectable()
 export class BlobStorageService {
-  private _storageClient: StorageClient | null = null;
+  private _storageClient: IStorageClient<S3Bucket | ContainerClient> | null =
+    null;
 
   private readonly blobDefinitions: Record<
     RegisteredBlobModel,
@@ -77,7 +87,10 @@ export class BlobStorageService {
     },
   } as const;
 
-  readonly blobModels: Record<RegisteredBlobModel, BlobModel | null> = {
+  readonly blobModels: Record<
+    RegisteredBlobModel,
+    IStorageModel<S3Bucket | ContainerClient> | null
+  > = {
     db_updates: null,
     project_attachments: null,
     reports: null,
@@ -92,8 +105,35 @@ export class BlobStorageService {
     return this._storageClient;
   }
 
-  setStorageProvider(storageProvider: StorageProvider) {
-    this._storageClient = new StorageClient(storageProvider);
+  setStorageProvider(
+    storageProvider: StorageProvider,
+    options?: StorageClientOptions,
+  ) {
+    if (storageProvider === 'azure') {
+      try {
+        this._storageClient = new AzureStorageClient(
+          options?.azureConnectionString,
+        );
+      } catch (error) {
+        console.error('Failed to initialize Azure storage client:', error);
+        throw error;
+      }
+    } else {
+      try {
+        this._storageClient = new S3StorageClient(
+          options?.s3AccessKeyId || options?.s3SecretAccessKey
+            ? {
+                accessKeyId: options?.s3AccessKeyId,
+                secretAccessKey: options?.s3SecretAccessKey,
+              }
+            : undefined,
+        );
+      } catch (error) {
+        console.error('Failed to initialize S3 storage client:', error);
+        throw error;
+      }
+    }
+
     return this;
   }
 
