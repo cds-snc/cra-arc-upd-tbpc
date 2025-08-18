@@ -13,9 +13,9 @@ env:
   WEB_TAGS: >-
     ${{
       github.repository == 'cds-snc/cra-arc-upd-tbpc' && (
-        'ghcr.io/${{ github.repository }}/web:latest'
+        '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging:latest'
       ) || (
-      '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging:latest'
+        'ghcr.io/${{ github.repository }}/web:latest'
       )
     }}
   DATA_IMPORT_TAGS: '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging-data-import:latest'
