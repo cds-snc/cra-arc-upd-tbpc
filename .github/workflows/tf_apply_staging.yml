@@ -165,3 +165,7 @@ jobs:
       - name: Apply data_import
         working-directory: terragrunt/env/staging/data_import
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        
+      - name: Apply update_db
+        working-directory: terragrunt/env/staging/update_db
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
