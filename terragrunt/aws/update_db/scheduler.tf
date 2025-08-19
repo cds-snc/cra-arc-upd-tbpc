@@ -5,7 +5,7 @@ resource "aws_scheduler_schedule_group" "update_db_schedule_group" {
 resource "aws_scheduler_schedule" "update_db_schedule" {
   name       = local.scheduler_name
   group_name = aws_scheduler_schedule_group.update_db_schedule_group.name
-  
+
   schedule_expression          = var.schedule_cron_expression
   schedule_expression_timezone = "America/New_York"
 
@@ -52,4 +52,3 @@ resource "aws_sqs_queue" "scheduler_dlq" {
   name                      = "${local.scheduler_name}-dlq"
   message_retention_seconds = 1209600 # 14 days
 }
-

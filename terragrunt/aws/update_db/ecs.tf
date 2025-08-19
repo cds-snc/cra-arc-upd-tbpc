@@ -14,11 +14,11 @@ locals {
         value = var.data_bucket_name
       },
       {
-        name = "ENV"
+        name  = "ENV"
         value = var.env
       },
       {
-        name = "NODE_OPTIONS"
+        name  = "NODE_OPTIONS"
         value = "--max-old-space-size=8192"
       }
     ],
