@@ -65,6 +65,7 @@ resource "aws_iam_role" "scheduler_role" {
 
 data "aws_iam_policy_document" "scheduler_role_policy" {
   statement {
+    effect = "Allow"
     actions = [
       "ecs:RunTask"
     ]
@@ -74,6 +75,7 @@ data "aws_iam_policy_document" "scheduler_role_policy" {
   }
 
   statement {
+    effect = "Allow"
     actions = [
       "iam:PassRole"
     ]
