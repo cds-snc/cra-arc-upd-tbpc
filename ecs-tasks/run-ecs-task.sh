@@ -42,13 +42,14 @@ networkConfiguration=$(
     --query "services[0].deployments[0].networkConfiguration" 2>/dev/null
 )
 
-if [ $? -ne 0 ] || [ "$networkConfiguration" == "None" ]; || [ -z "$networkConfiguration" ]; then
+if [ $? -ne 0 ] || [ "$networkConfiguration" == "None" ]; then
   echo "Error: Failed to retrieve network configuration from service $serviceName."
   exit 1
 fi
 
 echo "Attempting to run the ECS task..."
 
+# Run the task with or without network configuration
 aws ecs run-task \
     --cluster "$clusterName" \
     --task-definition "$serviceName" \
