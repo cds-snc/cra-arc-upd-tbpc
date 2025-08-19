@@ -16,6 +16,10 @@ locals {
       {
         name = "ENV"
         value = var.env
+      },
+      {
+        name = "NODE_OPTIONS"
+        value = "--max-old-space-size=8192"
       }
     ],
     var.environment
