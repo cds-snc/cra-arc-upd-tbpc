@@ -19,6 +19,7 @@ env:
       )
     }}
   DATA_IMPORT_TAGS: '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging-data-import:latest'
+  UPDATE_DB_TAGS: '211125499457.dkr.ecr.ca-central-1.amazonaws.com/cra-upd-dashboard-staging-update-db:latest'
 
 jobs:
   cache-deps:
@@ -132,6 +133,17 @@ jobs:
           file: ecs-tasks/data-import/Dockerfile
           push: true
           tags: ${{ env.DATA_IMPORT_TAGS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (update-db)
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ecs-tasks/update-db/Dockerfile
+          push: true
+          tags: ${{ env.UPDATE_DB_TAGS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

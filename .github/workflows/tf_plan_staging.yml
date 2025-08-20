@@ -89,6 +89,7 @@ jobs:
           - module: ssm
           - module: web
           - module: data_import
+          - module: update_db
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
