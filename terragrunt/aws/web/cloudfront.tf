@@ -68,14 +68,18 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = local.cloudfront_api_origin_id
     viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    compress               = false
 
-    cache_policy_id = aws_cloudfront_cache_policy.cra_upd_api_cache_policy.id
+    # todo: fix caching/compression
+    # cache_policy_id = aws_cloudfront_cache_policy.cra_upd_api_cache_policy.id
+
+    # CachingDisabled managed policy ID:
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
 
     # AllViewerExceptHostHeader managed policy ID:
     origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
 
-    # Managed-CORS-With-Preflight
+    # Managed-CORS-With-Preflight managed policy ID:
     response_headers_policy_id = "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
   }
 
