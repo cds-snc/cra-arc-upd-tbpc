@@ -12,3 +12,8 @@ variable "vpc_cidr_block" {
   description = "The cidr block of the VPC"
   type        = string
 }
+
+variable "loadbalancer_certificate_arn" {
+  description = "The ARN of the load balancer SSL certificate"
+  type        = string
+}
