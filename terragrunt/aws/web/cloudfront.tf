@@ -28,6 +28,22 @@ resource "aws_s3_bucket_policy" "cra_upd_web_bucket_policy" {
   policy = data.aws_iam_policy_document.cra_upd_web_bucket_policy_doc.json
 }
 
+# VPC origin for the load balancer
+resource "aws_cloudfront_vpc_origin" "load_balancer_vpc_origin" {
+  vpc_origin_endpoint_config {
+    name                   = "${local.cloudfront_api_origin_id}_vpc_origin"
+    arn                    = var.loadbalancer_arn
+    http_port              = 80
+    https_port             = 443
+    origin_protocol_policy = "https-only"
+
+    origin_ssl_protocols {
+      items    = ["TLSv1.2"]
+      quantity = 1
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   enabled             = true
   aliases             = [var.domain]
@@ -51,14 +67,13 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   }
 
   origin {
-    domain_name = var.apigw_endpoint_domain
+    domain_name = var.loadbalancer_dns_name
     origin_id   = local.cloudfront_api_origin_id
 
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
+    vpc_origin_config {
+      vpc_origin_id            = aws_cloudfront_vpc_origin.load_balancer_vpc_origin.id
+      origin_read_timeout      = 60
+      origin_keepalive_timeout = 30
     }
   }
 
@@ -72,8 +87,8 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
 
     cache_policy_id = aws_cloudfront_cache_policy.cra_upd_api_cache_policy.id
 
-    # AllViewerExceptHostHeader managed policy ID:
-    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+    # AllViewer managed policy ID:
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
 
     # Managed-CORS-With-Preflight
     response_headers_policy_id = "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
@@ -100,7 +115,7 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
 
   viewer_certificate {
     cloudfront_default_certificate = false
-    acm_certificate_arn            = aws_acm_certificate.cra_upd_cloudfront_acm.arn
+    acm_certificate_arn            = var.cloudfront_acm_cert
     ssl_support_method             = "sni-only"
     minimum_protocol_version       = "TLSv1.2_2021"
   }
@@ -148,7 +163,7 @@ resource "aws_cloudfront_cache_policy" "cra_upd_api_cache_policy" {
     }
 
     query_strings_config {
-      query_string_behavior = "none"
+      query_string_behavior = "all"
     }
 
     enable_accept_encoding_gzip   = true
