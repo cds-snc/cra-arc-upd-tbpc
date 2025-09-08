@@ -22,3 +22,10 @@ output "ecs_loadbalancer_target_group_arn" {
   description = "Load Balancer Target Group ARN for CRA UPD"
   value       = aws_lb_target_group.cra_upd_ecs_lb_target_group.arn
 }
+
+output "ecs_loadbalancer_dns_name" {
+  description = "Load Balancer DNS Name for CRA UPD"
+  value       = aws_lb.cra_upd_ecs_alb.dns_name
+
+  sensitive = true
+}
