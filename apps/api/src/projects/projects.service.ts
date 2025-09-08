@@ -761,6 +761,7 @@ export class ProjectsService {
     return await this.db.views.tasks
       .find<{
         _id: Types.ObjectId;
+        taskId: Types.ObjectId;
         title: string;
         callsPer100Visits: number;
         dyfNoPer1000Visits: number;
@@ -772,16 +773,12 @@ export class ProjectsService {
           'projects._id': projectId,
         },
         {
-          _id: '$task._id',
+          taskId: '$task._id',
           dateRange: 1,
           title: '$task.title',
           'projects._id': 1,
-          callsPer100Visits: {
-            $multiply: ['$callsPerVisit', 100],
-          },
-          dyfNoPer1000Visits: {
-            $multiply: ['$dyfNoPerVisit', 1000],
-          },
+          callsPer100Visits: 1,
+          dyfNoPer1000Visits: 1,
           uxTestInLastTwoYears: {
             $cond: [
               {
@@ -805,17 +802,17 @@ export class ProjectsService {
       .then((tasks) =>
         tasks.map(
           ({
-            _id,
+            taskId,
             title,
             callsPer100Visits,
             dyfNoPer1000Visits,
             uxTestInLastTwoYears,
             ux_tests,
           }) => ({
-            _id: _id.toString(),
+            _id: taskId.toString(),
             title,
-            callsPer100Visits,
-            dyfNoPer1000Visits,
+            callsPer100Visits: callsPer100Visits * 100,
+            dyfNoPer1000Visits: dyfNoPer1000Visits * 1000,
             uxTestInLastTwoYears,
             latestSuccessRate:
               getLatestTaskSuccessRate(ux_tests).avgTestSuccess,

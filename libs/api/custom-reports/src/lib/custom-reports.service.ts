@@ -19,7 +19,6 @@ import type {
 } from '@dua-upd/types-common';
 import { DbService, CustomReportsMetrics } from '@dua-upd/db';
 import { CustomReportsCache } from './custom-reports.cache';
-import { instanceId } from './custom-reports.module';
 import { decomposeConfig } from './custom-reports.strategies';
 import { hashConfig, hashQueryConfig } from './custom-reports.utils';
 import {
@@ -53,8 +52,6 @@ export class CustomReportsService implements OnApplicationBootstrap {
     private reportQueueEvents: ReportsQueueEvents,
     private childQueueEvents: ChildQueueEvents,
     private cache: CustomReportsCache,
-    @Inject('INSTANCE_ID')
-    private instanceId: string,
   ) {}
 
   async onApplicationBootstrap() {
@@ -246,7 +243,6 @@ export class CustomReportsService implements OnApplicationBootstrap {
         return {
           name: hash,
           queueName: 'fetchAndProcessReportData',
-          prefix: instanceId,
           data: {
             hash,
             reportId,
@@ -276,7 +272,6 @@ export class CustomReportsService implements OnApplicationBootstrap {
     await this.reportFlowProducer.add({
       name: reportId,
       queueName: 'prepareReportData',
-      prefix: instanceId,
       data: {
         id: reportId,
         config,

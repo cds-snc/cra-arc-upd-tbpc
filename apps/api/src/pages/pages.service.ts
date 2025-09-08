@@ -106,25 +106,36 @@ export class PagesService {
       end: endDate,
     };
 
-    const results = (await this.db.views.pages.find(
-      { dateRange: queryDateRange },
-      {
-        _id: '$page._id',
-        title: '$page.title',
-        url: '$page.url',
-        pageStatus: 1,
-        visits: 1,
-      },
-      {
-        sort: { visits: -1 },
-      },
-    )) as unknown as {
-      _id: Types.ObjectId;
-      title: string;
-      url: string;
-      pageStatus: PageStatus;
-      visits: number;
-    }[];
+    const results = await this.db.views.pages
+      .find<{
+        _id: Types.ObjectId;
+        pageId: Types.ObjectId;
+        title: string;
+        url: string;
+        pageStatus: PageStatus;
+        visits: number;
+      }>(
+        { dateRange: queryDateRange },
+        {
+          pageId: '$page._id',
+          title: '$page.title',
+          url: '$page.url',
+          pageStatus: 1,
+          visits: 1,
+        },
+        {
+          sort: { visits: -1 },
+        },
+      )
+      .then((results) =>
+        results.map((page) => ({
+          _id: page.pageId,
+          title: page.title,
+          url: page.url,
+          pageStatus: page.pageStatus,
+          visits: page.visits,
+        })),
+      );
 
     await this.cacheManager.set(
       cacheKey,

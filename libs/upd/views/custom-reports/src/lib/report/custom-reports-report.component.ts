@@ -45,20 +45,20 @@ interface ConfigData {
 }
 
 @Component({
-    selector: 'dua-upd-custom-reports-report',
-    imports: [I18nModule, CommonModule, UpdComponentsModule, ProgressBarModule],
-    templateUrl: './custom-reports-report.component.html',
-    styleUrls: ['./custom-reports-report.component.scss'],
-    styles: [
-        `
+  selector: 'dua-upd-custom-reports-report',
+  imports: [I18nModule, CommonModule, UpdComponentsModule, ProgressBarModule],
+  templateUrl: './custom-reports-report.component.html',
+  styleUrls: ['./custom-reports-report.component.scss'],
+  styles: [
+    `
       :host {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
       }
     `,
-    ],
-    providers: [ApiService, I18nFacade]
+  ],
+  providers: [ApiService, I18nFacade],
 })
 export class CustomReportsReportComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -205,7 +205,9 @@ export class CustomReportsReportComponent implements OnInit {
 
   setupPolling() {
     const request$ = defer(() =>
-      this.http.get<ReportStatus>(`/api/custom-reports/${this.id()}/status`),
+      this.http.get<ReportStatus>(`/api/custom-reports/${this.id()}/status`, {
+        headers: { 'Cache-Control': 'no-cache' },
+      }),
     );
 
     return timer(0, 1000).pipe(

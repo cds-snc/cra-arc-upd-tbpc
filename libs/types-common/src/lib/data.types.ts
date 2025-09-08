@@ -511,14 +511,20 @@ export interface ProjectsHomeData {
   uniqueTaskTestedLatestTestKpi?: number;
   avgTestSuccess?: number;
 }
-export interface ReportsHomeProject extends ProjectsHomeProject {
-  attachments: AttachmentData[];
-}
 
-export interface ReportsData {
+export type ReportsHomeProject = {
+  _id: string;
+  title: string;
+  cops: boolean;
+  startDate?: Date;
+  status: ProjectStatus;
+  attachments: AttachmentData[];
+};
+
+export type ReportsData = {
   projects: ReportsHomeProject[];
   tasks: IReports[];
-}
+};
 
 export interface VisitsByPage {
   _id: string;

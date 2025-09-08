@@ -1,18 +1,18 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Cache } from 'cache-manager';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import type { ProjectDocument } from '@dua-upd/db';
-import { Project, Reports } from '@dua-upd/db';
+import { omit } from 'rambdax';
+import { DbService } from '@dua-upd/db';
 import type {
-  AttachmentData,
+  IProject,
   IReports,
+  OverviewProject,
   ReportsData,
   ReportsHomeProject,
 } from '@dua-upd/types-common';
+import { arrayToDictionary } from '@dua-upd/utils-common';
 
 dayjs.extend(utc);
 
@@ -86,10 +86,8 @@ const projectStatusSwitchExpression = {
 @Injectable()
 export class ReportsService {
   constructor(
-    @InjectModel(Project.name, 'defaultConnection')
-    private projectsModel: Model<ProjectDocument>,
-    @InjectModel(Reports.name, 'defaultConnection')
-    private reportsModel: Model<Reports>,
+    @Inject(DbService)
+    private db: DbService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -101,99 +99,69 @@ export class ReportsService {
       return cachedData;
     }
 
-    const tasksData = (await this.reportsModel
+    const tasksData = (await this.db.collections.reports
       .find(
         { type: 'tasks' },
         {
-          _id: 0,
           en_title: 1,
           fr_title: 1,
           en_attachment: 1,
           fr_attachment: 1,
         },
       )
-      .exec()) as IReports[];
+      .lean()
+      .exec()
+      .then((reports) =>
+        reports.map((report) => omit(['_id'], report)),
+      )) as IReports[];
 
-    const projectsData = await this.projectsModel
-      .aggregate<ReportsHomeProject>()
-      .lookup({
-        from: 'ux_tests',
-        let: { project_id: '$_id' },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $eq: ['$project', '$$project_id'],
-              },
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              cops: {
-                $max: '$cops',
-              },
-              startDate: {
-                $min: '$date',
-              },
-              launchDate: {
-                $max: '$launch_date',
-              },
-              uxTests: {
-                $push: {
-                  success_rate: '$success_rate',
-                  date: '$date',
-                  test_type: '$test_type',
-                },
-              },
-              avgSuccessRate: {
-                $avg: '$success_rate',
-              },
-              statuses: {
-                $addToSet: '$status',
-              },
-            },
-          },
-          {
-            $addFields: {
-              status: projectStatusSwitchExpression,
-            },
-          },
-        ],
-        as: 'tests_aggregated',
+    const projectAttachments: Pick<IProject, '_id' | 'attachments'>[] =
+      await this.db.collections.projects
+        .find({ attachments: { $ne: [] } }, { attachments: 1 })
+        .lean()
+        .exec();
+
+    const projectAttachmentsDict = arrayToDictionary(projectAttachments, '_id');
+
+    const projectsData = await this.db.collections.uxTests
+      .aggregate<OverviewProject>()
+      .group({
+        _id: '$project',
+        title: { $first: '$title' },
+        cops: { $max: '$cops' },
+        startDate: { $min: '$date' },
+        statuses: { $addToSet: '$status' },
       })
-      .unwind('$tests_aggregated')
-      .replaceRoot({
-        $mergeObjects: ['$$ROOT', '$tests_aggregated', { _id: '$_id' }],
+      .addFields({
+        status: projectStatusSwitchExpression,
       })
       .project({
+        _id: { $toString: '$_id' },
         title: 1,
         cops: 1,
         startDate: 1,
-        launchDate: 1,
-        avgSuccessRate: 1,
         status: 1,
-        uxTests: 1,
-        attachments: 1,
-      });
+      })
+      .sort({
+        startDate: -1,
+      })
+      .exec();
 
-    projectsData.map((project) => {
-      return {
-        ...project,
-        attachment: processAttachments(project.attachments),
-      };
-    });
+    const includedProjects = Object.keys(projectAttachmentsDict);
 
-    tasksData.map((task) => {
-      return {
-        ...task,
-        en_attachment: processAttachments(task.en_attachment),
-        fr_attachment: processAttachments(task.fr_attachment),
-      };
-    });
+    const projectsWithAttachments = projectsData
+      .filter((project) => includedProjects.includes(project._id))
+      .map((project) => ({
+        _id: project._id,
+        title: project.title,
+        attachments: projectAttachmentsDict[project._id]?.attachments || [],
+        cops: !!project.cops,
+        startDate: project.startDate,
+        status: project.status,
+      }));
 
     const results = {
-      projects: projectsData,
+      projects: projectsWithAttachments satisfies ReportsHomeProject[],
       tasks: tasksData,
     };
 
@@ -201,11 +169,4 @@ export class ReportsService {
 
     return results;
   }
-}
-
-function processAttachments(attachments: AttachmentData[]) {
-  return attachments?.map((attachment) => {
-    attachment.storage_url = attachment.storage_url?.replace(/^https:\/\//, '');
-    return attachment;
-  });
 }

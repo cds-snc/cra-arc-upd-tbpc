@@ -116,7 +116,7 @@ export abstract class DbViewNew<
         try {
           await this._model.bulkWrite(ops, this.bulkWriteOptions);
         } catch (err) {
-          console.error(err);
+          console.error((<Error>err).stack);
         }
       },
     );

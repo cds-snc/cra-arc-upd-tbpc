@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import type { FilterQuery, Model } from 'mongoose';
-import { pick } from 'rambdax';
+import { omit, pick } from 'rambdax';
 import type {
   CallDriverModel,
   OverallDocument,
@@ -199,8 +199,7 @@ export class OverallService {
       .endOf('week')
       .format('YYYY-MM-DD')}`;
 
-    const uxTests =
-      (await this.uxTestModel.find({}, { _id: 0 }).lean().exec()) || [];
+    const uxTests = (await this.uxTestModel.find({}).lean().exec()) || [];
 
     const lastQuarter =
       getStructuredDateRangesWithComparison().quarter.dateRange;
@@ -1008,25 +1007,35 @@ async function getOverviewMetrics(
       ),
     // visitsByDay
     overallModel
-      .find({ date: dateQuery }, { _id: 0, date: 1, visits: 1 })
+      .find({ date: dateQuery }, { date: 1, visits: 1 })
       .sort({ date: 1 })
       .lean()
       .exec()
       .then((visits) =>
-        visits.map((visit) => ({
-          ...visit,
-          date: visit.date.toISOString(),
-        })),
+        visits.map((visit) =>
+          omit(['_id'], {
+            ...visit,
+            date: visit.date.toISOString(),
+          }),
+        ),
       ),
     // dyfByDay
     overallModel
       .find(
         { date: dateQuery },
-        { _id: 0, date: 1, dyf_yes: 1, dyf_no: 1, dyf_submit: 1 },
+        { date: 1, dyf_yes: 1, dyf_no: 1, dyf_submit: 1 },
       )
       .sort({ date: 1 })
       .lean()
-      .exec(),
+      .exec()
+      .then((dyf) =>
+        dyf.map((item) =>
+          omit(['_id'], {
+            ...item,
+            date: item.date.toISOString(),
+          }),
+        ),
+      ),
     // calldriversByDay
     calldriversModel
       .aggregate()
@@ -1118,20 +1127,7 @@ async function getOverviewMetrics(
         total_searches: { $sum: '$total_searches' },
         expected_position: { $avg: '$expected_position' },
         position: { $avg: '$expected_position' },
-        doc: { $push: '$$ROOT' },
-      })
-      .replaceRoot({
-        $mergeObjects: [
-          {
-            $ifNull: [
-              {
-                $arrayElemAt: ['$doc', 0],
-              },
-              {},
-            ],
-          },
-          '$$ROOT',
-        ],
+        expected_result: { $first: '$expected_result' },
       })
       .project({
         query: '$_id.query',
