@@ -98,6 +98,6 @@ inputs = {
   data_bucket_arn               = dependency.s3.outputs.data_bucket_arn
   data_bucket_name              = dependency.s3.outputs.data_bucket_name
   container_secrets             = dependency.ssm.outputs.ssm_secret_arns
-  ecs_cpu                       = 512
-  ecs_memory                    = 1024
+  ecs_cpu                       = 1024
+  ecs_memory                    = 8192
 }
