@@ -39,7 +39,7 @@ dependency "route53" {
   mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
-    cra_upd_hosted_zone_id     = ""
+    cra_upd_hosted_zone_id     = "mock_id"
     cloudfront_certificate_arn = ""
   }
 }
