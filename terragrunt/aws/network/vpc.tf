@@ -18,8 +18,7 @@ module "cra_upd_vpc" {
   allow_https_request_out          = true
   allow_https_request_out_response = true
 
-  # disallow inbound HTTPS connections from the internet
-  # all inbound traffic will come from a VPC link from the API Gateway
-  allow_https_request_in          = false
-  allow_https_request_in_response = false
+  # needed to allow requests from CloudFront
+  allow_https_request_in          = true
+  allow_https_request_in_response = true
 }
