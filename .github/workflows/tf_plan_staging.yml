@@ -87,6 +87,7 @@ jobs:
           - module: network
           - module: s3
           - module: ssm
+          - module: route53
           - module: web
           - module: data_import
           - module: update_db
