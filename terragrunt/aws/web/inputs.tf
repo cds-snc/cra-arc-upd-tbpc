@@ -1,10 +1,3 @@
-variable "apigw_endpoint_domain" {
-  description = "API Gateway Endpoint Domain for the CRA UPD app"
-  type        = string
-
-  sensitive = true
-}
-
 variable "cloudfront_waf_allowed_ips" {
   description = "List of IP addresses to allow through the CloudFront WAF"
   type        = list(string)
@@ -27,4 +20,26 @@ variable "web_bucket_domain" {
   type        = string
 
   sensitive = true
+}
+
+variable "loadbalancer_arn" {
+  description = "The ARN of the ECS load balancer."
+  type        = string
+}
+
+variable "loadbalancer_dns_name" {
+  description = "The private DNS name of the ECS load balancer."
+  type        = string
+
+  sensitive = true
+}
+
+variable "hosted_zone_id" {
+  description = "The ID of the Route 53 hosted zone."
+  type        = string
+}
+
+variable "cloudfront_acm_cert" {
+  description = "The ARN of the CloudFront ACM certificate."
+  type        = string
 }

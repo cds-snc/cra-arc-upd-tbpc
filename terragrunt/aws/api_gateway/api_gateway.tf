@@ -1,0 +1,1 @@
+# Empty file, to be removed after resources are destroyed
