@@ -84,6 +84,7 @@ jobs:
           - module: network
           - module: s3
           - module: ssm
+          - module: route53
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
