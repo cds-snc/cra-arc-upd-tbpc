@@ -3,12 +3,14 @@ from datetime import datetime
 import polars as pl
 import pyarrow
 from pymongoarrow.api import Schema
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, TypeVar, Union, overload
 from ..sampling import SamplingContext
 from ..utils import convert_objectids
 
 
 type PartitionBy = Union[Literal["month"], Literal["year"]]
+
+AnyFrame = TypeVar("AnyFrame", pl.DataFrame, pl.LazyFrame)
 
 
 class ParquetModel(abc.ABC):
@@ -29,10 +31,14 @@ class ParquetModel(abc.ABC):
     def transform(self, df: pl.DataFrame) -> pl.DataFrame:
         pass
 
+    @overload
+    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame: ...
+
+    @overload
+    def reverse_transform(self, df: pl.LazyFrame) -> pl.LazyFrame: ...
+
     @abc.abstractmethod
-    def reverse_transform(
-        self, df: pl.DataFrame, with_objectid_instances: bool = True
-    ) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         pass
 
     def get_sampling_filter(self, sampling_context: SamplingContext) -> Optional[dict]:
@@ -72,18 +78,28 @@ class MongoCollection:
         "attachments": [],
     }
 
+    @overload
+    def assemble(
+        self, primary_df: pl.DataFrame, secondary_dfs: Optional[List[pl.DataFrame]]
+    ) -> pl.DataFrame: ...
+
+    @overload
+    def assemble(
+        self, primary_df: pl.LazyFrame, secondary_dfs: Optional[List[pl.LazyFrame]]
+    ) -> pl.LazyFrame: ...
+
     def assemble(
         self,
-        primary_df: pl.DataFrame,
-        secondary_dfs: Optional[List[pl.DataFrame]] = None,
-    ) -> pl.DataFrame:
+        primary_df: AnyFrame,
+        secondary_dfs: Optional[List[AnyFrame]] = None,
+    ) -> AnyFrame:
         if secondary_dfs is None or len(secondary_dfs) == 0:
             return primary_df
 
         df = primary_df
 
         for secondary_df in secondary_dfs:
-            df = df.join(secondary_df, on="_id", how="left")
+            df = df.join(secondary_df, on="_id", how="left", maintain_order="left")
 
         return df
 

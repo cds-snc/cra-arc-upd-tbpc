@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import int64, string, timestamp, list_, float64, int32
 from pymongoarrow.types import ObjectIdType
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from .aa_searchterms import AASearchTerms
 from .activity_map import ActivityMap
 from .gsc_searchterms import GSCSearchTerms
@@ -77,7 +77,7 @@ class PageMetrics(ParquetModel):
             pl.col("gsc_total_position").round(4).cast(pl.Float32),
         ).sort("date", "url")
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("page").str.decode("hex"),

@@ -4,7 +4,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, list_, int32, struct, timestamp
 from pymongoarrow.types import ObjectIdType
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 from .utils import get_sample_ids
 
@@ -60,7 +60,7 @@ class Tasks(ParquetModel):
             pl.col("pages").list.eval(pl.element().bin.encode("hex")),
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("ux_tests").list.eval(pl.element().str.decode("hex")),

@@ -2,7 +2,7 @@ import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import string, list_, struct, timestamp, bool_
 from bson import ObjectId
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
@@ -39,7 +39,7 @@ class CustomReportsRegistry(ParquetModel):
             pl.col("_id").bin.encode("hex"),
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )

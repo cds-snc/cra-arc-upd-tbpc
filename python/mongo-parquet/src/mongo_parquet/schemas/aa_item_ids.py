@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from pymongoarrow.types import ObjectIdType
 from pyarrow import string, list_
 from bson import ObjectId
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 
 
 class AAItemIds(ParquetModel):
@@ -29,7 +29,7 @@ class AAItemIds(ParquetModel):
             pl.col("pages").list.eval(pl.element().bin.encode("hex")),
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("page").str.decode("hex"),

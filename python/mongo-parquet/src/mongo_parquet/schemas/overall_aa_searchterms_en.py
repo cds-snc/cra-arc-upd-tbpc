@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, float64, int32, struct
 from pymongoarrow.types import ObjectIdType
-from . import ParquetModel
+from . import AnyFrame, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
@@ -71,7 +71,7 @@ class OverallAASearchTermsEn(ParquetModel):
             .sort("date")
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
                 [

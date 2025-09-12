@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from functools import lru_cache
+from typing import Literal
 import polars as pl
 from pymongoarrow.types import ObjectId
 
@@ -85,6 +86,25 @@ def parse_objectids(row, objectid_fields: list[str]):
         if key in row:
             row[key] = convert_objectids(row[key])
     return row
+
+
+def get_partition_values(
+    df: pl.LazyFrame, partition_by: Literal["month", "year"]
+) -> list[dict[str, int]]:
+    partition_cols = ["year", "month"] if partition_by == "month" else ["year"]
+
+    if not all(col in df.collect_schema().names() for col in partition_cols):
+        raise ValueError(
+            f"Partition columns {partition_cols} not found in the DataFrame."
+        )
+
+    return (
+        df.select(partition_cols)
+        .unique(partition_cols)
+        .sort(partition_cols)
+        .collect()
+        .to_dicts()
+    )
 
 
 __all__ = [

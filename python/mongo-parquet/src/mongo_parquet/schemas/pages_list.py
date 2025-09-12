@@ -2,7 +2,7 @@ import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import string, timestamp
 from bson import ObjectId
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
@@ -35,7 +35,7 @@ class PagesList(ParquetModel):
             pl.col("lang").fill_null("").str.strip_chars(),  # normalize empty/null lang
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )

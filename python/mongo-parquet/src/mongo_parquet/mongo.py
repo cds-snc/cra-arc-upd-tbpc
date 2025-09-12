@@ -127,12 +127,11 @@ class MongoArrowClient:
         :param model: The model representing the MongoDB collection.
         :param df: The DataFrame containing the data to insert.
         """
-        print(f"Preparing data for insertion into {model.collection} collection...")
         records = model.prepare_for_insert(df)
 
-        print(f"Inserting data into {model.collection} collection...")
         self.db[model.collection].insert_many(records)
-        print(f"Inserted {len(records)} records into {model.collection} collection.")
+
+        del records
 
 
 __all__ = [

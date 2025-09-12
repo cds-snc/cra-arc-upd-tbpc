@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, int32, timestamp, list_, struct
 from pymongoarrow.types import ObjectIdType
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
@@ -65,7 +65,7 @@ class Reports(ParquetModel):
             pl.col("fr_attachment").list.eval(attachment_field),
         ).sort("date")
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         attachment_field = pl.struct(
             [
                 pl.element().struct.field("id"),

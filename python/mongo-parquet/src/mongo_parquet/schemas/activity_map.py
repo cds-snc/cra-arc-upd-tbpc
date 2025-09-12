@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, int32, struct
 from pymongoarrow.types import ObjectIdType
-from . import ParquetModel
+from . import AnyFrame, ParquetModel
 from .utils import get_sample_ids, get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
@@ -85,7 +85,7 @@ class ActivityMap(ParquetModel):
             .sort("date", "url", "clicks", descending=[False, False, True])
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
                 [
@@ -101,7 +101,6 @@ class ActivityMap(ParquetModel):
             )
             .group_by("_id")
             .agg(pl.col("activity_map").implode())
-            .rechunk()
         )
 
     def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:

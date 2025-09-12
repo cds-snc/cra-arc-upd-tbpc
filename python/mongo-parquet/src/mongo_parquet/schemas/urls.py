@@ -3,7 +3,7 @@ import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import bool_, string, timestamp, list_, struct
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 from ..utils import array_to_object, convert_objectids
 
@@ -87,7 +87,7 @@ class Urls(ParquetModel):
             pl.col("page").bin.encode("hex"),
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("page").str.decode("hex"),

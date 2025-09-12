@@ -10,7 +10,7 @@ from .mongo import MongoConfig, MongoArrowClient
 from .sampling import SamplingContext
 from .storage import StorageClient
 from .schemas import MongoCollection, ParquetModel
-from .utils import month_range, year_range
+from .utils import get_partition_values, month_range, year_range
 
 # Patch pymongo to support Arrow
 patch_all()
@@ -203,51 +203,22 @@ class MongoParquetIO:
         collection_model: MongoCollection,
         sample: Optional[bool] = None,
         remote: Optional[bool] = None,
+        batch_size: int | None = 50_000,
     ):
         """
-        Import data from Parquet files into a MongoDB collection.
+        Insert batches of data into a MongoDB collection.
 
         :param collection_model: The model representing the MongoDB collection.
-        :param sample: Whether to import a sample of the data.
-        :param remote: Whether to import data from a remote source.
+        :param sample: Whether to use a sample of the data.
+        :param remote: Whether to read data from a remote source.
+        :param batch_size: The number of records to insert in each batch.
         """
-
         start_time = datetime.now()
-
-        if (
-            sample is not True
-            and collection_model.primary_model.partition_by is not None
-        ):
-            self.import_from_parquet_partitioned(
-                collection_model,
-                sample=sample,
-                remote=remote,
-            )
-            print(f"Import completed in {datetime.now() - start_time}")
-            return
-
-        print(f"📥 Importing {collection_model.collection} from Parquet...")
-
-        def prepare_df(model: ParquetModel) -> pl.DataFrame | None:
-            df = self.storage.read_parquet(
-                model.parquet_filename, sample=sample or False, remote=remote or False
-            )
-
-            if df is None or df.is_empty():
-                print(f"No data found in {model.parquet_filename}, skipping...")
-                return
-
-            print(f"Found {len(df)} records in {model.parquet_filename}")
-
-            return model.reverse_transform(df)
-
-        primary_df = prepare_df(collection_model.primary_model)
-
-        if primary_df is None:
-            print(
-                f"No data found for primary model {collection_model.primary_model.parquet_filename}, skipping..."
-            )
-            return
+        formatted_datetime = start_time.strftime("%H:%M:%S")
+        print(
+            f"📥 [{formatted_datetime}] Importing {collection_model.collection} from Parquet..."
+        )
+        is_partitioned = collection_model.primary_model.partition_by is not None
 
         # create collection if it doesn't exist
         if (
@@ -256,88 +227,47 @@ class MongoParquetIO:
         ):
             self.db.db.create_collection(collection_model.collection)
 
-        if (
-            collection_model.secondary_models is None
-            or len(collection_model.secondary_models) == 0
-        ):
-            df = primary_df
-        else:
-            # If there are secondary models, prepare them
-            print(f"Preparing secondary models for {collection_model.collection}...")
-
-            secondary_dfs = [
-                prepare_df(model) for model in collection_model.secondary_models
-            ]
-
-            secondary_dfs = [df for df in secondary_dfs if df is not None]
-
-            df = collection_model.assemble(primary_df, secondary_dfs=secondary_dfs)
-
-        len_df = len(df)
-        self.db.insert_many(collection_model, df)
-
-        print(f"Inserted {len_df} records into {collection_model.collection}")
-        print(f"Import completed in {datetime.now() - start_time}")
-
-    def import_from_parquet_partitioned(
-        self,
-        collection_model: MongoCollection,
-        sample: Optional[bool] = None,
-        remote: Optional[bool] = None,
-    ):
-        """
-        Import data from partitioned Parquet files into a MongoDB collection.
-
-        :param collection_model: The model representing the MongoDB collection.
-        :param sample: Whether to import a sample of the data.
-        :param remote: Whether to import data from a remote source.
-        """
-        print(f"📥 Importing {collection_model.collection} from partitioned Parquet...")
-
-        def read_partitioned(filename: str):
-            return self.storage.read_parquet_partitioned(
-                filename,
+        def read_df(model: ParquetModel):
+            return self.storage.scan_parquet(
+                model.parquet_filename,
                 sample=sample or False,
                 remote=remote or False,
+                hive_partitioning=is_partitioned and not sample,
             )
 
-        primary_lf = read_partitioned(collection_model.primary_model.parquet_filename)
-        secondary_lfs = (
-            [
-                (model, read_partitioned(model.parquet_filename))
-                for model in collection_model.secondary_models
-            ]
+        primary_df = read_df(collection_model.primary_model)
+        secondary_dfs = (
+            [read_df(model) for model in collection_model.secondary_models]
             if len(collection_model.secondary_models) != 0
             else []
         )
 
-        if collection_model.primary_model.partition_by is None:
-            raise ValueError(
-                "Tried to import partitioned data without a partition_by field. "
+        if sample or not is_partitioned:
+            primary_df = collection_model.primary_model.reverse_transform(primary_df)
+            self.insert_batches(
+                primary_df,
+                [
+                    model.reverse_transform(df)
+                    for model, df in zip(
+                        collection_model.secondary_models, secondary_dfs
+                    )
+                ],
+                collection_model,
+                batch_size=batch_size,
             )
-
-        partition_cols = (
-            ["year", "month"]
-            if collection_model.primary_model.partition_by == "month"
-            else ["year"]
-        )
-
-        if not all(
-            col in primary_lf.collect_schema().names() for col in partition_cols
-        ):
-            raise ValueError(
-                f"Partition columns {partition_cols} not found in the DataFrame."
-            )
+            print(f"Import completed in {datetime.now() - start_time}")
+            return
 
         partition_values = (
-            primary_lf.select(partition_cols)
-            .unique(partition_cols)
-            .sort(partition_cols)
-            .collect()
-            .to_dicts()
+            get_partition_values(
+                primary_df,
+                collection_model.primary_model.partition_by,  # type: ignore
+            )
+            if is_partitioned
+            else None
         )
 
-        if len(partition_values) == 0:
+        if partition_values is None or len(partition_values) == 0:
             # If there are no partition values, skip the import
             print(
                 f"No data found in {collection_model.primary_model.parquet_filename}, skipping..."
@@ -345,19 +275,6 @@ class MongoParquetIO:
             return
 
         print(f"Found {len(partition_values)} partitions to process.")
-
-        def prepare_df(
-            model: ParquetModel, lf: pl.LazyFrame, filter: list[pl.Expr]
-        ) -> pl.DataFrame | None:
-            df = lf.filter(*filter).collect()
-
-            if df is None or df.is_empty():
-                print(f"No data found in {model.parquet_filename}, skipping...")
-                return
-
-            print(f"Found {len(df)} records in {model.parquet_filename} for partition")
-
-            return model.reverse_transform(df)
 
         for partition in partition_values:
             month_str = f"-{partition.get('month', '')}" if "month" in partition else ""
@@ -369,42 +286,86 @@ class MongoParquetIO:
             # Filter the DataFrame for the current partition
             partition_filter = [pl.col(col).eq(val) for col, val in partition.items()]
 
-            primary_df = prepare_df(
-                collection_model.primary_model, primary_lf, partition_filter
+            partition_primary_df = primary_df.filter(*partition_filter)
+            partition_primary_df = collection_model.primary_model.reverse_transform(
+                partition_primary_df
             )
 
-            if primary_df is None or primary_df.is_empty():
-                print(f"No data found for partition {partition}, skipping...")
+            if (
+                partition_primary_df is None
+                or partition_primary_df.collect().is_empty()
+            ):
+                print(f"df for partition {partition} is None or empty, skipping...")
                 continue
 
-            print(f"Found {len(primary_df)} records in partition {partition_str}")
-
-            # create collection if it doesn't exist
-            if (
-                collection_model.primary_model.collection
-                not in self.db.db.list_collection_names()
-            ):
-                self.db.db.create_collection(collection_model.collection)
-
-            if len(secondary_lfs) == 0:
-                df = primary_df
-
-            secondary_dfs = [
-                prepare_df(model, lf, partition_filter) for model, lf in secondary_lfs
+            partition_secondary_dfs = [
+                df.filter(*partition_filter) for df in secondary_dfs
+            ]
+            partition_secondary_dfs = [
+                model.reverse_transform(df)
+                for model, df in zip(
+                    collection_model.secondary_models, partition_secondary_dfs
+                )
             ]
 
-            secondary_dfs = [df for df in secondary_dfs if df is not None]
-
-            df = collection_model.assemble(primary_df, secondary_dfs=secondary_dfs)
-
-            self.db.insert_many(collection_model, df)
-
-            print(
-                f"Inserted {len(primary_df)} records into {collection_model.collection}"
+            self.insert_batches(
+                partition_primary_df,
+                partition_secondary_dfs,
+                collection_model,
+                batch_size=batch_size,
             )
+
             print(
                 f"Import for partition {partition_str} completed in {datetime.now() - start_time}"
             )
+
+    def insert_batches(
+        self,
+        primary_df: pl.LazyFrame,
+        secondary_dfs: list[pl.LazyFrame],
+        collection_model: MongoCollection,
+        batch_size: int | None = 50_000,
+    ):
+        print(f"Inserting data into {collection_model.collection} collection...")
+
+        # Ensure primary_df is sorted by _id
+        primary_df = primary_df.clone().sort("_id")
+
+        len_df = 0
+
+        while True:
+            if batch_size is None:
+                batch_primary_df = primary_df
+            else:
+                batch_primary_df = primary_df.slice(len_df, batch_size)
+
+            df = collection_model.assemble(
+                batch_primary_df,
+                secondary_dfs=secondary_dfs if len(secondary_dfs) > 0 else None,
+            )
+
+            batch_df = df.collect(engine="streaming")
+
+            if batch_df is None or (batch_df.is_empty() and len_df == 0):
+                print(
+                    f"No data found for {collection_model.primary_model.collection}, skipping..."
+                )
+                return
+
+            if batch_df.is_empty():
+                break
+
+            self.db.insert_many(collection_model, batch_df)
+
+            len_df += len(batch_df)
+
+            # free memory
+            del batch_df
+
+            if batch_size is None:
+                break
+
+        print(f"Inserted {len_df} records into {collection_model.collection}")
 
 
 __all__ = [

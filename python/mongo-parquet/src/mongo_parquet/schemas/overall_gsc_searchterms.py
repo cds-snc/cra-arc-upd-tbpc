@@ -5,7 +5,7 @@ from pymongoarrow.types import struct
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, float64, int32
 from pymongoarrow.types import ObjectIdType
-from . import ParquetModel
+from . import AnyFrame, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
@@ -76,7 +76,7 @@ class OverallGSCSearchTerms(ParquetModel):
             .sort("date")
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
                 [
@@ -95,7 +95,7 @@ class OverallGSCSearchTerms(ParquetModel):
             )
             .group_by("_id")
             .agg(
-                pl.col("gsc_searchterms").implode(),
+                pl.col("gsc_searchterms").limit(2000).implode(),
             )
         )
 

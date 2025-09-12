@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, bool_
 from pymongoarrow.types import ObjectIdType
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
@@ -52,7 +52,7 @@ class GcTss(ParquetModel):
             pl.col("tasks").list.eval(pl.element().bin.encode("hex")),
         ).sort("date", "url")
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("tasks").list.eval(pl.element().str.decode("hex")),

@@ -1,9 +1,11 @@
+from logging import warning
 import os
 from bson import ObjectId
 from datetime import datetime
 from dotenv import load_dotenv
 from pymongo.database import Database
 from mongo_parquet import MongoParquet, MongoConfig, SamplingContext, StorageClient
+
 
 def main():
     import argparse
@@ -107,6 +109,12 @@ def main():
         help="List of collections to exclude from the import/export.",
     )
 
+    parser.add_argument(
+        "--drop",
+        action="store_true",
+        help="Drop the collection before importing data.",
+    )
+
     args = parser.parse_args()
 
     if args.include and args.exclude:
@@ -145,6 +153,11 @@ def main():
         print("Invalid storage type. Use 'azure' or 's3'.")
         return
 
+    if args.drop and not args.import_to_mongo:
+        warning(
+            "--drop flag is only applicable with --import-to-mongo. Ignoring --drop."
+        )
+
     db_name = args.db_name or "upd-test"
     sample_dir = args.sample_dir or "sample"
     data_dir = args.data_dir or "data"
@@ -179,6 +192,9 @@ def main():
         return
 
     if args.import_to_mongo:
+        if args.drop:
+            drop_collections(mp.io.db.db)
+
         mp.import_to_mongo(
             remote=args.from_remote, include=args.include, exclude=args.exclude
         )
@@ -238,6 +254,14 @@ def setup_sampling_context(db: Database, sampling_context: SamplingContext):
         }
 
     sampling_context.update_context(get_sampling_context)
+
+
+# doesn't actually drop collections, just empties them, to avoid deleting indexes
+def drop_collections(db: Database):
+    for collection_name in db.list_collection_names():
+        print(f"Emptying collection '{collection_name}'...")
+        db[collection_name].delete_many({})
+        print(f"Collection '{collection_name}' successfully emptied.")
 
 
 if __name__ == "__main__":

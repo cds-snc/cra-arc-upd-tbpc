@@ -2,7 +2,7 @@ import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import int64, timestamp, float64, int32
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from .overall_aa_searchterms_en import OverallAASearchTermsEn
 from .overall_aa_searchterms_fr import OverallAASearchTermsFr
 from .overall_gsc_searchterms import OverallGSCSearchTerms
@@ -64,7 +64,7 @@ class OverallMetrics(ParquetModel):
             pl.col("bouncerate").round(4).cast(pl.Float32),
         ).sort("date")
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )

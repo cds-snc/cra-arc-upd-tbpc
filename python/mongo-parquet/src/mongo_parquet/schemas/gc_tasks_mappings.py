@@ -3,7 +3,7 @@ from pymongoarrow.api import Schema
 from pymongoarrow.types import ObjectIdType
 from pyarrow import string, list_, timestamp
 from bson import ObjectId
-from . import MongoCollection, ParquetModel
+from . import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
@@ -30,7 +30,7 @@ class GcTasksMappings(ParquetModel):
             pl.col("date_mapped").cast(pl.Datetime),
         )
 
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("tasks").list.eval(pl.element().str.decode("hex")),

@@ -5,10 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "polars==1.31.0",
+  "polars==1.33.1",
   "pydantic>=2.10.6",
   "pymongo>=4.10.1",
-  "pymongoarrow==1.9.0",
+  "pymongoarrow==1.10.0",
   "python-dotenv>=1.0.1",
   "zstandard>=0.23.0",
   "adlfs>=2024.12.0",
