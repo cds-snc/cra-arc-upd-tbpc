@@ -204,7 +204,7 @@ class MongoParquetIO:
         sample: Optional[bool] = None,
         remote: Optional[bool] = None,
         batch_size: int | None = 50_000,
-        min_date: Optional[datetime.datetime] = None,
+        min_date: Optional[datetime] = None,
     ):
         """
         Insert batches of data into a MongoDB collection.
