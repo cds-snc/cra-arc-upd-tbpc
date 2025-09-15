@@ -204,6 +204,7 @@ class MongoParquetIO:
         sample: Optional[bool] = None,
         remote: Optional[bool] = None,
         batch_size: int | None = 50_000,
+        min_date: Optional[datetime.datetime] = None,
     ):
         """
         Insert batches of data into a MongoDB collection.
@@ -233,6 +234,7 @@ class MongoParquetIO:
                 sample=sample or False,
                 remote=remote or False,
                 hive_partitioning=is_partitioned and not sample,
+                min_date=min_date,
             )
 
         primary_df = read_df(collection_model.primary_model)

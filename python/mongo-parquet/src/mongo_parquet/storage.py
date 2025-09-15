@@ -1,4 +1,5 @@
 import os
+import datetime
 from typing import Literal, Optional, Union
 import adlfs
 import fsspec
@@ -114,6 +115,7 @@ class StorageClient:
         sample: bool = False,
         remote: bool = False,
         hive_partitioning: bool = False,
+        min_date: Optional[datetime.datetime] = None,
     ) -> pl.LazyFrame:
         print(f"📥 Reading {filename}...")
         local_filepath = self.target_filepath(filename, sample=sample, remote=False)
@@ -124,7 +126,15 @@ class StorageClient:
         if not os.path.exists(local_filepath):
             raise FileNotFoundError(f"Local file {local_filepath} does not exist.")
 
-        return pl.scan_parquet(local_filepath, hive_partitioning=hive_partitioning)
+        lf = pl.scan_parquet(local_filepath, hive_partitioning=hive_partitioning)
+
+        if min_date and "date" in lf.columns:
+            lf = lf.filter(
+                pl.col("date")
+                >= pl.date(year=min_date.year, month=min_date.month, day=min_date.day)
+            )
+
+        return lf
 
     def read_parquet(
         self,
@@ -132,9 +142,14 @@ class StorageClient:
         sample: bool = False,
         remote: bool = False,
         hive_partitioning: bool = False,
+        min_date: Optional[datetime.datetime] = None,
     ) -> pl.DataFrame:
         return self.scan_parquet(
-            filename, sample=sample, remote=remote, hive_partitioning=hive_partitioning
+            filename,
+            sample=sample,
+            remote=remote,
+            hive_partitioning=hive_partitioning,
+            min_date=min_date,
         ).collect()
 
     def write_parquet(
@@ -158,8 +173,6 @@ class StorageClient:
             f"☁️ Downloading Parquet files from remote storage `{self.remote_container}/{local_dir_path}`..."
         )
 
-        download_paths = []
-
         for file in files:
             remote_path = self.target_filepath(file, sample=sample, remote=True)
 
@@ -177,12 +190,17 @@ class StorageClient:
                 os.makedirs(local_filepath, exist_ok=True)
 
                 dir_glob = os.path.normpath(f"{remote_path}/**/*.parquet")
-                download_paths.append(dir_glob)
+
+                dirname = os.path.basename(remote_path)
+
+                self.remote_fs.get(
+                    dir_glob,
+                    f"{local_dirpath}/{dirname}/",
+                    recursive=True,
+                )
             else:
                 os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-                download_paths.append(remote_path)
-
-        self.remote_fs.get(download_paths, f"{local_dirpath}/", recursive=True)
+                self.remote_fs.get(remote_path, local_filepath)
 
 
 __all__ = [

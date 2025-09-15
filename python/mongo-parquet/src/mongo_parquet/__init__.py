@@ -4,6 +4,7 @@ mongo_parquet package
 This package provides utilities for working with MongoDB and converting data to Parquet format.
 """
 
+import datetime
 from pymongo.collection import Collection
 from .io import MongoParquetIO
 from .mongo import MongoConfig
@@ -123,6 +124,7 @@ class MongoParquet:
         remote: Optional[bool] = None,
         include: Optional[list[str]] = None,
         exclude: Optional[list[str]] = None,
+        min_date: Optional[datetime.datetime] = None,
     ):
         """
         Import data from Parquet files back to MongoDB.
@@ -150,16 +152,25 @@ class MongoParquet:
                 model,
                 sample=sample or self.sample,
                 remote=remote or False,
+                min_date=min_date,
             )
 
-    def download_from_remote(self, sample: Optional[bool] = None):
+    def download_from_remote(
+        self,
+        sample: Optional[bool] = None,
+        include: Optional[list[str]] = None,
+        exclude: Optional[list[str]] = None,
+    ):
         """
         Download Parquet files from remote storage.
 
         :param sample: Whether to download sample files.
         """
         filenames = [
-            model.primary_model.parquet_filename for model in self.collection_models
+            model.primary_model.parquet_filename
+            for model in self.collection_models
+            if (not include or model.collection in include)
+            and (not exclude or model.collection not in exclude)
         ]
 
         self.storage_client.download_from_remote(

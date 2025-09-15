@@ -110,6 +110,12 @@ def main():
     )
 
     parser.add_argument(
+        "--min-date",
+        type=str,
+        help="Minimum date for filtering documents to use when importing. (YYYY-MM-DD format)",
+    )
+
+    parser.add_argument(
         "--drop",
         action="store_true",
         help="Drop the collection before importing data.",
@@ -196,7 +202,10 @@ def main():
             drop_collections(mp.io.db.db)
 
         mp.import_to_mongo(
-            remote=args.from_remote, include=args.include, exclude=args.exclude
+            remote=args.from_remote,
+            include=args.include,
+            exclude=args.exclude,
+            min_date=datetime.fromisoformat(args.min_date) if args.min_date else None,
         )
         timer_end()
         return
@@ -207,7 +216,7 @@ def main():
         return
 
     if args.download_from_remote:
-        mp.download_from_remote()
+        mp.download_from_remote(include=args.include, exclude=args.exclude)
         timer_end()
         return
 
