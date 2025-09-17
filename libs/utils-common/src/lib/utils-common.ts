@@ -1,3 +1,4 @@
+import { TasksHomeAggregatedData } from '@dua-upd/types-common';
 import chalk from 'chalk';
 
 // Utility function for to help with rate-limiting within async functions
@@ -857,3 +858,148 @@ export const $trunc = (
     Math.pow(10, precision),
   ],
 });
+
+type Metric = 'visits' | 'calls' | 'dyf_total' | 'survey';
+const METRIC_KEYS: Metric[] = ['visits', 'calls', 'dyf_total', 'survey'];
+
+interface DistributionStats {
+  min: number;
+  max: number;
+  p5: number;
+  p95: number;
+}
+type StatsByMetric = {
+  visits: DistributionStats;
+  calls: DistributionStats;
+  dyf_total: DistributionStats;
+  survey: DistributionStats;
+};
+type MetricWeights = {
+  visits: number;
+  calls: number;
+  dyf_total: number;
+  survey: number;
+};
+
+export const METRIC_WEIGHTS: MetricWeights = {
+  visits: 50,
+  calls: 30,
+  dyf_total: 10,
+  survey: 10,
+};
+
+const calculatePercentile = (
+  sortedAsc: number[],
+  percentile: number,
+): number => {
+  const size = sortedAsc.length;
+  const rank = 1 + (size - 1) * percentile;
+  const lowerRank = Math.floor(rank);
+  const fraction = rank - lowerRank;
+  const lowerValue = sortedAsc[lowerRank - 1]!;
+  const upperValue = sortedAsc[lowerRank]!;
+
+  return lowerValue + fraction * (upperValue - lowerValue);
+};
+
+const computeDistributionStats = (arr: number[]): DistributionStats => {
+  const data = arr.filter((v) => typeof v === 'number' && Number.isFinite(v));
+  if (data.length === 0) return { min: NaN, max: NaN, p5: NaN, p95: NaN };
+  let min = data[0]!,
+    max = data[0]!;
+  for (let i = 1; i < data.length; i++) {
+    const v = data[i]!;
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  const sorted = [...data].sort((a, b) => a - b);
+  const p5 = calculatePercentile(sorted, 0.05);
+  const p95 = calculatePercentile(sorted, 0.95);
+  return { min, max, p5, p95 };
+};
+
+const normalizeWithinPercentileRange = (
+  rawValue: unknown,
+  p5th: unknown,
+  p95th: unknown,
+): number | undefined => {
+  const value = Number(rawValue),
+    low = Number(p5th),
+    high = Number(p95th);
+  if (
+    !Number.isFinite(value) ||
+    !Number.isFinite(low) ||
+    !Number.isFinite(high)
+  )
+    return undefined;
+  const span = high - low;
+  if (!(span > 0)) return undefined;
+  const clamped = Math.max(Math.min(value, high), low);
+  return (clamped - low) / span;
+};
+
+const tailBonusAboveP95 = (
+  rawValue: unknown,
+  p95th: unknown,
+  rawMax: unknown,
+  tailCap: number,
+): number => {
+  const value = Number(rawValue),
+    p95 = Number(p95th),
+    maxVal = Number(rawMax);
+  if (
+    !Number.isFinite(value) ||
+    !Number.isFinite(p95) ||
+    !Number.isFinite(maxVal)
+  )
+    return 0;
+  if (!(value > p95) || !(maxVal > p95) || !(tailCap > 0)) return 0;
+  const tailSpan = maxVal - p95;
+  const proportion = (value - p95) / tailSpan;
+  return Math.max(0, Math.min(1, proportion)) * tailCap;
+};
+
+export function computeMetricWeightedScore(
+  rawValue: unknown,
+  p5th: number,
+  p95th: number,
+  maxVal: number,
+  weight: number,
+): number | undefined {
+  const base = normalizeWithinPercentileRange(rawValue, p5th, p95th);
+  if (base === undefined) return undefined;
+  const tailCap = 1 / weight;
+  const tail = tailBonusAboveP95(rawValue, p95th, maxVal, tailCap);
+  return base * (weight - 1) + tail * weight;
+}
+
+export async function getGlobalMetricStats(
+  tasks: TasksHomeAggregatedData[],
+): Promise<StatsByMetric> {
+  const metrics = {
+    visits: [],
+    calls: [],
+    dyf_total: [],
+    survey: [],
+  } as Record<Metric, number[]>;
+
+  for (const t of tasks ?? []) {
+    const dyfNo = Number(t['dyf_no']);
+    const dyfYes = Number(t['dyf_yes']);
+
+    const dyfTotal =
+      (Number.isFinite(dyfNo) ? dyfNo : 0) +
+      (Number.isFinite(dyfYes) ? dyfYes : 0);
+
+    if (dyfTotal !== 0) metrics['dyf_total'].push(dyfTotal);
+
+    for (const k of ['visits', 'calls', 'survey'] as const) {
+      const n = Number(t[k]);
+      if (Number.isFinite(n) && n !== 0) metrics[k].push(n);
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(metrics).map(([k, v]) => [k, computeDistributionStats(v)]),
+  ) as StatsByMetric;
+}

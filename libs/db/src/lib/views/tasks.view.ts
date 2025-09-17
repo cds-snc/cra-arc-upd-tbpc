@@ -893,6 +893,7 @@ export class TasksViewService extends DbViewNew<
       user_type: string[];
       calls: number;
       calls_per_100_visits: number;
+      dyf_yes: number;
       dyf_no: number;
       dyf_no_per_1000_visits: number;
       survey: number;
@@ -930,6 +931,7 @@ export class TasksViewService extends DbViewNew<
         },
       },
       dyf_no: '$dyfNo',
+      dyf_yes: '$dyfYes',
       dyf_no_per_1000_visits: {
         $multiply: ['$dyfNoPerVisit', 1000],
       },
