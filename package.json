@@ -29,6 +29,7 @@
     "analyze-bundle:api": "webpack-bundle-analyzer dist/apps/api/stats.json",
     "pre-pr": "npm run lint && npm run build:parallel",
     "translations": "npm run db-script -- -ngenerateTaskTranslations",
+    "aws-sso": "bash .devcontainer/aws-sso-init.sh",
     "mongo-parquet:sync": "cd python/mongo-parquet && uv sync",
     "mongo-parquet": "cd python/mongo-parquet/src && uv run mongo_parquet",
     "mongo-parquet:download": "npm run mongo-parquet -- --download-from-remote",
