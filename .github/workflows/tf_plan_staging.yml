@@ -26,8 +26,8 @@ env:
   FEEDBACK_API_HOST: ${{ secrets.FEEDBACK_API_HOST }}
   FEEDBACK_API_USERNAME: ${{ secrets.FEEDBACK_API_USERNAME }}
   FEEDBACK_API_PASSWORD: ${{ secrets.FEEDBACK_API_PASSWORD }}
-  GSC_EMAIL: ${{ secrets.GSC_EMAIL }}
-  GSC_KEY: ${{ secrets.GSC_KEY }}
+  GSC_EMAIL: ${{ secrets.GSC_EMAIL_STAGING }}
+  GSC_KEY: ${{ secrets.GSC_KEY_STAGING }}
   NOTIFY_API_KEY: ${{ secrets.NOTIFY_API_KEY }}
   NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
   NOTIFY_EMAIL_2: ${{ secrets.NOTIFY_EMAIL_2 }}
