@@ -1,12 +1,14 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, int32, timestamp, list_, struct
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
+@final
 class Reports(ParquetModel):
     collection: str = "reports"
     parquet_filename: str = "reports.parquet"
@@ -47,7 +49,8 @@ class Reports(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         attachment_field = pl.struct(
             [
                 pl.element().struct.field("id").cast(pl.String),
@@ -65,6 +68,7 @@ class Reports(ParquetModel):
             pl.col("fr_attachment").list.eval(attachment_field),
         ).sort("date")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         attachment_field = pl.struct(
             [
@@ -83,12 +87,13 @@ class Reports(ParquetModel):
             pl.col("fr_attachment").list.eval(attachment_field),
         )
 
-    def get_sampling_filter(self, _: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         return self.filter or {}
 
 
+@final
 class ReportsModel(MongoCollection):
     collection = "reports"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = Reports()
-
-

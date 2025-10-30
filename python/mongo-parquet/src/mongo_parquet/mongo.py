@@ -6,7 +6,7 @@ from pymongoarrow.api import (
 )
 from pymongo import MongoClient
 from pymongoarrow.monkey import patch_all
-from typing import Optional
+from typing import final
 import urllib.parse
 
 from .schemas import MongoCollection, ParquetModel
@@ -15,15 +15,16 @@ from .utils import ensure_dataframe
 patch_all()
 
 
+@final
 class MongoConfig:
     def __init__(
         self,
         db_name: str,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        tls_ca_file: Optional[str] = None,
+        host: str | None = None,
+        port: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        tls_ca_file: str | None = None,
     ):
         self.db_name = db_name
         self.host = host or os.getenv("DB_HOST", "localhost")
@@ -56,6 +57,7 @@ class MongoConfig:
         return f"mongodb://{self.host}:{self.port}/"
 
 
+@final
 class MongoArrowClient:
     def __init__(self, client: MongoClient, db_name: str):
         patch_all()
@@ -75,7 +77,7 @@ class MongoArrowClient:
     def find(
         self,
         model: ParquetModel,
-        filter: Optional[dict] = None,
+        filter: dict | None = None,
     ) -> pl.DataFrame:
         # * note: pipelines currently don't support sample filtering
         # * and need filtering to be done in the pipeline
@@ -111,7 +113,7 @@ class MongoArrowClient:
 
         results = ensure_dataframe(results)
 
-        if model.transform:
+        if model.transform:  # pyright: ignore[reportUnnecessaryComparison]
             return model.transform(results)
 
         return results

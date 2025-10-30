@@ -227,9 +227,11 @@ export abstract class DbViewNew<
       );
     }
 
-    const refreshFilter = pick(this.refreshFilterProps, filter);
+    if (process.env.AUTO_REFRESH_VIEWS) {
+      const refreshFilter = pick(this.refreshFilterProps, filter);
 
-    await this.refreshIfStale(refreshFilter as FilterQuery<DocT<SchemaT>>);
+      await this.refreshIfStale(refreshFilter as FilterQuery<DocT<SchemaT>>);
+    }
 
     return this._model
       .find(filter, projection, options)
@@ -267,7 +269,9 @@ export abstract class DbViewNew<
       );
     }
 
-    await this.refreshIfStale(filter);
+    if (process.env.AUTO_REFRESH_VIEWS) {
+      await this.refreshIfStale(filter);
+    }
 
     return this._model
       .findOne(filter, projection, options)
@@ -289,7 +293,7 @@ export abstract class DbViewNew<
 
     return new Proxy(this._model.aggregate<T>([], options).match(filter), {
       get: (target, prop) => {
-        if (prop === 'exec') {
+        if (process.env.AUTO_REFRESH_VIEWS && prop === 'exec') {
           return async () => {
             await this.refreshIfStale(
               refreshFilter as FilterQuery<DocT<SchemaT>>,

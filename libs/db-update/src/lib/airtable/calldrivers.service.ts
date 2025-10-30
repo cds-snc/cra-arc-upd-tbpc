@@ -43,11 +43,8 @@ export class CalldriversService {
         (calldriverData) =>
           ({
             _id: new Types.ObjectId(),
-            calls: 0,
-            impact: 0,
-            tpc_id: 999999,
             ...calldriverData,
-          }) as CallDriver,
+          }) satisfies CallDriver,
       );
 
       if (calldriversData.length === 0) {

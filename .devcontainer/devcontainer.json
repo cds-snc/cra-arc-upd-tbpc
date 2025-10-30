@@ -42,5 +42,5 @@
   "remoteUser": "node",
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "bun install --ignore-scripts && chmod +x .devcontainer/get-duckdb-node-binding.sh && .devcontainer/get-duckdb-node-binding.sh && npm run mongo-parquet:sync && npm run mongo-parquet:seed-mongo"
+  "postCreateCommand": ".devcontainer/post-create.sh"
 }

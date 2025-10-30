@@ -6,6 +6,8 @@
 import type { Readable } from 'stream';
 import type { CompressionAlgorithm } from '@dua-upd/node-utils';
 import type { RegisteredBlobModel } from './storage.service';
+import type { CompleteMultipartUploadCommandOutput } from '@aws-sdk/client-s3';
+import type { BlobUploadCommonResponse } from '@azure/storage-blob';
 
 export type StorageProvider = 'azure' | 's3';
 
@@ -58,7 +60,9 @@ export interface IStorageClient<ContainerClientT> {
   /**
    * Get a container/bucket by name
    */
-  container(containerName: string): Promise<IStorageContainer<ContainerClientT> | null>;
+  container(
+    containerName: string,
+  ): Promise<IStorageContainer<ContainerClientT> | null>;
 
   /**
    * List all containers/buckets
@@ -97,6 +101,9 @@ export interface IStorageModel<ContainerClientT> {
    * Get the container this model belongs to
    */
   getContainer(): IStorageContainer<ContainerClientT>;
+
+  /** Get the path this model uses within the container */
+  getPath(): string;
 
   /**
    * Create a blob/object client
@@ -186,7 +193,7 @@ export interface IStorageBlob {
   uploadStream<T extends Readable>(
     stream: T,
     overwrite?: boolean,
-  ): Promise<any>;
+  ): Promise<CompleteMultipartUploadCommandOutput | BlobUploadCommonResponse>;
 
   /**
    * Download to a string

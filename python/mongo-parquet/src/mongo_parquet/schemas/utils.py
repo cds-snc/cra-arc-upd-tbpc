@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import Literal
 from bson import ObjectId
 from ..sampling import SamplingContext
 
 
-def get_sample_ids(sampling_context: SamplingContext, id_type: str) -> list:
+def get_sample_ids(sampling_context: SamplingContext, id_type: str) -> list[ObjectId]:
     """
     Get sample IDs from the sampling context.
 
@@ -11,16 +12,16 @@ def get_sample_ids(sampling_context: SamplingContext, id_type: str) -> list:
     :param id_type: The type of IDs to retrieve (e.g., "task", "page", "project").
     :return: A list of sample IDs.
     """
-    sample_ids = sampling_context.get(f"{id_type}_ids")
+    sample_ids: list[ObjectId] = sampling_context.get(f"{id_type}_ids")
 
     if not sample_ids:
         raise ValueError(
             f"Tried to get {id_type}_ids from sampling context, but it was not set."
         )
-    if not isinstance(sample_ids, list) or len(sample_ids) == 0:
+    if not isinstance(sample_ids, list) or len(sample_ids) == 0:  # pyright: ignore[reportUnnecessaryIsInstance]
         raise ValueError(f"{id_type}_ids in sampling context must be a non-empty list.")
 
-    if not isinstance(sample_ids[0], ObjectId) and not isinstance(sample_ids[0], str):
+    if not isinstance(sample_ids[0], ObjectId) and not isinstance(sample_ids[0], str):  # pyright: ignore[reportUnnecessaryIsInstance]
         raise ValueError(
             f"{id_type}_ids in sampling context must contain ObjectId instances or strings."
         )
@@ -31,7 +32,9 @@ def get_sample_ids(sampling_context: SamplingContext, id_type: str) -> list:
     return sample_ids
 
 
-def get_sample_date_range_filter(sampling_context: SamplingContext) -> dict:
+def get_sample_date_range_filter(
+    sampling_context: SamplingContext,
+) -> dict[Literal["date"], dict[Literal["$gte", "$lte"], datetime]]:
     """
     Get the sample date range from the sampling context.
 
@@ -60,7 +63,7 @@ def get_sample_date_range_filter(sampling_context: SamplingContext) -> dict:
     if isinstance(end_date, str):
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
-    start_filter = (
+    start_filter: dict[Literal["$gte"], datetime] = (
         {
             "$gte": start_date,
         }
@@ -68,7 +71,7 @@ def get_sample_date_range_filter(sampling_context: SamplingContext) -> dict:
         else {}
     )
 
-    end_filter = (
+    end_filter: dict[Literal["$lte"], datetime] = (
         {
             "$lte": end_date,
         }

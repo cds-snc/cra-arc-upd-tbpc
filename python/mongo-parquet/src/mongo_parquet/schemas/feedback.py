@@ -1,19 +1,21 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class Feedback(ParquetModel):
     collection: str = "feedback"
     parquet_filename: str = "feedback.parquet"
-    filter: dict | None = None
-    projection: dict | None = None
+    filter = None
+    projection = None
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -34,7 +36,8 @@ class Feedback(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
@@ -42,6 +45,7 @@ class Feedback(ParquetModel):
             pl.col("projects").list.eval(pl.element().bin.encode("hex")),
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
@@ -50,18 +54,19 @@ class Feedback(ParquetModel):
             pl.col("projects").list.eval(pl.element().str.decode("hex")),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter
 
 
+@final
 class FeedbackModel(MongoCollection):
     collection = "feedback"
+    sync_type: Literal["simple", "incremental"] = "incremental"
     primary_model = Feedback()
-
-

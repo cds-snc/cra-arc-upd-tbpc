@@ -1,19 +1,21 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, bool_
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class GcTss(ParquetModel):
     collection: str = "gc_tasks"
     parquet_filename: str = "gc_tasks.parquet"
-    filter: dict | None = None
-    projection: dict | None = None
+    filter = None
+    projection = None
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -46,30 +48,33 @@ class GcTss(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("tasks").list.eval(pl.element().bin.encode("hex")),
         ).sort("date", "url")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("tasks").list.eval(pl.element().str.decode("hex")),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter
 
 
+@final
 class GcTssModel(MongoCollection):
     collection = "gc_tasks"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = GcTss()
-
-

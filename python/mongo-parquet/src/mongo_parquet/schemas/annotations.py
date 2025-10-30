@@ -1,11 +1,13 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
+@final
 class Annotations(ParquetModel):
     collection: str = "annotations"
     parquet_filename: str = "annotations.parquet"
@@ -28,16 +30,21 @@ class Annotations(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(pl.col("_id").bin.encode("hex")).sort("event_date")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(pl.col("_id").str.decode("hex"))
 
-    def get_sampling_filter(self, _: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         return self.filter or {}
 
 
+@final
 class AnnotationsModel(MongoCollection):
     collection = "annotations"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = Annotations()

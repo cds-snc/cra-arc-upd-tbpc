@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import type { AnyBulkWriteOperation, FilterQuery, Model } from 'mongoose';
+import type {
+  AnyBulkWriteOperation,
+  Document,
+  FilterQuery,
+  Model,
+} from 'mongoose';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import {
   CallDriver,
@@ -36,6 +41,7 @@ import {
 import type { UxApiData, UxApiDataType, UxData } from './types';
 import { assertHasUrl, assertObjectId } from './utils';
 import { difference, uniq } from 'rambdax';
+import assert from 'node:assert';
 
 @Injectable()
 export class AirtableService {
@@ -116,6 +122,8 @@ export class AirtableService {
         return true;
       }
     }
+
+    return false;
   }
 
   async getUxData(): Promise<UxApiData> {
@@ -159,7 +167,7 @@ export class AirtableService {
       .exec()) || []) as T[];
 
     for (const doc of existingData) {
-      idsMap.set(doc.airtable_id, doc._id);
+      doc.airtable_id && idsMap.set(doc.airtable_id, doc._id);
     }
 
     const urlsDict = Object.fromEntries(
@@ -173,7 +181,7 @@ export class AirtableService {
           urlsDict[doc['url']]?._id || new Types.ObjectId(),
         );
       }
-      return { ...doc, _id: idsMap.get(doc.airtable_id) };
+      return { ...doc, _id: idsMap.get(doc.airtable_id) as Types.ObjectId };
     });
   }
 
@@ -439,7 +447,9 @@ export class AirtableService {
     );
 
     const existingMetricsPageIds = new Set(
-      (await this.pageMetricsModel.distinct('page')).map((id) => id.toString()),
+      (await this.pageMetricsModel.distinct('page'))
+        .filter((id) => id)
+        .map((id) => id.toString()),
     );
 
     // unset refs on metrics
@@ -586,7 +596,7 @@ export class AirtableService {
           .lean()
           .exec()) as {
           url: string;
-          page: Types.ObjectId;
+          page?: Types.ObjectId;
           tasks?: Types.ObjectId[];
           projects?: Types.ObjectId[];
           ux_tests?: Types.ObjectId[];
@@ -613,7 +623,7 @@ export class AirtableService {
           ).length > 0;
 
         if (
-          !currentRefs.page.equals(page._id) ||
+          !currentRefs.page?.equals(page._id) ||
           refsAreDifferent(currentRefs.tasks, page.tasks) ||
           refsAreDifferent(currentRefs.projects, page.projects) ||
           refsAreDifferent(currentRefs.ux_tests, page.ux_tests)
@@ -787,20 +797,27 @@ export class AirtableService {
       )
       .exec();
 
-    const promises = [];
+    const promises: Promise<void | Document>[] = [];
 
     for (const project of projectsWithAttachments) {
       const promise = Promise.all(
-        project.attachments.map(async ({ url, filename, size }) => {
+        (project.attachments || []).map(async ({ url, filename, size }) => {
+          assert(
+            this.blobService.blobModels.project_attachments,
+            'project_attachments blob model not found',
+          );
+
           const blobClient =
             this.blobService.blobModels.project_attachments.blob(filename);
 
           try {
             await blobClient.copyFromUrlIfDifferent(url, size);
 
+            const storagePath = new URL(blobClient.url).pathname;
+
             return {
               blobFilename: blobClient.filename,
-              blobUrl: blobClient.url,
+              storagePath,
             };
           } catch (err) {
             this.logger.error(
@@ -812,12 +829,16 @@ export class AirtableService {
         }),
       )
         .then((results) => {
-          for (const { blobFilename, blobUrl } of results) {
+          for (const { blobFilename, storagePath } of results) {
+            if (!project.attachments) {
+              continue;
+            }
+
             const attachmentIndex = project.attachments.findIndex(
               ({ filename }) => filename === blobFilename,
             );
 
-            project.attachments[attachmentIndex].storage_url = blobUrl;
+            project.attachments[attachmentIndex].storage_url = storagePath;
           }
 
           return project.save();
@@ -865,13 +886,24 @@ export class AirtableService {
           report['en_attachment'],
           report['fr_attachment'],
         ]) {
+          if (!attachments) {
+            continue;
+          }
+
+          assert(
+            this.blobService.blobModels.reports,
+            'reports blob model not found',
+          );
+
           for (const [i, { url, filename, size }] of attachments.entries()) {
             const blobClient =
               this.blobService.blobModels.reports.blob(filename);
 
             await blobClient.copyFromUrlIfDifferent(url, size);
 
-            attachments[i].storage_url = blobClient.url;
+            const storagePath = new URL(blobClient.url).pathname;
+
+            attachments[i].storage_url = storagePath;
           }
         }
 

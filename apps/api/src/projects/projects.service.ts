@@ -114,6 +114,8 @@ const projectStatusSwitchExpression = {
   },
 };
 
+const DOCUMENTS_URL = () => process.env.DOCUMENTS_URL || '';
+
 const getProjectStatus = (statuses: ProjectStatus[]): ProjectStatus => {
   if (statuses.length === 0) {
     return 'Unknown';
@@ -507,7 +509,7 @@ export class ProjectsService {
       searchTerms,
       attachments: populatedProjectDoc.attachments.map((attachment) => ({
         ...attachment,
-        storage_url: attachment.storage_url?.replace(/^https:\/\//, ''),
+        storage_url: `${DOCUMENTS_URL()}${attachment.storage_url}`,
       })),
       feedbackByPage,
       feedbackByDay: (
@@ -763,8 +765,8 @@ export class ProjectsService {
         _id: Types.ObjectId;
         taskId: Types.ObjectId;
         title: string;
-        callsPer100Visits: number;
-        dyfNoPer1000Visits: number;
+        callsPerVisit: number;
+        dyfNoPerVisit: number;
         uxTestInLastTwoYears: boolean;
         ux_tests: IUxTest[];
       }>(
@@ -777,8 +779,8 @@ export class ProjectsService {
           dateRange: 1,
           title: '$task.title',
           'projects._id': 1,
-          callsPer100Visits: 1,
-          dyfNoPer1000Visits: 1,
+          callsPerVisit: 1,
+          dyfNoPerVisit: 1,
           uxTestInLastTwoYears: {
             $cond: [
               {
@@ -804,15 +806,15 @@ export class ProjectsService {
           ({
             taskId,
             title,
-            callsPer100Visits,
-            dyfNoPer1000Visits,
+            callsPerVisit,
+            dyfNoPerVisit,
             uxTestInLastTwoYears,
             ux_tests,
           }) => ({
             _id: taskId.toString(),
             title,
-            callsPer100Visits: callsPer100Visits * 100,
-            dyfNoPer1000Visits: dyfNoPer1000Visits * 1000,
+            callsPer100Visits: callsPerVisit * 100,
+            dyfNoPer1000Visits: dyfNoPerVisit * 1000,
             uxTestInLastTwoYears,
             latestSuccessRate:
               getLatestTaskSuccessRate(ux_tests).avgTestSuccess,

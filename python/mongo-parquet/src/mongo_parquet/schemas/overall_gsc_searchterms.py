@@ -1,20 +1,21 @@
-import pyarrow as pa
+from typing import final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pymongoarrow.types import struct
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, float64, int32
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, ParquetModel
+from .lib import AnyFrame, ParquetModel
 from .utils import get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class OverallGSCSearchTerms(ParquetModel):
     collection: str = "overall_metrics"
     parquet_filename: str = "overall_metrics_gsc_searchterms.parquet"
-    filter: dict = {"gsc_searchterms": {"$exists": True}}
+    filter = {"gsc_searchterms": {"$exists": True}}
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -33,7 +34,7 @@ class OverallGSCSearchTerms(ParquetModel):
             ),
         }
     )
-    secondary_schema: Schema = Schema(
+    secondary_schema: Schema | None = Schema(
         {
             "gsc_searchterms": list_(
                 struct(
@@ -50,7 +51,8 @@ class OverallGSCSearchTerms(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.filter(
                 pl.col("gsc_searchterms").is_not_null(),
@@ -76,6 +78,7 @@ class OverallGSCSearchTerms(ParquetModel):
             .sort("date")
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
@@ -99,11 +102,12 @@ class OverallGSCSearchTerms(ParquetModel):
             )
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter

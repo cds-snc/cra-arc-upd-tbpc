@@ -3,9 +3,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import type { Cache } from 'cache-manager';
-import {
-  DbService,
-} from '@dua-upd/db';
+import { DbService } from '@dua-upd/db';
 import type {
   ApiParams,
   IReports,
@@ -24,6 +22,8 @@ import {
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { omit } from 'rambdax';
 import { compressString, decompressString } from '@dua-upd/node-utils';
+
+const DOCUMENTS_URL = () => process.env.DOCUMENTS_URL || '';
 
 @Injectable()
 export class TasksService {
@@ -105,6 +105,8 @@ export class TasksService {
       );
     console.timeEnd('tasks');
 
+    const documentsUrl = DOCUMENTS_URL();
+
     const reports = (await this.db.collections.reports
       .find(
         { type: 'tasks' },
@@ -117,7 +119,17 @@ export class TasksService {
       )
       .exec()
       .then((reports) =>
-        reports.map((report) => omit(['_id'], report)),
+        reports.map((report) => ({
+          ...omit(['_id'], report),
+          en_attachment: report.en_attachment?.map((attachment) => ({
+            ...attachment,
+            storage_url: `${documentsUrl}${attachment.storage_url}`,
+          })),
+          fr_attachment: report.fr_attachment?.map((attachment) => ({
+            ...attachment,
+            storage_url: `${documentsUrl}${attachment.storage_url}`,
+          })),
+        })),
       )) as IReports[];
 
     const results = {

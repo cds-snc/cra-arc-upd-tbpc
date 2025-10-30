@@ -1,154 +1,5 @@
-import abc
-from datetime import datetime
-import polars as pl
-import pyarrow
-from pymongoarrow.api import Schema
-from typing import List, Literal, Optional, TypeVar, Union, overload
-from ..sampling import SamplingContext
-from ..utils import convert_objectids
-
-
-type PartitionBy = Union[Literal["month"], Literal["year"]]
-
-AnyFrame = TypeVar("AnyFrame", pl.DataFrame, pl.LazyFrame)
-
-
-class ParquetModel(abc.ABC):
-    collection: str
-    schema: Schema
-    parquet_filename: str
-    secondary_schema: Optional[Schema] = None
-    """Partial schema to be combined with the primary"""
-    filter: Optional[dict] = None
-    projection: Optional[dict] = None
-    use_aggregation: Optional[bool] = None
-    start: Optional[datetime] = None
-    end: Optional[datetime] = None
-    pipeline: Optional[list] = None
-    partition_by: Optional[PartitionBy] = None
-
-    @abc.abstractmethod
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
-        pass
-
-    @overload
-    def reverse_transform(self, df: pl.DataFrame) -> pl.DataFrame: ...
-
-    @overload
-    def reverse_transform(self, df: pl.LazyFrame) -> pl.LazyFrame: ...
-
-    @abc.abstractmethod
-    def reverse_transform(self, df: AnyFrame) -> AnyFrame:
-        pass
-
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> Optional[dict]:
-        """
-        Returns a filter to be applied to the MongoDB query based on the sampling context.
-        If no filter is needed, return None.
-        """
-        return self.filter
-
-
-class MongoCollection:
-    collection: str
-    primary_model: ParquetModel
-    secondary_models: List[ParquetModel] = []
-    objectid_fields: List[str] = [
-        "_id",
-        "tasks",
-        "page",
-        "pages",
-        "project",
-        "projects",
-        "ux_tests",
-        "attachments",
-        "en_attachment",
-        "fr_attachment",
-        "aa_searchterms",
-        "aa_searchterms_en",
-        "aa_searchterms_fr",
-        "activity_map",
-        "gsc_searchterms",
-    ]
-    default_values: dict = {
-        "pages": [],
-        "tasks": [],
-        "projects": [],
-        "ux_tests": [],
-        "attachments": [],
-    }
-
-    @overload
-    def assemble(
-        self, primary_df: pl.DataFrame, secondary_dfs: Optional[List[pl.DataFrame]]
-    ) -> pl.DataFrame: ...
-
-    @overload
-    def assemble(
-        self, primary_df: pl.LazyFrame, secondary_dfs: Optional[List[pl.LazyFrame]]
-    ) -> pl.LazyFrame: ...
-
-    def assemble(
-        self,
-        primary_df: AnyFrame,
-        secondary_dfs: Optional[List[AnyFrame]] = None,
-    ) -> AnyFrame:
-        if secondary_dfs is None or len(secondary_dfs) == 0:
-            return primary_df
-
-        df = primary_df
-
-        for secondary_df in secondary_dfs:
-            df = df.join(secondary_df, on="_id", how="left", maintain_order="left")
-
-        return df
-
-    def combined_schema(self) -> Schema:
-        combined = self.primary_model.schema.to_arrow()
-
-        for model in self.secondary_models:
-            combined = pyarrow.unify_schemas(
-                [
-                    combined,
-                    model.secondary_schema.to_arrow()
-                    if model.secondary_schema
-                    else model.schema.to_arrow(),
-                ]
-            )
-
-        return Schema.from_arrow(combined)
-
-    def prepare_for_insert(self, df: pl.DataFrame) -> List[dict]:
-        """
-        Prepares the data for insertion into MongoDB.
-        This method should be overridden by models that require specific transformations.
-        """
-        records = []
-
-        col_names = self.combined_schema().to_arrow().names
-
-        for row in df.sort("_id").to_dicts():
-            record = {}
-            for k, v in row.items():
-                if v is None and k not in self.default_values:
-                    continue
-                elif v is None and k in self.default_values:
-                    record[k] = self.default_values[k]
-
-                if k in self.objectid_fields:
-                    record[k] = convert_objectids(v)
-                else:
-                    record[k] = v
-
-            for col in col_names:
-                if col not in record and col in self.default_values:
-                    record[col] = self.default_values[col]
-
-            records.append(record)
-
-        return records
-
-
+from typing import TypedDict
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from .aa_item_ids import AAItemIds, AAItemIdsModel  # noqa: E402
 from .aa_searchterms import AASearchTerms  # noqa: E402
 from .activity_map import ActivityMap  # noqa: E402
@@ -175,7 +26,7 @@ from .search_assessment import SearchAssessment, SearchAssessmentModel  # noqa: 
 from .annotations import Annotations, AnnotationsModel  # noqa: E402
 
 
-collection_models: List[type[MongoCollection]] = [
+collection_models: list[type[MongoCollection]] = [
     AnnotationsModel,
     AAItemIdsModel,
     CalldriverModel,
@@ -196,9 +47,73 @@ collection_models: List[type[MongoCollection]] = [
     SearchAssessmentModel,
 ]
 
+
+ParquetModels = TypedDict(
+    "ParquetModels",
+    {
+        "annotations": Annotations,
+        "aa_item_ids": AAItemIds,
+        "aa_searchterms": AASearchTerms,
+        "activity_map": ActivityMap,
+        "calldrivers": Calldrivers,
+        "custom_reports_registry": CustomReportsRegistry,
+        "feedback": Feedback,
+        "gsc_searchterms": GSCSearchTerms,
+        "gc_tss": GcTss,
+        "gc_tasks_mappings": GcTasksMappings,
+        "overall_metrics": OverallMetrics,
+        "overall_aa_searchterms_en": OverallAASearchTermsEn,
+        "overall_aa_searchterms_fr": OverallAASearchTermsFr,
+        "overall_gsc_searchterms": OverallGSCSearchTerms,
+        "pages_list": PagesList,
+        "pages": Pages,
+        "page_metrics": PageMetrics,
+        "projects": Projects,
+        "tasks": Tasks,
+        "urls": Urls,
+        "ux_tests": UxTests,
+        "readability": Readability,
+        "reports": Reports,
+        "search_assessment": SearchAssessment,
+    },
+)
+
+
+def get_parquet_models(dir_path: str | None = None) -> ParquetModels:
+    return {
+        "annotations": Annotations(dir_path),
+        "aa_item_ids": AAItemIds(dir_path),
+        "aa_searchterms": AASearchTerms(dir_path),
+        "activity_map": ActivityMap(dir_path),
+        "calldrivers": Calldrivers(dir_path),
+        "custom_reports_registry": CustomReportsRegistry(dir_path),
+        "feedback": Feedback(dir_path),
+        "gsc_searchterms": GSCSearchTerms(dir_path),
+        "gc_tss": GcTss(dir_path),
+        "gc_tasks_mappings": GcTasksMappings(dir_path),
+        "overall_metrics": OverallMetrics(dir_path),
+        "overall_aa_searchterms_en": OverallAASearchTermsEn(dir_path),
+        "overall_aa_searchterms_fr": OverallAASearchTermsFr(dir_path),
+        "overall_gsc_searchterms": OverallGSCSearchTerms(dir_path),
+        "pages_list": PagesList(dir_path),
+        "pages": Pages(dir_path),
+        "page_metrics": PageMetrics(dir_path),
+        "projects": Projects(dir_path),
+        "tasks": Tasks(dir_path),
+        "urls": Urls(dir_path),
+        "ux_tests": UxTests(dir_path),
+        "readability": Readability(dir_path),
+        "reports": Reports(dir_path),
+        "search_assessment": SearchAssessment(dir_path),
+    }
+
+
 __all__ = [
+    "AnyFrame",
     "collection_models",
     "ParquetModel",
+    "ParquetModels",
+    "get_parquet_models",
     "MongoCollection",
     "AASearchTerms",
     "AAItemIds",

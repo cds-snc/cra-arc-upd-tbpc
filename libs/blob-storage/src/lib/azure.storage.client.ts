@@ -39,7 +39,7 @@ import type {
   IStorageModel,
   IStorageBlob,
   IStorageProperties,
-  StorageProvider
+  StorageProvider,
 } from './storage.interfaces';
 
 export type AzureBlobType = 'block' | 'append';
@@ -171,6 +171,12 @@ export class BlobModel implements IStorageModel<ContainerClient> {
 
   getContainer() {
     return this.container;
+  }
+
+  getPath() {
+    const containerName = this.config.container.getClient().containerName;
+    const path = this.config.path ? `/${this.config.path}` : '';
+    return `${containerName}${path}`;
   }
 
   blob(blobName: string, blobType?: AzureBlobType) {
@@ -311,7 +317,9 @@ export class BlobClient implements IStorageBlob {
     }
 
     try {
-      const response = await this.client.syncCopyFromURL(sourceUrl);
+      const copyPoller = await this.client.beginCopyFromURL(sourceUrl);
+
+      const response = await copyPoller.pollUntilDone();
 
       if (response.copyStatus !== 'success') {
         throw Error(

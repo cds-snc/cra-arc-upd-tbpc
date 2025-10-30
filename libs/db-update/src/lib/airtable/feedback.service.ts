@@ -24,8 +24,8 @@ export class FeedbackService {
 
     const newFeedback: IFeedback[] = [];
 
-    const latestDataDate: Date | null = (
-      await this.feedbackModel.findOne({}, { date: 1 }).sort({ date: -1 })
+    const latestDataDate: Date | undefined = (
+      await this.feedbackModel.findOne({}, { date: 1 }).sort({ date: -1 }).lean().exec()
     )?.date;
 
     const start = dayjs
@@ -59,7 +59,7 @@ export class FeedbackService {
       const existingIds = new Set<string>(
         existingFeedback
           .filter(({ unique_id }) => unique_id)
-          .map(({ unique_id }) => unique_id.toString()),
+          .map(({ unique_id }) => unique_id!.toString()),
       );
 
       const lateAdditionsCra = await this.airtableClient.getFeedback({

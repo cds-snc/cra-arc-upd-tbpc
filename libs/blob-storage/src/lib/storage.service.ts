@@ -80,6 +80,7 @@ export class BlobStorageService {
     },
     html_snapshots: {
       containerName: 'html-snapshots',
+      overwrite: true,
     },
     html_snapshots_backup: {
       path: 'backup',
@@ -155,12 +156,15 @@ export class BlobStorageService {
         );
       }
 
-      const truePath =
+      const normalizedPath =
         this.storageClient.storageType === 's3'
           ? normalize(
               `${blobDefinition.containerName}/${blobDefinition.path ?? ''}`,
             )
           : normalize(`${blobDefinition.path ?? ''}`);
+
+      // if path is empty, it will be '.', so convert to empty string
+      const truePath = normalizedPath === '.' ? '' : normalizedPath;
 
       const container = await this._storageClient?.container(trueContainer);
 

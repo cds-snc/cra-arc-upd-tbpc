@@ -1,16 +1,18 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import string, list_, struct, timestamp, bool_
 from bson import ObjectId
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
+@final
 class CustomReportsRegistry(ParquetModel):
     collection: str = "custom_reports_registry"
     parquet_filename: str = "custom_reports_registry.parquet"
-    filter: dict = {}
-    projection: dict | None = None
+    filter = {}
+    projection = None
 
     schema: Schema = Schema(
         {
@@ -34,22 +36,25 @@ class CustomReportsRegistry(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )
 
-    def get_sampling_filter(self, _: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         return self.filter
 
 
+@final
 class CustomReportsRegistryModel(MongoCollection):
     collection = "custom_reports_registry"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = CustomReportsRegistry()
-
-

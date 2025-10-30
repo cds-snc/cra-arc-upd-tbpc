@@ -1,20 +1,22 @@
+from typing import Any, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, timestamp, list_, int32, struct
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, ParquetModel
+from .lib import AnyFrame, ParquetModel
 from .utils import get_sample_ids, get_sample_date_range_filter
 from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class ActivityMap(ParquetModel):
     collection: str = "pages_metrics"
     parquet_filename: str = "pages_metrics_activity_map.parquet"
     partition_by = "month"
-    filter: dict = {"activity_map": {"$exists": True}}
-    projection: dict | None = None
+    filter = {"activity_map": {"$exists": True}}
+    projection: dict[str, Any] | None = None
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -35,7 +37,7 @@ class ActivityMap(ParquetModel):
             ),
         }
     )
-    secondary_schema: Schema = Schema(
+    secondary_schema: Schema | None = Schema(
         {
             "activity_map": list_(
                 struct(
@@ -49,7 +51,8 @@ class ActivityMap(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.filter(
                 pl.col("activity_map").is_not_null(),
@@ -85,6 +88,7 @@ class ActivityMap(ParquetModel):
             .sort("date", "url", "clicks", descending=[False, False, True])
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
@@ -103,13 +107,14 @@ class ActivityMap(ParquetModel):
             .agg(pl.col("activity_map").implode())
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         task_ids = get_sample_ids(sampling_context, "task")
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
         filter.update({"tasks": {"$in": task_ids}})
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter

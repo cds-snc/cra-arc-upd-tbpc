@@ -10,10 +10,7 @@
  */
 
 import type { Readable } from 'stream';
-import type {
-  PutObjectCommandOutput,
-  S3ClientConfig,
-} from '@aws-sdk/client-s3';
+import type { PutObjectCommandInput, S3ClientConfig } from '@aws-sdk/client-s3';
 import {
   S3Client,
   ListObjectsV2Command,
@@ -45,6 +42,7 @@ import type {
   IStorageProperties,
   StorageProvider,
 } from './storage.interfaces';
+import { escapeURL } from './storage.utils';
 
 /**
  * The base client for connecting to S3 storage. Wraps the official AWS S3 client.
@@ -226,6 +224,10 @@ export class S3ObjectModel implements IStorageModel<S3StorageClient> {
     return this.container;
   }
 
+  getPath() {
+    return this.config.path || '';
+  }
+
   blob(objectName: string) {
     return new S3ObjectClient(objectName, this.config);
   }
@@ -252,9 +254,7 @@ export class S3ObjectClient implements IStorageBlob {
     this.container = config.container;
     this.overwrite = !!config.overwrite;
 
-    const objectPath = this.path
-      ? normalize(`${this.path}/${objectName}`)
-      : objectName;
+    const objectPath = this.path ? `${this.path}/${objectName}` : objectName;
 
     this.objectKey = objectPath;
     this.name = objectPath;
@@ -267,7 +267,9 @@ export class S3ObjectClient implements IStorageBlob {
 
   get url() {
     const region = process.env.AWS_REGION || 'ca-central-1';
-    return `https://${this.container.bucketName}.s3.${region}.amazonaws.com/${this.objectKey}`;
+    return escapeURL(
+      `https://${this.container.bucketName}.s3.${region}.amazonaws.com/${this.objectKey}`,
+    );
   }
 
   async exists() {
@@ -386,15 +388,18 @@ export class S3ObjectClient implements IStorageBlob {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.arrayBuffer();
+      const headers = response.headers;
 
-      const command = new PutObjectCommand({
-        Bucket: this.container.bucketName,
-        Key: this.objectKey,
-        Body: new Uint8Array(data),
+      const data = await response.blob();
+
+      await this.uploadStream(data.stream(), this.overwrite, {
+        ContentLength:
+          headers.get('content-length') &&
+          parseInt(headers.get('content-length') || '0', 10),
+        ContentType: headers.get('content-type') || undefined,
+        CacheControl: headers.get('cache-control') || undefined,
+        ContentMD5: headers.get('etag') || undefined,
       });
-
-      await this.container.getClient().send(command);
     } catch (err) {
       console.error(chalk.red('Error copying from url to storage'));
       throw err;
@@ -590,9 +595,10 @@ export class S3ObjectClient implements IStorageBlob {
     return;
   }
 
-  async uploadStream<T extends Readable>(
+  async uploadStream<T extends Readable | ReadableStream>(
     stream: T,
     overwrite = this.overwrite,
+    options?: Omit<PutObjectCommandInput, 'Bucket' | 'Key' | 'Body'>,
   ) {
     const objectExists = await this.exists();
 
@@ -603,6 +609,8 @@ export class S3ObjectClient implements IStorageBlob {
     }
 
     try {
+      const extraParams = options || {};
+
       // Use Upload class for proper streaming
       const upload = new Upload({
         client: this.container.getClient(),
@@ -610,6 +618,7 @@ export class S3ObjectClient implements IStorageBlob {
           Bucket: this.container.bucketName,
           Key: this.objectKey,
           Body: stream,
+          ...extraParams,
         },
       });
 

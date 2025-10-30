@@ -1,19 +1,21 @@
 from copy import deepcopy
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, list_, int32, struct, timestamp
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 from .utils import get_sample_ids
 
 
+@final
 class Tasks(ParquetModel):
     collection: str = "tasks"
     parquet_filename: str = "tasks.parquet"
-    filter: dict | None = None
-    projection: dict | None = None
+    filter = None
+    projection = None
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -52,7 +54,8 @@ class Tasks(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("ux_tests").list.eval(pl.element().bin.encode("hex")),
@@ -60,6 +63,7 @@ class Tasks(ParquetModel):
             pl.col("pages").list.eval(pl.element().bin.encode("hex")),
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
@@ -68,7 +72,8 @@ class Tasks(ParquetModel):
             pl.col("pages").list.eval(pl.element().str.decode("hex")),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         task_ids = get_sample_ids(sampling_context, "task")
@@ -78,6 +83,8 @@ class Tasks(ParquetModel):
         return filter
 
 
+@final
 class TasksModel(MongoCollection):
     collection = "tasks"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = Tasks()

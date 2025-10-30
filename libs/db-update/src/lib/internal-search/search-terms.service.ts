@@ -90,7 +90,8 @@ export class InternalSearchTermsService {
           },
         })
         .group({
-          _id: '$url_first247', page: { $push: '$_id', },
+          _id: '$url_first247',
+          page: { $push: '$_id' },
           count: {
             $sum: 1,
           },
@@ -137,8 +138,8 @@ export class InternalSearchTermsService {
           ),
         );
 
-        const updateOps: AnyBulkWriteOperation<IAAItemId>[] = partialsToInsert.map(
-          (itemId) => ({
+        const updateOps: AnyBulkWriteOperation<IAAItemId>[] =
+          partialsToInsert.map((itemId) => ({
             updateOne: {
               filter: { itemId: itemId.itemId },
               update: {
@@ -154,12 +155,9 @@ export class InternalSearchTermsService {
               },
               upsert: true,
             },
-          }),
-        );
+          }));
 
-        await this.db.collections.aaItemIds.bulkWrite(
-          updateOps,
-        );
+        await this.db.collections.aaItemIds.bulkWrite(updateOps);
       }
     }
     /*
@@ -212,8 +210,8 @@ export class InternalSearchTermsService {
           ),
         );
 
-        const updateOps: AnyBulkWriteOperation<IAAItemId>[] = itemIdsToInsert.map(
-          (itemId) => ({
+        const updateOps: AnyBulkWriteOperation<IAAItemId>[] =
+          itemIdsToInsert.map((itemId) => ({
             updateOne: {
               filter: { itemId: itemId.itemId },
               update: {
@@ -229,12 +227,9 @@ export class InternalSearchTermsService {
               },
               upsert: true,
             },
-          }),
-        );
+          }));
 
-        await this.db.collections.aaItemIds.bulkWrite(
-          updateOps,
-        );
+        await this.db.collections.aaItemIds.bulkWrite(updateOps);
       }
     }
 
@@ -343,10 +338,17 @@ export class InternalSearchTermsService {
 
     // get the most recent date from the DB, and set the start date to the next day
 
+    // if no date in db, start from 16 months ago (the rolling GSC data range)
+    const fallbackStartDate = dayjs()
+      .utc()
+      .subtract(16, 'month')
+      .startOf('day');
+
     // collect data up to the start of the current day/end of the previous day
+
     const queryDateRange = dateRange || {
       start: dayjs
-        .utc(latestDateResults['date'])
+        .utc(latestDateResults?.['date'] || fallbackStartDate)
         .add(1, 'day')
         .format('YYYY-MM-DD'),
       end: today().subtract(1, 'day').endOf('day').format('YYYY-MM-DD'),
@@ -397,9 +399,8 @@ export class InternalSearchTermsService {
         const insertDocument: Partial<IOverall> = {
           date,
           [propName]: results.map((result) => {
-            delete result.date;
-
-            return result;
+            const { date, ...data } = result;
+            return data;
           }),
         };
 
@@ -519,6 +520,10 @@ export class InternalSearchTermsService {
 
       const itemIdDocs = await this.updateInternalSearchItemIds(dateRange);
 
+      if (!itemIdDocs) {
+        continue;
+      }
+
       const searchTermResults = await blobProxy.exec(
         [dateRange, itemIdDocs],
         `${dateRange.start.slice(0, 10)}_${dateRange.end.slice(0, 10)}`, // the date string to include in the filename
@@ -533,8 +538,22 @@ export class InternalSearchTermsService {
       const itemIdDict = arrayToDictionary(dbItemIds, 'itemId');
 
       const resultsWithRefs = searchTermResults
+        .filter((result) => {
+          const hasItemId = result.itemId;
+
+          if (!hasItemId) {
+            this.logger.warn(
+              chalk.yellowBright(
+                'Received search term results with no itemId:',
+              ),
+            );
+            logJson(result);
+          }
+
+          return hasItemId;
+        })
         .map((searchTermResults) => {
-          const itemIdData = itemIdDict[searchTermResults.itemId];
+          const itemIdData = itemIdDict[searchTermResults.itemId!];
           const page = itemIdData?.page;
           const itemIdUrl = itemIdData?.value;
 
@@ -559,13 +578,16 @@ export class InternalSearchTermsService {
       const duplicateSearchTermPageRefs = resultsWithRefs
         .map(({ page }) => `${page}`)
         .sort()
-        .reduce((duplicates, pageRef, i, pageRefs) => {
-          if (i !== 0 && pageRefs[i - 1] === pageRef) {
-            duplicates.push(pageRef);
-          }
+        .reduce(
+          (duplicates, pageRef, i, pageRefs) => {
+            if (i !== 0 && pageRefs[i - 1] === pageRef) {
+              duplicates.push(pageRef);
+            }
 
-          return duplicates;
-        }, []);
+            return duplicates;
+          },
+          [] as string[],
+        );
 
       // try to match to metrics
       const pageMetricsToMatch = await this.db.collections.pageMetrics
@@ -592,7 +614,7 @@ export class InternalSearchTermsService {
           }
 
           return duplicates;
-        }, []);
+        }, [] as string[]);
 
       // lookup table by page refs
       const pageMetricsDict = arrayToDictionary(
@@ -608,11 +630,11 @@ export class InternalSearchTermsService {
 
       // will be easier to do if we separate with dups from without dups
       const searchResultsWithoutDups = resultsWithRefs.filter(
-        ({ page }) => !duplicateSearchTermPageRefs.includes(page),
+        ({ page }) => !duplicateSearchTermPageRefs.includes(page.toString()),
       );
 
       const searchResultsWithDups = resultsWithRefs.filter(({ page }) =>
-        duplicateSearchTermPageRefs.includes(page),
+        duplicateSearchTermPageRefs.includes(page.toString()),
       );
 
       // And... bare with me here...
@@ -620,12 +642,12 @@ export class InternalSearchTermsService {
 
       // Refs are duplicated in search results only:
       const searchResultsWithSearchDups = searchResultsWithDups.filter(
-        ({ page }) => !duplicatePageMetricsPageRefs.includes(page),
+        ({ page }) => !duplicatePageMetricsPageRefs.includes(page.toString()),
       );
 
       // Refs are duplicated in both:
       const searchResultsWithDupsInBoth = searchResultsWithDups.filter(
-        ({ page }) => duplicatePageMetricsPageRefs.includes(page),
+        ({ page }) => duplicatePageMetricsPageRefs.includes(page.toString()),
       );
 
       // possible "duplicated page ref" scenarios:

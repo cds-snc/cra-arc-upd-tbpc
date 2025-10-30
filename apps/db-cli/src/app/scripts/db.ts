@@ -30,7 +30,13 @@ import {
   prettyJson,
   round,
 } from '@dua-upd/utils-common';
-import type { IFeedback, IPage, IReadability, IUrl } from '@dua-upd/types-common';
+import type {
+  AttachmentData,
+  IFeedback,
+  IPage,
+  IReadability,
+  IUrl,
+} from '@dua-upd/types-common';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { RunScriptCommand } from '../run-script.command';
 import { startTimer } from './utils/misc';
@@ -1060,8 +1066,8 @@ export async function populateFeedbackWords(db: DbService) {
       },
     }));
 
-  const updateOps: AnyBulkWriteOperation<IFeedback>[] =
-    feedbackWithWords.map(({ _id, words }) => ({
+  const updateOps: AnyBulkWriteOperation<IFeedback>[] = feedbackWithWords.map(
+    ({ _id, words }) => ({
       updateOne: {
         filter: { _id },
         update: {
@@ -1070,7 +1076,8 @@ export async function populateFeedbackWords(db: DbService) {
           },
         },
       },
-    }));
+    }),
+  );
 
   console.log(
     `Removing words from ${idsNoLongerHavingWords.length} comments...`,
@@ -1161,8 +1168,8 @@ export async function setPageSectionsFromList(db: DbService) {
     .lean()
     .exec();
 
-  const updateOps: AnyBulkWriteOperation<IPage>[] =
-    pagesListWithSections.map(({ url, sections, owners }) => ({
+  const updateOps: AnyBulkWriteOperation<IPage>[] = pagesListWithSections.map(
+    ({ url, sections, owners }) => ({
       updateOne: {
         filter: { url },
         update: {
@@ -1172,7 +1179,8 @@ export async function setPageSectionsFromList(db: DbService) {
           },
         },
       },
-    }));
+    }),
+  );
 
   console.log('Updating page owners/sections...');
 
@@ -1673,4 +1681,49 @@ export async function thirty30Report() {
   );
 
   console.log(`Excel report generated successfully in ${outDir}`);
+}
+
+function updateAttachmentUrls(attachments?: AttachmentData[]) {
+  if (!attachments) {
+    return attachments;
+  }
+
+  return attachments.map((attachment) => {
+    if (!attachment.storage_url || attachment.storage_url.startsWith('/')) {
+      return attachment;
+    }
+
+    return {
+      ...attachment,
+      storage_url: new URL(attachment.storage_url).pathname,
+    };
+  });
+}
+
+export async function migrateAttachmentUrls(db: DbService) {
+  const reports = await db.collections.reports.find().exec();
+
+  for (const report of reports) {
+    if (report.en_attachment) {
+      report.en_attachment = updateAttachmentUrls(report.en_attachment);
+    }
+
+    if (report.fr_attachment) {
+      report.fr_attachment = updateAttachmentUrls(report.fr_attachment);
+    }
+    await report.save();
+  }
+
+  console.log(`Updated ${reports.length} reports.`);
+
+  const projects = await db.collections.projects.find().exec();
+
+  for (const project of projects) {
+    if (project.attachments) {
+      project.attachments = updateAttachmentUrls(project.attachments);
+      await project.save();
+    }
+  }
+
+  console.log(`Updated ${projects.length} projects.`);
 }
