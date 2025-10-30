@@ -1,4 +1,4 @@
-FROM node:22.14.0-bookworm-slim AS base
+FROM node:24.11.0-bookworm-slim AS base
 RUN apt-get update && apt-get install -y tzdata curl
 ENV TZ=America/Toronto
 
@@ -22,7 +22,7 @@ USER root
 
 
 # Build stage for node app
-FROM node:22.14.0-bookworm-slim AS node-builder
+FROM node:24.11.0-bookworm-slim AS node-builder
 WORKDIR /builder
 VOLUME ["/builder"]
 COPY ["package.json", "package-lock.json", "./"]
