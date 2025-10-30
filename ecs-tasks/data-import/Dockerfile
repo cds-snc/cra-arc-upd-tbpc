@@ -22,4 +22,4 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
   && (uv python install 3.12) \
   && (uv sync --no-dev)
 
-CMD ["uv", "run", "--no-sync", "--directory=src", "mongo_parquet", "--import-to-mongo", "--from-remote", "--storage=s3"]
+CMD ["uv", "run", "--no-sync", "--directory=src", "mongo_parquet", "--import-to-mongo", "--from-remote", "--storage=s3", "&&", "uv", "run", "--no-sync", "--directory=src", "mongo_parquet", "--recalculate-views"]
