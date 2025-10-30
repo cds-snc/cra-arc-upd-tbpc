@@ -47,8 +47,6 @@ export class UpdateTaskService {
 
       await this.dataIntegrityService.fillMissingData();
       await this.dataIntegrityService.cleanPageUrls();
-
-      await this.dbUpdateService.recalculateViews(false);
     } catch (error) {
       this.logger.error(error.stack);
       throw error; // Re-throw to ensure the error is handled by the caller
