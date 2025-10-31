@@ -28,12 +28,12 @@ dependency "s3" {
   mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
-    web_bucket_id      = ""
-    web_bucket_arn     = ""
-    web_bucket_domain  = ""
-    data_bucket_name   = ""
-    data_bucket_arn    = ""
-    data_bucket_domain = ""
+    web_bucket_id      = "mock_id"
+    web_bucket_arn     = "mock_arn"
+    web_bucket_domain  = "mock_domain"
+    data_bucket_name   = "mock_id"
+    data_bucket_arn    = "mock_arn"
+    data_bucket_domain = "mock_domain"
   }
 }
 
