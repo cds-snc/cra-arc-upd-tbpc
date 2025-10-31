@@ -131,7 +131,7 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
     path_pattern           = "/documents/*"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = local.cloudfront_assets_origin_id
+    target_origin_id       = local.cloudfront_documents_origin_id
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
