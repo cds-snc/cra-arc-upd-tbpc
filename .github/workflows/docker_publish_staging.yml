@@ -129,7 +129,7 @@ jobs:
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
-          context: python/mongo-parquet
+          context: .
           file: ecs-tasks/data-import/Dockerfile
           push: true
           tags: ${{ env.DATA_IMPORT_TAGS }}
