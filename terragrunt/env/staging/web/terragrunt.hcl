@@ -28,9 +28,12 @@ dependency "s3" {
   mock_outputs_allowed_terraform_commands = ["init", "fmt", "validate", "plan", "show", "destroy"]
   mock_outputs_merge_with_state           = true
   mock_outputs = {
-    web_bucket_id     = ""
-    web_bucket_arn    = ""
-    web_bucket_domain = ""
+    web_bucket_id      = "mock_id"
+    web_bucket_arn     = "mock_arn"
+    web_bucket_domain  = "mock_domain"
+    data_bucket_name   = "mock_id"
+    data_bucket_arn    = "mock_arn"
+    data_bucket_domain = "mock_domain"
   }
 }
 
@@ -49,6 +52,9 @@ inputs = {
   web_bucket_id              = dependency.s3.outputs.web_bucket_id
   web_bucket_arn             = dependency.s3.outputs.web_bucket_arn
   web_bucket_domain          = dependency.s3.outputs.web_bucket_domain
+  data_bucket_id             = dependency.s3.outputs.data_bucket_name
+  data_bucket_arn            = dependency.s3.outputs.data_bucket_arn
+  data_bucket_domain         = dependency.s3.outputs.data_bucket_domain
   loadbalancer_arn           = dependency.load_balancer.outputs.ecs_loadbalancer_arn
   loadbalancer_dns_name      = dependency.load_balancer.outputs.ecs_loadbalancer_dns_name
   hosted_zone_id             = dependency.route53.outputs.cra_upd_hosted_zone_id

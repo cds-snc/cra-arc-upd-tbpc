@@ -22,6 +22,23 @@ variable "web_bucket_domain" {
   sensitive = true
 }
 
+variable "data_bucket_id" {
+  description = "The ID of the data resources S3 bucket."
+  type        = string
+}
+
+variable "data_bucket_arn" {
+  description = "The ARN of the data resources S3 bucket."
+  type        = string
+}
+
+variable "data_bucket_domain" {
+  description = "The domain name of the data resources S3 bucket."
+  type        = string
+
+  sensitive = true
+}
+
 variable "loadbalancer_arn" {
   description = "The ARN of the ECS load balancer."
   type        = string

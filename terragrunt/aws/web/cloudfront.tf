@@ -1,12 +1,14 @@
 locals {
-  cloudfront_web_origin_id = "upd_web"
-  cloudfront_api_origin_id = "upd_api"
+  cloudfront_web_origin_id       = "upd_web"
+  cloudfront_api_origin_id       = "upd_api"
+  cloudfront_documents_origin_id = "upd_documents"
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
   comment = "Cloudfront origin access identity"
 }
 
+# Bucket policy to allow CloudFront to access the S3 web bucket
 data "aws_iam_policy_document" "cra_upd_web_bucket_policy_doc" {
   statement {
     effect = "Allow"
@@ -26,6 +28,29 @@ data "aws_iam_policy_document" "cra_upd_web_bucket_policy_doc" {
 resource "aws_s3_bucket_policy" "cra_upd_web_bucket_policy" {
   bucket = var.web_bucket_id
   policy = data.aws_iam_policy_document.cra_upd_web_bucket_policy_doc.json
+}
+
+# Bucket policy to allow CloudFront to access the "documents" directory in the data bucket
+# which contains "documents" such as powerpoint files, excel files, etc.
+data "aws_iam_policy_document" "cra_upd_data_bucket_policy_doc" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = [aws_cloudfront_origin_access_identity.origin_access_identity.iam_arn]
+    }
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "${var.data_bucket_arn}/documents/*"
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "cra_upd_data_bucket_policy" {
+  bucket = var.data_bucket_id
+  policy = data.aws_iam_policy_document.cra_upd_data_bucket_policy_doc.json
 }
 
 # VPC origin for the load balancer
@@ -67,6 +92,14 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   }
 
   origin {
+    domain_name = var.data_bucket_domain
+    origin_id   = local.cloudfront_documents_origin_id
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.origin_access_identity.cloudfront_access_identity_path
+    }
+  }
+
+  origin {
     domain_name = var.loadbalancer_dns_name
     origin_id   = local.cloudfront_api_origin_id
 
@@ -94,18 +127,33 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
     response_headers_policy_id = "5cc3b908-e619-4b99-88e5-2cf7f45965bd"
   }
 
+  ordered_cache_behavior {
+    path_pattern           = "/documents/*"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = local.cloudfront_documents_origin_id
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    # CachingOptimized managed policy ID:
+    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+
+    # CORS-S3Origin managed policy ID:
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
+  }
+
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.cloudfront_web_origin_id
-    compress         = true
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = local.cloudfront_web_origin_id
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
 
     cache_policy_id = aws_cloudfront_cache_policy.cra_upd_s3_cache_policy.id
 
     # CORS-S3Origin managed policy ID:
     origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
 
-    viewer_protocol_policy = "redirect-to-https"
 
     function_association {
       event_type   = "viewer-request"

@@ -8,6 +8,11 @@ output "data_bucket_name" {
   value       = module.cra_upd_data_s3_bucket.s3_bucket_id
 }
 
+output "data_bucket_domain" {
+  description = "The domain name of the S3 data bucket."
+  value       = module.cra_upd_data_s3_bucket.s3_bucket_regional_domain_name
+}
+
 output "web_bucket_id" {
   description = "The ID of the web resources S3 bucket."
   value       = aws_s3_bucket.cra_upd_web_bucket.id
