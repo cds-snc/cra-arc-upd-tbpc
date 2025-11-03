@@ -21,25 +21,17 @@ mkdir src/.views_temp
 echo "Downloading most recent parquet files from S3"
 uv run --directory=src mongo_parquet --download-from-remote --storage=s3
 
-echo "Syncing parquet files with MongoDB"
-uv run --directory=src mongo_parquet --sync-parquet --cleanup-temp-dir
+echo "Syncing and uploading parquet files with MongoDB"
+uv run --directory=src mongo_parquet --sync-parquet --upload-to-remote --storage=s3 --cleanup-temp-dir
 
 if [ $? -ne 0 ]; then
-  echo "Syncing parquet files failed"
+  echo "Syncing and/or uploading parquet files failed"
 else
-  echo "Parquet files synced successfully"
-  echo "Uploading updated parquet files to S3"
-  uv run --directory=src mongo_parquet --upload-to-remote --storage=s3
-
-  if [ $? -ne 0 ]; then
-    echo "Uploading updated parquet files failed"
-  else
-    echo "Updated parquet files uploaded successfully"
-  fi
+  echo "Parquet files synced and uploaded successfully"
 fi
 
 echo "Recalculating views"
-uv run --directory=src mongo_parquet --recalculate-views --cleanup-temp-dir
+uv run --directory=src mongo_parquet --recalculate-views --storage=s3 --cleanup-temp-dir
 
 if [ $? -ne 0 ]; then
   echo "Recalculating views failed"
