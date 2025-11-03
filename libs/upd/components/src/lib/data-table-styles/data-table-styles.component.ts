@@ -6,10 +6,10 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
 
 @Component({
-    selector: 'upd-data-table-styles',
-    templateUrl: './data-table-styles.component.html',
-    styleUrls: ['./data-table-styles.component.scss'],
-    standalone: false
+  selector: 'upd-data-table-styles',
+  templateUrl: './data-table-styles.component.html',
+  styleUrls: ['./data-table-styles.component.scss'],
+  standalone: false,
 })
 export class DataTableStylesComponent implements OnInit {
   private secondsToMinutesPipe = inject(SecondsToMinutesPipe);
@@ -28,7 +28,7 @@ export class DataTableStylesComponent implements OnInit {
     if (!data) return;
 
     if (this.config.pipe) {
-      this.numberVal =  this.applyPipe(data);
+      this.numberVal = this.applyPipe(data);
     }
 
     if (this.config.type === 'label') {
@@ -76,8 +76,7 @@ export class DataTableStylesComponent implements OnInit {
 
   getIndicator(field: string, arrows = true) {
     const value = this.data[field] as number;
-    if (arrows)
-      return this.getArrow(value);
+    if (arrows) return this.getArrow(value);
     return this.getSignedNumbers(value);
   }
 
@@ -101,7 +100,12 @@ export class DataTableStylesComponent implements OnInit {
     return '';
   }
 
-  getValueIndicator(field: string, pipe = '', pipeParam = '', abs = true): string {
+  getValueIndicator(
+    field: string,
+    pipe = '',
+    pipeParam = '',
+    abs = true,
+  ): string {
     const value = this.data[field] as number;
     const sign = abs && value !== 0 ? (value < 0 ? '-' : '+') : '';
     const absValue = Math.abs(value);
@@ -138,7 +142,14 @@ export class DataTableStylesComponent implements OnInit {
   }
 
   ensureLinkFormat(link: string | number) {
-    if (typeof link !== 'string') return link;
+    if (
+      typeof link !== 'string' ||
+      link.startsWith('https://') ||
+      link.startsWith('/')
+    ) {
+      return link;
+    }
+
     return link.replace(/^(?!https:\/\/)/, 'https://');
   }
 }
