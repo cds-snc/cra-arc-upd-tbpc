@@ -197,7 +197,7 @@ resource "aws_cloudfront_cache_policy" "cra_upd_s3_cache_policy" {
 resource "aws_cloudfront_cache_policy" "cra_upd_api_cache_policy" {
   name        = "cra_upd_api_cache_policy"
   comment     = "The cache policy for the API Gateway origin"
-  min_ttl     = 1
+  min_ttl     = 0
   default_ttl = 120
   max_ttl     = 31536000
 
