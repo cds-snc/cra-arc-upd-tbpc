@@ -4,7 +4,7 @@ import type {
   ReportStatus,
 } from '@dua-upd/types-common';
 import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { CustomReportsService } from './custom-reports.service';
 
 @Controller('custom-reports')
