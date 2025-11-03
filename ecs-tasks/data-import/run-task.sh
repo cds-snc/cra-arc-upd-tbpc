@@ -12,7 +12,7 @@ fi
 echo "Data import completed successfully."
 
 echo "Recalculating views..."
-uv run --no-sync --directory=src mongo_parquet --recalculate-views
+uv run --no-sync --directory=src mongo_parquet --recalculate-views --storage=s3
 
 if [ $? -ne 0 ]; then
   echo "An error occurred during views recalculation."
