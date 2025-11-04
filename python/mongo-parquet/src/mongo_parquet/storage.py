@@ -8,7 +8,7 @@ import polars as pl
 import s3fs
 
 
-def get_aws_config_value(key: str) -> Optional[str]:
+def get_aws_config_value(key: str) -> str | None:
     config_path = os.path.expanduser("~/.aws/credentials.json")
     with open(config_path, 'r') as f:
         data = json.load(f)
