@@ -49,7 +49,7 @@ export class GcTaskService {
   @AsyncLogTiming
   async updateGcTaskData(endDate?: AbstractDate, useProcessedDate = true) {
     this.logger.log('Updating GC task data');
-    const latestDataDate: Date | null = (
+    const latestDataDate: Date | undefined = (
       await this.gcTasksModel.findOne({}, { date: 1 }).sort({ date: -1 })
     )?.date;
 

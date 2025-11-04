@@ -8,7 +8,7 @@ ARG USER=python
 
 WORKDIR /home/${USER}
 
-COPY . .
+COPY python/mongo-parquet/ ./
 
 RUN useradd -ms /bin/bash $USER \
   && mkdir -p /home/$USER/.local/bin \
@@ -22,4 +22,6 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
   && (uv python install 3.12) \
   && (uv sync --no-dev)
 
-CMD ["uv", "run", "--no-sync", "--directory=src", "mongo_parquet", "--import-to-mongo", "--from-remote", "--storage=s3"]
+COPY ["ecs-tasks/data-import/run-task.sh", "./"]
+
+CMD ["./run-task.sh"]

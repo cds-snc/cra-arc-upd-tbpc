@@ -33,14 +33,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 24.11.0
 
       - name: Use the node_modules cache if available [npm]
         id: use-npm-cache
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-22.14.0-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-24.11.0-modules-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
         if: steps.use-npm-cache.outputs.cache-hit != 'true'
@@ -129,7 +129,7 @@ jobs:
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
-          context: python/mongo-parquet
+          context: .
           file: ecs-tasks/data-import/Dockerfile
           push: true
           tags: ${{ env.DATA_IMPORT_TAGS }}

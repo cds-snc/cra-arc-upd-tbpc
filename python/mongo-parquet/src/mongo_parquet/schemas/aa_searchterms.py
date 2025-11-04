@@ -1,19 +1,21 @@
 from copy import deepcopy
+from typing import Any, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import float32, string, timestamp, list_, float64, int32, struct
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, ParquetModel
+from .lib import AnyFrame, ParquetModel
 from ..sampling import SamplingContext
 from .utils import get_sample_ids, get_sample_date_range_filter
 
 
+@final
 class AASearchTerms(ParquetModel):
     collection: str = "pages_metrics"
     parquet_filename: str = "pages_metrics_aa_searchterms.parquet"
     partition_by = "month"
-    filter: dict = {"aa_searchterms": {"$exists": True}}
-    projection: dict | None = None
+    filter = {"aa_searchterms": {"$exists": True}}
+    projection: dict[str, Any] | None = None
     schema: Schema = Schema(
         {
             "_id": ObjectIdType(),
@@ -35,7 +37,7 @@ class AASearchTerms(ParquetModel):
             ),
         }
     )
-    secondary_schema: Schema = Schema(
+    secondary_schema: Schema | None = Schema(
         {
             "aa_searchterms": list_(
                 struct(
@@ -50,7 +52,8 @@ class AASearchTerms(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.filter(
                 pl.col("aa_searchterms").is_not_null(),
@@ -60,7 +63,6 @@ class AASearchTerms(ParquetModel):
             .explode("aa_searchterms")
             .with_columns(pl.col("aa_searchterms").struct.unnest())
             .drop("aa_searchterms")
-            .rechunk()
             .with_columns(
                 pl.col("_doc_id").bin.encode("hex"),
                 pl.col("_id").bin.encode("hex"),
@@ -80,6 +82,7 @@ class AASearchTerms(ParquetModel):
             .sort("date", "url")
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return (
             df.select(
@@ -101,13 +104,14 @@ class AASearchTerms(ParquetModel):
             )
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         task_ids = get_sample_ids(sampling_context, "task")
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
         filter.update({"tasks": {"$in": task_ids}})
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter

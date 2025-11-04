@@ -222,7 +222,11 @@ export class ActivityMapService {
 
     return itemIds.map((itemId) => {
       const urls = urlsDict[itemId.value];
-      const pagesFromUrls = urls ? urls.map((url) => url.page) : [];
+      const pagesFromUrls: Types.ObjectId[] = urls
+        ? urls
+            .filter((url) => url.page)
+            .map((url) => url.page as Types.ObjectId)
+        : [];
       const currentPages = itemId.pages || (itemId.page ? [itemId.page] : []);
       const uniquePages = [...new Set([...currentPages, ...pagesFromUrls])];
 
@@ -265,6 +269,7 @@ export class ActivityMapService {
       .filter(
         (item) =>
           !existingItemIdsDict[item.itemId] &&
+          item.value &&
           !item.value.match(/^https?:\/\//),
       )
       .map((item) => ({

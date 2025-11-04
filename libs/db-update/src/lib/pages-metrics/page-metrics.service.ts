@@ -48,11 +48,10 @@ export class PageMetricsService {
   ) {}
 
   async upsertPageMetrics(pageMetrics: PageMetrics[]) {
-    const bulkInsertOps = [];
+    const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     for (const pageMetric of pageMetrics) {
-      const pageMetricNoId = { ...pageMetric };
-      delete pageMetricNoId._id;
+      const { _id, ...pageMetricNoId } = pageMetric;
 
       bulkInsertOps.push({
         updateOne: {
@@ -115,7 +114,7 @@ export class PageMetricsService {
         console.log(
           `[${
             datasourceName || 'datasource'
-          }] (${data[0].date.toISOString()}) number of records passed to insertFunc:`,
+          }] (${data[0].date!.toISOString()}) number of records passed to insertFunc:`,
         );
         console.log(data.length);
 
@@ -139,7 +138,7 @@ export class PageMetricsService {
               console.log(
                 `[${
                   datasourceName || 'datasource'
-                }] (${data[0].date.toISOString()}) bulkWrite completed`,
+                }] (${data[0].date!.toISOString()}) bulkWrite completed`,
               ),
             )
             .catch((err) =>
@@ -183,7 +182,7 @@ export class PageMetricsService {
     return {
       dataSources: { aaData: aaDataSource, gscData: gscDataSource },
       insertWithHooks: true,
-      insertFn: () => Promise.resolve(null),
+      insertFn: () => Promise.resolve(),
       onComplete: async () => {
         console.log(
           chalk.blueBright(

@@ -1,13 +1,15 @@
 from copy import deepcopy
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import string, float64, int32, timestamp, list_, struct
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 from .utils import get_sample_ids, get_sample_date_range_filter
 
 
+@final
 class Readability(ParquetModel):
     collection: str = "readability"
     parquet_filename: str = "readability.parquet"
@@ -43,32 +45,35 @@ class Readability(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
         ).sort("_id")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("page").str.decode("hex"),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         page_ids = get_sample_ids(sampling_context, "page")
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
         filter.update({"page": {"$in": page_ids}})
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter
 
 
+@final
 class ReadabilityModel(MongoCollection):
     collection = "readability"
+    sync_type: Literal["simple", "incremental"] = "incremental"
     primary_model = Readability()
-
-

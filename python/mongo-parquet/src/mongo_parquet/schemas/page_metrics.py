@@ -1,9 +1,10 @@
+from typing import Any, Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import int64, string, timestamp, list_, float64, int32
 from pymongoarrow.types import ObjectIdType
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from .aa_searchterms import AASearchTerms
 from .activity_map import ActivityMap
 from .gsc_searchterms import GSCSearchTerms
@@ -12,6 +13,7 @@ from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class PageMetrics(ParquetModel):
     collection: str = "pages_metrics"
     parquet_filename: str = "pages_metrics.parquet"
@@ -64,7 +66,8 @@ class PageMetrics(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
@@ -77,6 +80,7 @@ class PageMetrics(ParquetModel):
             pl.col("gsc_total_position").round(4).cast(pl.Float32),
         ).sort("date", "url")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
@@ -86,20 +90,23 @@ class PageMetrics(ParquetModel):
             pl.col("ux_tests").list.eval(pl.element().str.decode("hex")),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict[str, Any]:
         filter = deepcopy(self.filter or {})
 
         task_ids = get_sample_ids(sampling_context, "task")
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
         filter.update({"tasks": {"$in": task_ids}})
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter
 
 
+@final
 class PagesMetricsModel(MongoCollection):
     collection = "pages_metrics"
+    sync_type: Literal["simple", "incremental"] = "incremental"
     primary_model = PageMetrics()
     secondary_models = [
         AASearchTerms(),

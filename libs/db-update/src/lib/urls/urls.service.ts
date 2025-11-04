@@ -4,7 +4,11 @@ import dayjs from 'dayjs';
 import { minify } from 'html-minifier-terser';
 import { type FilterQuery, Types, type AnyBulkWriteOperation } from 'mongoose';
 import { filter, mapObject, omit, pick, pipe } from 'rambdax';
-import { BlobStorageService } from '@dua-upd/blob-storage';
+import {
+  BlobStorageService,
+  type IStorageModel,
+  type S3Bucket,
+} from '@dua-upd/blob-storage';
 import { DbService, Page, Readability, Url } from '@dua-upd/db';
 import { BlobLogger } from '@dua-upd/logger';
 import { md5Hash } from '@dua-upd/node-utils';
@@ -21,11 +25,10 @@ import {
 } from '@dua-upd/utils-common';
 import { ReadabilityService } from '../readability/readability.service';
 import { createUpdateQueue } from '../utils';
-import {
-  DuckDbService,
-  type HtmlSnapshot,
-} from '@dua-upd/duckdb';
+import { DuckDbService, type HtmlSnapshot } from '@dua-upd/duckdb';
 import { sql } from 'drizzle-orm';
+import { assert } from 'node:console';
+import type { ContainerClient } from '@azure/storage-blob';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -39,6 +42,7 @@ export type UpdateUrlsOptions = {
 export class UrlsService {
   private readonly DATA_BLOB_NAME = 'urls-collection-data.json';
   private readonly READABILITY_BLOB_NAME = 'readability-collection-data.json';
+  private readonly urlsBlob: IStorageModel<S3Bucket | ContainerClient>;
 
   private rateLimitStats = true;
   private readonly http = new HttpClient({
@@ -55,22 +59,23 @@ export class UrlsService {
     @Inject('ENV') private production: boolean,
     @Inject(DuckDbService.name) private duckDb: DuckDbService,
     @Optional() private readability: ReadabilityService,
-  ) {}
+  ) {
+    assert(this.blobService.blobModels.urls, 'Urls blob model not found');
+    this.urlsBlob = this.blobService.blobModels.urls!;
+  }
 
   private async getBlobClient() {
-    return this.blobService.blobModels.urls.blob(this.DATA_BLOB_NAME);
+    return this.urlsBlob.blob(this.DATA_BLOB_NAME);
   }
 
   private async getArchiveBlobClient() {
     const dateString = new Date().toISOString().slice(0, 10);
 
-    return this.blobService.blobModels.urls.blob(
-      `archive/${dateString}/${this.DATA_BLOB_NAME}`,
-    );
+    return this.urlsBlob.blob(`archive/${dateString}/${this.DATA_BLOB_NAME}`);
   }
 
   private async getReadabilityBlobClient() {
-    return this.blobService.blobModels.urls.blob(this.READABILITY_BLOB_NAME);
+    return this.urlsBlob.blob(this.READABILITY_BLOB_NAME);
   }
 
   private async preparePagesCollection() {
@@ -137,6 +142,11 @@ export class UrlsService {
 
       const blobData = await blobClient.downloadToString();
 
+      if (!blobData) {
+        this.logger.warn(`No data found in blob storage.`);
+        return;
+      }
+
       this.logger.log(`Inserting data into collection...`);
 
       const jsonReviver = (key, value) => {
@@ -161,21 +171,18 @@ export class UrlsService {
       const bulkWriteOps: AnyBulkWriteOperation<Url>[] = JSON.parse(
         blobData,
         jsonReviver,
-      ).map(
-        (url: IUrl) =>
-          ({
-            updateOne: {
-              filter: { url: url.url },
-              update: {
-                $setOnInsert: {
-                  _id: url._id,
-                },
-                $set: omit(['_id'], url),
-              },
-              upsert: true,
+      ).map((url: IUrl) => ({
+        updateOne: {
+          filter: { url: url.url },
+          update: {
+            $setOnInsert: {
+              _id: url._id,
             },
-          }),
-      );
+            $set: omit(['_id'], url),
+          },
+          upsert: true,
+        },
+      }));
 
       const bulkWriteResults = await this.db.collections.urls.bulkWrite(
         bulkWriteOps,
@@ -303,7 +310,7 @@ export class UrlsService {
       throw new Error(`Could not determine language for ${metadata.url}`);
     }
 
-    const readabilityScore = await this.readability.calculateReadability(
+    const readabilityScore = this.readability.calculateReadability(
       content,
       lang,
     );
@@ -439,7 +446,7 @@ export class UrlsService {
             return;
           }
 
-          const processedHtml = processHtml(response.body);
+          const processedHtml = processHtml(response.body || '');
 
           if (!processedHtml) {
             return await addToQueues({
@@ -467,12 +474,14 @@ export class UrlsService {
             date,
           };
 
-          const urlBlob = this.blobService.blobModels.urls.blob(hash);
+          const urlBlob = this.urlsBlob.blob(hash);
 
           // if blob already exists, add the url to its blob metadata if it's not already there
           if (await urlBlob.exists()) {
             const blobMetadata = (await urlBlob.getProperties()).metadata;
-            const urls: string[] = JSON.parse(blobMetadata.urls);
+            const urls: string[] = blobMetadata
+              ? JSON.parse(blobMetadata.urls)
+              : [];
 
             if (!urls.includes(response.url)) {
               urls.push(response.url);
@@ -506,7 +515,7 @@ export class UrlsService {
 
               urlsParquetUpdateQueue.push({
                 url: collectionData.url,
-                page: collectionData.page.toString(),
+                page: collectionData.page?.toString() || null,
                 hash,
                 html: minifiedBody,
                 date,
@@ -520,7 +529,9 @@ export class UrlsService {
                 // if already exists, set blob metadata like above
                 const blobMetadata = (await urlBlob.getProperties()).metadata;
 
-                const urls: string[] = JSON.parse(blobMetadata.urls);
+                const urls: string[] = blobMetadata
+                  ? JSON.parse(blobMetadata.urls)
+                  : [];
 
                 if (!urls.includes(response.url)) {
                   urls.push(response.url);
@@ -540,7 +551,7 @@ export class UrlsService {
 
                 urlsParquetUpdateQueue.push({
                   url: collectionData.url,
-                  page: collectionData.page.toString(),
+                  page: collectionData.page?.toString() || null,
                   hash,
                   html: processedHtml.body,
                   date,
@@ -558,10 +569,23 @@ export class UrlsService {
             try {
               // assess readability if data does not exist for this hash
               if (!existingReadabilityHashes.includes(hash)) {
-                const readabilityScore = await this.assessReadability(
-                  processedHtml.body,
-                  readabilityMetadata,
-                );
+                if (!readabilityMetadata.page) {
+                  this.logger.warn(
+                    `Page ref not found for url ${response.url}, skipping readability assessment.`,
+                  );
+                }
+
+                const readabilityScore = readabilityMetadata.page
+                  ? await this.assessReadability(
+                      processedHtml.body,
+                      readabilityMetadata as {
+                        url: string;
+                        page: Types.ObjectId;
+                        hash: string;
+                        date: Date;
+                      },
+                    )
+                  : undefined;
 
                 return await addToQueues(
                   {
@@ -602,10 +626,23 @@ export class UrlsService {
               ? { page: urlsPageDict[response.url]._id }
               : {};
 
-            const readabilityScore = await this.assessReadability(
-              processedHtml.body,
-              readabilityMetadata,
-            );
+            if (!readabilityMetadata.page) {
+              this.logger.warn(
+                `Page ref not found for url ${response.url}, skipping readability assessment.`,
+              );
+            }
+
+            const readabilityScore = readabilityMetadata.page
+              ? await this.assessReadability(
+                  processedHtml.body,
+                  readabilityMetadata as {
+                    url: string;
+                    page: Types.ObjectId;
+                    hash: string;
+                    date: Date;
+                  },
+                )
+              : undefined;
 
             return await addToQueues(
               {
@@ -707,7 +744,11 @@ export class UrlsService {
         throw Error('Tried to get page data but received "Access Denied"');
       }
 
-      const processedHtml = processHtml(response.body);
+      const processedHtml = processHtml(response.body || '');
+
+      if (!processedHtml) {
+        throw Error('Tried to get page data but body was empty');
+      }
 
       // need to hash the processed html because of dynamically injected content
       const hash = md5Hash(processedHtml.body);
@@ -744,7 +785,7 @@ export class UrlsService {
 
     const noTitleUrls = urlsNoTitle.map(({ url }) => url);
 
-    const urlsTitlesMap = await this.blobService.blobModels.urls
+    const urlsTitlesMap = await this.urlsBlob
       .blob('all-titles.json')
       .downloadToString()
       .then(
@@ -755,7 +796,7 @@ export class UrlsService {
         ),
       );
 
-    const titlesFromPagesMap = await this.blobService.blobModels.urls
+    const titlesFromPagesMap = await this.urlsBlob
       .blob('titles-from-pages.json')
       .downloadToString()
       .then(JSON.parse);
@@ -955,7 +996,7 @@ export class UrlsService {
       const blobClient = await this.getBlobClient();
 
       if (await blobClient.exists()) {
-        const date = new Date((await blobClient.getProperties()).metadata.date);
+        const date = new Date((await blobClient.getProperties()).metadata?.date || '1970-01-01');
 
         const newData = await this.db.collections.urls
           .findOne({ last_modified: { $gt: date } })
@@ -1012,7 +1053,7 @@ export class UrlsService {
 
     const urlsToUpdate = urlsWithPages
       .filter(
-        (urlDoc) => !urlDoc.page.length || urlDoc.page[0]?.url !== urlDoc.url,
+        (urlDoc) => !urlDoc.page?.length || urlDoc.page[0]?.url !== urlDoc.url,
       )
       .map(({ url }) => url);
 
@@ -1037,15 +1078,16 @@ export class UrlsService {
       return;
     }
 
-    const bulkWriteOps: AnyBulkWriteOperation<IUrl>[] =
-      pagesForUpdates.map((page) => ({
+    const bulkWriteOps: AnyBulkWriteOperation<IUrl>[] = pagesForUpdates.map(
+      (page) => ({
         updateOne: {
           filter: { url: page.url },
           update: {
             $set: { page: page._id },
           },
         },
-      }));
+      }),
+    );
 
     this.logger.log(
       `Updating references to ${pagesForUpdates.length} pages...`,
@@ -1130,11 +1172,11 @@ export class UrlsService {
         .lean()
         .exec()
     ).flatMap((urlDoc) =>
-      urlDoc.hashes
+    (urlDoc.hashes || [])
         .filter((hashDoc) => missingHashes.includes(hashDoc.hash))
         .map((hashDoc) => ({
           url: urlDoc.url,
-          page: urlDoc.page.toString(),
+          page: urlDoc.page?.toString() || null,
           hash: hashDoc.hash,
           date: hashDoc.date,
         })),
@@ -1144,20 +1186,20 @@ export class UrlsService {
 
     const promises: Promise<{
       url: string;
-      page: string;
+      page: string | null;
       hash: string;
-      html: string;
+      html: string | null;
       date: Date;
     } | null>[] = [];
 
     console.time('HTML blob download time');
     for (const hashDoc of missingHashDocs) {
-      const promise = this.blobService.blobModels.urls
+      const promise = this.urlsBlob
         .blob(hashDoc.hash)
         .downloadToString({ decompressData: true })
         .then((html) => ({
           ...hashDoc,
-          html,
+          html: html || null,
         }))
         .catch((err) => {
           this.logger.error(`Error occurred downloading html blob:`);
@@ -1219,7 +1261,7 @@ type ProcessedHtml = {
   langHrefs: { [lang: string]: string };
 };
 
-export const processHtml = (html: string): ProcessedHtml => {
+export const processHtml = (html: string): ProcessedHtml | null => {
   const $ = cheerio.load(
     // remove part of dynamically generated attribute to avoid generating
     // a different hash for the same content
@@ -1232,7 +1274,7 @@ export const processHtml = (html: string): ProcessedHtml => {
   const body = $('main').html() || '';
 
   if (!body.trim()) {
-    return;
+    return null;
   }
 
   const metadata = Object.fromEntries(

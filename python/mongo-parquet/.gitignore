@@ -11,3 +11,6 @@ data/
 sample/
 .venv/
 .env
+.sync_temp/
+.views_temp/
+memray*

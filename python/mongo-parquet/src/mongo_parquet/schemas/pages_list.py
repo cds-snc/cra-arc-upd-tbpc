@@ -1,16 +1,18 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pyarrow import string, timestamp
 from bson import ObjectId
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 
 
+@final
 class PagesList(ParquetModel):
     collection: str = "pages_list"
     parquet_filename: str = "pages_list.parquet"
-    filter: dict = {}
-    projection: dict | None = None
+    filter = {}
+    projection = None
 
     schema: Schema = Schema(
         {
@@ -27,7 +29,8 @@ class PagesList(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("updatedAt").cast(pl.Datetime),
@@ -35,17 +38,19 @@ class PagesList(ParquetModel):
             pl.col("lang").fill_null("").str.strip_chars(),  # normalize empty/null lang
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )
 
-    def get_sampling_filter(self, _: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         return self.filter
 
 
+@final
 class PagesListModel(MongoCollection):
     collection = "pages_list"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = PagesList()
-
-

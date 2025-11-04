@@ -1,8 +1,9 @@
+from logging import error, warning
 import os
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
-from typing import Optional
+from typing import final
 import polars as pl
 from pymongoarrow.monkey import patch_all
 from pymongo import MongoClient
@@ -10,12 +11,19 @@ from .mongo import MongoConfig, MongoArrowClient
 from .sampling import SamplingContext
 from .storage import StorageClient
 from .schemas import MongoCollection, ParquetModel
-from .utils import get_partition_values, month_range, year_range
+from .utils import (
+    format_timedelta,
+    get_partition_values,
+    month_range,
+    year_range,
+    SyncUtils,
+)
 
 # Patch pymongo to support Arrow
 patch_all()
 
 
+@final
 class MongoParquetIO:
     """
     A class to handle that wraps the MongoDB client and handles reading and writing local or remote Parquet files.
@@ -46,10 +54,304 @@ class MongoParquetIO:
         self.storage = storage_client
         self.sampling_context = sampling_context
 
+    def sync_incremental_parquet(
+        self,
+        collection_model: MongoCollection,
+        sync_utils: SyncUtils,
+        sample: bool | None = None,
+        partition_filename: str = "0.parquet",  # default file name from polars partitioned write
+        cleanup_temp_dir: bool = False,
+    ):
+        """
+        Sync incremental changes from MongoDB to Parquet files.
+
+        :param collection_model: The model representing the MongoDB collection.
+        :param sample: Whether to use a sample of the data.
+        :param sync_filter: Date filter to apply for incremental sync.
+        """
+        sync_start_time = datetime.now()
+        formatted_datetime = sync_start_time.strftime("%H:%M:%S")
+        print(
+            f"\n🔄 [{formatted_datetime}] Syncing parquet with incremental changes for {collection_model.collection}..."
+        )
+
+        # make sure date is actually in the schema
+        if "date" not in collection_model.primary_model.schema:
+            raise ValueError(
+                f"Collection {collection_model.collection} is set to incremental sync, but has no 'date' field in schema."
+            )
+
+        # get latest date
+        latest_parquet_date: datetime = (
+            collection_model.primary_model.lf()
+            .select(pl.col("date").max())
+            .collect()["date"]
+            .item()
+        )
+
+        latest_mongo_date = (
+            self.db.db[collection_model.collection].find_one(
+                filter=collection_model.primary_model.filter,
+                projection={"date": 1},
+                sort=[("date", -1)],
+            )
+            or {}
+        ).get("date")
+
+        if latest_mongo_date is None or latest_mongo_date <= latest_parquet_date:
+            warning(
+                f"No new data found in MongoDB for collection {collection_model.collection}, skipping."
+            )
+            return
+
+        print(
+            f"Latest parquet date: {latest_parquet_date}, latest mongo date: {latest_mongo_date}"
+        )
+
+        incremental_filter = {
+            "date": {"$gt": latest_parquet_date},
+        }
+
+        for parquet_model in [
+            collection_model.primary_model,
+            *collection_model.secondary_models,
+        ]:
+            parquet_start_time = datetime.now()
+            print(f"Processing {parquet_model.parquet_filename}...")
+
+            # Do initial processing/hashing for current/previous data
+            local_path = self.storage.target_filepath(
+                parquet_model.parquet_filename, remote=False
+            )
+
+            if os.path.exists(local_path):
+                hash_start_time = datetime.now()
+
+                print(f"Hashing {local_path}...")
+
+                sync_utils.add_hash(local_path)
+
+                print(f"Hashed {local_path} in {datetime.now() - hash_start_time}")
+
+            base_filter = (
+                parquet_model.get_sampling_filter(self.sampling_context)
+                or parquet_model.filter
+                or {}
+            )
+            import re
+
+            re.sub(r"\s+", " ", str(base_filter))
+
+            if base_filter.get("date") is not None:
+                base_filter.pop("date")
+
+            combined_filter = {**incremental_filter, **base_filter}
+
+            if parquet_model.partition_by is not None and not sample:
+
+                def create_filter(start_date: datetime, end_date: datetime):
+                    return {
+                        **deepcopy(combined_filter),
+                        **{
+                            "date": {
+                                "$gte": start_date,
+                                "$lte": end_date,
+                            }
+                        },
+                    }
+
+                date_range_start_filter: datetime = latest_parquet_date + timedelta(
+                    days=1
+                )
+
+                date_range_end_filter: datetime = latest_mongo_date
+
+                if parquet_model.partition_by == "month":
+                    date_range_iter = month_range(
+                        date_range_start_filter,
+                        date_range_end_filter,
+                        exact_start_date=True,
+                    )
+
+                elif parquet_model.partition_by == "year":
+                    date_range_iter = year_range(
+                        date_range_start_filter,
+                        date_range_end_filter,
+                        exact_start_date=True,
+                    )
+
+                else:
+                    raise ValueError(
+                        f"Unsupported partitioning type: {parquet_model.partition_by}"
+                    )
+
+                for start, end in date_range_iter:
+                    partition_label = (
+                        f"{start.strftime('%Y-%m-%d')} - {end.strftime('%Y-%m-%d')}"
+                    )
+                    print(
+                        f"Processing {partition_label} for {parquet_model.collection}..."
+                    )
+
+                    partition_start_time = datetime.now()
+                    new_data = self.db.find(parquet_model, create_filter(start, end))
+
+                    if new_data is None or new_data.is_empty():  # pyright: ignore[reportUnnecessaryComparison]
+                        print(f"No data found for {start} - {end}, skipping...")
+                        continue
+
+                    print(f"Found {len(new_data)} new records")
+
+                    year = start.strftime("%Y")
+                    month = start.strftime("%#m" if os.name == "nt" else "%-m")
+
+                    partition_base_path = (
+                        parquet_model.parquet_filename
+                        if parquet_model.parquet_filename
+                        else f"{parquet_model.collection}.parquet"
+                    )
+
+                    partition_path = f"{partition_base_path}/year={year}"
+
+                    if parquet_model.partition_by == "month":
+                        partition_path += f"/month={month}"
+
+                    filepath = f"{partition_path}/{partition_filename}"
+
+                    storage_filepath = self.storage.target_filepath(
+                        filepath, sample=sample or False, remote=False
+                    )
+
+                    if os.path.exists(storage_filepath):
+                        try:
+                            print(
+                                f"Backing up existing file {filepath} before overwriting..."
+                            )
+                            sync_utils.backup_file(filepath)
+
+                            print(
+                                f"Partition for {partition_path} exists with previous data, writing merged data to {filepath}..."
+                            )
+
+                            temp_storage_filepath = re.sub(
+                                r"\.parquet$", ".tmp.parquet", storage_filepath
+                            )
+                            print(
+                                f"Writing to temporary file {temp_storage_filepath}..."
+                            )
+
+                            pl.concat(
+                                [parquet_model.lf(), new_data.lazy()]
+                            ).sink_parquet(
+                                temp_storage_filepath,
+                                compression_level=7,
+                                engine="streaming",
+                                sync_on_close="all",
+                            )
+
+                            os.replace(temp_storage_filepath, storage_filepath)
+
+                            print(f"Successfully wrote to {storage_filepath}")
+                        except Exception as e:
+                            error(e.add_note(f"Error writing to {storage_filepath}"))
+                            sync_utils.restore_backup(filepath)
+                    else:
+                        print(f"Writing to {filepath}")
+                        try:
+                            self.storage.write_parquet(
+                                new_data,
+                                filepath,
+                                sample=sample or False,
+                            )
+                            print(f"Successfully wrote to {storage_filepath}")
+                        except Exception as e:
+                            error(e.add_note(f"Error writing to {storage_filepath}"))
+
+                    print(
+                        f"Updated {filepath} in {format_timedelta(datetime.now() - partition_start_time)}"
+                    )
+
+                    sync_utils.queue_upload_if_changed(filepath)
+
+                    del new_data
+                    print("")
+
+                    partition_time_elapsed = datetime.now() - partition_start_time
+
+                    print(
+                        f"Processed {partition_label} in {format_timedelta(partition_time_elapsed)}"
+                    )
+
+                print(
+                    f"Finished processing {parquet_model.parquet_filename} in {format_timedelta(datetime.now() - parquet_start_time)}"
+                )
+                continue
+
+            new_data = self.db.find(
+                parquet_model,
+                filter=combined_filter,
+            )
+
+            if new_data is None or new_data.is_empty():  # pyright: ignore[reportUnnecessaryComparison]
+                print("No new or updated records found, skipping...")
+                return
+
+            print(f"Found {len(new_data)} new or updated records")
+
+            print(f"Backing up {parquet_model.parquet_filename}...")
+
+            sync_utils.backup_file(parquet_model.parquet_filename)
+
+            target_filepath = self.storage.target_filepath(
+                parquet_model.parquet_filename, sample=sample or False, remote=False
+            )
+
+            print(f"Appending new data to {target_filepath}...")
+
+            try:
+                temp_target_filepath = re.sub(
+                    r"\.parquet$", ".tmp.parquet", target_filepath
+                )
+                print(f"Writing to temporary file {temp_target_filepath}...")
+
+                pl.concat(
+                    [parquet_model.lf(), new_data.lazy()], rechunk=True
+                ).sink_parquet(
+                    temp_target_filepath,
+                    compression_level=7,
+                    engine="streaming",
+                    sync_on_close="all",
+                )
+
+                os.replace(temp_target_filepath, target_filepath)
+
+                print(f"Successfully wrote to {target_filepath}")
+            except Exception as e:
+                error(e.add_note(f"Error writing to {target_filepath}"))
+                sync_utils.restore_backup(parquet_model.parquet_filename)
+
+            sync_utils.queue_upload_if_changed(target_filepath)
+
+            print(
+                f"Finished processing {parquet_model.parquet_filename} in {format_timedelta(datetime.now() - parquet_start_time)}"
+            )
+
+        if cleanup_temp_dir:
+            print("Cleaning up temporary directory...")
+            sync_utils.cleanup_temp_dir()
+
+        collection_time_elapsed = datetime.now() - sync_start_time
+        sync_end_time = datetime.now()
+        formatted_end_datetime = sync_end_time.strftime("%H:%M:%S")
+
+        print(
+            f"✅ [{formatted_end_datetime}] Completed sync for {collection_model.collection} in {format_timedelta(collection_time_elapsed)}"
+        )
+
     def export_to_parquet(
         self,
         collection_model: MongoCollection,
-        sample: Optional[bool] = None,
+        sample: bool | None = None,
     ):
         """
         Export data from a MongoDB collection to Parquet format.
@@ -94,7 +396,7 @@ class MongoParquetIO:
     def export_partitioned(
         self,
         parquet_model: ParquetModel,
-        sample: Optional[bool] = None,
+        sample: bool | None = None,
         filename: str = "0.parquet",  # default file name from polars partitioned write
         delay_secs: int | float = 0.3,
     ):
@@ -118,7 +420,7 @@ class MongoParquetIO:
             else parquet_model.filter
         ) or {}
 
-        def create_filter(start_date, end_date):
+        def create_filter(start_date: datetime, end_date: datetime):
             return {
                 **deepcopy(query_filter),
                 **{
@@ -158,7 +460,7 @@ class MongoParquetIO:
             start_time = datetime.now()
             df = self.db.find(parquet_model, create_filter(start, end))
 
-            if df is None or df.is_empty():
+            if df is None or df.is_empty():  # pyright: ignore[reportUnnecessaryComparison]
                 print(f"No data found for {start} - {end}, skipping...")
                 continue
 
@@ -190,7 +492,7 @@ class MongoParquetIO:
                 sample=sample or False,
             )
 
-            print(f"Done in {datetime.now() - start_time}")
+            print(f"Done in {format_timedelta(datetime.now() - start_time)}")
 
             del df
             print(f"waiting {delay_secs} seconds")
@@ -201,10 +503,10 @@ class MongoParquetIO:
     def import_from_parquet(
         self,
         collection_model: MongoCollection,
-        sample: Optional[bool] = None,
-        remote: Optional[bool] = None,
+        sample: bool | None = None,
+        remote: bool | None = None,
         batch_size: int | None = 50_000,
-        min_date: Optional[datetime] = None,
+        min_date: datetime | None = None,
     ):
         """
         Insert batches of data into a MongoDB collection.
@@ -257,7 +559,9 @@ class MongoParquetIO:
                 collection_model,
                 batch_size=batch_size,
             )
-            print(f"Import completed in {datetime.now() - start_time}")
+            print(
+                f"Import completed in {format_timedelta(datetime.now() - start_time)}"
+            )
             return
 
         partition_values = (
@@ -265,7 +569,7 @@ class MongoParquetIO:
                 primary_df,
                 collection_model.primary_model.partition_by,  # type: ignore
             )
-            if is_partitioned
+            if is_partitioned and collection_model.primary_model.partition_by
             else None
         )
 
@@ -294,7 +598,7 @@ class MongoParquetIO:
             )
 
             if (
-                partition_primary_df is None
+                partition_primary_df is None  # pyright: ignore[reportUnnecessaryComparison]
                 or partition_primary_df.collect().is_empty()
             ):
                 print(f"df for partition {partition} is None or empty, skipping...")
@@ -318,7 +622,7 @@ class MongoParquetIO:
             )
 
             print(
-                f"Import for partition {partition_str} completed in {datetime.now() - start_time}"
+                f"Import for partition {partition_str} completed in {format_timedelta(datetime.now() - start_time)}"
             )
 
     def insert_batches(
@@ -348,7 +652,7 @@ class MongoParquetIO:
 
             batch_df = df.collect(engine="streaming")
 
-            if batch_df is None or (batch_df.is_empty() and len_df == 0):
+            if batch_df is None or (batch_df.is_empty() and len_df == 0):  # pyright: ignore[reportUnnecessaryComparison]
                 print(
                     f"No data found for {collection_model.primary_model.collection}, skipping..."
                 )

@@ -1,16 +1,17 @@
+from typing import Any, Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from pymongoarrow.types import ObjectIdType
 from pyarrow import string, list_
 from bson import ObjectId
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 
 
 class AAItemIds(ParquetModel):
     collection: str = "aa_item_ids"
     parquet_filename: str = "aa_item_ids.parquet"
-    filter: dict = {}
-    projection: dict | None = None
+    filter: dict[str, Any] | None = {}
+    projection: dict[str, Any] | None = None
     schema: Schema = Schema(
         {
             "_id": ObjectId,
@@ -22,13 +23,15 @@ class AAItemIds(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
             pl.col("pages").list.eval(pl.element().bin.encode("hex")),
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
@@ -37,6 +40,8 @@ class AAItemIds(ParquetModel):
         )
 
 
+@final
 class AAItemIdsModel(MongoCollection):
     collection = "aa_item_ids"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = AAItemIds()

@@ -13,11 +13,12 @@ def get_aws_config_value(key: str) -> Optional[str]:
         data = json.load(f)
         return data.get("default", {}).get(key)
 
+@final
 class RemoteStorageConfig:
     def __init__(
         self,
-        storage_type: Union[Literal["azure"], Literal["s3"]],
-        remote_container: Optional[str] = None,
+        storage_type: Literal["azure"] | Literal["s3"],
+        remote_container: str | None = None,
     ):
         self.storage_type = storage_type
 
@@ -57,12 +58,13 @@ class RemoteStorageConfig:
             self.fs = s3_fs
 
 
+@final
 class StorageClient:
     def __init__(
         self,
         data_dir: str,
         sample_dir: str,
-        remote_storage_type: Union[Literal["azure"], Literal["s3"]],
+        remote_storage_type: Literal["azure"] | Literal["s3"],
     ):
         self.data_dir = data_dir
         self.sample_dir = sample_dir
@@ -86,7 +88,19 @@ class StorageClient:
         dirpath = self.target_dirpath(sample=sample, remote=remote)
         return os.path.join(dirpath, filename)
 
-    def upload_to_remote(self, sample: bool = False, cleanup_local: bool = True):
+    def upload_to_remote(
+        self,
+        sample: bool = False,
+        cleanup_local: bool = False,
+        filepaths: list[str] | None = None,
+    ):
+        """
+        Upload Parquet files to remote storage.
+
+        :param sample: Whether to upload sample files.
+        :param cleanup_local: Whether to delete local files after upload.
+        :param filepaths: List of specific file paths to upload, relative to the src directory.
+        """
         local_dir_path = self.target_dirpath(sample=sample, remote=False)
 
         print(
@@ -96,9 +110,14 @@ class StorageClient:
         if not os.path.exists(local_dir_path):
             raise FileNotFoundError(f"Local directory {local_dir_path} does not exist.")
 
-        for root, _, files in os.walk(local_dir_path):
+        filepath_tuples = (
+            [(local_dir_path, None, fp) for fp in filepaths] if filepaths else None
+        )
+
+        for root, _, files in filepath_tuples or os.walk(local_dir_path):
             for file in files:
                 if file.endswith(".parquet"):
+                    # may need a different root if using explicit filepaths?
                     local_path = os.path.join(root, file)
 
                     remote_filepath = local_path.replace(f"{local_dir_path}/", "")
@@ -124,7 +143,7 @@ class StorageClient:
         sample: bool = False,
         remote: bool = False,
         hive_partitioning: bool = False,
-        min_date: Optional[datetime.datetime] = None,
+        min_date: datetime | None = None,
     ) -> pl.LazyFrame:
         print(f"📥 Reading {filename}...")
         local_filepath = self.target_filepath(filename, sample=sample, remote=False)
@@ -151,7 +170,7 @@ class StorageClient:
         sample: bool = False,
         remote: bool = False,
         hive_partitioning: bool = False,
-        min_date: Optional[datetime.datetime] = None,
+        min_date: datetime | None = None,
     ) -> pl.DataFrame:
         return self.scan_parquet(
             filename,

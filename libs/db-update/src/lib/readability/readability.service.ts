@@ -20,6 +20,7 @@ import type {
 } from '@dua-upd/types-common';
 import { createUpdateQueue } from '../utils';
 import { lexiqueLookup } from './utils';
+import assert from 'node:assert';
 
 dayjs.extend(utc);
 
@@ -43,6 +44,7 @@ export class ReadabilityService {
   }
 
   private async getCollectionBlobClient() {
+    assert(this.blobService.blobModels.urls, 'Blob service not initialized');
     return this.blobService.blobModels.urls.blob(this.DATA_BLOB_NAME);
   }
 
@@ -94,7 +96,7 @@ export class ReadabilityService {
     );
 
     // HTML string to be parsed
-    const mainHtml = load(main.html());
+    const mainHtml = load(main.html() as string);
 
     // get all headings and calculate how many words on average between headings
     const headings = mainHtml('h1, h2, h3, h4, h5, h6');
@@ -194,7 +196,7 @@ export class ReadabilityService {
       .replace(/\s+/g, ' ')
       .split(' ');
 
-    const notFound = [];
+    const notFound: string[] = [];
 
     return words.reduce((count, word) => {
       const entry = lexiqueLookup[word];
@@ -229,7 +231,7 @@ export class ReadabilityService {
   }
 
   lexiconCount(text: string): number {
-    return text.match(/(\w+)/g).length;
+    return (text.match(/(\w+)/g) || []).length;
   }
 
   async recalculateFromBlobStorage(
@@ -292,7 +294,9 @@ export class ReadabilityService {
       date,
       lang,
     }: ReadabilityData) => {
-      const blob = await this.blobService.blobModels.urls.blob(hash);
+      assert(this.blobService.blobModels.urls, 'Blob service not initialized');
+
+      const blob = this.blobService.blobModels.urls.blob(hash);
 
       if (!(await blob.exists())) {
         this.logger.warn(`blob does not exist for hash: ${hash}`);
@@ -390,7 +394,7 @@ export class ReadabilityService {
       // upload only if it has changed
       const blobMetadata = (await blobClient.getProperties()).metadata;
 
-      if (blobMetadata.hash === hash) {
+      if (blobMetadata?.hash === hash) {
         this.logger.log('Readability data in blob storage already up to date.');
 
         return;
@@ -444,9 +448,16 @@ export class ReadabilityService {
     try {
       const blobData = await blobClient.downloadToString();
 
+      if (!blobData) {
+        this.logger.warn(
+          `Tried to sync local Readability collection, but data blob is empty.`
+        );
+        return;
+      }
+
       this.logger.log(`Inserting data into collection...`);
 
-      const jsonReviver = (key, value) => {
+      const jsonReviver = (key: string, value: string) => {
         if (key === 'date') {
           return new Date(value);
         }
@@ -524,7 +535,7 @@ export class ReadabilityService {
     const urlsToUpdate = readabilityWithPages
       .filter(
         (readabilityDoc) =>
-          !readabilityDoc.page.length ||
+          !readabilityDoc.page?.length ||
           readabilityDoc.page[0].url !== readabilityDoc.url
       )
       .map(({ url }) => url);

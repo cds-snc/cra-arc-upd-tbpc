@@ -321,12 +321,10 @@ export class DbUpdateService {
   }
 
   async upsertPageMetrics(pageMetrics: PageMetrics[]) {
-    const bulkInsertOps = [];
+    const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     for (const pageMetric of pageMetrics) {
-      const pageMetricNoId = { ...pageMetric };
-      const _id = pageMetricNoId._id;
-      delete pageMetricNoId._id;
+      const { _id, ...pageMetricNoId } = pageMetric;
 
       bulkInsertOps.push({
         updateOne: {
@@ -402,7 +400,7 @@ export class DbUpdateService {
   }
 
   async upsertGscPageMetrics(dates: Date[]) {
-    const bulkWriteOps = [];
+    const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     const results = (
       await Promise.all(

@@ -1,19 +1,20 @@
-from typing import List, Optional, override
+from typing import Any, Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import bool_, string, timestamp, list_, struct
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from ..sampling import SamplingContext
 from ..utils import array_to_object, convert_objectids
 
 
+@final
 class Urls(ParquetModel):
     collection: str = "urls"
     parquet_filename: str = "urls.parquet"
-    filter: dict | None = None
-    use_aggregation: Optional[bool] = True
-    projection: dict | None = {
+    filter = None
+    use_aggregation = True
+    projection = {
         "_id": 1,
         "url": 1,
         "title": 1,
@@ -81,34 +82,39 @@ class Urls(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("page").bin.encode("hex"),
         )
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
             pl.col("page").str.decode("hex"),
         )
 
-    def get_sampling_filter(self, _: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         return self.filter or {}
 
 
+@final
 class UrlsModel(MongoCollection):
     collection = "urls"
+    sync_type: Literal["simple", "incremental"] = "simple"
     primary_model = Urls()
 
     @override
-    def prepare_for_insert(self, df: pl.DataFrame) -> List[dict]:
-        records = []
+    def prepare_for_insert(self, df: pl.DataFrame, sort_id: bool = True):
+        records: list[dict[str, Any]] = []
 
         col_names = self.combined_schema().to_arrow().names
 
         for row in df.sort("_id").to_dicts():
-            record = {}
+            record: dict[str, Any] = {}
             for k, v in row.items():
                 if k == "metadata":
                     v = array_to_object(v)

@@ -1,8 +1,9 @@
+from typing import Literal, final, override
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import int64, timestamp, float64, int32
-from . import AnyFrame, MongoCollection, ParquetModel
+from .lib import AnyFrame, MongoCollection, ParquetModel
 from .overall_aa_searchterms_en import OverallAASearchTermsEn
 from .overall_aa_searchterms_fr import OverallAASearchTermsFr
 from .overall_gsc_searchterms import OverallGSCSearchTerms
@@ -11,6 +12,7 @@ from ..sampling import SamplingContext
 from copy import deepcopy
 
 
+@final
 class OverallMetrics(ParquetModel):
     collection: str = "overall_metrics"
     parquet_filename: str = "overall_metrics.parquet"
@@ -57,30 +59,35 @@ class OverallMetrics(ParquetModel):
         }
     )
 
-    def transform(self, df: pl.DataFrame) -> pl.DataFrame:
+    @override
+    def transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").bin.encode("hex"),
             pl.col("average_time_spent").round(4).cast(pl.Float32),
             pl.col("bouncerate").round(4).cast(pl.Float32),
         ).sort("date")
 
+    @override
     def reverse_transform(self, df: AnyFrame) -> AnyFrame:
         return df.with_columns(
             pl.col("_id").str.decode("hex"),
         )
 
-    def get_sampling_filter(self, sampling_context: SamplingContext) -> dict:
+    @override
+    def get_sampling_filter(self, sampling_context: SamplingContext):
         filter = deepcopy(self.filter or {})
 
         date_range_filter = get_sample_date_range_filter(sampling_context)
 
-        filter.update(date_range_filter)
+        filter.update(date_range_filter.items())
 
         return filter
 
 
+@final
 class OverallMetricsModel(MongoCollection):
     collection = "overall_metrics"
+    sync_type: Literal["simple", "incremental"] = "incremental"
     primary_model = OverallMetrics()
     secondary_models = [
         OverallAASearchTermsEn(),

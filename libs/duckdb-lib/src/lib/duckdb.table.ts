@@ -6,17 +6,20 @@ import {
   type TableLikeHasEmptySelection,
 } from 'drizzle-orm/pg-core';
 import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
-import type { BlobStorageService } from '@dua-upd/blob-storage';
+import type { IStorageModel, S3Bucket } from '@dua-upd/blob-storage';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
-import { availableParallelism } from 'node:os';
+import type { ContainerClient } from '@azure/storage-blob';
+
+type BlobModel = IStorageModel<S3Bucket | ContainerClient>;
 
 export type DuckDbStorageConfig<Table extends PgTableWithColumns<any>> = {
   name: string;
   table: Table;
   tableCreationSql: SQLWrapper | string;
-  remoteContainer: string;
-  remoteContainerPath: string;
+  filename: string;
+  blobClient: BlobModel;
+  backupBlobClient: BlobModel;
 };
 
 export type DrizzleTable<Table extends PgTableWithColumns<any>> =
@@ -36,57 +39,40 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
   readonly name: string;
   readonly table: Table;
   readonly filename: string;
-  readonly remoteContainer: string;
-  readonly remoteContainerPath: string;
-  readonly remotePath: string;
-  readonly remoteBackupPath: string;
-  readonly fullRemotePath: string;
+  readonly blobClient: BlobModel;
+  readonly backupBlobClient: BlobModel;
+  readonly storagePath: string;
+  readonly backupStoragePath: string;
 
   constructor(
     private readonly db: DuckDBDatabase,
-    private readonly blob: BlobStorageService,
     private readonly config: DuckDbStorageConfig<Table>,
   ) {
     this.name = config.name;
     this.table = config.table;
-    this.remoteContainer = config.remoteContainer;
-    this.remoteContainerPath = config.remoteContainerPath;
-    this.remotePath = `${config.remoteContainer}/${config.remoteContainerPath}`;
-    this.remoteBackupPath = `${config.remoteContainer}/backup/${config.remoteContainerPath}`;
-    this.fullRemotePath = `${getStorageUriPrefix()}${this.remotePath}`;
-    this.filename =
-      this.remoteContainerPath.split('/').pop() || this.remoteContainerPath;
+    this.filename = config.filename;
+    this.blobClient = config.blobClient;
+    this.backupBlobClient = config.backupBlobClient;
+    this.storagePath = config.blobClient.getPath();
+    this.backupStoragePath = config.backupBlobClient.getPath();
   }
 
   async backupRemote() {
-    const container = await this.blob.container(this.remoteContainer);
-
-    const backupFilePath = this.remoteBackupPath.replace(
+    const backupFilename = this.filename.replace(
       /\.parquet$/,
       `_${new Date().toISOString().slice(0, 10)}.parquet`,
     );
-    console.log(`Backing up ${this.remotePath} to ${backupFilePath}`);
 
-    const blobClient = container
-      ?.createBlobsClient({
-        overwrite: true,
-        path: this.remoteContainer,
-      })
-      .blob(this.remoteContainerPath);
-    const backupBlobClient = container
-      ?.createBlobsClient({
-        overwrite: true,
-        path: this.remoteContainer,
-      })
-      .blob(backupFilePath);
+    const backupFilePath = `${this.backupBlobClient.getPath()}/${backupFilename}`;
 
-    if (!blobClient?.url) {
-      throw new Error(`Blob client for ${this.remotePath} not found`);
-    }
+    const blobClient = this.blobClient.blob(this.filename);
+    const backupBlobClient = this.backupBlobClient.blob(backupFilename);
 
-    await backupBlobClient?.copyFromUrl(blobClient?.url);
+    console.log(`Backing up ${blobClient.url} to ${backupBlobClient.url}...`);
 
-    console.log(`Backup complete: ${this.remoteBackupPath}`);
+    await backupBlobClient?.copyFromUrl(blobClient.url);
+
+    console.log(`Backup complete for ${backupFilePath}`);
   }
 
   async createLocalTable() {
@@ -160,8 +146,8 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     console.log(`Downloading ${this.filename} to ${currentRemoteFilename}`);
     console.time('Downloading remote file to local disk');
-    await this.blob.blobModels.html_snapshots
-      ?.blob(this.filename)
+    await this.blobClient
+      .blob(this.filename)
       .downloadToFile(currentRemoteFilename);
     console.timeEnd('Downloading remote file to local disk');
 
@@ -184,23 +170,25 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     const uploadStreamBufferSize = 8 * 1024 * 1024; // 8MB buffer size
 
-    const container = await this.blob.container(this.remoteContainer);
-    if (!container) {
-      throw new Error(`Container ${this.remoteContainer} not found`);
-    }
+    const blobClient = this.blobClient.blob(this.filename);
 
-    const storageClient = container
-      .createBlobsClient({
-        overwrite: true,
-        path: this.remoteContainer,
-      })
-      .blob(this.remoteContainerPath);
-
-    await storageClient?.uploadStream(
+    const response = await blobClient.uploadStream(
       createReadStream(this.filename, {
         highWaterMark: uploadStreamBufferSize,
       }),
     );
+
+    if ('ETag' in response) {
+      // S3 response
+      console.log(
+        `Upload complete with ETag: ${response.ETag} (versionId: ${response.VersionId})`,
+      );
+    } else if ('requestId' in response) {
+      // Azure response
+      console.log(
+        `Upload complete with MD5: ${response.contentMD5} (versionId: ${response.versionId})`,
+      );
+    }
 
     console.log(
       `Uploaded ${this.filename} to remote storage, deleting local copy...`,
@@ -216,8 +204,10 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
   }
 
   selectRemote<TSelection extends SelectedFields>(selection?: TSelection) {
+    const fullRemotePath = `${getStorageUriPrefix()}${this.storagePath}/${this.filename}`;
+
     const parquetSql = sql.raw(
-      `read_parquet('${this.fullRemotePath}') as "${this.name}"`,
+      `read_parquet('${fullRemotePath}') as "${this.name}"`,
     ) as unknown as DrizzleTable<Table>;
 
     return selection
@@ -229,8 +219,7 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
 export function duckDbTable<Table extends PgTableWithColumns<any>>(
   db: DuckDBDatabase,
-  blob: BlobStorageService,
   config: DuckDbStorageConfig<Table>,
 ): DuckDbTable<Table> {
-  return new DuckDbTable(db, blob, config);
+  return new DuckDbTable(db, config);
 }

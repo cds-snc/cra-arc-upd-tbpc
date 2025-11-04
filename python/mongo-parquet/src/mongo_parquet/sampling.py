@@ -1,13 +1,13 @@
-from typing import Callable, Dict, Any
+from typing import Callable, Any
 from copy import deepcopy
 
 
 class SamplingContext:
     def __init__(self):
-        self.sampling_context: Dict[str, Any] = {}
+        self.sampling_context: dict[str, Any] = {}
 
     def update_context(
-        self, callable: Callable[[Dict[str, Any]], Dict[str, Any]]
+        self, callable: Callable[[dict[str, Any]], dict[str, Any]]
     ) -> None:
         """
         Update the sampling context with data from a callable function.
@@ -29,5 +29,6 @@ class SamplingContext:
             raise KeyError(f"Key '{key}' not found in sampling context.")
 
         return deepcopy(val)
+
 
 __all__ = ["SamplingContext"]

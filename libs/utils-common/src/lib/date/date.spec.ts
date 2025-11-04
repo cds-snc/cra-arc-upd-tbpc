@@ -217,6 +217,78 @@ describe('Fiscal year', () => {
   });
 });
 
-describe.skip('Last 52 weeks', () => {
-  // unimplemented
+describe('Last 52 weeks', () => {
+  const periodConfig = _dateRangeConfigs['last_52_weeks'];
+
+  // 364 days -1 because technically the date range ends immediately
+  // at the start of the last day, meaning it isn't counted
+  const numDaysIn52Weeks = 52 * 7 - 1;
+
+  const initialDate = today();
+  
+  const datesToTest = [
+    initialDate,
+    initialDate.add(1, 'day'),
+    initialDate.add(3, 'days'),
+    initialDate.add(1, 'week'),
+    initialDate.add(2, 'weeks'),
+    initialDate.add(3, 'weeks'),
+    initialDate.add(4, 'weeks'),
+    initialDate.add(1, 'month'),
+    initialDate.add(2, 'months'),
+    initialDate.add(2, 'months').add(3, 'days'),
+    initialDate.add(3, 'months'),
+    initialDate.add(3, 'months').add(3, 'days'),
+    initialDate.add(4, 'months'),
+    initialDate.add(4, 'months').add(3, 'weeks'),
+    initialDate.add(1, 'quarter'),
+    initialDate.add(1, 'quarter').add(3, 'weeks'),
+    initialDate.add(2, 'quarters'),
+    initialDate.add(7, 'months'),
+    initialDate.add(7, 'months').add(3, 'days'),
+    initialDate.add(8, 'months'),
+    initialDate.add(8, 'months').add(3, 'days'),
+    initialDate.add(3, 'quarters'),
+    dayjs.utc('2024-02-29'), // leap year
+  ].map((date) => [date.toDate()]);
+
+  test.concurrent.each(datesToTest)(
+    'Date ranges should be 364 (-1) days (%o)',
+    async (date) => {
+      const dateRange = periodConfig.getDateRange(date);
+      const { start, end } = dateRange;
+      const comparisonStart = periodConfig.getComparisonDate(start);
+      const comparisonEnd = periodConfig.getComparisonDate(end);
+
+      const daysInDateRange = end.diff(start, 'day');
+      const daysInComparisonDateRange = comparisonEnd.diff(
+        comparisonStart,
+        'day'
+      );
+
+      expect(daysInDateRange).toEqual(numDaysIn52Weeks);
+      expect(daysInComparisonDateRange).toEqual(numDaysIn52Weeks);
+    }
+  );
+
+  test.concurrent.each(datesToTest)(
+    'Date ranges should start on Sunday and end on Saturday (%o)',
+    async (date) => {
+      const dateRange = periodConfig.getDateRange(date);
+      const { start, end } = dateRange;
+      const comparisonStart = periodConfig.getComparisonDate(start);
+      const comparisonEnd = periodConfig.getComparisonDate(end);
+
+      const startDay = start.day();
+      const endDay = end.day();
+      const comparisonStartDay = comparisonStart.day();
+      const comparisonEndDay = comparisonEnd.day();
+
+      // 0 = Sunday, 6 = Saturday
+      expect(startDay).toEqual(0);
+      expect(endDay).toEqual(6);
+      expect(comparisonStartDay).toEqual(0);
+      expect(comparisonEndDay).toEqual(6);
+    }
+  );
 });

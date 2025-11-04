@@ -71,6 +71,18 @@ def main():
     )
 
     parser.add_argument(
+        "--sync-parquet",
+        action="store_true",
+        help="Sync local Parquet files with the data in MongoDB.",
+    )
+
+    parser.add_argument(
+        "--recalculate-views",
+        action="store_true",
+        help="Recalculate the views (pages, tasks) using the current parquet files.",
+    )
+
+    parser.add_argument(
         "--sample-dir",
         type=str,
         help="Override the sample directory for remote storage.",
@@ -121,6 +133,12 @@ def main():
         help="Drop the collection before importing data.",
     )
 
+    parser.add_argument(
+        "--cleanup-temp-dir",
+        action="store_true",
+        help="Cleanup temporary directories after operations that use them.",
+    )
+
     args = parser.parse_args()
 
     if args.include and args.exclude:
@@ -136,18 +154,23 @@ def main():
         actions_selected += 1
     if args.download_from_remote:
         actions_selected += 1
+    if args.sync_parquet:
+        actions_selected += 1
+    if args.recalculate_views:
+        actions_selected += 1
 
     if actions_selected == 0:
         print(
-            "No action specified. Use --export-from-mongo, --import-to-mongo, --upload-to-remote, or --download-from-remote."
+            "No action specified. Use --export-from-mongo, --import-to-mongo, --sync-parquet, --upload-to-remote, or --download-from-remote."
         )
         print("Use --help for more information.")
         return
 
     if actions_selected > 1:
-        # export_from_mongo and upload_to_remote are the only two that can be selected together
-        if not (
-            actions_selected == 2 and (args.export_from_mongo and args.upload_to_remote)
+        # upload_to_remote is treated as an option when used with either export_from_mongo or sync_parquet, instead of an action
+        if actions_selected == 2 and not (
+            (args.export_from_mongo and args.upload_to_remote)
+            or (args.sync_parquet and args.upload_to_remote)
         ):
             print(
                 "⚠️ Multiple actions selected. Only one action can be performed at a time."
@@ -197,6 +220,19 @@ def main():
         timer_end()
         return
 
+    if args.sync_parquet:
+        mp.sync_parquet_with_mongo(
+            include=args.include,
+            exclude=args.exclude,
+            upload_on_success=args.upload_to_remote,
+            cleanup_temp_dir=args.cleanup_temp_dir,
+        )
+        if args.upload_to_remote:
+            mp.upload_to_remote()
+
+        timer_end()
+        return
+
     if args.import_to_mongo:
         if args.drop:
             drop_collections(mp.io.db.db)
@@ -220,15 +256,27 @@ def main():
         timer_end()
         return
 
+    if args.recalculate_views:
+        mp.recalculate_views(cleanup_temp_dir=args.cleanup_temp_dir)
+        timer_end()
+        return
+
     if not (
         args.export_from_mongo
         or args.import_to_mongo
         or args.upload_to_remote
         or args.download_from_remote
+        or args.sync_parquet
+        or args.recalculate_views
     ):
-        print(
-            "No action specified. Use --export_from_mongo (export), --import_to_mongo (import), or --upload_to_remote (upload), or --download_from_remote (download)."
-        )
+        print("No action specified. Use one of the following:\r\n")
+        print("\t--export_from_mongo (export)")
+        print("\t--import_to_mongo (import)")
+        print("\t--upload_to_remote (upload)")
+        print("\t--download_from_remote (download)")
+        print("\t--sync_parquet (sync)")
+        print("\t--recalculate-views (recalculate)")
+
         print("Use --help for more information.")
 
 
@@ -266,8 +314,22 @@ def setup_sampling_context(db: Database, sampling_context: SamplingContext):
 
 
 # doesn't actually drop collections, just empties them, to avoid deleting indexes
-def drop_collections(db: Database):
+def drop_collections(
+    db: Database,
+    exclude: list[str] | None = None,
+    include: list[str] | None = None,
+):
     for collection_name in db.list_collection_names():
+        if (
+            collection_name.startswith("system.")
+            or exclude
+            and collection_name in exclude
+        ):
+            continue
+
+        if include and collection_name not in include:
+            continue
+
         print(f"Emptying collection '{collection_name}'...")
         db[collection_name].delete_many({})
         print(f"Collection '{collection_name}' successfully emptied.")

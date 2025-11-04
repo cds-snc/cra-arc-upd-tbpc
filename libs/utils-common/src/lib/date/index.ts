@@ -269,7 +269,7 @@ export const structuredDateRangeConfigs = {
     label: 'Last 52 weeks',
     getDateRange: (fromDate = today()) => {
       const end = dayjs.utc(fromDate).startOf('week').subtract(1, 'day');
-      const start = end.subtract(1, 'year').add(1, 'day');
+      const start = end.startOf('week').subtract(51, 'weeks'); // 51 weeks + end week = 52 weeks
 
       return { start, end };
     },
@@ -280,7 +280,7 @@ export const structuredDateRangeConfigs = {
     type: 'year_to_date',
     label: 'Year to date',
     getDateRange: (fromDate = today()) => {
-      const end = dayjs.utc(fromDate).subtract(1, 'day');
+      const end = dayjs.utc(fromDate).subtract(1, 'day').startOf('day');
       const start = end.startOf('year');
 
       return { start, end };
@@ -393,9 +393,7 @@ const getDateRangeDefaults = {
   withComparison: false,
 } as const;
 
-export function getDateRange(
-  type: DateRangeType,
-): DateRange<Date>;
+export function getDateRange(type: DateRangeType): DateRange<Date>;
 export function getDateRange(
   type: DateRangeType,
   options: GetDateRangeOptions & { asDate: false },

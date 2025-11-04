@@ -52,7 +52,7 @@ export class FeedbackService {
   @AsyncLogTiming
   async updateFeedbackData(endDate?: AbstractDate, useProcessedDate = true) {
     this.logger.log('Updating Feedback data');
-    const latestDataDate: Date | null = (
+    const latestDataDate: Date | undefined = (
       await this.feedbackModel.findOne({}, { date: 1 }).sort({ date: -1 })
     )?.date;
 
@@ -111,7 +111,7 @@ export class FeedbackService {
         theme,
       }),
     );
-    
+
     const feedbackWithWords = preprocessCommentWords(feedback);
 
     return await this.feedbackModel

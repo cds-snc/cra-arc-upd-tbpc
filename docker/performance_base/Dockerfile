@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.3
-FROM node:22.14.0-bookworm-slim AS builder
+FROM node:24.11.0-bookworm-slim AS builder
 WORKDIR /builder
 VOLUME ["/builder"]
 COPY ["package.json", "package-lock.json", "./"]
@@ -18,7 +18,7 @@ WORKDIR /apps
 COPY --from=builder /builder/dist/apps/ .
 
 
-FROM node:22.14.0-bookworm-slim AS node_base
+FROM node:24.11.0-bookworm-slim AS node_base
 RUN apt-get update && apt-get install -y tzdata curl
 ENV TZ=America/Toronto
 

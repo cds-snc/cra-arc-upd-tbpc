@@ -23,13 +23,11 @@ export class DuckDbService implements BeforeApplicationShutdown {
   readonly isReadOnly: boolean = !!this.options?.readOnly;
 
   readonly remote = {
-    html: duckDbTable(this.db, this.blob, {
+    html: duckDbTable(this.db, {
       name: 'html',
-      remoteContainer: process.env['DATA_BUCKET_NAME'] || 'html-snapshots',
-      remoteContainerPath:
-        this.blob.storageClient?.storageType === 's3'
-          ? 'html-snapshots/hashes-html.parquet'
-          : 'hashes-html.parquet',
+      filename: 'hashes-html.parquet',
+      blobClient: this.blob.blobModels.html_snapshots!, // let it throw an error if clients are null
+      backupBlobClient: this.blob.blobModels.html_snapshots_backup!,
       tableCreationSql: `
           CREATE TABLE IF NOT EXISTS html (
             url TEXT,
