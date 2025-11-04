@@ -228,8 +228,6 @@ class MongoParquet:
 
         sync_utils = SyncUtils(root_dir_path)
 
-        sync_utils.create_temp_dir()
-
         for model in self.collection_models:
             if include and model.collection not in include:
                 print(f"Skipping {model.collection} (not in include list)")
