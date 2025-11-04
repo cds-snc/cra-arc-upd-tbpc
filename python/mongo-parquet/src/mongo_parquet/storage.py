@@ -10,6 +10,10 @@ import s3fs
 
 def get_aws_config_value(key: str) -> str | None:
     config_path = os.path.expanduser("~/.aws/credentials.json")
+
+    if not os.path.exists(config_path):
+        return None
+
     with open(config_path, 'r') as f:
         data = json.load(f)
         return data.get("default", {}).get(key)
