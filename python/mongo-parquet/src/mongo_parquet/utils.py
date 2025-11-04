@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from functools import lru_cache
 import os
 import re
 import shutil
@@ -77,7 +78,7 @@ def objectid(bin: bytes | None = None) -> ObjectId:
         return cached_objectid(ObjectId().binary)
     return cached_objectid(bin)
 
-
+@lru_cache(maxsize=75_000)
 def cached_objectid(bin: bytes) -> ObjectId:
     """Convert bytes to ObjectId, caching the result."""
     return ObjectId(bin)
@@ -136,6 +137,7 @@ def hash_file(filepath: str) -> str:
         return hashlib.file_digest(f, "md5").hexdigest()
 
 
+# Currently unused
 @final
 class RefChangeTracker:
     """
@@ -171,7 +173,6 @@ class RefChangeTracker:
         )
         return removed_ids.collect()
 
-    # Currently unused
     def get_changed(
         self, ref_fields: list[str], before_df: pl.LazyFrame, after_df: pl.LazyFrame
     ) -> pl.LazyFrame:
@@ -220,6 +221,7 @@ class RefChangeTracker:
         return df.unique(["url", "page"]).collect()
 
 
+@final
 class SyncUtils:
     """
     Utilities for syncing data between MongoDB and Parquet files, such as:
@@ -234,16 +236,16 @@ class SyncUtils:
 
     upload_queue: list[str] = []
 
-    root_path: str
-    temp_dir_path: str
-    backup_dir_path: str
-    incremental_dir_path: str
-
     partition_overlaps: dict[str, list[str]] = {}
 
-    def __init__(self, root_path: str):
-        self.root_path = root_path
-        self.create_temp_dir()
+    def __init__(self, parquet_dir_path: str, temp_dir_name: str = ".sync_temp"):
+        temp_dir_str = os.path.join(parquet_dir_path, "..", temp_dir_name)
+        self.parquet_dir_path: str = os.path.abspath(parquet_dir_path)
+        self.temp_dir_path: str = os.path.abspath(temp_dir_str)
+        self.backup_dir_path: str = os.path.join(self.temp_dir_path, "backup")
+        self.incremental_dir_path: str = os.path.join(self.temp_dir_path, "incremental")
+
+        self.ensure_temp_dirs()
 
     def file_has_changed(self, filepath: str) -> bool:
         """
@@ -299,19 +301,10 @@ class SyncUtils:
         if self.file_has_changed(file_path):
             self.queue_file_upload(file_path)
 
-    def create_temp_dir(self):
-        sync_root_relative = "../.sync_temp"
-        temp_dir = os.path.join(self.root_path, sync_root_relative)
-        os.makedirs(temp_dir, exist_ok=True)
-        self.temp_dir_path = temp_dir
-
-        backup_dir = os.path.join(temp_dir, "backup")
-        os.makedirs(backup_dir, exist_ok=True)
-        self.backup_dir_path = backup_dir
-
-        incremental_dir = os.path.join(temp_dir, "incremental")
-        os.makedirs(incremental_dir, exist_ok=True)
-        self.incremental_dir_path = incremental_dir
+    def ensure_temp_dirs(self):
+        os.makedirs(self.temp_dir_path, exist_ok=True)
+        os.makedirs(self.backup_dir_path, exist_ok=True)
+        os.makedirs(self.incremental_dir_path, exist_ok=True)
 
     def cleanup_temp_dir(self):
         if os.path.exists(self.temp_dir_path):
@@ -322,7 +315,7 @@ class SyncUtils:
                     os.rmdir(os.path.join(root, name))
 
     def backup_file(self, filename: str):
-        filepath = os.path.join(self.root_path, filename)
+        filepath = os.path.join(self.parquet_dir_path, filename)
 
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File {filepath} does not exist for backup.")
@@ -332,11 +325,11 @@ class SyncUtils:
 
     def restore_backup(self, filename: str):
         backup_path = os.path.join(self.backup_dir_path, filename)
-        filepath = os.path.join(self.root_path, filename)
 
         if not os.path.exists(backup_path):
             raise FileNotFoundError(f"Backup file {backup_path} does not exist.")
 
+        filepath = os.path.join(self.parquet_dir_path, filename)
         shutil.copy(backup_path, filepath)
 
 

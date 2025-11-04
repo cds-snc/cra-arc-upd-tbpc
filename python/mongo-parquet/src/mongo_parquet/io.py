@@ -119,6 +119,8 @@ class MongoParquetIO:
             parquet_start_time = datetime.now()
             print(f"Processing {parquet_model.parquet_filename}...")
 
+            sync_utils.ensure_temp_dirs()
+
             # Do initial processing/hashing for current/previous data
             local_path = self.storage.target_filepath(
                 parquet_model.parquet_filename, remote=False
