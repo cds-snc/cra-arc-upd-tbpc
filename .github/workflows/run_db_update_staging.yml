@@ -1,4 +1,4 @@
-name: Run Data Import ECS Task
+name: Run Update DB ECS Task (Staging)
 on:
   workflow_dispatch: # Only run on manual triggering of the workflow
 
@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/run_ecs_task.yml
     with:
       aws_region: ca-central-1
-      aws_account_id: 211125499457
+      aws_account_id: 211125499457 # Staging account
       aws_role_name: cra-arc-upd-tbpc-apply
-      aws_role_session_name: cra-upd-data-import-staging-session
-      task_name: cra-upd-dashboard-data-import
+      aws_role_session_name: cra-upd-update-db-staging-session
+      task_name: cra-upd-dashboard-update-db
