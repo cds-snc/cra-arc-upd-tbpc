@@ -321,6 +321,10 @@ class SyncUtils:
             raise FileNotFoundError(f"File {filepath} does not exist for backup.")
 
         backup_path = os.path.join(self.backup_dir_path, filename)
+
+        # shutil.copy will not create directories automatically
+        os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+
         shutil.copy(filepath, backup_path)
 
     def restore_backup(self, filename: str):
