@@ -182,11 +182,17 @@ class MongoParquet:
 
         :param sample: Whether to download sample files.
         """
-        filenames = [
-            model.primary_model.parquet_filename
+        parquet_models = [
+            [model.primary_model, *model.secondary_models]
             for model in self.collection_models
             if (not include or model.collection in include)
             and (not exclude or model.collection not in exclude)
+        ]
+
+        filenames = [
+            parquet_model.parquet_filename
+            for collection_models in parquet_models
+            for parquet_model in collection_models
         ]
 
         self.storage_client.download_from_remote(
