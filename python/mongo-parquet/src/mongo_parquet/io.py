@@ -1,5 +1,6 @@
 from logging import error, warning
 import os
+import re
 from copy import deepcopy
 from datetime import datetime, timedelta
 from time import sleep
@@ -137,12 +138,9 @@ class MongoParquetIO:
 
             base_filter = (
                 parquet_model.get_sampling_filter(self.sampling_context)
-                or parquet_model.filter
-                or {}
-            )
-            import re
-
-            re.sub(r"\s+", " ", str(base_filter))
+                if sample
+                else parquet_model.filter
+            ) or {}
 
             if base_filter.get("date") is not None:
                 base_filter.pop("date")
