@@ -964,6 +964,7 @@ export class TasksViewService extends DbViewNew<
 
     const comparisonProps = [
       'calls',
+      'visits',
       'dyf_no',
       'calls_per_100_visits',
       'dyf_no_per_1000_visits',
@@ -978,7 +979,7 @@ export class TasksViewService extends DbViewNew<
     );
 
     return getArraySelectedAbsoluteChange(
-      ['calls_per_100_visits', 'dyf_no_per_1000_visits'],
+      ['calls_per_100_visits', 'dyf_no_per_1000_visits', 'visits', 'calls'],
       '_id',
       dataWithPercentChange,
       // Need to cast it to the same type to get the correct type for the return value
