@@ -66,6 +66,8 @@ export class OverviewSummaryComponent implements OnInit {
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;
 
+  improvedKpiSuccessRateBaseline$ = this.overviewService.improvedKpiSuccessRateBaseline$;
+  
   improvedKpi$ = this.overviewService.improvedKpi$;
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
 
@@ -297,44 +299,65 @@ export class OverviewSummaryComponent implements OnInit {
           translate: true,
         },
         {
-          field: 'calls_per_100_visits_percent_change',
-          header: 'kpi-calls-per-100-title-change',
-          pipe: 'percent',
-          pipeParam: '1.0-2',
-          upGoodDownBad: false,
-          indicator: true,
-          useArrows: true,
-          showTextColours: true,
-          secondaryField: {
-            field: 'calls_per_100_visits_difference',
-            pipe: 'number',
-            pipeParam: '1.0-2',
-          },
-          width: '170px',
+          field: 'visits',
+          header: 'visits',
+          pipe: 'number',
         },
         {
-          field: 'dyf_no_per_1000_visits_percent_change',
-          header: 'kpi-feedback-per-1000-title-change',
-          pipe: 'percent',
-          pipeParam: '1.0-2',
-          upGoodDownBad: false,
-          indicator: true,
-          useArrows: true,
-          showTextColours: true,
-          secondaryField: {
-            field: 'dyf_no_per_1000_visits_difference',
-            pipe: 'number',
-            pipeParam: '1.0-2',
-          },
-          width: '220px',
+          field: 'calls',
+          header: 'calls',
+          pipe: 'number',
         },
         {
-          field: 'survey_completed',
-          header: 'Self-reported success',
-          pipe: 'percent',
-          tooltip: 'tooltip-self-reported-success',
-          width: '140px',
+          field: 'calls_per_100_visits',
+          header: 'kpi-calls-per-100-title',
+          pipe: 'number',
+          pipeParam: '1.0-2',
         },
+        {
+          field: 'dyf_no',
+          header: 'dyf_no',
+          pipe: 'number',
+        },
+        // {
+        //   field: 'calls_per_100_visits_percent_change',
+        //   header: 'kpi-calls-per-100-title-change',
+        //   pipe: 'percent',
+        //   pipeParam: '1.0-2',
+        //   upGoodDownBad: false,
+        //   indicator: true,
+        //   useArrows: true,
+        //   showTextColours: true,
+        //   secondaryField: {
+        //     field: 'calls_per_100_visits_difference',
+        //     pipe: 'number',
+        //     pipeParam: '1.0-2',
+        //   },
+        //   width: '170px',
+        // },
+        // {
+        //   field: 'dyf_no_per_1000_visits_percent_change',
+        //   header: 'kpi-feedback-per-1000-title-change',
+        //   pipe: 'percent',
+        //   pipeParam: '1.0-2',
+        //   upGoodDownBad: false,
+        //   indicator: true,
+        //   useArrows: true,
+        //   showTextColours: true,
+        //   secondaryField: {
+        //     field: 'dyf_no_per_1000_visits_difference',
+        //     pipe: 'number',
+        //     pipeParam: '1.0-2',
+        //   },
+        //   width: '220px',
+        // },
+        // {
+        //   field: 'survey_completed',
+        //   header: 'Self-reported success',
+        //   pipe: 'percent',
+        //   tooltip: 'tooltip-self-reported-success',
+        //   width: '140px',
+        // },
         {
           field: 'latest_ux_success',
           header: 'Latest UX success rate',

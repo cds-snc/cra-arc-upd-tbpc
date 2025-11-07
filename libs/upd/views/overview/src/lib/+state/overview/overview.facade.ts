@@ -135,7 +135,15 @@ export class OverviewFacade {
     map((overviewData) => overviewData?.improvedTasksKpi),
   );
 
+   wosImprovedKpi$ = this.overviewData$.pipe(
+    map((overviewData) => overviewData?.wosImprovedTasksKpi),
+  );
+
   improvedKpiUniqueTasks$ = this.improvedKpi$.pipe(
+    map((improvedKpi) => improvedKpi?.uniqueTasks || 0),
+  );
+
+  wosImprovedKpiUniqueTasks$ = this.wosImprovedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.uniqueTasks || 0),
   );
 
@@ -153,6 +161,22 @@ export class OverviewFacade {
 
   improvedKpiSuccessRateValidation$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates.validation || 0),
+  );
+  
+  improvedKpiSuccessRateBaseline$ = this.improvedKpi$.pipe(
+    map((improvedKpi) => improvedKpi?.successRates.baseline || 0),
+  );
+
+   wosImprovedKpiSuccessRateDifferencePoints$ = this.wosImprovedKpi$.pipe(
+    map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
+  );
+
+  wosImprovedKpiSuccessRateValidation$ = this.wosImprovedKpi$.pipe(
+    map((improvedKpi) => improvedKpi?.successRates.validation || 0),
+  );
+
+  wosImprovedKpiSuccessRateBaseline$ = this.wosImprovedKpi$.pipe(
+    map((improvedKpi) => improvedKpi?.successRates.baseline || 0),
   );
 
   improvedTopKpi$ = this.overviewData$.pipe(
@@ -181,6 +205,10 @@ export class OverviewFacade {
 
   improvedKpiTopSuccessRateValidation$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => improvedTopKpi?.topSuccessRates.validation || 0),
+  );
+
+  improvedKpiTopSuccessRateBaseline$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.topSuccessRates.baseline || 0),
   );
 
   kpiTestsCompleted$ = this.overviewData$.pipe(

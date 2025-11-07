@@ -401,6 +401,9 @@
   "selected-columns": "{{num}} columns selected",
   "latest_success_rate_change": "Latest success rate change",
 
+  "kpi-calls-change": "Change in calls",
+  "kpi-visits-change": "Change in visits",
+  
   "kpi-calls-per-100-title": "Calls per 100 visits",
   "kpi-calls-per-100-title-change": "Change in calls per 100 visits",
   "kpi-calls-per-100-tooltip": "The ratio of calls received by the CRA per 100 visits to the CRA pages on Canada.ca in the reporting time period.",
@@ -433,15 +436,34 @@
   "kpi-ux-test-guidance": "<strong>What is this?</strong>  <br />The percentage of average success rate for the latest testing on all complete UX tests with Validation test type.<br />The target for this Key performance indicator is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A: The sum of latest user test success rates (in percentages) of all complete UX tests with the Validation test type<br />B: The total number of complete tests performed with the Validation test type<br /> <br />A/B<br /><br /><div class='d-flex justify-content-end'><a href=\"/en/overview/uxtests/\"</div>",
   "kpi-ux-test-text": "{{total}} unique tasks tested",
 
-  "kpi-ux-test-success-all-title": "Average success rate of all tasks",
-  "kpi-ux-test-success-all-tooltip": "Average success rate of all tasks",
-  "kpi-ux-test-success-all-guidance": "<strong>What is this?</strong>  <br />The percentage of average success rate for all tasks, using the latest success rate from their most recent UX test. Note: Not all tasks have been tested.<br />The target for this Key performance indicator is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A: The sum of success rates of the most recent tasks tested<br />B: Total number of tasks tested<br /> <br />A/B<br /><br />",
+  "kpi-ux-test-success-all-title": "All tasks tested",
+  "kpi-ux-test-success-all-tooltip": "Average success rate for all tasks tested",
+  "kpi-ux-test-success-all-guidance": "<strong>What is this for?</strong>  <br />The <strong>Average success rate for all tasks</strong> measures how often users successfully complete tasks during their most recent usability test.<br/><br/>This KPI helps provide an overall picture of task performance across all tasks tested, regardless of whether tasks have been validated for improvement.<br />The target for this Key performance indicator is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A: Sum of the most recent success rates of all tested tasks<br />B: Total number of tasks tested<br /> <br />A/B<br /><br />",
   "kpi-ux-test-success-all-text": "{{unique}}/{{total}} unique tasks tested",
 
-  "kpi-ux-test-improved-title": "Average success rate of improved tasks",
-  "kpi-ux-test-improved-tooltip": "Average success rate of all improved tasks",
-  "kpi-ux-test-improved-guidance": "<strong>What is this?</strong>  <br />The percentage of average success rate for improved tasks from their latest validation UX test. It also measures improvement by comparing the average success rate of previous UX tests (baseline) with the most recent UX tests (validation).<br />The target for this Key performance indicator is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A: The sum of validation success rates on all improved tasks<br />B: Total number of tasks tested<br /> <br />A/B<br /><br />Improvement is the difference between this average success rate and the average success rate of the same tasks from their baseline tests.<br /><br />",
+  "kpi-ux-test-success-all-text-unique": "{{unique}} tasks tested",
+  "kpi-ux-test-success-all-text-total": "{{total}} tasks in total",
+
+  "kpi-ux-test-improved-title": "All improved tasks",
+  "kpi-ux-test-improved-tooltip": "Average success rate for all improved tasks",
+  "kpi-ux-test-improved-guidance": "<strong>What is this?</strong>  <br />The <strong>Average success rate for improved tasks</strong> measures how often users successfully complete validated tasks during usability testing. It is calculated by taking the average success rate across all validated tasks that were baseline tested, then re-tested after improvements.<br/><br/>This KPI highlights the impact of content and design improvements on all validated tasks, showing progress toward the success rate target.<br />The target for this KPI is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A = Sum of validation success rates across all improved tasks<br />B = Total number of improved tasks tested<br /><br />A / B<br /><br />",
   "kpi-ux-test-improved-text": "{{unique}}/{{total}} unique tasks tested",
+  
+  "avg-success-subtitle": "average success rate",
+  "percentage-points": "percentage points",
+  "from-to-improvement": "(From {{baseline}} \u2192 {{validation}})",
+  
+  "kpi-ux-test-improved-text-unique": "{{unique}} tasks validation tested",
+  "kpi-ux-test-improved-text-total": "{{total}} tasks baseline tested",
+
+  "kpi-ux-test-top-text-unique": "{{unique}} top tasks validation tested",
+  "kpi-ux-test-top-text-total": "{{total}} top tasks baseline tested",
+  "kpi-ux-test-top-text-not-tested": "{{nottested}} top tasks to be tested",
+
+  "kpi-ux-test-wos-improved-title": "Improved WOS tasks",
+  "kpi-ux-test-wos-improved-tooltip": "Average success rate for improved Web Optimization Strategy (WOS) project tasks",
+  "kpi-ux-test-wos-improved-guidance": "<strong>What is this?</strong>  <br />The <strong>Average success rate for improved WOS tasks</strong> measures how often users successfully complete Web Content Optimization (WOS) project tasks after improvements. Each task was baseline tested, then re-tested after changes, and the results averaged.<br/><br/>This KPI highlights the impact of content and design improvements on WOS-related tasks, showing progress toward the success rate target.<br />The target for this KPI is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A = Sum of validation success rates across all improved WOS tasks<br />B = Total number of improved WOS tasks tested<br /><br />A / B<br /><br />",
+  "kpi-ux-test-wos-improved-text": "{{unique}}/{{total}} unique tasks tested",
 
   "increase": "increase",
   "decrease": "decrease",
@@ -450,9 +472,9 @@
   "decrease from Baseline UX tests": "{{value}} decrease from Baseline UX tests",
   " from Baseline UX tests": "{{value}} improvement from Baseline UX tests",
 
-  "kpi-ux-test-top50-title": "Average success rate of top 50 tasks",
-  "kpi-ux-test-top50-tooltip": "Average success rate of tasks ranked in the top 50 based on performance metrics from the previous quarter",
-  "kpi-ux-test-top50-guidance": "<strong>What is this?</strong>  <br />This KPI measures the average success rate of tasks ranked in the top 50 from the previous quarter. It includes only improved tasks, which have both baseline and validation UX tests. It also measures improvement by comparing the average success rate of previous UX tests (baseline) with the most recent UX tests (validation) for these tasks.<br />The target for this Key performance indicator is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A: The sum of success rates for all improved top 50 tasks in the latest validation tests<br />B: Total number of improved tasks tested<br /> <br />A/B<br /><br />Improvement is the difference between this average success rate and the average success rate of the same tasks from their baseline tests.<br /><br />",
+  "kpi-ux-test-top50-title": "Improved top 50 tasks",
+  "kpi-ux-test-top50-tooltip": "Average success rate for improved tasks ranked in the top 50 based on performance metrics from the previous quarter",
+  "kpi-ux-test-top50-guidance": "<strong>What is this?</strong>  <br />The <strong>Average success rate for improved top 50 tasks</strong> measures how well users complete the most important top 50 tasks after they have been improved and validated through usability testing. Each task was first baseline tested to capture its original success rate, then re-tested after improvements to confirm measurable gains.<br/><br/>This KPI highlights the impact of content and design improvements on the top 50 priority tasks, showing progress toward the success rate target.<br />The target for this KPI is 80%.<br /><br /><strong>How is this KPI calculated?</strong>  <br />A = Sum of validation success rates for all improved top 50 tasks<br />B = Total number of improved top 50 tasks tested<br /><br />A / B<br /><br /",
   "kpi-ux-test-top50-text": "{{unique}}/{{total}} unique tasks tested",
   "Top 50 tasks": "Top 50 tasks",
 

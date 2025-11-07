@@ -272,6 +272,10 @@ export interface OverviewData
     uniqueTasks: number;
     successRates: SuccessRates;
   };
+  wosImprovedTasksKpi?: {
+    uniqueTasks: number;
+    successRates: SuccessRates;
+  };
   improvedKpiTopSuccessRate?: {
     uniqueTopTasks: number;
     allTopTasks: number;

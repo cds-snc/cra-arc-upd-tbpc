@@ -401,6 +401,9 @@
   "selected-columns": "{{num}} colonnes sélectionnées",
   "Rank": "Classement",
   "latest_success_rate_change": "Dernière variation du taux de réussite",
+  
+  "kpi-calls-change": "Variation des appels",
+  "kpi-visits-change": "Variation des visites",
 
   "kpi-calls-per-100-title": "Appels pour 100 visites",
   "kpi-calls-per-100-title-change": "Variation des appels pour 100 visites",
@@ -433,15 +436,34 @@
   "kpi-ux-test-tooltip": "Taux de réussite moyen des derniers tests sur tous les tests d'expérience utilisateur complets avec le type de test de validation",
   "kpi-ux-test-text": "{{total}} tâches uniques testées",
 
-  "kpi-ux-test-success-all-title": "Taux de réussite moyen de toutes les tâches",
-  "kpi-ux-test-success-all-tooltip": "Taux de réussite moyen de toutes les tâches",
-  "kpi-ux-test-success-all-guidance": "<strong>Qu'est-ce que c'est?</strong>  <br />Le pourcentage de taux de réussite moyen pour toutes les tâches, en utilisant le taux de réussite le plus récent de leur dernier test UX. Remarque : Toutes les tâches n'ont pas été testées.<br />L'objectif pour cet indicateur de performance clé est de 80%.<br /><br /><strong>Comment cet ICR est-il calculé?</strong>  <br />A: La somme des taux de réussite des tâches les plus récentes testées<br />B: Nombre total de tâches testées<br /> <br />A/B<br /><br />",
+  "kpi-ux-test-success-all-title": "Toutes les tâches testées",
+  "kpi-ux-test-success-all-tooltip": "Taux de réussite moyen pour toutes les tâches testées",
+  "kpi-ux-test-success-all-guidance": "<strong>Qu'est-ce que c'est?</strong>  <br />Le <strong>taux de réussite moyen pour toutes les tâches</strong> mesure la fréquence à laquelle les utilisateurs réussissent à accomplir les tâches lors de leur plus récent test d’utilisabilité.<br/><br/>Cet ICR fournit un aperçu global de la performance des tâches testées, qu’elles aient été ou non validées pour amélioration.<br />L'objectif pour cet indicateur de performance clé est de 80%.<br /><br /><strong>Comment cet ICR est-il calculé?</strong>  <br />A: Somme des taux de réussite les plus récents de toutes les tâches testées<br />B: Nombre total de tâches testées<br /> <br />A/B<br /><br />",
   "kpi-ux-test-success-all-text": "{{unique}}/{{total}} tâches uniques testées",
 
-  "kpi-ux-test-improved-title": "Taux de réussite moyen des tâches améliorées",
-  "kpi-ux-test-improved-tooltip": "Taux de réussite moyen de toutes les tâches améliorées",
-  "kpi-ux-test-improved-guidance": "<strong>Qu'est-ce que c'est?</strong>  <br />Le pourcentage de taux de réussite moyen pour les tâches améliorées à partir de leur dernier test de validation UX. Il mesure également l'amélioration en comparant le taux de réussite moyen des tests UX précédents (base de référence) avec les tests UX les plus récents (validation).<br />L'objectif pour cet indicateur de performance clé est de 80%.<br /><br /><strong>Comment cet ICR est-il calculé?</strong>  <br />A: La somme des taux de réussite de validation sur toutes les tâches améliorées<br />B: Nombre total de tâches testées<br /> <br />A/B<br /><br />L'amélioration est la différence entre ce taux de réussite moyen et le taux de réussite moyen des mêmes tâches lors de leurs tests de référence.<br /><br />",
+  "kpi-ux-test-success-all-text-unique": "{{unique}} tâches testées",
+  "kpi-ux-test-success-all-text-total": "{{total}} tâches au total",
+
+  "kpi-ux-test-improved-title": "Toutes les tâches améliorées",
+  "kpi-ux-test-improved-tooltip": "Taux de réussite moyen pour toutes les tâches améliorées",
+  "kpi-ux-test-improved-guidance": "<strong>Qu'est-ce que c'est ?</strong>  <br />Le <strong>taux de réussite moyen des tâches améliorées</strong> mesure la fréquence à laquelle les utilisateurs réussissent à accomplir les tâches validées lors des tests d’utilisabilité. Il est calculé en prenant la moyenne des taux de réussite de toutes les tâches validées qui ont été testées en référence puis re-testées après amélioration.<br/><br/>Cet ICR met en évidence l’impact des améliorations de contenu et de conception sur l’ensemble des tâches validées, et montre les progrès vers l’objectif de taux de réussite.<br />L'objectif pour cet indicateur de performance clé est de 80 %.<br /><br /><strong>Comment cet ICR est-il calculé ?</strong>  <br />A = Somme des taux de réussite de validation pour toutes les tâches améliorées<br />B = Nombre total de tâches améliorées testées<br /><br />A / B<br /><br />",
   "kpi-ux-test-improved-text": "{{unique}}/{{total}} tâches uniques testées",
+
+  "avg-success-subtitle": "taux de réussite moyen",
+  "percentage-points": "points de pourcentage",
+  "from-to-improvement": "(de {{baseline}} \u2192 {{validation}})",
+
+  "kpi-ux-test-improved-text-unique": "{{unique}} tâches testées en validation",
+  "kpi-ux-test-improved-text-total": "{{total}} tâches testées en référence",
+
+  "kpi-ux-test-top-text-unique": "{{unique}} tâches principales testées en validation",
+  "kpi-ux-test-top-text-total": "{{total}} tâches principales testées en référence",
+  "kpi-ux-test-top-text-not-tested": "{{nottested}} tâches principales à tester",
+  
+  "kpi-ux-test-wos-improved-title": "Tâches SOW améliorées",
+  "kpi-ux-test-wos-improved-tooltip": "Taux de réussite moyen pour les tâches de projet améliorées de stratégie d'optimisation Web (SOW)",
+  "kpi-ux-test-wos-improved-guidance": "<strong>Qu'est-ce que c'est ?</strong>  <br />Le <strong>taux de réussite moyen des tâches SOW améliorées</strong> mesure la fréquence à laquelle les utilisateurs réussissent à accomplir les tâches liées aux projets Stratégie d’optimisation du Web (SOW) après amélioration. Chaque tâche a d’abord été testée en référence, puis re-testée après modifications, et les résultats ont été moyennés.<br/><br/>Cet ICR met en évidence l’impact des améliorations de contenu et de conception sur les tâches liées à SOW, et montre les progrès vers l’objectif de taux de réussite.<br />L'objectif pour cet indicateur de performance clé est de 80 %.<br /><br /><strong>Comment cet ICR est-il calculé ?</strong>  <br />A = Somme des taux de réussite en validation pour toutes les tâches SOW améliorées<br />B = Nombre total de tâches SOW améliorées testées<br /><br />A / B<br /><br />",
+  "kpi-ux-test-wos-improved-text": "{{unique}}/{{total}} tâches uniques testées",
 
   "increase": "d'augmentation",
   "decrease": "de diminution",
@@ -450,9 +472,9 @@
   "decrease from Baseline UX tests": "Diminution de {{value}} par rapport aux tests UX de bases",
   " from Baseline UX tests": "Amélioration de {{value}} par rapport aux tests UX de bases",
 
-  "kpi-ux-test-top50-title": "Taux de réussite moyen des 50 tâches prioritaires",
-  "kpi-ux-test-top50-tooltip": "Taux de réussite moyen des tâches classées parmi les 50 premières selon les métriques de performance du trimestre précédent.",
-  "kpi-ux-test-top50-guidance": "<strong>Qu'est-ce que c'est?</strong>  <br />Ce KPI mesure le taux de réussite moyen des tâches classées parmi les 50 premières du trimestre précédent. Il inclut uniquement les tâches améliorées, qui ont à la fois des tests UX de base et de validation. Il mesure également l'amélioration en comparant le taux de réussite moyen des tests UX précédents (de base) avec les tests UX les plus récents (validation) pour ces tâches.<br />L'objectif de cet indicateur de performance clé est de 80 %.<br /><br /><strong>Comment cet ICR est-il calculé?</strong>  <br />A: La somme des taux de réussite de toutes les tâches améliorées parmi les 50 premières dans les tests de validation les plus récents<br />B: Nombre total de tâches améliorées testées<br /> <br />A/B<br /><br />L'amélioration est la différence entre ce taux de réussite moyen et le taux de réussite moyen des mêmes tâches lors de leurs tests de référence.<br /><br />",
+  "kpi-ux-test-top50-title": "50 principales tâches améliorées",
+  "kpi-ux-test-top50-tooltip": "Taux de réussite moyen pour les tâches améliorées classées dans le Top 50 selon les indicateurs de performance du trimestre précédent",
+  "kpi-ux-test-top50-guidance": "<strong>Qu'est-ce que c'est ?</strong>  <br />Le <strong>taux de réussite moyen des 50 principales tâches améliorées</strong> mesure la capacité des utilisateurs à accomplir les 50 tâches les plus importantes après leur amélioration et validation par des tests d’utilisabilité. Chaque tâche a d’abord été testée en référence pour mesurer son taux de réussite initial, puis re-testée après amélioration afin de confirmer les gains mesurables.<br/><br/>Cet ICR met en évidence l’impact des améliorations de contenu et de conception sur les 50 tâches prioritaires, et montre les progrès vers l’objectif de taux de réussite.<br />L'objectif pour cet indicateur de performance clé est de 80 %.<br /><br /><strong>Comment cet ICR est-il calculé ?</strong>  <br />A = Somme des taux de réussite en validation pour les 50 principales tâches améliorées<br />B = Nombre total de 50 principales tâches améliorées testées<br /><br />A / B<br /><br />",
   "kpi-ux-test-top50-text": "{{unique}}/{{total}} tâches uniques testées",
   "Top 50 tasks": "50 tâches prioritaires",
 

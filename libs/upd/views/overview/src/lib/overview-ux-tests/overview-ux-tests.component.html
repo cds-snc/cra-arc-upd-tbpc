@@ -1,8 +1,9 @@
-<div class="container-fluid gx-0">
+<div class="container-fluid my-4 gx-0">
   <div class="row">
-    <div class="col-lg-4 col-sm-12 ps-0">
+    <div class="col-lg-3 col-sm-12">
       <upd-apex-radial-bar
         [title]="'kpi-ux-test-success-all-title'"
+        [titleSuffix]="'average success rate'"
         [titleTooltip]="'kpi-ux-test-success-all-tooltip'"
         [preLabel]="'Target'"
         [valueLabel]="0.8"
@@ -11,20 +12,28 @@
         [keyword]="'ux'"
         modal="{{ 'kpi-ux-test-success-all-guidance' | translate }}"
       >
-        {{
-          'kpi-ux-test-success-all-text'
+      {{
+        'kpi-ux-test-success-all-text-unique'
+          | translate
+            : {
+                unique: (uniqueTaskTestedLatestTestKpi$ | async) || 0
+              }
+      }}
+      <br />
+      {{
+          'kpi-ux-test-success-all-text-total'
             | translate
               : {
-                  unique: (uniqueTaskTestedLatestTestKpi$ | async) || 0,
                   total: (totalTasks$ | async) || 0
                 }
-        }}
+      }}   
       </upd-apex-radial-bar>
     </div>
-    <div class="col-lg-4 col-sm-12">
+    <div class="col-lg-3 col-sm-12">
       <upd-apex-radial-bar
         class="custom-radial-bar"
         [title]="'kpi-ux-test-improved-title'"
+        [titleSuffix]="'average success rate'"
         [titleTooltip]="'kpi-ux-test-improved-tooltip'"
         [preLabel]="'Target'"
         [valueLabel]="0.8"
@@ -45,26 +54,100 @@
               <i class="material-icons">{{
                 getTrendIconAndColor(improvedKpi.value ?? 0).iconName
               }}</i>
-              {{ improvedKpi.value | number: undefined : currentLangSignal() }} points
+              {{ improvedKpi.value | number: undefined : currentLangSignal() }} {{ 'percentage-points' | translate }}
             </span>
             <br />
             {{
-              'kpi-ux-test-improved-text'
+              'from-to-improvement'
                 | translate
                   : {
-                      unique: (improvedKpiUniqueTasks$ | async) || 0,
-                      total: (uniqueTaskTestedLatestTestKpi$ | async) || 0
+                      baseline: (improvedKpiSuccessRateBaseline$ | async | percent) || 0,
+                      validation: (improvedKpiSuccessRateValidation$ | async | percent) || 0
+                    }
+            }}
+            <br />
+            <br />
+            {{
+                'kpi-ux-test-improved-text-total'
+                  | translate
+                    : {
+                        total: (uniqueTaskTestedLatestTestKpi$ | async) || 0
+                      }
+            }}
+            <br />
+            {{
+              'kpi-ux-test-improved-text-unique'
+                | translate
+                  : {
+                      unique: (improvedKpiUniqueTasks$ | async) || 0
                     }
             }}
           </ng-container>
         </div>
       </upd-apex-radial-bar>
     </div>
-
-    <div class="col-lg-4 col-sm-12">
+    <div class="col-lg-3 col-sm-12">
+      <upd-apex-radial-bar
+        class="custom-radial-bar"
+        [title]="'kpi-ux-test-wos-improved-title'"
+        [titleSuffix]="'average success rate'"
+        [titleTooltip]="'kpi-ux-test-wos-improved-tooltip'"
+        [preLabel]="'Target'"
+        [valueLabel]="0.8"
+        [current]="(wosImprovedKpiSuccessRateValidation$ | async) || 0"
+        [kpiObjectiveCriteria]="uxTestsKpiObjectiveCriteria"
+        [keyword]="'ux'"
+        modal="{{ 'kpi-ux-test-wos-improved-guidance' | translate }}"
+      >
+        <div>
+          <ng-container
+            *ngIf="{
+              value: wosImprovedKpiSuccessRateDifferencePoints$ | async
+            } as improvedKpi"
+          >
+            <span
+              [style.color]="getTrendIconAndColor(improvedKpi.value ?? 0).color"
+            >
+              <i class="material-icons">{{
+                getTrendIconAndColor(improvedKpi.value ?? 0).iconName
+              }}</i>
+              {{ improvedKpi.value | number: undefined : currentLangSignal() }} {{ 'percentage-points' | translate }}
+            </span>
+            <br />
+            {{
+              'from-to-improvement'
+                | translate
+                  : {
+                      baseline: (wosImprovedKpiSuccessRateBaseline$ | async | percent) || 0,
+                      validation: (wosImprovedKpiSuccessRateValidation$ | async | percent) || 0
+                    }
+            }}
+            <br />
+            <br /> 
+            {{
+                'kpi-ux-test-improved-text-total'
+                  | translate
+                    : {
+                        total: (uniqueTaskTestedLatestTestKpi$ | async) || 0
+                      }
+              }}
+            <br />   
+            {{
+              'kpi-ux-test-improved-text-unique'
+                | translate
+                  : {
+                      unique: (wosImprovedKpiUniqueTasks$ | async) || 0
+                    }
+            }}
+          </ng-container>
+        </div>
+      </upd-apex-radial-bar>
+    </div>
+    <div class="col-lg-3 col-sm-12">
       <upd-apex-radial-bar
         class="custom-radial-bar"
         [title]="'kpi-ux-test-top50-title'"
+        [titleSuffix]="'average success rate'"
         [titleTooltip]="'kpi-ux-test-top50-tooltip'"
         [preLabel]="'Target'"
         [valueLabel]="0.8"
@@ -87,27 +170,52 @@
               <i class="material-icons">{{
                 getTrendIconAndColor(improvedTopKpi.value ?? 0).iconName
               }}</i>
-              {{
-                improvedTopKpi.value | number: undefined : currentLangSignal()
-              }} points
+              {{ improvedTopKpi.value | number: undefined : currentLangSignal() }} {{ 'percentage-points' | translate }}
             </span>
             <br />
             {{
-              'kpi-ux-test-top50-text'
+              'from-to-improvement'
                 | translate
                   : {
-                      unique: (improvedKpiTopUniqueTasks$ | async) || 0,
-                      total: (improvedKpiTopTasks$ | async) || 0
+                      baseline: (improvedKpiTopSuccessRateBaseline$ | async | percent) || 0,
+                      validation: (improvedKpiTopSuccessRateValidation$ | async | percent) || 0
                     }
             }}
+            <br />
+            <br />
+            {{
+                'kpi-ux-test-top-text-total'
+                  | translate
+                    : {
+                        total: (improvedKpiTopTasks$ | async) || 0
+                      }
+              }}
+            <br />  
+            {{
+              'kpi-ux-test-top-text-unique'
+                | translate
+                  : {
+                      unique: (improvedKpiTopUniqueTasks$ | async) || 0
+                    }
+            }}
+            <br />
+            {{
+                'kpi-ux-test-top-text-not-tested'
+                  | translate
+                    : {
+                        nottested: 50 - ((improvedKpiTopTasks$ | async) || 0)
+                      }
+              }}
           </ng-container>
         </div>
       </upd-apex-radial-bar>
     </div>
   </div>
+</div>  
 
+<div class="container-fluid gx-0">
   <div class="row my-4">
-    <div class="col-lg-4 col-sm-12 ps-0">
+    <div class="col-lg-4 col-sm-12">
       <upd-data-card
         [current]="kpiTestsCompleted$ | async"
         [title]="'tests-completed-since2018'"
@@ -119,40 +227,19 @@
         [title]="'tasks-tested-since2018'"
       ></upd-data-card>
     </div>
-    <div class="col-lg-4 col-sm-12 pe-0">
+    <div class="col-lg-4 col-sm-12">
       <upd-data-card
         [current]="participantsTested$ | async"
         [title]="'participants-since2018'"
       ></upd-data-card>
     </div>
   </div>
-
-  <!-- <div class="container-fluid my-4 gx-0">
-      <div class="row">
-        <div class="col-lg-4 col-sm-12">
-          <upd-data-card
-            [current]="testsConductedLastFiscal$ | async"
-            [title]="'tests-conducted-lastfiscal'"
-          ></upd-data-card>
-        </div>
-        <div class="col-lg-4 col-sm-12">
-          <upd-data-card
-            [current]="testsConductedLastQuarter$ | async"
-            [title]="'tests-conducted-lastquarter'"
-          ></upd-data-card>
-        </div>
-        <div class="col-lg-4 col-sm-12">
-          <upd-data-card
-            [current]="COPSTests$ | async"
-            [title]="'cops-completed-since2018'"
-          ></upd-data-card>
-        </div>
-      </div>
-    </div> -->
-
+</div>
+  
+<div class="container-fluid gx-0">
   <div class="container-fluid my-4 gx-0">
     <div class="row">
-      <div class="col px-0">
+      <div class="col">
         <upd-data-table-card
           [data]="(uxChartData | async) || []"
           [cols]="uxChartCols"

@@ -55,6 +55,7 @@ import {
   dateRangeSplit,
   getAvgSuccessFromLatestTests,
   getImprovedKpiSuccessRates,
+  getWosImprovedKpiSuccessRates,
   getImprovedKpiTopSuccessRates,
   getLatestTestData,
   getStructuredDateRangesWithComparison,
@@ -244,8 +245,12 @@ export class OverallService {
             [
               'tmf_rank',
               'title',
+              'visits',
+              'calls',
+              'calls_per_100_visits',
               'calls_per_100_visits_percent_change',
               'calls_per_100_visits_difference',
+              'dyf_no',
               'dyf_no_per_1000_visits_percent_change',
               'dyf_no_per_1000_visits_difference',
               'latest_ux_success',
@@ -297,6 +302,7 @@ export class OverallService {
       projects: await getProjects(this.projectModel, this.uxTestModel),
       uxTests,
       improvedTasksKpi: getImprovedKpiSuccessRates(uxTests),
+      wosImprovedTasksKpi: getWosImprovedKpiSuccessRates(uxTests),
       improvedKpiTopSuccessRate,
       ...(await getUxData(testsSince2018)),
       calldriverTopics,
@@ -882,56 +888,41 @@ async function getProjects(
 
   const avgTestSuccess = avg(kpiUxTestsSuccessRates2, 2);
 
-  const taskSuccessRatesRecord: Record<string, number[]> = projectsData
+  // Updated testsCompleted metric 
+  const testTypesRecord: Record<string, string[]> = projectsData
     .flatMap((project) => project.uxTests)
     .filter(
       (test) =>
-        test.test_type === 'Validation' &&
         (test.success_rate || test.success_rate === 0) &&
         test.task &&
-        test.title,
+        test.title
     )
     .reduce(
       (acc, test) => {
-        if (!acc[test.task]) {
-          acc[test.task] = [];
+        if (!acc[test.title]) {
+          acc[test.title] = [];
         }
-
-        acc[test.task].push(test.success_rate);
-
+        if (!acc[test.title].includes(test.test_type)) {
+          acc[test.title].push(test.test_type);
+        }
         return acc;
       },
-      {} as Record<string, number[]>,
+      {} as Record<string, string[]>
     );
-
-  // except this is actually "unique tasks tested?"
-  const testsCompleted = Object.values(taskSuccessRatesRecord).length;
+    
+  const testsCompleted = Object
+    .values(testTypesRecord)        
+    .reduce((sum, typesArray) => sum + typesArray.length, 0);
 
   const uniqueTasksTested: Set<string> = new Set();
-
+  
   projectsData.forEach((project) => {
-    const testsByType: { [key: string]: any[] } = {};
-
-    project.uxTests.forEach((test) => {
-      if (testsByType[test.test_type]) {
-        testsByType[test.test_type].push(test);
-      } else {
-        testsByType[test.test_type] = [test];
-      }
-    });
-
-    // Include tests from projects tested once by type (Baseline, Spot Check, or Exploratory)
-    ['Baseline', 'Spot Check', 'Exploratory'].forEach((type) => {
-      if (testsByType[type] && testsByType[type].length === 1) {
-        uniqueTasksTested.add(testsByType[type][0].task);
-      }
-    });
-
-    // Include all validation tests
-    Object.values(testsByType).forEach((tests: any[]) => {
-      if (tests.length >= 2 && tests[0].test_type === 'Validation') {
-        tests.forEach((test) => {
-          uniqueTasksTested.add(test.task);
+    (project.uxTests || []).forEach((test) => {
+      // Only tests with a success_rate
+      if (typeof test?.success_rate === 'number') {
+        const tasks = Array.isArray(test.task) ? test.task : [test.task];
+        tasks.forEach((taskId) => {
+          if (taskId != null) uniqueTasksTested.add(taskId.toString());
         });
       }
     });
