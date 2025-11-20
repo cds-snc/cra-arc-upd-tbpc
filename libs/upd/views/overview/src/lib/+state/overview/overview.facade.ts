@@ -191,6 +191,10 @@ export class OverviewFacade {
     map((improvedTopKpi) => improvedTopKpi?.allTopTasks || 0),
   );
 
+  improvedKpiTopTasksCount$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => improvedTopKpi?.totalTopTasksCount || 0),
+  );
+
   improvedKpiTopSuccessRate$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => improvedTopKpi?.topSuccessRates || 0),
   );
@@ -201,6 +205,14 @@ export class OverviewFacade {
 
   improvedKpiTopSuccessRateDifferencePoints$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => round(improvedTopKpi?.topSuccessRates.difference as number * 100, 0) || 0),
+  );
+  
+  improvedKpiTopSuccessRateDifferencePointsRounded$ = this.improvedTopKpi$.pipe(
+    map((improvedTopKpi) => {
+      const baselinePoints = round((improvedTopKpi?.topSuccessRates.baseline ?? 0) * 100, 0);
+      const validationPoints = round((improvedTopKpi?.topSuccessRates.validation ?? 0) * 100, 0);
+      return validationPoints - baselinePoints;
+    }),
   );
 
   improvedKpiTopSuccessRateValidation$ = this.improvedTopKpi$.pipe(

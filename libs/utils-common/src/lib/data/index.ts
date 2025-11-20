@@ -764,7 +764,7 @@ export const getWosImprovedKpiSuccessRates = (
 export const getImprovedKpiTopSuccessRates = (
   topTaskIds: string[],
   uxTests: IUxTest[],
-): { uniqueTopTasks: number; allTopTasks: number; topSuccessRates: SuccessRates } => {
+): { uniqueTopTasks: number; allTopTasks: number; topSuccessRates: SuccessRates; totalTopTasksCount: number } => {
   const groupByTaskByProjectByTestType = pipe(
     groupBy((test: IUxTest) => test!.tasks!.toString()), // group by task
     mapObject(groupBy((test: IUxTest) => test.project.toString())), // group by project
@@ -845,6 +845,8 @@ export const getImprovedKpiTopSuccessRates = (
     // for tests with multiple tasks, unwind the tasks array
     map(unwind('tasks')),
     flatten,
+    //exclude tasks not in the topTaskIds 
+    filter((test: any) => topTaskIds.includes(test.tasks.toString())),
     (tests: IUxTest[]) =>
       groupByTaskByProjectByTestType(tests) as Dictionary<
         Dictionary<ProjectTestTypes>
@@ -872,5 +874,6 @@ export const getImprovedKpiTopSuccessRates = (
     uniqueTopTasks: keys(avgTestTopSuccessRates).length,
     allTopTasks: keys(avgTestAllTopSuccessRates).length,
     topSuccessRates: top50Tasks,
+    totalTopTasksCount: topTaskIds.length,
   };
 };

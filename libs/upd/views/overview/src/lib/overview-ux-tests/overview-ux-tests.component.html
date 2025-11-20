@@ -159,7 +159,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiTopSuccessRateDifferencePoints$ | async
+              value: improvedKpiTopSuccessRateDifferencePointsRounded$ | async
             } as improvedTopKpi"
           >
             <span
@@ -200,12 +200,14 @@
             }}
             <br />
             {{
-                'kpi-ux-test-top-text-not-tested'
-                  | translate
-                    : {
-                        nottested: 50 - ((improvedKpiTopTasks$ | async) || 0)
-                      }
-              }}
+              'kpi-ux-test-top-text-not-tested' 
+                | translate 
+                  : { 
+                      nottested: 
+                        ((improvedKpiTopTasksCount$ | async) ?? 0) -
+                        ((improvedKpiTopTasks$ | async) ?? 0)
+                  }
+            }}
           </ng-container>
         </div>
       </upd-apex-radial-bar>
