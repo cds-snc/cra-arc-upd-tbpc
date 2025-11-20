@@ -363,13 +363,18 @@ export interface TasksHomeAggregatedData {
   dyf_no: number;
   latest_ux_success: number;
   survey: number;
+  survey_percent_change: number | null;
+  survey_difference: number | null;
   survey_completed: number;
+  survey_completed_percent_change: number | null;
+  survey_completed_difference: number | null;
   calls_per_100_visits: number;
   dyf_no_per_1000_visits: number;
-  calls_per_100_visits_difference: number;
-  dyf_no_per_1000_visits_difference: number;
+  calls_per_100_visits_difference: number | null;
+  dyf_no_per_1000_visits_difference: number | null;
   calls_percent_change: number | null;
   dyf_no_percent_change: number | null;
+  dyf_no_difference: number | null;
   latest_success_rate_difference: number | null;
   latest_success_rate_percent_change: number | null;
 }

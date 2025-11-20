@@ -305,7 +305,7 @@ export class OverviewSummaryComponent implements OnInit {
         },
         {
           field: 'calls',
-          header: 'calls',
+          header: 'Call volume',
           pipe: 'number',
         },
         {
@@ -316,7 +316,7 @@ export class OverviewSummaryComponent implements OnInit {
         },
         {
           field: 'dyf_no',
-          header: 'dyf_no',
+          header: 'negative-feedback-noclicks',
           pipe: 'number',
         },
         // {
@@ -360,14 +360,14 @@ export class OverviewSummaryComponent implements OnInit {
         // },
         {
           field: 'latest_ux_success',
-          header: 'Latest UX success rate',
+          header: 'Task success',
           pipe: 'percent',
           tooltip: 'tooltip-latest-success-rate',
           width: '145px',
         },
         {
           field: 'latest_success_rate_percent_change',
-          header: 'latest_success_rate_change',
+          header: 'Task success change',
           pipe: 'percent',
           pipeParam: '1.0-2',
           upGoodDownBad: true,
