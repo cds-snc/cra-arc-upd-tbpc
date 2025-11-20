@@ -158,6 +158,14 @@ export class OverviewFacade {
   improvedKpiSuccessRateDifferencePoints$ = this.improvedKpi$.pipe(
     map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
   );
+  
+  improvedKpiSuccessRateDifferencePointsRounded$ = this.improvedKpi$.pipe(
+    map((improvedKpi) => {
+      const baselinePoints = round((improvedKpi?.successRates.baseline ?? 0) * 100, 0);
+      const validationPoints = round((improvedKpi?.successRates.validation ?? 0) * 100, 0);
+      return validationPoints - baselinePoints;
+    }),
+  );
 
   improvedKpiSuccessRateValidation$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates.validation || 0),
@@ -167,8 +175,16 @@ export class OverviewFacade {
     map((improvedKpi) => improvedKpi?.successRates.baseline || 0),
   );
 
-   wosImprovedKpiSuccessRateDifferencePoints$ = this.wosImprovedKpi$.pipe(
+  wosImprovedKpiSuccessRateDifferencePoints$ = this.wosImprovedKpi$.pipe(
     map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
+  );
+
+  wosImprovedKpiSuccessRateDifferencePointsRounded$ = this.wosImprovedKpi$.pipe(
+    map((wosImprovedKpi) => {
+      const baselinePoints = round((wosImprovedKpi?.successRates.baseline ?? 0) * 100, 0);
+      const validationPoints = round((wosImprovedKpi?.successRates.validation ?? 0) * 100, 0);
+      return validationPoints - baselinePoints;
+    }),
   );
 
   wosImprovedKpiSuccessRateValidation$ = this.wosImprovedKpi$.pipe(

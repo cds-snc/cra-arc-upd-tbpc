@@ -62,6 +62,7 @@ export class OverviewSummaryComponent implements OnInit {
     this.overviewService.improvedKpiSuccessRateDifference$;
 
   improvedKpiSuccessRateDifferencePoints$ = this.overviewService.improvedKpiSuccessRateDifferencePoints$;
+  improvedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.improvedKpiSuccessRateDifferencePointsRounded$;
 
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;

@@ -45,6 +45,7 @@ export class OverviewUxTestsComponent implements OnInit {
     this.overviewService.improvedKpiSuccessRateDifference$;
 
   improvedKpiSuccessRateDifferencePoints$ = this.overviewService.improvedKpiSuccessRateDifferencePoints$;
+  improvedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.improvedKpiSuccessRateDifferencePointsRounded$;
 
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;
@@ -52,7 +53,8 @@ export class OverviewUxTestsComponent implements OnInit {
   improvedKpiSuccessRateBaseline$ = this.overviewService.improvedKpiSuccessRateBaseline$;
     
   wosImprovedKpiSuccessRateDifferencePoints$ = this.overviewService.wosImprovedKpiSuccessRateDifferencePoints$;
-
+  wosImprovedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.wosImprovedKpiSuccessRateDifferencePointsRounded$;
+  
   wosImprovedKpiSuccessRateValidation$ =
     this.overviewService.wosImprovedKpiSuccessRateValidation$;
   

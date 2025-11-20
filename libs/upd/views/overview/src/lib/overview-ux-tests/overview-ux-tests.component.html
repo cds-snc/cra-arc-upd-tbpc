@@ -45,7 +45,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiSuccessRateDifferencePoints$ | async
+              value: improvedKpiSuccessRateDifferencePointsRounded$ | async
             } as improvedKpi"
           >
             <span
@@ -102,7 +102,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: wosImprovedKpiSuccessRateDifferencePoints$ | async
+              value: wosImprovedKpiSuccessRateDifferencePointsRounded$ | async
             } as improvedKpi"
           >
             <span
