@@ -193,6 +193,11 @@ export class PagesDetailsFacade {
 
   apexKpiFeedback$ = this.store.select(selectDyfNoPerVisitsSeries);
 
+  accessibility$ = this.store.select(PagesDetailsSelectors.selectAccessibilityData);
+  accessibilityLoading$ = this.store.select(PagesDetailsSelectors.selectAccessibilityLoading).pipe(debounceTime(500));
+  accessibilityLoaded$ = this.store.select(PagesDetailsSelectors.selectAccessibilityLoaded);
+  accessibilityError$ = this.store.select(PagesDetailsSelectors.selectAccessibilityError);
+
   pageLang$ = this.store.select(selectPageLang);
 
   currentKpiFeedback$ = this.pagesDetailsData$.pipe(
@@ -752,6 +757,10 @@ export class PagesDetailsFacade {
    */
   init() {
     this.store.dispatch(PagesDetailsActions.loadPagesDetailsInit());
+  }
+
+  refreshAccessibilityTest(url: string) {
+    this.store.dispatch(PagesDetailsActions.loadAccessibilityInit({ url }));
   }
 }
 

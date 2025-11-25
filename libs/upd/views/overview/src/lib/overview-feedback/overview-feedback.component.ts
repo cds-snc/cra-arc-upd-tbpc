@@ -2,8 +2,8 @@ import { Component, computed, inject, Signal } from '@angular/core';
 import type {
   ColumnConfig,
   FeedbackWithScores,
+  FeedbackWord,
   OverviewFeedback,
-  WordRelevance,
 } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -18,10 +18,10 @@ import { OverviewFacade } from '../+state/overview/overview.facade';
 import { round } from '@dua-upd/utils-common';
 
 @Component({
-    selector: 'upd-overview-feedback',
-    templateUrl: './overview-feedback.component.html',
-    styleUrls: ['./overview-feedback.component.css'],
-    standalone: false
+  selector: 'upd-overview-feedback',
+  templateUrl: './overview-feedback.component.html',
+  styleUrls: ['./overview-feedback.component.css'],
+  standalone: false,
 })
 export class OverviewFeedbackComponent {
   private overviewService = inject(OverviewFacade);
@@ -46,9 +46,7 @@ export class OverviewFeedbackComponent {
 
   commentsPercentChange = computed(() => this.data().numCommentsPercentChange);
 
-  feedbackMostRelevant = computed(
-    () => this.data().mostRelevantCommentsAndWords,
-  );
+  feedbackCommentsAndWords = computed(() => this.data().commentsAndWords);
 
   avgCommentsByDay = computed(() => {
     const total = this.currentTotalComments();
@@ -75,15 +73,11 @@ export class OverviewFeedbackComponent {
 
   dyfChart$ = this.overviewService.dyfData$;
 
-  mostRelevantCommentsEn = computed(
-    () => this.feedbackMostRelevant().en.comments,
-  );
-  mostRelevantWordsEn = computed(() => this.feedbackMostRelevant().en.words);
+  commentsEn = computed(() => this.feedbackCommentsAndWords().en.comments);
+  wordsEn = computed(() => this.feedbackCommentsAndWords().en.words);
 
-  mostRelevantCommentsFr = computed(
-    () => this.feedbackMostRelevant().fr.comments,
-  );
-  mostRelevantWordsFr = computed(() => this.feedbackMostRelevant().fr.words);
+  commentsFr = computed(() => this.feedbackCommentsAndWords().fr.comments);
+  wordsFr = computed(() => this.feedbackCommentsAndWords().fr.words);
 
   dyfChartApex$ = this.overviewService.dyfDataApex$;
   feedbackByDayCols: ColumnConfig<{
@@ -172,14 +166,7 @@ export class OverviewFeedbackComponent {
     },
   ]);
 
-  mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    {
-      field: 'rank',
-      header: 'Rank',
-      width: '10px',
-      center: true,
-      frozen: true,
-    },
+  commentsColumns: ColumnConfig<FeedbackWithScores>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -192,7 +179,7 @@ export class OverviewFeedbackComponent {
     { field: 'sections', header: 'Section', hide: true },
     { field: 'comment', header: 'comment', width: '400px', frozen: true },
   ];
-  mostRelevantWordsColumns: ColumnConfig<WordRelevance>[] = [
+  wordsColumns: ColumnConfig<FeedbackWord>[] = [
     { field: 'word', header: 'word', width: '10px' },
     {
       field: 'word_occurrences',
@@ -206,15 +193,9 @@ export class OverviewFeedbackComponent {
       pipe: 'number',
       width: '10px',
     },
-    // {
-    //   field: 'page_occurrences',
-    //   header: 'Page occurrences',
-    //   pipe: 'number',
-    //   width: '10px',
-    // },
   ];
 
-  recalculateMostRelevant() {
-    this.overviewService.getMostRelevantFeedback();
+  recalculateCommentsAndWords() {
+    this.overviewService.getCommentsAndWords();
   }
 }

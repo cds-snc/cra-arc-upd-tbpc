@@ -13,6 +13,15 @@ export const loadOverviewError = createAction(
   props<{ error: string }>(),
 );
 
+export const getCommentsAndWords = createAction(
+  '[Overview Page] Get Comments And Words',
+);
+
+export const getCommentsAndWordsError = createAction(
+  '[Overview/API] Get Comments And Words Error',
+  props<{ error: string }>(),
+);
+
 export const getMostRelevantFeedback = createAction(
   '[Overview Page] Get Most Relevant Feedback',
 );

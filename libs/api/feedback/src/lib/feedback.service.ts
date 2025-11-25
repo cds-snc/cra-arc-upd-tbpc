@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 // need mongo import or TS will complain about missing types
-import { Types, type FilterQuery } from 'mongoose';
+import { Types, type FilterQuery, type ProjectionType } from 'mongoose';
 import { omit } from 'rambdax';
 import { DbService, Feedback } from '@dua-upd/db';
-import { $trunc, arrayToDictionary } from '@dua-upd/utils-common';
+import {
+  $trunc,
+  arrayToDictionary,
+  arrayToDictionaryMultiref,
+} from '@dua-upd/utils-common';
 import type {
+  CommentsAndWordsByLang,
   DateRange,
   FeedbackBase,
   FeedbackWithScores,
@@ -16,10 +21,12 @@ import type {
   MostRelevantCommentsAndWordsByLang,
   WordRelevance,
 } from '@dua-upd/types-common';
+import { createHash } from 'node:crypto';
 
 export type FeedbackParams = {
   dateRange: DateRange<Date>;
   type?: 'page' | 'task' | 'project';
+  lang?: 'EN' | 'FR';
   id?: string;
   b?: number;
   k1?: number;
@@ -481,12 +488,23 @@ export class FeedbackService {
       .exec();
   }
 
-  async getComments(params: FeedbackParams) {
-    const cachedComments = await this.cache.get<IFeedback[]>('comments', {
-      dateRange: params.dateRange,
-      type: params.type,
-      id: params.id,
-    });
+  async getComments<T extends object = IFeedback>(
+    params: FeedbackParams,
+    projection?: ProjectionType<T>,
+  ) {
+    const projectionHash = projection
+      ? createHash('md5').update(JSON.stringify(projection)).digest('hex')
+      : '';
+
+    const cachedComments = await this.cache.get<T[]>(
+      `comments${projectionHash}`,
+      {
+        dateRange: params.dateRange,
+        type: params.type,
+        lang: params.lang,
+        id: params.id,
+      },
+    );
 
     if (cachedComments) {
       return cachedComments;
@@ -496,9 +514,16 @@ export class FeedbackService {
       `Fetching comments ${params.type || ''}${params.id || ''} from db`,
     );
 
+    const queryProjection = projection || {
+      airtable_id: 0,
+      unique_id: 0,
+      __v: 0,
+    };
+
     const comments = await this.db.collections.feedback
-      .find(paramsToQuery(params), { airtable_id: 0, unique_id: 0, __v: 0 })
-      .lean()
+      .find<T>(paramsToQuery(params), queryProjection)
+      .sort({ date: -1 })
+      .lean<T[]>()
       .exec();
 
     console.timeEnd(
@@ -533,6 +558,151 @@ export class FeedbackService {
 
     return mostRelevant;
   }
+
+  async getCommentsAndWords(
+    params: FeedbackParams,
+  ): Promise<CommentsAndWordsByLang> {
+    const startTime = Date.now();
+
+    type CommentsProjection = {
+      _id: Types.ObjectId;
+      url: string;
+      date: Date;
+      lang: 'EN' | 'FR';
+      comment: string;
+    };
+
+    const projection = {
+      _id: 1,
+      url: 1,
+      date: 1,
+      lang: 1,
+      comment: 1,
+    } as const;
+
+    const queryFilter = omit(['date'], paramsToQuery(params));
+    const pagesFilter =
+      params.type === 'page' ? { _id: queryFilter['page'] } : queryFilter;
+    const tasksFilter =
+      params.type === 'page' ? { pages: queryFilter['page'] } : queryFilter;
+
+    const tasks = await this.db.collections.tasks
+      .find<Types.ObjectId>(tasksFilter, { pages: 1, title: 1 })
+      .lean()
+      .exec();
+
+    const tasksDict = arrayToDictionaryMultiref(tasks, 'pages', true);
+
+    const withPageData = async (comments: CommentsProjection[]) => {
+      const commentsWithPageData = await this.db.collections.pages.mergePages<
+        CommentsProjection,
+        {
+          _id: Types.ObjectId;
+          url: string;
+          sections?: string;
+          owners?: string;
+        }
+      >(comments, {
+        dataJoinProp: 'url',
+        pagesJoinProp: 'url',
+        filter: pagesFilter,
+        projection: {
+          url: 1,
+          sections: 1,
+          owners: 1,
+        },
+        noDefaults: true,
+        returnAsPairs: true,
+      });
+
+      return commentsWithPageData.map(([page, comment]) => ({
+        ...comment,
+        sections: page?.sections,
+        owners: page?.owners,
+        tasks: tasksDict[page?._id.toString()]?.map((task) => task.title) || [],
+      }));
+    };
+
+    const commentsAndWords: CommentsAndWordsByLang = {
+      en: {
+        comments: await this.getComments<CommentsProjection>(
+          {
+            ...params,
+            lang: 'EN',
+          },
+          projection,
+        ).then(withPageData),
+        words: await this.getWordCounts({
+          ...params,
+          lang: 'EN',
+        }),
+      },
+      fr: {
+        comments: await this.getComments<CommentsProjection>(
+          {
+            ...params,
+            lang: 'FR',
+          },
+          projection,
+        ),
+        words: await this.getWordCounts({
+          ...params,
+          lang: 'FR',
+        }),
+      },
+    };
+
+    const endTime = Date.now();
+    console.log(`Comments fetch: ${endTime - startTime}ms`);
+
+    return commentsAndWords;
+  }
+
+  async getWordCounts(params: FeedbackParams) {
+    const filterQuery = paramsToQuery(params);
+
+    const wordsFilterQuery = {
+      ...filterQuery,
+      words: { $exists: true },
+    };
+
+    const projection = Object.fromEntries([
+      ...Object.keys(wordsFilterQuery).map((key) => [key, 1]),
+    ]);
+
+    const wordsResults = await this.db.collections.feedback
+      .aggregate<{
+        word: string;
+        word_occurrences: number;
+        comment_occurrences: number;
+      }>()
+      .project(projection)
+      .match(wordsFilterQuery)
+      .unwind('words')
+      .group({
+        _id: '$words',
+        word_occurrences: { $sum: 1 },
+        comment_occurrences: {
+          $addToSet: '$_id',
+        },
+      })
+      .addFields({
+        comment_occurrences: { $size: '$comment_occurrences' },
+      })
+      .match({
+        comment_occurrences: { $gt: 1 },
+      })
+      .addFields({
+        word: '$_id',
+      })
+      .project({
+        _id: 0,
+      })
+      .sort({ word_occurrences: -1 })
+      .exec();
+
+    return wordsResults;
+  }
 }
 
 function paramsToQuery(params: FeedbackParams | RelevanceScoreParams) {
@@ -541,8 +711,11 @@ function paramsToQuery(params: FeedbackParams | RelevanceScoreParams) {
       $gte: params.dateRange.start,
       $lte: params.dateRange.end,
     },
-    lang: 'lang' in params ? params.lang : 'EN',
   };
+
+  if (params.lang) {
+    query.lang = params.lang;
+  }
 
   if (params.id && !params.type) {
     throw new Error(

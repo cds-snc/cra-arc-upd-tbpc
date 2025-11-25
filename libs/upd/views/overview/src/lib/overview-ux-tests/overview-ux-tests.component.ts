@@ -45,25 +45,43 @@ export class OverviewUxTestsComponent implements OnInit {
     this.overviewService.improvedKpiSuccessRateDifference$;
 
   improvedKpiSuccessRateDifferencePoints$ = this.overviewService.improvedKpiSuccessRateDifferencePoints$;
+  improvedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.improvedKpiSuccessRateDifferencePointsRounded$;
 
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;
-
+  
+  improvedKpiSuccessRateBaseline$ = this.overviewService.improvedKpiSuccessRateBaseline$;
+    
+  wosImprovedKpiSuccessRateDifferencePoints$ = this.overviewService.wosImprovedKpiSuccessRateDifferencePoints$;
+  wosImprovedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.wosImprovedKpiSuccessRateDifferencePointsRounded$;
+  
+  wosImprovedKpiSuccessRateValidation$ =
+    this.overviewService.wosImprovedKpiSuccessRateValidation$;
+  
+  wosImprovedKpiSuccessRateBaseline$ =
+    this.overviewService.wosImprovedKpiSuccessRateBaseline$;
+ 
   improvedKpi$ = this.overviewService.improvedKpi$;
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
+
+  wosImprovedKpiUniqueTasks$ = this.overviewService.wosImprovedKpiUniqueTasks$;
 
   improvedKpiTopSuccessRate$ = this.overviewService.improvedKpiTopSuccessRate$;
   improvedKpiTopSuccessRateDifference$ =
     this.overviewService.improvedKpiTopSuccessRateDifference$;
 
-  improvedKpiTopSuccessRateDifferencePoints$ = this.overviewService.improvedKpiTopSuccessRateDifferencePoints$;
+  improvedKpiTopSuccessRateDifferencePointsRounded$ = this.overviewService.improvedKpiTopSuccessRateDifferencePointsRounded$;
 
   improvedKpiTopSuccessRateValidation$ =
     this.overviewService.improvedKpiTopSuccessRateValidation$;
 
+  improvedKpiTopSuccessRateBaseline$ =
+    this.overviewService.improvedKpiTopSuccessRateBaseline$; 
+
   improvedTopKpi$ = this.overviewService.improvedTopKpi$;
   improvedKpiTopUniqueTasks$ = this.overviewService.improvedKpiTopUniqueTasks$;
   improvedKpiTopTasks$ = this.overviewService.improvedKpiTopTasks$;
+  improvedKpiTopTasksCount$ = this.overviewService.improvedKpiTopTasksCount$;
 
   kpiLastAvgSuccessRate$ = this.overviewService.kpiLastAvgSuccessRate$;
   kpiTestsCompleted$ = this.overviewService.kpiTestsCompleted$;

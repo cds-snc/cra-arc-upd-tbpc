@@ -37,15 +37,27 @@ export class OverallController {
     @Query('comparisonDateRange') comparisonDateRange: string,
     @Query('ipd', ParseBoolPipe) ipd: boolean,
   ) {
-    if (ipd) {
-      console.log('IPD MODE ACTIVATED 🤖');
-    }
-
     return this.overallService.getFeedback({
       dateRange,
       comparisonDateRange,
       ipd,
     });
+  }
+
+  @Get('comments-and-words')
+  @Header('Content-Type', 'application/json')
+  getCommentsAndWords(
+    @Query('dateRange') dateRange: string,
+    @Query('comparisonDateRange') comparisonDateRange: string,
+    @Query('part', ParseIntPipe) part: number,
+  ) {
+    return this.overallService.getCachedCommentsAndWordsChunk(
+      {
+        dateRange,
+        comparisonDateRange,
+      },
+      part,
+    );
   }
 
   @Get('most-relevant')

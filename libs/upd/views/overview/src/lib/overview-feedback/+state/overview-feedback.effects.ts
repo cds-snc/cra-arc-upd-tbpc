@@ -8,7 +8,7 @@ import { selectDateRanges } from '@dua-upd/upd/state';
 import { ApiService } from '@dua-upd/upd/services';
 import { OverviewFeedbackActions } from './overview-feedback.actions';
 import * as OverviewActions from '../../+state/overview/overview.actions';
-import { MostRelevantCommentsAndWordsByLang } from '@dua-upd/types-common';
+import type { CommentsAndWordsByLang } from '@dua-upd/types-common';
 
 @Injectable()
 export class OverviewFeedbackEffects {
@@ -42,14 +42,14 @@ export class OverviewFeedbackEffects {
             // with that, we create a nested observable to fetch all parts
             mergeMap((data) => {
               const parts = Array.from(
-                { length: data.mostRelevantCommentsAndWords.parts },
+                { length: data.commentsAndWords.parts },
                 (_, i) => i,
               );
 
               // fetch all parts in parallel
               return forkJoin(
                 parts.map((part) =>
-                  this.api.getOverviewMostRelevant({
+                  this.api.getOverviewCommentsAndWords({
                     ...apiParams,
                     ipd,
                     part,
@@ -65,7 +65,7 @@ export class OverviewFeedbackEffects {
 
                   return {
                     ...data,
-                    mostRelevantCommentsAndWords: {
+                    commentsAndWords: {
                       en: {
                         comments: enComments,
                         words: enWords,
@@ -74,7 +74,7 @@ export class OverviewFeedbackEffects {
                         comments: frComments,
                         words: frWords,
                       },
-                    } as MostRelevantCommentsAndWordsByLang,
+                    } as CommentsAndWordsByLang,
                   };
                 }),
               );

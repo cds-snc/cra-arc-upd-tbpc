@@ -91,6 +91,10 @@ export class PagesDetailsComponent {
       href: 'version-history',
       title: 'tab-version-history',
     },
+    {
+      href: 'accessibility',
+      title: 'tab-accessibility',
+    },
   ];
 
   projectsCol = computed(() => {

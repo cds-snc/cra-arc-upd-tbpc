@@ -67,7 +67,8 @@
   <upd-date-selector
     *ngIf="
       !((currentRoute$ | async) || '').endsWith('readability') &&
-      !((currentRoute$ | async) || '').endsWith('version-history')
+      !((currentRoute$ | async) || '').endsWith('version-history') &&
+      !((currentRoute$ | async) || '').endsWith('accessibility')
     "
   ></upd-date-selector>
 

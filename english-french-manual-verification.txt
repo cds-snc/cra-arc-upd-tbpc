@@ -1,0 +1,63 @@
+Translation key: accessibility-manual-interactive-control
+English Title: Interactive controls are keyboard focusable
+English Description: Custom interactive controls are keyboard focusable and display a focus indicator. Learn how to make custom controls focusable. https://developer.chrome.com/docs/lighthouse/accessibility/focusable-controls
+French Title: Les commandes interactives peuvent être sélectionnables au clavier
+French Description: Les contrôles interactifs personnalisés peuvent être activés par le clavier et affichent un indicateur de mise au point. Découvrez comment rendre les contrôles personnalisés cliquables. https://developer.chrome.com/docs/lighthouse/accessibility/focusable-control
+
+Translation key: accessibility-manual-interactive-elements
+English Title: Interactive elements indicate their purpose and state
+English Description: Interactive elements, such as links and buttons, should indicate their state and be distinguishable from non-interactive elements. Learn how to decorate interactive elements with affordance hints. https://developer.chrome.com/docs/lighthouse/accessibility/interactive-element-affordance/
+French Title: Les éléments interactifs indiquent leur objectif et leur état
+French Description: Les éléments interactifs, tels que les liens et les boutons, doivent indiquer leur état et se distinguer des éléments non interactifs. Apprenez à décorer les éléments interactifs avec des indices d'affordance. https://developer.chrome.com/docs/lighthouse/accessibility/interactive-element-affordance/
+
+Translation key: accessibility-manual-logical-tab
+English Title: The page has a logical tab order
+English Description: Tabbing through the page follows the visual layout. Users cannot focus elements that are offscreen. Learn more about logical tab ordering. https://developer.chrome.com/docs/lighthouse/accessibility/logical-tab-order/
+French Title: La page a un ordre de tabulation logique
+French Description: Le passage d'une page à l'autre suit la disposition visuelle. Les utilisateurs ne peuvent pas mettre l'accent sur des éléments qui se trouvent hors de l'écran. En savoir plus sur l'ordre logique des onglets. https://developer.chrome.com/docs/lighthouse/accessibility/logical-tab-order/
+
+Translation key: accessibility-manual-dom-order
+English Title: Visual order on the page follows DOM order
+English Description: DOM order matches the visual order, improving navigation for assistive technology. Learn more about DOM and visual ordering. https://developer.chrome.com/docs/lighthouse/accessibility/visual-order-follows-dom/
+French Title: L'ordre visuel sur la page suit l'ordre DOM
+French Description: L'ordre DOM correspond à l'ordre visuel, ce qui améliore la navigation pour les technologies d'assistance. En savoir plus sur DOM et l'ordre visuel. https://developer.chrome.com/docs/lighthouse/accessibility/visual-order-follows-dom/
+
+Translation key: accessibility-manual-focus-trap
+English Title: User focus is not accidentally trapped in a region
+English Description: A user can tab into and out of any control or region without accidentally trapping their focus. Learn how to avoid focus traps. https://developer.chrome.com/docs/lighthouse/accessibility/focus-traps/
+French Title: L'attention de l'utilisateur n'est pas accidentellement piégée dans une région
+French Description: Un utilisateur peut entrer et sortir de n'importe quel contrôle ou région sans piéger accidentellement son attention. Apprenez à éviter les pièges à focus. https://developer.chrome.com/docs/lighthouse/accessibility/focus-traps/
+
+Translation key: accessibility-manual-new-content
+English Title: The user's focus is directed to new content added to the page
+English Description: If new content, such as a dialog, is added to the page, the user's focus is directed to it. Learn how to direct focus to new content. https://developer.chrome.com/docs/lighthouse/accessibility/managed-focus/
+French Title: L'objectif de l'utilisateur est dirigé vers le nouveau contenu ajouté à la pag
+French Description: Si un nouveau contenu, tel qu'une boîte de dialogue, est ajouté à la page, l'attention de l'utilisateur est dirigée vers ce contenu. Découvrez comment diriger le focus sur un nouveau contenu. https://developer.chrome.com/docs/lighthouse/accessibility/managed-focus/
+
+Translation key: accessibility-manual-html5-landmark
+English Title: HTML5 landmark elements are used to improve navigation
+English Description: Landmark elements (`
+`, `
+`, etc.) are used to improve the keyboard navigation of the page for assistive technology. Learn more about landmark elements. https://developer.chrome.com/docs/lighthouse/accessibility/use-landmarks/
+French Title: Les éléments de repère HTML5 permettent d'améliorer la navigation
+French Description: Les éléments de repère (`
+`, `
+`, etc.) sont utilisés pour améliorer la navigation au clavier de la page pour les technologies d'assistance. En savoir plus sur les éléments repères. https://developer.chrome.com/docs/lighthouse/accessibility/use-landmarks/
+
+Translation key: accessibility-manual-offscreen-content
+English Title: Offscreen content is hidden from assistive technology
+English Description: Offscreen content is hidden with display: none or aria-hidden=true. Learn how to properly hide offscreen content. https://developer.chrome.com/docs/lighthouse/accessibility/offscreen-content-hidden/
+French Title: Le contenu hors écran est masqué pour les technologies d'assistance
+French Description: Le contenu hors écran est masqué avec display : none ou aria-hidden=true. Apprenez à masquer correctement le contenu hors écran. https://developer.chrome.com/docs/lighthouse/accessibility/offscreen-content-hidden/
+
+Translation key: accessibility-manual-custom-control
+English Title: Custom controls have associated labels
+English Description: Custom interactive controls have associated labels, provided by aria-label or aria-labelledby. Learn more about custom controls and labels. https://developer.chrome.com/docs/lighthouse/accessibility/custom-controls-labels/
+French Title: Les commandes personnalisées sont associées à des libellés
+French Description: Les contrôles interactifs personnalisés sont associés à des étiquettes, fournies par aria-label ou aria-labelledby. En savoir plus sur les contrôles personnalisés et les étiquettes. https://developer.chrome.com/docs/lighthouse/accessibility/custom-controls-labels/
+
+Translation key: accessibility-manual-aria-roles
+English Title: Custom controls have ARIA roles
+English Description: Custom interactive controls have appropriate ARIA roles. Learn how to add roles to custom controls. https://developer.chrome.com/docs/lighthouse/accessibility/custom-control-roles/
+French Title: Les commandes personnalisées sont associées à des rôles ARIA
+French Description: Les contrôles interactifs personnalisés ont les rôles ARIA appropriés. Découvrez comment ajouter des rôles aux contrôles personnalisés. https://developer.chrome.com/docs/lighthouse/accessibility/custom-control-roles/

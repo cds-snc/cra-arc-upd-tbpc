@@ -11,6 +11,7 @@ import { PagesDetailsFeedbackComponent } from './pages-details/pages-details-fee
 import { PagesDetailsFlowComponent } from './pages-details/pages-details-flow/pages-details-flow.component';
 import { PagesDetailsReadabilityComponent } from './pages-details/pages-details-readability/pages-details-readability.component';
 import { PagesDetailsVersionsComponent } from './pages-details/pages-details-versions/pages-details-versions.component';
+import { PagesDetailsAccessibilityComponent } from './pages-details/pages-details-accessibility/pages-details-accessibility.component';
 
 const routes: Routes = [
   {
@@ -30,6 +31,7 @@ const routes: Routes = [
           { path: 'flow', component: PagesDetailsFlowComponent, data: {title: 'Pages | Flow'} },
           { path: 'readability', component: PagesDetailsReadabilityComponent, data: {title: 'Pages | Readability'} },
           { path: 'version-history', component: PagesDetailsVersionsComponent, data: {title: 'Pages | Version history'} },
+          { path: 'accessibility', component: PagesDetailsAccessibilityComponent, data: {title: 'Pages | Accessibility'} },
         ],
       },
     ],

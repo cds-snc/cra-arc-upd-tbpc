@@ -41,7 +41,7 @@
               <input
                 pInputText
                 type="text"
-                (input)="dt.filterGlobal(getEventValue($event), 'contains')"
+                (input)="multiKeywordGlobalFilter(dt, $event)"
                 placeholder="{{ placeholderText | translate }}"
               />
             </p-iconfield>

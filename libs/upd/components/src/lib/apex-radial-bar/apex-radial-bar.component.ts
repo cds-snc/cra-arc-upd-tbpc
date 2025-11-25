@@ -42,6 +42,7 @@ export class ApexRadialBarComponent {
   @Input() secondaryTitleData: Record<string, number | string>[] = [];
   @Input() title = '';
   @Input() titleTooltip = '';
+  @Input() titleSuffix = ''; 
   @Input() modal = '';
   @Input() keyword = 'calls';
   @Input() seriesLabel = 'visits';

@@ -56,7 +56,7 @@
     </div>
   </div>
 
-  @if (feedbackMostRelevant()) {
+  @if (feedbackCommentsAndWords()) {
     <upd-card
       title="Most frequent words (EN)"
       headerClass="h6"
@@ -67,8 +67,8 @@
         [filter]="true"
         [sort]="true"
         [pagination]="true"
-        [data]="mostRelevantWordsEn() || []"
-        [cols]="mostRelevantWordsColumns"
+        [data]="wordsEn() || []"
+        [cols]="wordsColumns"
         [title]="'Most frequent words (EN)'"
         [allowHeaderWrap]="true"
       >
@@ -78,14 +78,14 @@
     <div class="container-fluid my-4 gx-0">
       <div class="row">
         <div class="col">
-          <upd-card [title]="'Most relevant comments (EN)'" titleSize="h6">
+          <upd-card [title]="'List of comments (EN)'" titleSize="h6">
             <upd-data-table
               id="overview-feedback-most-relevant-comments-en"
               [filter]="true"
               [sort]="true"
               [pagination]="true"
-              [data]="mostRelevantCommentsEn() || []"
-              [cols]="mostRelevantCommentsColumns"
+              [data]="commentsEn() || []"
+              [cols]="commentsColumns"
               [columnSelection]="true"
               [allowHeaderWrap]="true"
             >
@@ -104,8 +104,8 @@
         [filter]="true"
         [sort]="true"
         [pagination]="true"
-        [data]="mostRelevantWordsFr() || []"
-        [cols]="mostRelevantWordsColumns"
+        [data]="wordsFr() || []"
+        [cols]="wordsColumns"
         [title]="'Most frequent words (FR)'"
         [allowHeaderWrap]="true"
       >
@@ -115,14 +115,14 @@
     <div class="container-fluid my-4 gx-0">
       <div class="row">
         <div class="col">
-          <upd-card [title]="'Most relevant comments (FR)'" titleSize="h6">
+          <upd-card [title]="'List of comments (FR)'" titleSize="h6">
             <upd-data-table
               id="overview-feedback-most-relevant-comments-fr"
               [filter]="true"
               [sort]="true"
               [pagination]="true"
-              [data]="mostRelevantCommentsFr()"
-              [cols]="mostRelevantCommentsColumns"
+              [data]="commentsFr()"
+              [cols]="commentsColumns"
               [columnSelection]="true"
               [allowHeaderWrap]="true"
             >

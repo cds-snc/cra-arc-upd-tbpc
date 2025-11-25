@@ -103,6 +103,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     NgApexchartsModule,
     ProgressBarModule,
     RangeSliderComponent,
+    I18nModule,
 ],
   declarations: [
     CardComponent,

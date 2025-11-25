@@ -2,8 +2,11 @@ import { createReducer, on, Action } from '@ngrx/store';
 
 import * as PagesDetailsActions from './pages-details.actions';
 import { PageDetailsData } from '@dua-upd/types-common';
+import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
 export const PAGES_DETAILS_FEATURE_KEY = 'pagesDetails';
+
+const MAX_ACCESSIBILITY_CACHE_SIZE = 50;
 
 export interface PagesDetailsState {
   data: PageDetailsData;
@@ -13,6 +16,10 @@ export interface PagesDetailsState {
   loadedHashes: boolean;
   loadingHashes: boolean;
   errorHashes?: string | null;
+  accessibilityByUrl: Record<string, LocalizedAccessibilityTestResponse>;
+  loadedAccessibility: boolean;
+  loadingAccessibility: boolean;
+  errorAccessibility?: string | null;
 }
 
 export interface PagesDetailsPartialState {
@@ -46,6 +53,10 @@ export const pagesDetailsInitialState: PagesDetailsState = {
   loadingHashes: false,
   loadedHashes: false,
   errorHashes: null,
+  accessibilityByUrl: {},
+  loadedAccessibility: false,
+  loadingAccessibility: false,
+  errorAccessibility: null,
 };
 
 const reducer = createReducer(
@@ -62,21 +73,24 @@ const reducer = createReducer(
   ),
   on(
     PagesDetailsActions.loadPagesDetailsSuccess,
-    (state, { data }): PagesDetailsState =>
-      data === null
-        ? {
-            ...state,
-            loading: false,
-            loaded: true,
-            error: null,
-          }
-        : {
-            ...state,
-            data: { ...data },
-            loading: false,
-            loaded: true,
-            error: null,
-          },
+    (state, { data }): PagesDetailsState => {
+      if (data === null) {
+        return {
+          ...state,
+          loading: false,
+          loaded: true,
+          error: null,
+        };
+      }
+
+      return {
+        ...state,
+        data: { ...data },
+        loading: false,
+        loaded: true,
+        error: null,
+      };
+    }
   ),
   on(
     PagesDetailsActions.loadPagesDetailsError,
@@ -124,6 +138,67 @@ const reducer = createReducer(
       loadingHashes: false,
       loadedHashes: true,
       errorHashes: error,
+    }),
+  ),
+  on(
+    PagesDetailsActions.loadAccessibilityInit,
+    (state): PagesDetailsState => {
+      return {
+        ...state,
+        loadingAccessibility: true,
+        loadedAccessibility: false,
+        errorAccessibility: null,
+      };
+    }
+  ),
+  on(
+    PagesDetailsActions.loadAccessibilitySuccess,
+    (state, { url, data }): PagesDetailsState => {
+      const currentCache = state.accessibilityByUrl;
+      const cacheKeys = Object.keys(currentCache);
+
+      // Implement LRU cache: if cache is at limit, remove oldest entry (first key)
+      let updatedCache = { ...currentCache };
+      if (cacheKeys.length >= MAX_ACCESSIBILITY_CACHE_SIZE && !currentCache[url]) {
+        // Only evict if adding NEW url (not updating existing)
+        const [, ...remainingUrls] = cacheKeys;
+        updatedCache = remainingUrls.reduce((acc, key) => {
+          acc[key] = currentCache[key];
+          return acc;
+        }, {} as Record<string, LocalizedAccessibilityTestResponse>);
+      }
+
+      const newCache = {
+        ...updatedCache,
+        [url]: data, // Store/update data by URL
+      };
+
+      return {
+        ...state,
+        accessibilityByUrl: newCache,
+        loadingAccessibility: false,
+        loadedAccessibility: true,
+        errorAccessibility: null,
+      };
+    },
+  ),
+  on(
+    PagesDetailsActions.loadAccessibilityError,
+    (state, { error }): PagesDetailsState => ({
+      ...state,
+      loadingAccessibility: false,
+      loadedAccessibility: true,
+      errorAccessibility: error,
+    }),
+  ),
+  on(
+    PagesDetailsActions.clearAccessibilityCache,
+    (state): PagesDetailsState => ({
+      ...state,
+      accessibilityByUrl: {},
+      loadedAccessibility: false,
+      loadingAccessibility: false,
+      errorAccessibility: null,
     }),
   ),
 );

@@ -1,6 +1,7 @@
 import { HttpClient, type HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type {
+  ChunkedCommentsAndWords,
   ChunkedMostRelevantCommentsAndWords,
   DbQuery,
   PartialOverviewFeedback,
@@ -64,6 +65,13 @@ export class ApiService {
 
   getOverviewFeedback(params: ApiParams) {
     return this.get<PartialOverviewFeedback>('/api/overall/feedback', params);
+  }
+
+  getOverviewCommentsAndWords(params: ApiParams) {
+    return this.get<ChunkedCommentsAndWords>(
+      '/api/overall/comments-and-words',
+      params,
+    );
   }
 
   getOverviewMostRelevant(params: ApiParams) {

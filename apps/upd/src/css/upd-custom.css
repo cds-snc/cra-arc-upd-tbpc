@@ -183,7 +183,7 @@ header#header {
 }
 
 .lang-toggle a:link {
-  text-color: black;
+  color: black;
 }
 
 .lang-toggle a:visited {
@@ -572,4 +572,19 @@ ol[role='listbox'], ul[role='listbox'] {
 
 .p-select-label.p-select-label-empty {
   opacity: 1 !important;
+}
+
+/* .avg-success-rate-subtitle h3.card-title span::after {
+  /* content: "\00A0\2013\00A0 " var(--subtitle); */
+  /* \200B zero-width space = optional break if title fits one line
+     \2013 en dash
+     \00A0 non-breaking space */
+  /* white-space: nowrap; */
+  /* color: #555;
+  font-weight:normal; */
+/* } */
+
+h3 span.title-suffix {
+  font-weight: normal;
+  color: #555;
 }

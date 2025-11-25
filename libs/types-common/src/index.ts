@@ -1,3 +1,4 @@
+export * from './lib/accessibility.types';
 export * from './lib/adobe-analytics.types';
 export * from './lib/custom-reports.types';
 export * from './lib/data.types';

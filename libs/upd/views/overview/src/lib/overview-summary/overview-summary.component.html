@@ -58,6 +58,7 @@
       <upd-apex-radial-bar
         class="custom-radial-bar"
         [title]="'kpi-ux-test-improved-title'"
+        [titleSuffix]="'average success rate'"
         [titleTooltip]="'kpi-ux-test-improved-tooltip'"
         [preLabel]="'Target'"
         [valueLabel]="0.8"
@@ -69,7 +70,7 @@
         <div>
           <ng-container
             *ngIf="{
-              value: improvedKpiSuccessRateDifferencePoints$ | async,
+              value: improvedKpiSuccessRateDifferencePointsRounded$ | async,
             } as improvedKpi"
           >
             <span
@@ -78,17 +79,34 @@
               <i class="material-icons">{{
                 getTrendIconAndColor(improvedKpi.value ?? 0).iconName
               }}</i>
-              {{ improvedKpi.value | number: undefined : currentLangSignal() }} points
+              {{ improvedKpi.value | number: undefined : currentLangSignal() }} {{ 'percentage-points' | translate }}
             </span>
             <br />
             {{
-              'kpi-ux-test-improved-text'
+              'from-to-improvement'
                 | translate
                   : {
-                      unique: (improvedKpiUniqueTasks$ | async) || 0,
-                      total: (uniqueTaskTestedLatestTestKpi$ | async) || 0,
+                      baseline: (improvedKpiSuccessRateBaseline$ | async | percent) || 0,
+                      validation: (improvedKpiSuccessRateValidation$ | async | percent) || 0
                     }
             }}
+            <br />
+            <br />
+            {{
+                'kpi-ux-test-improved-text-total'
+                  | translate
+                    : {
+                        total: (uniqueTaskTestedLatestTestKpi$ | async) || 0
+                      }
+            }}
+            <br />
+            {{
+              'kpi-ux-test-improved-text-unique'
+                | translate
+                  : {
+                      unique: (improvedKpiUniqueTasks$ | async) || 0
+                    }
+            }}        
           </ng-container>
         </div>
       </upd-apex-radial-bar>
@@ -140,10 +158,18 @@
         [tooltip]="'tooltip-page-views'"
       ></upd-data-card>
     </div>
+    <div class="col">
+      <upd-data-card
+        [current]="gscImpressions$ | async"
+        [comparison]="gscImpressionsPercentChange$ | async"
+        [title]="'total-impressions-google'"
+        [tooltip]="'tooltip-total-impressions-google'"
+      ></upd-data-card>
+    </div>
   </div>
 </div>
 
-<div class="container-fluid my-4 gx-0">
+<!-- <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-4 col-sm-12">
       <upd-data-card
@@ -172,9 +198,9 @@
       ></upd-data-card>
     </div>
   </div>
-</div>
+</div> -->
 
-<div class="container-fluid my-4 gx-0">
+<!-- <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-12 col-md-12 col-sm-12">
       <upd-apex-bar
@@ -194,12 +220,12 @@
       ></upd-apex-bar>
     </div>
   </div>
-</div>
+</div> -->
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-sm-12">
-      <upd-card title="Top 50 tasks" titleSize="h5">
+      <upd-card [title]="'Top 50 tasks'" titleSize="h5">
         <upd-data-table
           id="overview-top-tasks-"
           [data]="topTasksTable()"

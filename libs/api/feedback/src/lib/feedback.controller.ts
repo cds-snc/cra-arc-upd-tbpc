@@ -31,4 +31,21 @@ export class FeedbackController {
 
     return await this.feedbackService.getMostRelevantCommentsAndWords(params);
   }
+
+  @Get('comments-and-words')
+  async commentsAndWords(
+    @Query('dateRange') dateRangeString: string,
+    @Query('type') type?: 'page' | 'task' | 'project',
+    @Query('id') id?: string,
+  ) {
+    const params: FeedbackParams = {
+      dateRange: parseDateRangeString(dateRangeString),
+      type,
+      id,
+    };
+
+    logJson(params);
+
+    return await this.feedbackService.getCommentsAndWords(params);
+  }
 }

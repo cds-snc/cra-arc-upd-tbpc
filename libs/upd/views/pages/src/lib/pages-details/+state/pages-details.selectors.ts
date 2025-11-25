@@ -252,3 +252,28 @@ export const selectDyfNoPerVisitsSeries = createSelector(
     ];
   }
 );
+
+export const selectAccessibilityData = createSelector(
+  selectPagesDetailsState,
+  selectPagesDetailsData,
+  (state: PagesDetailsState, pageData) => {
+    const currentUrl = pageData?.url;
+    if (!currentUrl) return null;
+    return state.accessibilityByUrl[currentUrl] || null;
+  }
+);
+
+export const selectAccessibilityLoaded = createSelector(
+  selectPagesDetailsState,
+  (state: PagesDetailsState) => state.loadedAccessibility
+);
+
+export const selectAccessibilityLoading = createSelector(
+  selectPagesDetailsState,
+  (state: PagesDetailsState) => state.loadingAccessibility
+);
+
+export const selectAccessibilityError = createSelector(
+  selectPagesDetailsState,
+  (state: PagesDetailsState) => state.errorAccessibility
+);

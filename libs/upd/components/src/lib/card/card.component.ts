@@ -15,7 +15,9 @@ import type { ColumnConfig } from '@dua-upd/types-common';
           >
             <span placement="top" ngbTooltip="{{ titleTooltip | translate }}">{{
               title | translate
-            }}</span>
+            }}
+            <span *ngIf="titleSuffix" class="title-suffix"> - {{ titleSuffix | translate }}</span>
+            </span>
             <span *ngIf="modal" class="modal-icon-by-title">
               <upd-modal [modalTitle]="title" [modalContent]="modal" [modalSize]="modalSize"> </upd-modal>
             </span>
@@ -39,6 +41,7 @@ export class CardComponent {
   private popoverConfig: NgbPopoverConfig;
 
   @Input() title = '';
+  @Input() titleSuffix = '';
   @Input() titleTooltip = '';
   @Input() titleSize: CardTitleSize = 'h6';
   @Input() h = 0;

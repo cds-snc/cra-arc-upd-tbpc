@@ -62,7 +62,7 @@ export class Task implements ITask {
   @Prop({ type: [gcTaskMappingsTypeDef] })
   gc_tasks?: IGCTasksMappings[];
 
-  @Prop({ type: [Number] })
+  @Prop({ type: [Number], index: true })
   tpc_ids: number[] = [];
 
   @Prop({ type: String })
@@ -88,8 +88,6 @@ export class Task implements ITask {
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
-
-TaskSchema.index({ tasks: 1, date: 1 });
 
 export const taskModel = model(Task.name, TaskSchema);
 

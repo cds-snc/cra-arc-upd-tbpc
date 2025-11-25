@@ -54,3 +54,9 @@ docker/certbot
 .nx/workspace-data
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# Project documentation files
+CLAUDE.md
+
+# Zone.Identifier files (Windows WSL)
+*:Zone.Identifier

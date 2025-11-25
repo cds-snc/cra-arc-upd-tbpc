@@ -1,7 +1,7 @@
 import type { IFeedback } from './schema.types';
 
 export type FeedbackBase = Omit<IFeedback, 'tasks' | 'projects'> & {
-  tasks?: string;
+  tasks?: string[];
   owners?: string;
   sections?: string;
 };
@@ -42,4 +42,27 @@ export type ChunkedMostRelevantCommentsAndWords = {
   enWords: MostRelevantCommentsAndWords['words'];
   frComments: MostRelevantCommentsAndWords['comments'];
   frWords: MostRelevantCommentsAndWords['words'];
+};
+
+export type FeedbackWord = Pick<
+    WordRelevance,
+    'word' | 'word_occurrences' | 'comment_occurrences'
+  >;
+
+export type CommentsAndWords = {
+  comments: Omit<FeedbackBase, 'words'>[];
+  words: FeedbackWord[];
+};
+
+export type CommentsAndWordsByLang = {
+  en: CommentsAndWords;
+  fr: CommentsAndWords;
+};
+
+// to get around JSON.stringify string length/memory issues
+export type ChunkedCommentsAndWords = {
+  enComments: CommentsAndWords['comments'];
+  enWords: CommentsAndWords['words'];
+  frComments: CommentsAndWords['comments'];
+  frWords: CommentsAndWords['words'];
 };

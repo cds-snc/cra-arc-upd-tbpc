@@ -110,6 +110,10 @@ export class DuckDbService implements BeforeApplicationShutdown {
             CONNECTION_STRING '${process.env['AZURE_STORAGE_CONNECTION_STRING']}'
           );  
         `);
+        
+        await this.db.execute(`
+          SET azure_transport_option_type = 'curl';
+        `);
       } catch (error) {
         console.error('Error creating Azure secret:', error);
       }

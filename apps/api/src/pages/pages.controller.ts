@@ -42,4 +42,10 @@ export class PagesController {
       return error;
     }
   }
+
+  @Get('accessibility-test')
+  @Header('Content-Type', 'application/json')
+  async runAccessibilityTest(@Query('url') url: string) {
+    return this.pagesService.runAccessibilityTest(url);
+  }
 }

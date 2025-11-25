@@ -39,6 +39,7 @@ import type { InternalSearchTerm } from '@dua-upd/types-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
 import { FlowService } from '@dua-upd/api/flow';
+import { PageSpeedInsightsService } from '@dua-upd/external-data';
 import { omit } from 'rambdax';
 
 @Injectable()
@@ -56,6 +57,7 @@ export class PagesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private feedbackService: FeedbackService,
     private flowService: FlowService,
+    private pageSpeedInsightsService: PageSpeedInsightsService,
   ) {}
 
   async listPages({ projection, populate }): Promise<Page[]> {
@@ -123,18 +125,17 @@ export class PagesService {
           pageStatus: 1,
           visits: 1,
         },
-        {
-          sort: { visits: -1 },
-        },
       )
       .then((results) =>
-        results.map((page) => ({
-          _id: page.pageId,
-          title: page.title,
-          url: page.url,
-          pageStatus: page.pageStatus,
-          visits: page.visits,
-        })),
+        results
+          .map((page) => ({
+            _id: page.pageId,
+            title: page.title,
+            url: page.url,
+            pageStatus: page.pageStatus,
+            visits: page.visits,
+          }))
+          .sort((a, b) => (b.visits || 0) - (a.visits || 0)),
       );
 
     await this.cacheManager.set(
@@ -255,29 +256,6 @@ export class PagesService {
       params.comparisonDateRange,
     );
 
-    const aggregatedSearchTermMetrics =
-      aggregateSearchTermMetrics(dateRangeDataByDay);
-    const aggregatedComparisonSearchTermMetrics = aggregateSearchTermMetrics(
-      comparisonDateRangeDataByDay,
-    );
-
-    const searchTermsWithPercentChange = getSearchTermsWithPercentChange(
-      aggregatedSearchTermMetrics,
-      aggregatedComparisonSearchTermMetrics,
-    );
-
-    const topIncreasedSearchTerms = getTop5IncreaseSearchTerms(
-      searchTermsWithPercentChange,
-    );
-
-    const top25GSCSearchTerms = getTop25SearchTerms(
-      searchTermsWithPercentChange,
-    );
-
-    const topDecreasedSearchTerms = getTop5DecreaseSearchTerms(
-      searchTermsWithPercentChange,
-    );
-
     const readability = await this.readabilityModel
       .find({ page: new Types.ObjectId(params.id) })
       .sort({ date: -1 })
@@ -319,6 +297,23 @@ export class PagesService {
         )?._id.toString()
       : null;
 
+    const dateRange = parseDateRangeString(params.dateRange);
+    const comparisonDateRange = parseDateRangeString(
+      params.comparisonDateRange,
+    );
+
+    const {
+      aaSearchTerms,
+      top25GSCSearchTerms,
+      topIncreasedSearchTerms,
+      topDecreasedSearchTerms,
+      activityMap,
+    } = await this.db.views.pages.getPageDetailsData(
+      page._id,
+      dateRange,
+      comparisonDateRange,
+    );
+
     const results = {
       _id: page._id.toString(),
       ...omit(['_id'], page),
@@ -355,8 +350,8 @@ export class PagesService {
         date: date.toISOString(),
         sum,
       })),
-      searchTerms: await this.getTopSearchTerms(params),
-      activityMap: await this.getActivityMapData(params),
+      searchTerms: aaSearchTerms,
+      activityMap,
       readability,
       mostRelevantCommentsAndWords,
       numComments,
@@ -397,44 +392,35 @@ export class PagesService {
   async getPageDetailsDataByDay(page: Page, dateRange: string) {
     const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
 
-    return (
-      await this.pageMetricsModel
-        .aggregate<PageMetrics>([
-          {
-            $match: {
-              page: page._id,
-              date: { $gte: startDate, $lte: endDate },
+    return await this.pageMetricsModel
+      .aggregate<PageMetrics>([
+        {
+          $match: {
+            page: page._id,
+            date: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            visits: 1,
+            date: 1,
+          },
+        },
+        {
+          $group: {
+            _id: '$date',
+            date: {
+              $first: '$date',
+            },
+            visits: {
+              $sum: '$visits',
             },
           },
-          {
-            $project: {
-              _id: 0,
-              visits: 1,
-              date: 1,
-              gsc_searchterms: 1,
-            },
-          },
-          {
-            $group: {
-              _id: '$date',
-              date: {
-                $first: '$date',
-              },
-              visits: {
-                $sum: '$visits',
-              },
-              gsc_searchterms: {
-                $push: '$gsc_searchterms',
-              },
-            },
-          },
-        ])
-        .sort('date')
-        .exec()
-    ).map((result) => ({
-      ...result,
-      gsc_searchterms: result.gsc_searchterms.flat(),
-    }));
+        },
+      ])
+      .sort('date')
+      .exec();
   }
 
   async getActivityMapData({ dateRange, comparisonDateRange, id }: ApiParams) {
@@ -596,6 +582,94 @@ export class PagesService {
         clicksChange,
       };
     });
+  }
+
+  async runAccessibilityTest(url: string) {
+    try {
+      // Ensure URL has https:// protocol for PageSpeed Insights API
+      const fullUrl =
+        url.startsWith('http://') || url.startsWith('https://')
+          ? url
+          : `https://${url}`;
+
+      // Run desktop tests for both locales (English and French)
+      const results =
+        await this.pageSpeedInsightsService.runAccessibilityTestForBothLocales(
+          fullUrl,
+        );
+
+      return {
+        en: {
+          success: true,
+          data: {
+            desktop: results.en,
+          },
+        },
+        fr: {
+          success: true,
+          data: {
+            desktop: results.fr,
+          },
+        },
+      };
+    } catch (error) {
+      // Map error types to translation keys
+      let errorKey = 'accessibility-error-generic';
+
+      // Check HTTP status codes first (from axios error.response)
+      if (error.response?.status === 429) {
+        errorKey = 'accessibility-error-rate-limit';
+      } else if (error.response?.status === 500) {
+        errorKey = 'accessibility-error-server-error';
+      } else if (error.response?.status === 503) {
+        errorKey = 'accessibility-error-service-unavailable';
+      } else if (error.response?.status === 504) {
+        errorKey = 'accessibility-error-gateway-timeout';
+      } else if (error.response?.status === 502) {
+        errorKey = 'accessibility-error-bad-gateway';
+      }
+      // Check error codes for network/socket issues
+      else if (
+        error.code === 'ECONNRESET' ||
+        error.message?.includes('socket hang up') ||
+        error.message?.includes('ECONNRESET')
+      ) {
+        errorKey = 'accessibility-error-connection-reset';
+      } else if (
+        error.code === 'ETIMEDOUT' ||
+        error.message?.includes('timeout') ||
+        error.message?.includes('ETIMEDOUT')
+      ) {
+        errorKey = 'accessibility-error-timeout';
+      } else if (
+        error.code === 'ENOTFOUND' ||
+        error.message?.includes('network') ||
+        error.message?.includes('ENOTFOUND')
+      ) {
+        errorKey = 'accessibility-error-network';
+      }
+      // Check error message strings as fallback
+      else if (
+        error.message?.includes('429') ||
+        error.message?.includes('rate limit')
+      ) {
+        errorKey = 'accessibility-error-rate-limit';
+      } else if (
+        error.message?.includes('Invalid URL') ||
+        error.message?.includes('invalid url')
+      ) {
+        errorKey = 'accessibility-error-invalid-url';
+      }
+
+      const errorResponse = {
+        success: false,
+        error: errorKey,
+      };
+      return {
+        en: errorResponse,
+        fr: errorResponse,
+      };
+    }
   }
 }
 

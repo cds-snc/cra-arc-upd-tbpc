@@ -55,6 +55,7 @@ import {
   dateRangeSplit,
   getAvgSuccessFromLatestTests,
   getImprovedKpiSuccessRates,
+  getWosImprovedKpiSuccessRates,
   getImprovedKpiTopSuccessRates,
   getLatestTestData,
   getStructuredDateRangesWithComparison,
@@ -142,7 +143,7 @@ export class OverallService {
 
   @AsyncLogTiming
   async getMetrics(params: ApiParams): Promise<OverviewData> {
-    const cacheKey = `OverviewMetrics-${params.dateRange}-${params['ipd']}`;
+    const cacheKey = `OverviewMetrics-${params.dateRange}`;
 
     const cachedData = await this.cacheManager.store.get<string>(cacheKey).then(
       async (cachedData) =>
@@ -243,8 +244,12 @@ export class OverallService {
             [
               'tmf_rank',
               'title',
+              'visits',
+              'calls',
+              'calls_per_100_visits',
               'calls_per_100_visits_percent_change',
               'calls_per_100_visits_difference',
+              'dyf_no',
               'dyf_no_per_1000_visits_percent_change',
               'dyf_no_per_1000_visits_difference',
               'latest_ux_success',
@@ -296,6 +301,7 @@ export class OverallService {
       projects: await getProjects(this.projectModel, this.uxTestModel),
       uxTests,
       improvedTasksKpi: getImprovedKpiSuccessRates(uxTests),
+      wosImprovedTasksKpi: getWosImprovedKpiSuccessRates(uxTests),
       improvedKpiTopSuccessRate,
       ...(await getUxData(testsSince2018)),
       calldriverTopics,
@@ -317,7 +323,7 @@ export class OverallService {
 
   @AsyncLogTiming
   async getFeedback(params: ApiParams): Promise<PartialOverviewFeedback> {
-    const cacheKey = `OverviewFeedback-${params.dateRange}-${params['ipd']}`;
+    const cacheKey = `OverviewFeedback-${params.dateRange}`;
 
     const cachedData = await this.cacheManager.store.get<string>(cacheKey).then(
       async (cachedData) =>
@@ -333,15 +339,12 @@ export class OverallService {
       return cachedData;
     }
 
-    const mostRelevantCommentsAndWords =
-      await this.feedbackService.getMostRelevantCommentsAndWords({
-        dateRange: parseDateRangeString(params.dateRange),
-        ipd: params.ipd as boolean,
-      });
+    const commentsAndWords = await this.feedbackService.getCommentsAndWords({
+      dateRange: parseDateRangeString(params.dateRange),
+    });
 
     const numComments =
-      mostRelevantCommentsAndWords.en.comments.length +
-      mostRelevantCommentsAndWords.fr.comments.length;
+      commentsAndWords.en.comments.length + commentsAndWords.fr.comments.length;
 
     const { start: prevDateRangeStart, end: prevDateRangeEnd } =
       parseDateRangeString(params.comparisonDateRange);
@@ -354,7 +357,7 @@ export class OverallService {
 
     const numCommentsPercentChange =
       !params.ipd && numPreviousComments
-        ? percentChange(numComments, numPreviousComments)
+        ? percentChange(numComments, numPreviousComments, 4)
         : null;
 
     const commentsByPage = (
@@ -379,7 +382,7 @@ export class OverallService {
     const enCommentsChunks = {
       cacheKey: `${cacheKey}-en-comments`,
       chunks: chunkMap(
-        mostRelevantCommentsAndWords.en.comments,
+        commentsAndWords.en.comments,
         (chunk) => chunk,
         chunkSize,
       ),
@@ -387,17 +390,13 @@ export class OverallService {
 
     const enWordsChunks = {
       cacheKey: `${cacheKey}-en-words`,
-      chunks: chunkMap(
-        mostRelevantCommentsAndWords.en.words,
-        (chunk) => chunk,
-        chunkSize,
-      ),
+      chunks: chunkMap(commentsAndWords.en.words, (chunk) => chunk, chunkSize),
     };
 
     const frCommentsChunks = {
       cacheKey: `${cacheKey}-fr-comments`,
       chunks: chunkMap(
-        mostRelevantCommentsAndWords.fr.comments,
+        commentsAndWords.fr.comments,
         (chunk) => chunk,
         chunkSize,
       ),
@@ -405,11 +404,7 @@ export class OverallService {
 
     const frWordsChunks = {
       cacheKey: `${cacheKey}-fr-words`,
-      chunks: chunkMap(
-        mostRelevantCommentsAndWords.fr.words,
-        (chunk) => chunk,
-        chunkSize,
-      ),
+      chunks: chunkMap(commentsAndWords.fr.words, (chunk) => chunk, chunkSize),
     };
 
     // chunks will likely not be the same length, but to make it easier,
@@ -423,7 +418,7 @@ export class OverallService {
     );
 
     const overviewFeedback = {
-      mostRelevantCommentsAndWords: {
+      commentsAndWords: {
         parts: longestChunks,
       },
       numComments,
@@ -471,7 +466,7 @@ export class OverallService {
     params: ApiParams,
     chunkIndex: number,
   ): Promise<ChunkedMostRelevantCommentsAndWords> {
-    const cacheKey = `OverviewFeedback-${params.dateRange}-${params['ipd']}`;
+    const cacheKey = `OverviewFeedback-${params.dateRange}`;
 
     const enCommentsKey = `${cacheKey}-en-comments-${chunkIndex}`;
     const enWordsKey = `${cacheKey}-en-words-${chunkIndex}`;
@@ -511,6 +506,7 @@ export class OverallService {
     return chunkedData as unknown as ChunkedMostRelevantCommentsAndWords;
   }
 
+  @AsyncLogTiming
   async getTopSearchTerms(
     { dateRange, comparisonDateRange }: ApiParams,
     lang: 'en' | 'fr',
@@ -881,56 +877,42 @@ async function getProjects(
 
   const avgTestSuccess = avg(kpiUxTestsSuccessRates2, 2);
 
-  const taskSuccessRatesRecord: Record<string, number[]> = projectsData
+  // Updated testsCompleted metric
+  const testTypesRecord: Record<string, string[]> = projectsData
     .flatMap((project) => project.uxTests)
     .filter(
       (test) =>
-        test.test_type === 'Validation' &&
         (test.success_rate || test.success_rate === 0) &&
         test.task &&
         test.title,
     )
     .reduce(
       (acc, test) => {
-        if (!acc[test.task]) {
-          acc[test.task] = [];
+        if (!acc[test.title]) {
+          acc[test.title] = [];
         }
-
-        acc[test.task].push(test.success_rate);
-
+        if (!acc[test.title].includes(test.test_type)) {
+          acc[test.title].push(test.test_type);
+        }
         return acc;
       },
-      {} as Record<string, number[]>,
+      {} as Record<string, string[]>,
     );
 
-  // except this is actually "unique tasks tested?"
-  const testsCompleted = Object.values(taskSuccessRatesRecord).length;
+  const testsCompleted = Object.values(testTypesRecord).reduce(
+    (sum, typesArray) => sum + typesArray.length,
+    0,
+  );
 
   const uniqueTasksTested: Set<string> = new Set();
 
   projectsData.forEach((project) => {
-    const testsByType: { [key: string]: any[] } = {};
-
-    project.uxTests.forEach((test) => {
-      if (testsByType[test.test_type]) {
-        testsByType[test.test_type].push(test);
-      } else {
-        testsByType[test.test_type] = [test];
-      }
-    });
-
-    // Include tests from projects tested once by type (Baseline, Spot Check, or Exploratory)
-    ['Baseline', 'Spot Check', 'Exploratory'].forEach((type) => {
-      if (testsByType[type] && testsByType[type].length === 1) {
-        uniqueTasksTested.add(testsByType[type][0].task);
-      }
-    });
-
-    // Include all validation tests
-    Object.values(testsByType).forEach((tests: any[]) => {
-      if (tests.length >= 2 && tests[0].test_type === 'Validation') {
-        tests.forEach((test) => {
-          uniqueTasksTested.add(test.task);
+    (project.uxTests || []).forEach((test) => {
+      // Only tests with a success_rate
+      if (typeof test?.success_rate === 'number') {
+        const tasks = Array.isArray(test.task) ? test.task : [test.task];
+        tasks.forEach((taskId) => {
+          if (taskId != null) uniqueTasksTested.add(taskId.toString());
         });
       }
     });
@@ -964,6 +946,7 @@ async function getOverviewMetrics(
   dateRange: string,
   satDateRange: string,
 ): Promise<OverviewAggregatedData> {
+  console.time(`OverviewMetrics-${dateRange}`);
   const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
 
   const dateQuery: FilterQuery<Date> = {
@@ -1151,6 +1134,7 @@ async function getOverviewMetrics(
     // gcTasksData
     gcTasksModel.getGcTaskData(dateRange),
   ]);
+  console.timeEnd(`OverviewMetrics-${dateRange}`);
 
   return {
     visitsByDay,

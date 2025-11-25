@@ -4,6 +4,7 @@ import type { Document, FilterQuery, mongo } from 'mongoose';
 import { Schema as MSchema, Types } from 'mongoose';
 import type { IProject, ITask, IUxTest } from '@dua-upd/types-common';
 import {
+  type KeysOfType,
   type ModelWithStatics,
   arrayToDictionary,
 } from '@dua-upd/utils-common';
@@ -61,22 +62,27 @@ export class Page {
   ux_tests?: Types.ObjectId[] | IUxTest[];
 
   // overloads
-  static mergePages<T extends object>(
+  static mergePages<
+    T extends object,
+    PageProjection extends { _id: Types.ObjectId } = Page,
+  >(
     this: PageModel,
     data: T[],
-    options: MergePagesOptions<T>,
-  ): Promise<(Page & T)[]>;
-  static mergePages<T extends object>(
+    options: MergePagesOptions<T, PageProjection> & { returnAsPairs: true },
+  ): Promise<[PageProjection, T][]>;
+  static mergePages<
+    T extends object,
+    PageProjection extends { _id: Types.ObjectId } = Page,
+  >(
     this: PageModel,
     data: T[],
-    options: MergePagesOptions<T> & { returnAsPairs: true },
-  ): Promise<[Page, T][]>;
+    options: MergePagesOptions<T, PageProjection>,
+  ): Promise<(PageProjection & T)[]>;
 
-  static async mergePages<T extends object>(
-    this: PageModel,
-    data: T[],
-    options: MergePagesOptions<T>,
-  ) {
+  static async mergePages<
+    T extends object,
+    PageProjection extends { _id: Types.ObjectId } = Page,
+  >(this: PageModel, data: T[], options: MergePagesOptions<T, PageProjection>) {
     if (!options.defaultValues && !options.noDefaults) {
       throw new Error(
         'Must provide either defaultValues or set noDefaults=true',
@@ -87,17 +93,20 @@ export class Page {
       options.filter || {},
       options.projection || {},
     )
-      .lean()
+      .lean<PageProjection[]>()
       .exec();
 
     if (options.noDefaults) {
       const pagesDict = arrayToDictionary(pages, options.pagesJoinProp);
 
-      const getPage = (record: T): Page | undefined =>
-        pagesDict[record[options.dataJoinProp] as string];
+      const getPage = (record: T): PageProjection | undefined =>
+        pagesDict[record[options.dataJoinProp as string]];
 
       if (options.returnAsPairs) {
-        return data.map((record) => [getPage(record), record]) as [Page, T][];
+        return data.map((record) => [getPage(record), record]) as [
+          PageProjection,
+          T,
+        ][];
       }
 
       return data
@@ -105,18 +114,20 @@ export class Page {
           ...getPage(record),
           ...record,
         }))
-        .filter((page) => page._id) as (Page & T)[];
+        .filter((page) => page._id) as (PageProjection & T)[];
     }
 
-    const dataDict = arrayToDictionary(data, options.dataJoinProp);
+    const dataDict = arrayToDictionary(data, options.dataJoinProp as keyof T);
 
-    const getRecord = (page: Page): Omit<T, keyof Page> | undefined =>
+    const getRecord = (
+      page: PageProjection,
+    ): Omit<T, keyof PageProjection> | undefined =>
       dataDict[page[options.pagesJoinProp] as string] || options.defaultValues;
 
     if (options.returnAsPairs) {
       return pages.map((page) => [page, getRecord(page)]) satisfies [
-        Page,
-        Omit<T, keyof Page>,
+        PageProjection,
+        Omit<T, keyof PageProjection>,
       ][];
     }
 
@@ -137,12 +148,12 @@ PageSchema.statics = statics;
 
 export type PageModel = ModelWithStatics<Page, typeof statics>;
 
-export type MergePagesOptions<T> = {
-  dataJoinProp: keyof T;
-  pagesJoinProp: keyof Page;
+export type MergePagesOptions<T, PageProjection extends object = Page> = {
+  dataJoinProp: KeysOfType<PageProjection, string>;
+  pagesJoinProp: KeysOfType<PageProjection, string>;
   projection?: { [key in keyof Page]?: 0 | 1 };
   filter?: FilterQuery<Page>;
-  defaultValues?: Omit<T, keyof Page>;
+  defaultValues?: Omit<T, keyof PageProjection>;
   returnAsPairs?: true;
   // Don't include pages with no results
   noDefaults?: boolean;

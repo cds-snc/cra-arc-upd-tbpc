@@ -221,7 +221,7 @@ export class Feedback implements IFeedback {
       return {
         ...page,
         percentChange: numPreviousComments
-          ? percentChange(page.sum, numPreviousComments)
+          ? percentChange(page.sum, numPreviousComments, 4)
           : null,
       };
     });

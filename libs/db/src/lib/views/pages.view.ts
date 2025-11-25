@@ -21,7 +21,13 @@ import { DbViewNew, ViewConfig } from '../db.views.new';
 import { PagesView, PagesViewSchema } from './pages-view.schema';
 import { DbService } from '../db.service';
 import { topLevelMetricsGrouping } from './metrics';
-import { $trunc, arrayToDictionary, prettyJson } from '@dua-upd/utils-common';
+import {
+  $trunc,
+  arrayToDictionary,
+  getArraySelectedPercentChange,
+  isNullish,
+  prettyJson,
+} from '@dua-upd/utils-common';
 
 export type PagesViewConfig = ViewConfig<typeof PagesViewSchema>;
 
@@ -435,5 +441,110 @@ export class PagesViewService extends DbViewNew<
     return this._model.deleteMany({
       'page._id': { $in: nonExistingIds },
     });
+  }
+
+  // Methods for API data
+  async getPageDetailsData(
+    pageId: Types.ObjectId,
+    dateRange: DateRange<Date>,
+    comparisonDateRange: DateRange<Date>,
+  ) {
+    // for now, only gsc searchterms, (+top25 increase, top25 decrease), aa searchterms, activity map
+    // todo: rest of data that can come from views
+
+    const getData = async (pageId: Types.ObjectId, range: DateRange<Date>) =>
+      this.db.views.pages.findOne<
+        Pick<
+          PagesView,
+          | 'page'
+          | 'dateRange'
+          | 'aa_searchterms'
+          | 'gsc_searchterms'
+          | 'activity_map'
+        >
+      >(
+        {
+          'page._id': pageId,
+          dateRange: range,
+        },
+        {
+          page: 1,
+          dateRange: 1,
+          aa_searchterms: 1,
+          gsc_searchterms: 1,
+          activity_map: 1,
+        },
+      );
+
+    const [currentData, comparisonData] = await Promise.all([
+      getData(pageId, dateRange),
+      getData(pageId, comparisonDateRange),
+    ]);
+
+    const aaSearchTerms = currentData?.aa_searchterms
+      ? getArraySelectedPercentChange(
+          ['clicks'],
+          'term',
+          currentData?.aa_searchterms,
+          comparisonData?.aa_searchterms,
+          { suffix: 'Change', round: 3 },
+        )
+          .sort((a, b) => b.clicks - a.clicks)
+          .slice(0, 10)
+      : [];
+
+    const gscSearchTerms = currentData?.gsc_searchterms
+      ? getArraySelectedPercentChange(
+          ['clicks'],
+          'term',
+          currentData?.gsc_searchterms,
+          comparisonData?.gsc_searchterms,
+          { suffix: 'Change', round: 3 },
+        )
+          .map(
+            ({ term, clicks, ctr, impressions, position, clicksChange }) => ({
+              term,
+              clicks,
+              ctr,
+              impressions,
+              position,
+              change: clicksChange,
+            }),
+          )
+          .sort((a, b) =>
+            isNullish(b.change) ? -1 : b.change - (a.change || 0),
+          )
+      : [];
+
+    const top25GSCSearchTerms = gscSearchTerms
+      .toSorted((a, b) => b.clicks - a.clicks)
+      .slice(0, 25);
+
+    const topIncreasedSearchTerms = gscSearchTerms
+      .filter((term) => term.change !== null && term.change > 0)
+      .slice(0, 5);
+
+    const topDecreasedSearchTerms = gscSearchTerms
+      .filter((term) => term.change !== null && term.change < 0)
+      .toReversed()
+      .slice(0, 5);
+
+    const activityMap = currentData?.activity_map
+      ? getArraySelectedPercentChange(
+          ['clicks'],
+          'link',
+          currentData?.activity_map,
+          comparisonData?.activity_map,
+          { suffix: 'Change', round: 3 },
+        ).sort((a, b) => b.clicks - a.clicks)
+      : [];
+
+    return {
+      aaSearchTerms,
+      top25GSCSearchTerms,
+      topIncreasedSearchTerms,
+      topDecreasedSearchTerms,
+      activityMap,
+    };
   }
 }

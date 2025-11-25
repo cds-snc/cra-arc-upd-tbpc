@@ -62,10 +62,13 @@ export class OverviewSummaryComponent implements OnInit {
     this.overviewService.improvedKpiSuccessRateDifference$;
 
   improvedKpiSuccessRateDifferencePoints$ = this.overviewService.improvedKpiSuccessRateDifferencePoints$;
+  improvedKpiSuccessRateDifferencePointsRounded$ = this.overviewService.improvedKpiSuccessRateDifferencePointsRounded$;
 
   improvedKpiSuccessRateValidation$ =
     this.overviewService.improvedKpiSuccessRateValidation$;
 
+  improvedKpiSuccessRateBaseline$ = this.overviewService.improvedKpiSuccessRateBaseline$;
+  
   improvedKpi$ = this.overviewService.improvedKpi$;
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
 
@@ -297,54 +300,75 @@ export class OverviewSummaryComponent implements OnInit {
           translate: true,
         },
         {
-          field: 'calls_per_100_visits_percent_change',
-          header: 'kpi-calls-per-100-title-change',
-          pipe: 'percent',
-          pipeParam: '1.0-2',
-          upGoodDownBad: false,
-          indicator: true,
-          useArrows: true,
-          showTextColours: true,
-          secondaryField: {
-            field: 'calls_per_100_visits_difference',
-            pipe: 'number',
-            pipeParam: '1.0-2',
-          },
-          width: '170px',
+          field: 'visits',
+          header: 'visits',
+          pipe: 'number',
         },
         {
-          field: 'dyf_no_per_1000_visits_percent_change',
-          header: 'kpi-feedback-per-1000-title-change',
-          pipe: 'percent',
-          pipeParam: '1.0-2',
-          upGoodDownBad: false,
-          indicator: true,
-          useArrows: true,
-          showTextColours: true,
-          secondaryField: {
-            field: 'dyf_no_per_1000_visits_difference',
-            pipe: 'number',
-            pipeParam: '1.0-2',
-          },
-          width: '220px',
+          field: 'calls',
+          header: 'Call volume',
+          pipe: 'number',
         },
         {
-          field: 'survey_completed',
-          header: 'Self-reported success',
-          pipe: 'percent',
-          tooltip: 'tooltip-self-reported-success',
-          width: '140px',
+          field: 'calls_per_100_visits',
+          header: 'kpi-calls-per-100-title',
+          pipe: 'number',
+          pipeParam: '1.0-2',
         },
+        {
+          field: 'dyf_no',
+          header: 'negative-feedback-noclicks',
+          pipe: 'number',
+        },
+        // {
+        //   field: 'calls_per_100_visits_percent_change',
+        //   header: 'kpi-calls-per-100-title-change',
+        //   pipe: 'percent',
+        //   pipeParam: '1.0-2',
+        //   upGoodDownBad: false,
+        //   indicator: true,
+        //   useArrows: true,
+        //   showTextColours: true,
+        //   secondaryField: {
+        //     field: 'calls_per_100_visits_difference',
+        //     pipe: 'number',
+        //     pipeParam: '1.0-2',
+        //   },
+        //   width: '170px',
+        // },
+        // {
+        //   field: 'dyf_no_per_1000_visits_percent_change',
+        //   header: 'kpi-feedback-per-1000-title-change',
+        //   pipe: 'percent',
+        //   pipeParam: '1.0-2',
+        //   upGoodDownBad: false,
+        //   indicator: true,
+        //   useArrows: true,
+        //   showTextColours: true,
+        //   secondaryField: {
+        //     field: 'dyf_no_per_1000_visits_difference',
+        //     pipe: 'number',
+        //     pipeParam: '1.0-2',
+        //   },
+        //   width: '220px',
+        // },
+        // {
+        //   field: 'survey_completed',
+        //   header: 'Self-reported success',
+        //   pipe: 'percent',
+        //   tooltip: 'tooltip-self-reported-success',
+        //   width: '140px',
+        // },
         {
           field: 'latest_ux_success',
-          header: 'Latest UX success rate',
+          header: 'Task success',
           pipe: 'percent',
           tooltip: 'tooltip-latest-success-rate',
           width: '145px',
         },
         {
           field: 'latest_success_rate_percent_change',
-          header: 'latest_success_rate_change',
+          header: 'Task success change',
           pipe: 'percent',
           pipeParam: '1.0-2',
           upGoodDownBad: true,

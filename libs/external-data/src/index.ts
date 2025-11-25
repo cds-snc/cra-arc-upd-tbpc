@@ -7,3 +7,5 @@ export * from './lib/google-search-console/google-search-console.service';
 export * from './lib/airtable';
 export * from './search-assessment/search-assessment.service';
 export * from './lib/utils';
+export * from './lib/pagespeed-insights/pagespeed-insights.service';
+export * from './lib/pagespeed-insights/pagespeed-insights.client';
