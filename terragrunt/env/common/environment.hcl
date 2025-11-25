@@ -19,6 +19,7 @@ inputs = {
       "NOTIFY_API_KEY",
       "NOTIFY_EMAIL",
       "NOTIFY_EMAIL_2",
+      "PAGESPEED_API_KEY",
     ] : val => get_env(val)
   }
 
