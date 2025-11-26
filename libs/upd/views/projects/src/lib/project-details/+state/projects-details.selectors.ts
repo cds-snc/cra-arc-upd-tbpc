@@ -65,9 +65,9 @@ export const selectComparisonDateRangeLabel = selectDateRangeLabel(
 );
 
 // Feedback - most relevant comments/words
-export const selectFeedbackMostRelevant = createSelector(
+export const selectFeedbackCommentsAndWords = createSelector(
   selectProjectsDetailsData,
-  (data) => data?.mostRelevantCommentsAndWords,
+  (data) => data?.commentsAndWords,
 );
 
 // Visits by day

@@ -78,9 +78,9 @@ export const selectTaskId = createSelector(
   (data) => data?._id,
 );
 
-export const selectFeedbackMostRelevant = createSelector(
+export const selectFeedbackCommentsAndWords = createSelector(
   selectTasksDetailsData,
-  (data) => data?.mostRelevantCommentsAndWords,
+  (data) => data?.commentsAndWords,
 );
 
 export const selectCallsPerVisitsChartData = createSelector(

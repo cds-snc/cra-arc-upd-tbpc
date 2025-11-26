@@ -33,20 +33,20 @@
   </div>
 </div>
 
-@if (feedbackMostRelevant()) {
+@if (feedbackCommentsAndWords()) {
   <upd-card
     [title]="'Most frequent words (EN)'"
     titleTooltip="most-frequent-words-en-tooltip"
     titleSize="h6"
   >
-    @if (mostRelevantWordsEn() && mostRelevantWordsEn().length) {
+    @if (wordsEn() && wordsEn().length) {
       <upd-data-table
         id="tasks-feedback-most-relevant-words-en"
         [filter]="true"
         [sort]="true"
         [pagination]="true"
-        [data]="mostRelevantWordsEn()"
-        [cols]="mostRelevantWordsColumns"
+        [data]="wordsEn()"
+        [cols]="wordsColumns"
         [title]="'Most frequent words (EN)'"
         [allowHeaderWrap]="true"
       >
@@ -61,15 +61,15 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
-        <upd-card [title]="'Comments by relevance (EN)'" titleSize="h6">
-          @if (mostRelevantCommentsEn() && mostRelevantCommentsEn().length) {
+        <upd-card [title]="'List of comments (EN)'" titleSize="h6">
+          @if (commentsEn() && commentsEn().length) {
             <upd-data-table
               id="tasks-feedback-most-relevant-comments-en"
               [filter]="true"
               [sort]="true"
               [pagination]="true"
-              [data]="mostRelevantCommentsEn()"
-              [cols]="mostRelevantCommentsColumns"
+              [data]="commentsEn()"
+              [cols]="commentsColumns"
               [columnSelection]="true"
               [allowHeaderWrap]="true"
             >
@@ -89,14 +89,14 @@
     titleTooltip="most-frequent-words-fr-tooltip"
     titleSize="h6"
   >
-    @if (mostRelevantWordsFr() && mostRelevantWordsFr().length) {
+    @if (wordsFr() && wordsFr().length) {
       <upd-data-table
         id="tasks-feedback-most-relevant-words-fr"
         [filter]="true"
         [sort]="true"
         [pagination]="true"
-        [data]="mostRelevantWordsFr() || []"
-        [cols]="mostRelevantWordsColumns"
+        [data]="wordsFr() || []"
+        [cols]="wordsColumns"
         [title]="'Most frequent words (FR)'"
         [allowHeaderWrap]="true"
       >
@@ -111,15 +111,15 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
-        <upd-card [title]="'Comments by relevance (FR)'" titleSize="h6">
-          @if (mostRelevantCommentsFr() && mostRelevantCommentsFr().length) {
+        <upd-card [title]="'List of comments (FR)'" titleSize="h6">
+          @if (commentsFr() && commentsFr().length) {
             <upd-data-table
               id="tasks-feedback-most-relevant-comments-fr"
               [filter]="true"
               [sort]="true"
               [pagination]="true"
-              [data]="mostRelevantCommentsFr() || []"
-              [cols]="mostRelevantCommentsColumns"
+              [data]="commentsFr() || []"
+              [cols]="commentsColumns"
               [columnSelection]="true"
               [allowHeaderWrap]="true"
             >

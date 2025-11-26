@@ -753,12 +753,12 @@ export class TasksDetailsFacade {
 
   error$ = this.store.select(TasksDetailsSelectors.selectTasksDetailsError);
 
-  feedbackMostRelevant = this.store.selectSignal(
-    TasksDetailsSelectors.selectFeedbackMostRelevant,
+  feedbackCommentsAndWords = this.store.selectSignal(
+    TasksDetailsSelectors.selectFeedbackCommentsAndWords,
   );
 
-  getMostRelevantFeedback() {
-    this.store.dispatch(TasksDetailsActions.getMostRelevantFeedback());
+  getCommentsAndWords() {
+    this.store.dispatch(TasksDetailsActions.getCommentsAndWords());
   }
 
   /**

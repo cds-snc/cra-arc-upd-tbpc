@@ -707,8 +707,8 @@ export class PagesDetailsFacade {
     map((data) => data?.searchTerms),
   );
 
-  feedbackMostRelevant = this.store.selectSignal(
-    PagesDetailsSelectors.selectFeedbackMostRelevant,
+  feedbackCommentsAndWords = this.store.selectSignal(
+    PagesDetailsSelectors.selectFeedbackCommentsAndWords,
   );
   numComments = this.store.selectSignal(
     PagesDetailsSelectors.selectNumComments,

@@ -1,8 +1,8 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
 import type {
   ColumnConfig,
-  FeedbackWithScores,
-  WordRelevance,
+  FeedbackBase,
+  FeedbackWord,
 } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
@@ -64,26 +64,20 @@ export class TaskDetailsFeedbackComponent implements OnInit {
   dyfChartApex$ = this.taskDetailsService.dyfDataApex$;
   dyfChartLegend: string[] = [];
 
-  feedbackMostRelevant = this.taskDetailsService.feedbackMostRelevant;
+  feedbackCommentsAndWords =
+    this.taskDetailsService.feedbackCommentsAndWords;
 
-  mostRelevantCommentsEn = computed(
-    () => this.feedbackMostRelevant()?.en.comments,
+  commentsEn = computed(
+    () => this.feedbackCommentsAndWords()?.en.comments,
   );
-  mostRelevantWordsEn = computed(() => this.feedbackMostRelevant().en.words);
+  wordsEn = computed(() => this.feedbackCommentsAndWords()?.en.words);
 
-  mostRelevantCommentsFr = computed(
-    () => this.feedbackMostRelevant().fr.comments,
+  commentsFr = computed(
+    () => this.feedbackCommentsAndWords()?.fr.comments,
   );
-  mostRelevantWordsFr = computed(() => this.feedbackMostRelevant().fr.words);
+  wordsFr = computed(() => this.feedbackCommentsAndWords()?.fr.words);
 
-  mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    {
-      field: 'rank',
-      header: 'Rank',
-      width: '10px',
-      center: true,
-      frozen: true,
-    },
+  commentsColumns: ColumnConfig<FeedbackBase>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -97,7 +91,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
     { field: 'comment', header: 'comment', width: '400px', frozen: true },
   ];
 
-  mostRelevantWordsColumns: ColumnConfig<WordRelevance>[] = [
+  wordsColumns: ColumnConfig<FeedbackWord>[] = [
     { field: 'word', header: 'word', width: '10px' },
     {
       field: 'word_occurrences',
@@ -119,8 +113,8 @@ export class TaskDetailsFeedbackComponent implements OnInit {
     // },
   ];
 
-  getMostRelevantFeedback() {
-    this.taskDetailsService.getMostRelevantFeedback();
+  getCommentsAndWords() {
+    this.taskDetailsService.getCommentsAndWords();
   }
 
   ngOnInit() {

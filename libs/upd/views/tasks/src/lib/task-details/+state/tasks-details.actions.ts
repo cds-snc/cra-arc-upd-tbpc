@@ -13,16 +13,16 @@ export const loadTasksDetailsError = createAction(
   props<{ error: string }>()
 );
 
-export const getMostRelevantFeedback = createAction(
-  '[TasksDetails/API] Get Most Relevant Feedback',
+export const getCommentsAndWords = createAction(
+  '[TasksDetails/API] Get Comments And Words',
 );
 
-export const getMostRelevantFeedbackSuccess = createAction(
-  '[TasksDetails/API] Get Most Relevant Feedback Success',
-  props<{ data: TaskDetailsData['mostRelevantCommentsAndWords'] }>(),
+export const getCommentsAndWordsSuccess = createAction(
+  '[TasksDetails/API] Get Comments And Words Success',
+  props<{ data: TaskDetailsData['commentsAndWords'] }>(),
 );
 
-export const getMostRelevantFeedbackError = createAction(
-  '[TasksDetails/API] Get Most Relevant Feedback Error',
+export const getCommentsAndWordsError = createAction(
+  '[TasksDetails/API] Get Comments And Words Error',
   props<{ error: string }>(),
 );

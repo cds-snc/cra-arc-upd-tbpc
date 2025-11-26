@@ -55,7 +55,7 @@ export const tasksDetailsInitialState: TasksDetailsState = {
     taskSuccessByUxTest: [],
     projects: [],
     searchTerms: [],
-    mostRelevantCommentsAndWords: {
+    commentsAndWords: {
       en: { comments: [], words: [] },
       fr: { comments: [], words: [] },
     },
@@ -107,12 +107,12 @@ const reducer = createReducer(
     }),
   ),
   on(
-    TasksDetailsActions.getMostRelevantFeedbackSuccess,
+    TasksDetailsActions.getCommentsAndWordsSuccess,
     (state, payload): TasksDetailsState => ({
       ...state,
       data: {
         ...state.data,
-        mostRelevantCommentsAndWords: payload.data,
+        commentsAndWords: payload.data,
       },
       loading: false,
       loaded: true,

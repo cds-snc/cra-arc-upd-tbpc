@@ -92,10 +92,10 @@ export const selectNumCommentsPercentChange = createSelector(
   (data) => data?.numCommentsPercentChange,
 );
 
-// Feedback - most relevant comments/words
-export const selectFeedbackMostRelevant = createSelector(
+// Feedback - comments/words
+export const selectFeedbackCommentsAndWords = createSelector(
   selectPagesDetailsData,
-  (data) => data?.mostRelevantCommentsAndWords,
+  (data) => data?.commentsAndWords,
 );
 
 /*

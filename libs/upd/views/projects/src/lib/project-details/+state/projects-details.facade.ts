@@ -967,8 +967,8 @@ export class ProjectsDetailsFacade {
       : `${formattedStartDate} ${separator} ${formattedEndDate}`;
   }
 
-  feedbackMostRelevant = this.store.selectSignal(
-    ProjectsDetailsSelectors.selectFeedbackMostRelevant,
+  feedbackCommentsAndWords = this.store.selectSignal(
+    ProjectsDetailsSelectors.selectFeedbackCommentsAndWords,
   );
 
   error$ = this.store.select(

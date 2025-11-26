@@ -19,7 +19,7 @@ import type {
   IFeedback,
   UrlHash,
 } from './schema.types';
-import type { CommentsAndWordsByLang, MostRelevantCommentsAndWordsByLang } from './feedback.types';
+import type { CommentsAndWordsByLang } from './feedback.types';
 
 export type ApiParams =
   | ({
@@ -127,7 +127,7 @@ export interface PageDetailsData extends EntityDetailsData<PageAggregatedData> {
   searchTerms: InternalSearchTerm[];
   readability: IReadability[];
   activityMap: ActivityMap[];
-  mostRelevantCommentsAndWords: MostRelevantCommentsAndWordsByLang;
+  commentsAndWords: CommentsAndWordsByLang;
   numComments: number;
   numCommentsPercentChange: number | null;
   hashes: UrlHash[];
@@ -444,7 +444,7 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     callsDifference?: number | null;
   })[];
   searchTerms: InternalSearchTerm[];
-  mostRelevantCommentsAndWords: MostRelevantCommentsAndWordsByLang;
+  commentsAndWords: CommentsAndWordsByLang;
   visitsByPage?: {
     _id: string;
     visits: number;
@@ -604,7 +604,7 @@ export interface ProjectsDetailsData
     percentChange: number | null;
   }[];
   feedbackByDay: { date: string; sum: number }[];
-  mostRelevantCommentsAndWords: MostRelevantCommentsAndWordsByLang;
+  commentsAndWords: CommentsAndWordsByLang;
   numComments: number;
   numCommentsPercentChange: number | null;
 }
@@ -677,7 +677,10 @@ export type PageFlowData = {
   exits?: number;
 };
 
-export type CustomReportsComment = Pick<IFeedback, 'comment' | 'date' | 'url'> & {
+export type CustomReportsComment = Pick<
+  IFeedback,
+  'comment' | 'date' | 'url'
+> & {
   taskTitles: string[];
   projectTitles: string[];
 };
@@ -687,4 +690,4 @@ export type CustomReportsFeedback = {
   selectedPages: { _id: string; title: string }[];
   selectedTasks: { _id: string; title: string; pages: string[] }[];
   selectedProjects: { _id: string; title: string; pages: string[] }[];
-}
+};

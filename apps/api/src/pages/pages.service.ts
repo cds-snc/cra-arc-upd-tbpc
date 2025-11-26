@@ -262,16 +262,14 @@ export class PagesService {
       .lean()
       .exec();
 
-    const mostRelevantCommentsAndWords =
-      await this.feedbackService.getMostRelevantCommentsAndWords({
-        dateRange: parseDateRangeString(params.dateRange),
-        type: 'page',
-        id: params.id,
-      });
+    const commentsAndWords = await this.feedbackService.getCommentsAndWords({
+      dateRange: parseDateRangeString(params.dateRange),
+      type: 'page',
+      id: params.id,
+    });
 
     const numComments =
-      mostRelevantCommentsAndWords.en.comments.length +
-      mostRelevantCommentsAndWords.fr.comments.length;
+      commentsAndWords.en.comments.length + commentsAndWords.fr.comments.length;
 
     const { start: prevDateRangeStart, end: prevDateRangeEnd } =
       parseDateRangeString(params.comparisonDateRange);
@@ -353,7 +351,7 @@ export class PagesService {
       searchTerms: aaSearchTerms,
       activityMap,
       readability,
-      mostRelevantCommentsAndWords,
+      commentsAndWords,
       numComments,
       numCommentsPercentChange,
       hashes: [],

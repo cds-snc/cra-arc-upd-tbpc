@@ -38,7 +38,7 @@ export const pagesDetailsInitialState: PagesDetailsState = {
     searchTerms: [],
     readability: [],
     activityMap: [],
-    mostRelevantCommentsAndWords: {
+    commentsAndWords: {
       en: { comments: [], words: [] },
       fr: { comments: [], words: [] },
     },

@@ -463,16 +463,14 @@ export class ProjectsService {
       .sort((a, b) => b.sum - a.sum);
     console.timeEnd('commentsByPage');
 
-    const mostRelevantCommentsAndWords =
-      await this.feedbackService.getMostRelevantCommentsAndWords({
-        dateRange: parseDateRangeString(params.dateRange),
-        type: 'project',
-        id: params.id,
-      });
+    const commentsAndWords = await this.feedbackService.getCommentsAndWords({
+      dateRange: parseDateRangeString(params.dateRange),
+      type: 'project',
+      id: params.id,
+    });
 
     const numComments =
-      mostRelevantCommentsAndWords.en.comments.length +
-      mostRelevantCommentsAndWords.fr.comments.length;
+      commentsAndWords.en.comments.length + commentsAndWords.fr.comments.length;
 
     const { start: prevDateRangeStart, end: prevDateRangeEnd } =
       parseDateRangeString(params.comparisonDateRange);
@@ -520,7 +518,7 @@ export class ProjectsService {
         date: date.toISOString(),
         sum,
       })),
-      mostRelevantCommentsAndWords,
+      commentsAndWords,
       numComments,
       numCommentsPercentChange,
     };

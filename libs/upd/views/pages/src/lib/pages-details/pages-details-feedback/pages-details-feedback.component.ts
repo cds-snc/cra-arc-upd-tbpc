@@ -2,8 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import type {
   ColumnConfig,
-  FeedbackWithScores,
-  WordRelevance,
+  FeedbackBase,
+  FeedbackWord,
 } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -52,30 +52,24 @@ export class PagesDetailsFeedbackComponent {
     this.pageDetailsService.comparisonDateRangeLabel$,
   );
 
-  feedbackMostRelevant = this.pageDetailsService.feedbackMostRelevant;
+  feedbackCommentsAndWords = this.pageDetailsService.feedbackCommentsAndWords;
 
   numComments = this.pageDetailsService.numComments;
   numCommentsPercentChange = this.pageDetailsService.numCommentsPercentChange;
 
-  mostRelevantComments = computed(
+  feedbackComments = computed(
     () =>
       this.pageLang() &&
-      this.feedbackMostRelevant()[this.pageLang() as 'en' | 'fr'].comments,
+      this.feedbackCommentsAndWords()[this.pageLang() as 'en' | 'fr']
+        .comments,
   );
-  mostRelevantWords = computed(
+  frequentWords = computed(
     () =>
       this.pageLang() &&
-      this.feedbackMostRelevant()[this.pageLang() as 'en' | 'fr'].words,
+      this.feedbackCommentsAndWords()[this.pageLang() as 'en' | 'fr'].words,
   );
 
-  mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    {
-      field: 'rank',
-      header: 'Rank',
-      width: '10px',
-      center: true,
-      frozen: true,
-    },
+  commentsColumns: ColumnConfig<FeedbackBase>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -88,7 +82,7 @@ export class PagesDetailsFeedbackComponent {
     { field: 'comment', header: 'comment', width: '400px', frozen: true },
   ];
 
-  mostRelevantWordsColumns: ColumnConfig<WordRelevance>[] = [
+  wordsColumns: ColumnConfig<FeedbackWord>[] = [
     { field: 'word', header: 'word', width: '10px' },
     {
       field: 'word_occurrences',

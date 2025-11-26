@@ -249,12 +249,29 @@ export class TasksService {
       { start: prevStart, end: prevEnd },
     );
 
-    const mostRelevantCommentsAndWords =
-      await this.feedbackService.getMostRelevantCommentsAndWords({
-        dateRange: parseDateRangeString(params.dateRange),
-        type: 'task',
-        id: params.id,
-      });
+    const commentsAndWords = await this.feedbackService.getCommentsAndWords({
+      dateRange: parseDateRangeString(params.dateRange),
+      type: 'task',
+      id: params.id,
+    });
+
+    const { start: prevDateRangeStart, end: prevDateRangeEnd } =
+      parseDateRangeString(params.comparisonDateRange);
+
+    const numComments =
+      commentsAndWords.en.comments.length + commentsAndWords.fr.comments.length;
+
+    const numPreviousComments = await this.db.collections.feedback
+      .countDocuments({
+        date: { $gte: prevDateRangeStart, $lte: prevDateRangeEnd },
+        tasks: taskId,
+      })
+      .exec();
+
+    const numCommentsPercentChange =
+      numPreviousComments && !Number.isNaN(numPreviousComments)
+        ? percentChange(numComments, numPreviousComments)
+        : null;
 
     const uxTests = taskData.ux_tests
       .map((uxTest) => ({
@@ -291,7 +308,9 @@ export class TasksService {
       avgSuccessPercentChange,
       avgSuccessValueChange,
       dateFromLastTest,
-      mostRelevantCommentsAndWords,
+      commentsAndWords,
+      numComments,
+      numCommentsPercentChange,
     };
 
     await this.cacheManager.set(cacheKey, returnData);

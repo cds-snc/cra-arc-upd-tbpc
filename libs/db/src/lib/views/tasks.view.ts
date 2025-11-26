@@ -855,8 +855,8 @@ export class TasksViewService extends DbViewNew<
       searchTerms: getArraySelectedPercentChange(
         ['clicks'],
         'term',
-        metricsWithPercentChange.aa_searchterms,
-        previousMetrics.aa_searchterms,
+        metricsWithPercentChange.aa_searchterms.filter(({ term }) => term),
+        previousMetrics.aa_searchterms.filter(({ term }) => term),
         { round: 2, suffix: 'Change' },
       ).slice(0, 25),
       // this isn't only visits, but this matches the current property name used in the rest of the code

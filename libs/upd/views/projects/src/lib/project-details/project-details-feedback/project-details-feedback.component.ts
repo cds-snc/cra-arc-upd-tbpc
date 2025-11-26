@@ -2,8 +2,8 @@ import { Component, computed, inject, OnInit } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import type {
   ColumnConfig,
-  FeedbackWithScores,
-  WordRelevance,
+  FeedbackBase,
+  FeedbackWord,
 } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { EN_CA } from '@dua-upd/upd/i18n';
@@ -57,7 +57,8 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
   comparisonDateRangeLabel$ =
     this.projectsDetailsService.comparisonDateRangeLabel$;
 
-  feedbackMostRelevant = this.projectsDetailsService.feedbackMostRelevant;
+  feedbackCommentsAndWords =
+    this.projectsDetailsService.feedbackCommentsAndWords;
 
   feedbackByDay$ = this.projectsDetailsService.feedbackByDay$;
   feedbackByDayCols: ColumnConfig[] = [
@@ -75,24 +76,13 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
     },
   ];
 
-  mostRelevantCommentsEn = computed(
-    () => this.feedbackMostRelevant().en.comments,
-  );
-  mostRelevantWordsEn = computed(() => this.feedbackMostRelevant().en.words);
+  commentsEn = computed(() => this.feedbackCommentsAndWords().en.comments);
+  wordsEn = computed(() => this.feedbackCommentsAndWords().en.words);
 
-  mostRelevantCommentsFr = computed(
-    () => this.feedbackMostRelevant().fr.comments,
-  );
-  mostRelevantWordsFr = computed(() => this.feedbackMostRelevant().fr.words);
+  commentsFr = computed(() => this.feedbackCommentsAndWords().fr.comments);
+  wordsFr = computed(() => this.feedbackCommentsAndWords().fr.words);
 
-  mostRelevantCommentsColumns: ColumnConfig<FeedbackWithScores>[] = [
-    {
-      field: 'rank',
-      header: 'Rank',
-      width: '10px',
-      center: true,
-      frozen: true,
-    },
+  commentsColumns: ColumnConfig<FeedbackBase>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -107,7 +97,7 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
     { field: 'comment', header: 'comment', width: '400px', frozen: true },
   ];
 
-  mostRelevantWordsColumns: ColumnConfig<WordRelevance>[] = [
+  wordsColumns: ColumnConfig<FeedbackWord>[] = [
     { field: 'word', header: 'word', width: '10px' },
     {
       field: 'word_occurrences',

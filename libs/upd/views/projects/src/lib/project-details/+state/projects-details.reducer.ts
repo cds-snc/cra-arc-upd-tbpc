@@ -36,7 +36,7 @@ export const projectDetailsInitialState: ProjectsDetailsState = {
     attachments: [],
     feedbackByPage: [],
     feedbackByDay: [],
-    mostRelevantCommentsAndWords: {
+    commentsAndWords: {
       en: { comments: [], words: [] },
       fr: { comments: [], words: [] },
     },
