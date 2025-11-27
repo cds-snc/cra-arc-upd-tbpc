@@ -65,11 +65,11 @@ on:
       artifacts-path:
         required: false
         type: string
-        default: ""
+        default: ''
       artifacts-name:
         required: false
         type: string
-        default: "nx-main-artifacts"
+        default: 'nx-main-artifacts'
       artifacts-retention-days:
         required: false
         type: number
@@ -86,7 +86,7 @@ on:
         type: number
 
 env:
-  NX_CLOUD_DISTRIBUTED_EXECUTION: true
+  NX_CLOUD_DISTRIBUTED_EXECUTION: ${{ inputs.number-of-agents && inputs.number-of-agents > 0 && !inputs.skip-cloud }}
   NX_CLOUD_DISTRIBUTED_EXECUTION_AGENT_COUNT: ${{ inputs.number-of-agents }}
   NX_BRANCH: ${{ github.event.number || github.ref_name }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -137,10 +137,10 @@ jobs:
       # Set node/npm/yarn versions using volta, with optional overrides provided by the consumer
       - uses: volta-cli/action@v4
         with:
-          node-version: "${{ inputs.node-version }}"
-          npm-version: "${{ inputs.npm-version }}"
-          yarn-version: "${{ inputs.yarn-version }}"
-          package-json-path: "${{ inputs.working-directory || github.workspace }}/package.json"
+          node-version: '${{ inputs.node-version }}'
+          npm-version: '${{ inputs.npm-version }}'
+          yarn-version: '${{ inputs.yarn-version }}'
+          package-json-path: '${{ inputs.working-directory || github.workspace }}/package.json'
 
       # Install pnpm with exact version provided by consumer or fallback to latest
       - name: Install PNPM
@@ -380,12 +380,14 @@ jobs:
           result-encoding: string
 
       - name: Run any configured parallel commands on main and agent jobs
+        env:
+          NX_NO_CLOUD: ${{ inputs.skip-cloud }}
         # We need to escape the workspace path to be consistent cross-platform: https://github.com/actions/runner/issues/1066
         run: ${GITHUB_WORKSPACE//\\//}/.github/workflows/run-commands-in-parallel.sh '${{ steps.parallel_commands_config.outputs.result }}'
 
       - name: Stop all running agents for this CI run
         # It's important that we always run this step, otherwise in the case of any failures in preceding non-Nx steps, the agents will keep running and waste billable minutes
-        if: ${{ always() }}
+        if: ${{ !inputs.skip-cloud && always() }}
         run: npx nx-cloud stop-all-agents
 
       # The good thing about the multi-line string input for sequential commands is that we can simply forward it on as is to the bash shell and it will behave
