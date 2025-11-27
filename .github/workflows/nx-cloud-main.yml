@@ -1,5 +1,5 @@
 # Copied from https://github.com/nrwl/ci/blob/c22bd1e5301b796cd1288c9e61a3cd3cdcdb37d0/.github/workflows/nx-cloud-main.yml
-# in order to enable overwriting uploaded artifacts
+# in order to enable overwriting uploaded artifacts, as well as continue working when free trial credits are exhausted.
 
 name: Nx Cloud Main
 
@@ -22,6 +22,14 @@ on:
       init-commands:
         required: false
         type: string
+      skip-start-ci-run:
+        required: false
+        type: boolean
+        default: false
+      skip-cloud:
+        required: false
+        type: boolean
+        default: false
       final-commands:
         required: false
         type: string
@@ -57,11 +65,11 @@ on:
       artifacts-path:
         required: false
         type: string
-        default: ""
+        default: ''
       artifacts-name:
         required: false
         type: string
-        default: "nx-main-artifacts"
+        default: 'nx-main-artifacts'
       artifacts-retention-days:
         required: false
         type: number
@@ -78,7 +86,7 @@ on:
         type: number
 
 env:
-  NX_CLOUD_DISTRIBUTED_EXECUTION: true
+  NX_CLOUD_DISTRIBUTED_EXECUTION: ${{ inputs.number-of-agents && inputs.number-of-agents > 0 && !inputs.skip-cloud }}
   NX_CLOUD_DISTRIBUTED_EXECUTION_AGENT_COUNT: ${{ inputs.number-of-agents }}
   NX_BRANCH: ${{ github.event.number || github.ref_name }}
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -129,10 +137,10 @@ jobs:
       # Set node/npm/yarn versions using volta, with optional overrides provided by the consumer
       - uses: volta-cli/action@v4
         with:
-          node-version: "${{ inputs.node-version }}"
-          npm-version: "${{ inputs.npm-version }}"
-          yarn-version: "${{ inputs.yarn-version }}"
-          package-json-path: "${{ inputs.working-directory || github.workspace }}/package.json"
+          node-version: '${{ inputs.node-version }}'
+          npm-version: '${{ inputs.npm-version }}'
+          yarn-version: '${{ inputs.yarn-version }}'
+          package-json-path: '${{ inputs.working-directory || github.workspace }}/package.json'
 
       # Install pnpm with exact version provided by consumer or fallback to latest
       - name: Install PNPM
@@ -307,6 +315,7 @@ jobs:
         run: chmod +x ${GITHUB_WORKSPACE//\\//}/.github/workflows/run-commands-in-parallel.sh
 
       - name: Initialize the Nx Cloud distributed CI run
+        if: ${{ inputs.skip-start-ci-run == false && inputs.skip-cloud == false }}
         run: npx nx-cloud start-ci-run
 
       # The good thing about the multi-line string input for sequential commands is that we can simply forward it on as is to the bash shell and it will behave
@@ -322,6 +331,7 @@ jobs:
         env:
           PARALLEL_COMMANDS: ${{ inputs.parallel-commands }}
           PARALLEL_COMMANDS_ON_AGENTS: ${{ inputs.parallel-commands-on-agents }}
+          SKIP_CLOUD: ${{ inputs.skip-cloud }}
         with:
           # For the ones configured for main, explicitly set NX_CLOUD_DISTRIBUTED_EXECUTION to false, taking into account commands chained with &&
           # within the strings. In order to properly escape single quotes we need to do some manual replacing and escaping so that the commands
@@ -329,6 +339,7 @@ jobs:
           script: |
             const parallelCommandsOnMainStr = process.env.PARALLEL_COMMANDS || '';
             const parallelCommandsOnAgentsStr = process.env.PARALLEL_COMMANDS_ON_AGENTS || '';
+            const skipCloud = process.env.SKIP_CLOUD === 'true';
 
             const parallelCommandsOnMain = parallelCommandsOnMainStr
               .split('\n')
@@ -340,6 +351,23 @@ jobs:
               .map(command => command.trim())
               .filter(command => command.length > 0)
               .map(s => s.replace(/'/g, '%27'));
+
+            if (skipCloud) {
+              // If skipping cloud, all commands should run on main with distributed execution disabled
+              const allCommands = [...parallelCommandsOnMain, ...parallelCommandsOnAgents];
+              const formattedAllCommands = allCommands.map(s => s
+                .split(' && ')
+                .map((s) => {
+                  const hasSkipCloudFlag = s.includes('--no-cloud');
+                  const skipCloudFlagString = hasSkipCloudFlag ? '' : ' --no-cloud';
+                  
+                  return `NX_NO_CLOUD=true NX_CLOUD_DISTRIBUTED_EXECUTION=false ${s}${skipCloudFlagString}`;
+                })
+                .join(' && ')
+              );
+
+              return JSON.stringify(formattedAllCommands).replace(/%27/g, "'\\''");
+            }
 
             const formattedArrayOfCommands = [
               ...parallelCommandsOnMain.map(s => s
@@ -357,13 +385,18 @@ jobs:
           result-encoding: string
 
       - name: Run any configured parallel commands on main and agent jobs
+        env:
+          NX_NO_CLOUD: ${{ inputs.skip-cloud }}
         # We need to escape the workspace path to be consistent cross-platform: https://github.com/actions/runner/issues/1066
         run: ${GITHUB_WORKSPACE//\\//}/.github/workflows/run-commands-in-parallel.sh '${{ steps.parallel_commands_config.outputs.result }}'
 
       - name: Stop all running agents for this CI run
         # It's important that we always run this step, otherwise in the case of any failures in preceding non-Nx steps, the agents will keep running and waste billable minutes
         if: ${{ always() }}
-        run: npx nx-cloud stop-all-agents
+        run: |
+          if [ "${{ inputs.skip-cloud }}" == "false" ]; then
+            npx nx-cloud stop-all-agents
+          fi
 
       # The good thing about the multi-line string input for sequential commands is that we can simply forward it on as is to the bash shell and it will behave
       # how we want it to in terms of quote escaping, variable assignment etc

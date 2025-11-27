@@ -11,26 +11,60 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-cloud-available:
+    name: Check Nx Cloud availability
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Nx Cloud Availability
+        id: check-cloud-availability
+        continue-on-error: true
+        env:
+          NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          npx nx-cloud start-ci-run --agent-count=0
+    outputs:
+      cloud-available: ${{ steps.check-cloud-availability.outcome == 'success' && 'true' || 'false' }}
+
+  cloud-available:
+    name: Echo Nx Cloud Availability
+    runs-on: ubuntu-latest
+    needs: check-cloud-available
+    steps:
+      - name: Echo availability
+        run: |
+          echo "Nx Cloud available: ${{ needs.check-cloud-available.outputs.cloud-available }}"
+
   main:
     name: Nx Cloud - Main Job
-    uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.15.0
+    needs: check-cloud-available
+    uses: ./.github/workflows/nx-cloud-main.yml
     secrets:
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
     with:
       node-version: 24.11.0
-      number-of-agents: 3
+      number-of-agents: ${{ needs.check-cloud-available.outputs.cloud-available == 'true' && 3 || 0 }}
+      skip-start-ci-run: true
+      skip-cloud: ${{ needs.check-cloud-available.outputs.cloud-available == 'false' }}
       init-commands: |
-        npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
+        if [ "${{ needs.check-cloud-available.outputs.cloud-available }}" != "true" ]; then
+          echo "Nx Cloud is not available. Remote cache will not be used."
+        else
+          npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
+        fi
       parallel-commands-on-agents: |
         npx nx affected --target=lint --parallel=3
         npx nx affected --target=build --parallel=3 --prod
 
   agents:
     name: Nx Cloud - Agents
+    needs: check-cloud-available
+    if: needs.check-cloud-available.outputs.cloud-available == 'true'
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.15.0
     secrets:
-      NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
     with:
       node-version: 24.11.0
