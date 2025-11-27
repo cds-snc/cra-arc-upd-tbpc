@@ -34,6 +34,15 @@ jobs:
     outputs:
       cloud-available: ${{ steps.check-cloud-availability.outputs.cloud-available }}
 
+  cloud-available:
+    name: Echo Nx Cloud Availability
+    runs-on: ubuntu-latest
+    needs: check-cloud-available
+    steps:
+      - name: Echo availability
+        run: |
+          echo "Nx Cloud available: ${{ needs.check-cloud-available.outputs.cloud-available }}"
+
   main:
     name: Nx Cloud - Main Job
     needs: check-cloud-available
