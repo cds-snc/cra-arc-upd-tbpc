@@ -357,7 +357,12 @@ jobs:
               const allCommands = [...parallelCommandsOnMain, ...parallelCommandsOnAgents];
               const formattedAllCommands = allCommands.map(s => s
                 .split(' && ')
-                .map((s) => `NX_NO_CLOUD=true NX_CLOUD_DISTRIBUTED_EXECUTION=false ${s}`)
+                .map((s) => {
+                  const hasSkipCloudFlag = s.includes('--no-cloud');
+                  const skipCloudFlagString = hasSkipCloudFlag ? '' : ' --no-cloud';
+                  
+                  return `NX_NO_CLOUD=true NX_CLOUD_DISTRIBUTED_EXECUTION=false ${s}${skipCloudFlagString}`;
+                })
                 .join(' && ')
               );
 
@@ -387,8 +392,11 @@ jobs:
 
       - name: Stop all running agents for this CI run
         # It's important that we always run this step, otherwise in the case of any failures in preceding non-Nx steps, the agents will keep running and waste billable minutes
-        if: ${{ !inputs.skip-cloud && always() }}
-        run: npx nx-cloud stop-all-agents
+        if: ${{ always() }}
+        run: |
+          if [ "${{ inputs.skip-cloud }}" == "false" ]; then
+            npx nx-cloud stop-all-agents
+          fi
 
       # The good thing about the multi-line string input for sequential commands is that we can simply forward it on as is to the bash shell and it will behave
       # how we want it to in terms of quote escaping, variable assignment etc
