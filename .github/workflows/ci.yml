@@ -14,8 +14,6 @@ jobs:
   check-cloud-available:
     name: Check Nx Cloud availability
     runs-on: ubuntu-latest
-    outputs:
-      cloud-available: ${{ steps.check-cloud-availability.outputs.cloud-available }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,13 +26,8 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           npx nx-cloud start-ci-run --agent-count=0
-          if [ $? -eq 0 ]; then
-            echo "cloud-available=true"
-            echo "cloud-available=true" >> $GITHUB_OUTPUT
-          else
-            echo "cloud-available=false"
-            echo "cloud-available=false" >> $GITHUB_OUTPUT
-          fi
+    outputs:
+      cloud-available: ${{ steps.check-cloud-availability.outcome == 'success' && 'true' || 'false' }}
 
   cloud-available:
     name: Echo Nx Cloud Availability
