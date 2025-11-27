@@ -7,6 +7,7 @@ import type {
   ReportConfig,
   ReportGranularity,
 } from '@dua-upd/types-common';
+import { createHash } from 'crypto';
 
 export const granularities: readonly ReportGranularity[] = [
   'day',
@@ -33,6 +34,9 @@ export class CustomReportsMetrics implements ICustomReportsMetrics {
   @Prop({ type: [String], required: false, index: true })
   urls?: string[];
 
+  @Prop({ type: String, required: false, index: true })
+  urlsHash?: string;
+
   @Prop({ type: Date, required: true })
   startDate: Date;
 
@@ -50,27 +54,31 @@ export class CustomReportsMetrics implements ICustomReportsMetrics {
   @Prop({ type: Boolean, required: true, index: true })
   grouped: boolean;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: false, index: true })
+  @Prop({ type: MongooseSchema.Types.Mixed, required: false })
   metrics: ICustomReportsMetrics['metrics'] = {};
 
   // for breakdowns by dimension
-  @Prop({ type: MongooseSchema.Types.Mixed, required: false, index: true })
+  @Prop({ type: MongooseSchema.Types.Mixed, required: false})
   metrics_by: ICustomReportsMetrics['metrics_by'] = {};
 
   static async getMetrics(
     this: Model<CustomReportsMetrics>,
     config: ReportConfig<Date>,
   ): Promise<CustomReportsMetrics[]> {
-    const urls = config.grouped
-      ? {
-          urls: {
-            $all: config.urls.map((url) => ({ $elemMatch: { $eq: url } })),
-            $size: config.urls.length,
-          },
-        }
-      : {
-          url: { $in: config.urls },
-        };
+
+
+  const normalizedUrls = (config.urls || []).map((url) => String(url)).sort();
+
+  const urlsHash =
+    normalizedUrls.length
+      ? createHash('md5')
+        .update(JSON.stringify(normalizedUrls))
+        .digest('hex')
+      : undefined;
+
+   const urls = config.grouped
+     ? { urlsHash }
+     : { url: { $in: normalizedUrls } };
 
     const defaultQuery = {
       startDate: {
@@ -242,10 +250,10 @@ CustomReportsMetricsSchema.index(
 );
 
 CustomReportsMetricsSchema.index(
-  { urls: 1, startDate: 1, endDate: 1, grouped: 1, granularity: 1 },
+  { urlsHash: 1, startDate: 1, endDate: 1, grouped: 1, granularity: 1 },
   {
     partialFilterExpression: {
-      urls: { $exists: true },
+      urlsHash: { $exists: true },
       grouped: true,
     },
   },
@@ -264,10 +272,10 @@ CustomReportsMetricsSchema.index(
 );
 
 CustomReportsMetricsSchema.index(
-  { urls: 1, startDate: 1, grouped: 1, granularity: 1 },
+  { urlsHash: 1, startDate: 1, grouped: 1, granularity: 1 },
   {
     partialFilterExpression: {
-      urls: { $exists: true },
+      urlsHash: { $exists: true },
       grouped: true,
       granularity: 'day',
     },
