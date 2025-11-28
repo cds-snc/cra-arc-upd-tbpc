@@ -78,6 +78,7 @@ def objectid(bin: bytes | None = None) -> ObjectId:
         return cached_objectid(ObjectId().binary)
     return cached_objectid(bin)
 
+
 @lru_cache(maxsize=75_000)
 def cached_objectid(bin: bytes) -> ObjectId:
     """Convert bytes to ObjectId, caching the result."""
@@ -254,12 +255,14 @@ class SyncUtils:
         :param filepath: Path to the file to check.
         :return: True if the file has changed, False otherwise.
         """
-        previous_hash = self.file_hashes.get(filepath)
+        absolute_path = os.path.abspath(filepath)
+
+        previous_hash = self.file_hashes.get(absolute_path)
 
         if previous_hash is None:
             return True
 
-        current_hash = hash_file(filepath)
+        current_hash = hash_file(absolute_path)
 
         return previous_hash != current_hash
 
@@ -277,11 +280,12 @@ class SyncUtils:
 
                         self.add_hash(partition_filepath)
             return
+        absolute_path = os.path.abspath(filepath)
 
-        if self.file_hashes.get(filepath) is not None:
-            raise ValueError(f"Hash for {filepath} already exists.")
+        if self.file_hashes.get(absolute_path) is not None:
+            raise ValueError(f"Hash for {absolute_path} already exists.")
 
-        self.file_hashes[filepath] = hash_file(filepath)
+        self.file_hashes[absolute_path] = hash_file(absolute_path)
 
     def queue_file_upload(self, file_path: str):
         """

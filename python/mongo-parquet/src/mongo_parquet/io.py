@@ -1,4 +1,4 @@
-from logging import error, warning
+from logging import error
 import os
 import re
 from copy import deepcopy
@@ -82,14 +82,6 @@ class MongoParquetIO:
                 f"Collection {collection_model.collection} is set to incremental sync, but has no 'date' field in schema."
             )
 
-        # get latest date
-        latest_parquet_date: datetime = (
-            collection_model.primary_model.lf()
-            .select(pl.col("date").max())
-            .collect()["date"]
-            .item()
-        )
-
         latest_mongo_date = (
             self.db.db[collection_model.collection].find_one(
                 filter=collection_model.primary_model.filter,
@@ -99,26 +91,29 @@ class MongoParquetIO:
             or {}
         ).get("date")
 
-        if latest_mongo_date is None or latest_mongo_date <= latest_parquet_date:
-            warning(
-                f"No new data found in MongoDB for collection {collection_model.collection}, skipping."
-            )
-            return
-
-        print(
-            f"Latest parquet date: {latest_parquet_date}, latest mongo date: {latest_mongo_date}"
-        )
-
-        incremental_filter = {
-            "date": {"$gt": latest_parquet_date},
-        }
-
         for parquet_model in [
             collection_model.primary_model,
             *collection_model.secondary_models,
         ]:
             parquet_start_time = datetime.now()
             print(f"Processing {parquet_model.parquet_filename}...")
+
+            # get latest date
+            latest_parquet_date: datetime = parquet_model.latest_date() or datetime.min
+
+            if latest_mongo_date is None or latest_mongo_date <= latest_parquet_date:
+                print(
+                    f"No new data found in MongoDB for parquet model: {parquet_model.parquet_filename}, skipping."
+                )
+                return
+
+            print(
+                f"Latest parquet date: {latest_parquet_date}, latest mongo date: {latest_mongo_date}"
+            )
+
+            incremental_filter = {
+                "date": {"$gt": latest_parquet_date},
+            }
 
             sync_utils.ensure_temp_dirs()
 

@@ -765,7 +765,6 @@ export class ProjectsService {
         title: string;
         callsPerVisit: number;
         dyfNoPerVisit: number;
-        uxTestInLastTwoYears: boolean;
         ux_tests: IUxTest[];
       }>(
         {
@@ -779,41 +778,19 @@ export class ProjectsService {
           'projects._id': 1,
           callsPerVisit: 1,
           dyfNoPerVisit: 1,
-          uxTestInLastTwoYears: {
-            $cond: [
-              {
-                $anyElementTrue: {
-                  $map: {
-                    input: '$ux_tests',
-                    as: 'test',
-                    in: {
-                      $gte: ['$$test.date', twoYearsAgo],
-                    },
-                  },
-                },
-              },
-              'Yes',
-              'No',
-            ],
-          },
           ux_tests: 1,
         },
       )
       .then((tasks) =>
         tasks.map(
-          ({
-            taskId,
-            title,
-            callsPerVisit,
-            dyfNoPerVisit,
-            uxTestInLastTwoYears,
-            ux_tests,
-          }) => ({
+          ({ taskId, title, callsPerVisit, dyfNoPerVisit, ux_tests }) => ({
             _id: taskId.toString(),
             title,
             callsPer100Visits: callsPerVisit * 100,
             dyfNoPer1000Visits: dyfNoPerVisit * 1000,
-            uxTestInLastTwoYears,
+            uxTestInLastTwoYears: ux_tests.some(
+              (test) => test.date && test.date >= twoYearsAgo,
+            ),
             latestSuccessRate:
               getLatestTaskSuccessRate(ux_tests).avgTestSuccess,
           }),
