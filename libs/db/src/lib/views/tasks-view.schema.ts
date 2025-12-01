@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Schema as MSchema, Types } from 'mongoose';
 import type {
   CallsByTopic,
   DateRange,
@@ -14,7 +14,7 @@ import type { ModelWithStatics } from '@dua-upd/utils-common/types';
 
 @Schema({ collection: 'view_tasks' })
 export class TasksView implements ITaskView {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({
@@ -27,7 +27,7 @@ export class TasksView implements ITaskView {
 
   @Prop({
     type: {
-      _id: Types.ObjectId,
+      _id: MSchema.Types.ObjectId,
       title: String,
       title_fr: String,
       group: String,
@@ -174,9 +174,9 @@ export class TasksView implements ITaskView {
   @Prop({
     type: [
       {
-        _id: Types.ObjectId,
+        _id: MSchema.Types.ObjectId,
         page: {
-          _id: Types.ObjectId,
+          _id: MSchema.Types.ObjectId,
           url: String,
           title: String,
           lang: String,
@@ -215,10 +215,10 @@ export class TasksView implements ITaskView {
   @Prop({
     type: [
       {
-        _id: Types.ObjectId,
+        _id: MSchema.Types.ObjectId,
         title: String,
         airtable_id: String,
-        project: Types.ObjectId,
+        project: MSchema.Types.ObjectId,
         subtask: String,
         date: Date,
         success_rate: Number,
@@ -253,7 +253,7 @@ export class TasksView implements ITaskView {
   @Prop({
     type: [
       {
-        _id: Types.ObjectId,
+        _id: MSchema.Types.ObjectId,
         title: String,
         description: String,
         attachments: [

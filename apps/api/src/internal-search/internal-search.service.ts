@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FilterQuery } from 'mongoose';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import type {
   Overall,
 } from '@dua-upd/db';

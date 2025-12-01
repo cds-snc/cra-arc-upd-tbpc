@@ -2,10 +2,16 @@ import { inject, Injectable } from '@angular/core';
 import { createEffect, Actions, ofType } from '@ngrx/effects';
 import { concatLatestFrom } from '@ngrx/operators';
 import { Store } from '@ngrx/store';
-import { catchError, EMPTY, mergeMap, map, of } from 'rxjs';
-import { selectDatePeriod, selectDateRanges } from '@dua-upd/upd/state';
+import { catchError, EMPTY, mergeMap, map, of, filter } from 'rxjs';
+import {
+  selectDatePeriod,
+  selectDateRanges,
+  selectRoute,
+} from '@dua-upd/upd/state';
 import { ApiService } from '@dua-upd/upd/services';
 import * as TasksHomeActions from './tasks-home.actions';
+
+const tasksRouteRegex = /\/tasks$/;
 
 @Injectable()
 export class TasksHomeEffects {
@@ -29,6 +35,8 @@ export class TasksHomeEffects {
   dateChange$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
+      concatLatestFrom(() => this.store.select(selectRoute)),
+      filter(([, route]) => tasksRouteRegex.test(route)),
       mergeMap(() => of(TasksHomeActions.loadTasksHomeInit())),
     );
   });

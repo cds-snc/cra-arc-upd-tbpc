@@ -39,7 +39,6 @@ export class OverviewSummaryComponent implements OnInit {
 
   loaded$ = this.overviewService.loaded$;
   loading$ = this.overviewService.loading$;
-  error$ = this.overviewService.error$;
 
   fullDateRangeLabel$ = this.overviewService.fullDateRangeLabel$;
   fullComparisonDateRangeLabel$ =

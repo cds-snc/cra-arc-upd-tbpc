@@ -1,15 +1,15 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app/app.module';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-
-
 import helmet from 'helmet';
+import compression from 'compression';
+import { AppModule } from './app/app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(helmet());
+  app.use(compression({ threshold: 4_194_304 })); // 4 MB threshold
   app.useBodyParser('json', { limit: '20mb' });
 
   const globalPrefix = 'api';

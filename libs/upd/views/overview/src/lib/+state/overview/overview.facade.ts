@@ -1105,7 +1105,7 @@ export class OverviewFacade {
     },
   ]);
 
-  error$ = this.store.select(OverviewSelectors.selectOverviewError);
+  error = this.store.selectSignal(OverviewSelectors.selectOverviewError);
 
   init() {
     this.store.dispatch(OverviewActions.init());

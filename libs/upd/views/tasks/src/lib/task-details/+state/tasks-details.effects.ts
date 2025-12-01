@@ -7,6 +7,7 @@ import { ApiService } from '@dua-upd/upd/services';
 import {
   selectDatePeriod,
   selectDateRanges,
+  selectRoute,
   selectRouteNestedParam,
 } from '@dua-upd/upd/state';
 import {
@@ -21,6 +22,8 @@ import {
   selectTasksDetailsData,
 } from './tasks-details.selectors';
 import type { CommentsAndWordsByLang } from '@dua-upd/types-common';
+
+const tasksRouteRegex = /\/tasks\//;
 
 @Injectable()
 export class TasksDetailsEffects {
@@ -75,6 +78,8 @@ export class TasksDetailsEffects {
   dateChange$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
+      concatLatestFrom(() => this.store.select(selectRoute)),
+      filter(([, route]) => tasksRouteRegex.test(route)),
       mergeMap(() => of(loadTasksDetailsInit())),
     );
   });

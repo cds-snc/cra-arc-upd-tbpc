@@ -9,9 +9,12 @@ import {
   selectDatePeriod,
   selectDateRanges,
   selectRouteNestedParam,
+  selectRoute,
 } from '@dua-upd/upd/state';
 import { selectProjectsDetailsData } from './projects-details.selectors';
 import { loadProjectsDetailsSuccess } from './projects-details.actions';
+
+const projectsRouteRegex = /\/projects\//;
 
 @Injectable()
 export class ProjectsDetailsEffects {
@@ -71,6 +74,8 @@ export class ProjectsDetailsEffects {
   dateChange$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
+      concatLatestFrom(() => this.store.select(selectRoute)),
+      filter(([, route]) => projectsRouteRegex.test(route)),
       mergeMap(() => of(ProjectsDetailsActions.loadProjectsDetailsInit())),
     );
   });

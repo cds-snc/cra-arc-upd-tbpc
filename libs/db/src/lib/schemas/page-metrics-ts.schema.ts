@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Schema as MSchema, Types } from 'mongoose';
 import type {
   GscSearchTermMetrics,
   AASearchTermMetrics,
@@ -24,16 +24,16 @@ export interface PageMetricsMeta {
   },
 })
 export class PageMetricsTS {
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: MSchema.Types.ObjectId, required: true })
   _id: Types.ObjectId = new Types.ObjectId();
 
   @Prop({
     type: {
       url: String,
-      page: { type: Types.ObjectId, ref: 'Page' },
-      projects: [{ type: Types.ObjectId, ref: 'Project' }],
-      tasks: [{ type: Types.ObjectId, ref: 'Task' }],
-      ux_tests: [{ type: Types.ObjectId, ref: 'UxTest' }],
+      page: { type: MSchema.Types.ObjectId, ref: 'Page' },
+      projects: [{ type: MSchema.Types.ObjectId, ref: 'Project' }],
+      tasks: [{ type: MSchema.Types.ObjectId, ref: 'Task' }],
+      ux_tests: [{ type: MSchema.Types.ObjectId, ref: 'UxTest' }],
     },
   })
   meta: PageMetricsMeta;

@@ -8,6 +8,7 @@ import {
   selectDateRanges,
   selectRouteNestedParam,
   selectDatePeriod,
+  selectRoute,
 } from '@dua-upd/upd/state';
 import {
   getHashes,
@@ -18,11 +19,14 @@ import {
   loadAccessibilityInit,
   loadAccessibilitySuccess,
   loadAccessibilityError,
+  loadPagesDetailsError,
 } from './pages-details.actions';
 import { selectPagesDetailsData, selectAccessibilityData } from './pages-details.selectors';
 import * as PagesDetailsSelectors from './pages-details.selectors';
 import { UrlHash } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
+
+const pagesRouteRegex = /\/pages\//;
 
 @Injectable()
 export class PagesDetailsEffects {
@@ -67,7 +71,7 @@ export class PagesDetailsEffects {
             })
             .pipe(
               map((data) => loadPagesDetailsSuccess({ data })),
-              catchError(() => EMPTY),
+              catchError((err) => of(loadPagesDetailsError({ error: err }))),
             );
         },
       ),
@@ -77,6 +81,8 @@ export class PagesDetailsEffects {
   dateChange$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
+      concatLatestFrom(() => this.store.select(selectRoute)),
+      filter(([, route]) => pagesRouteRegex.test(route)),
       mergeMap(() => of(loadPagesDetailsInit())),
     );
   });

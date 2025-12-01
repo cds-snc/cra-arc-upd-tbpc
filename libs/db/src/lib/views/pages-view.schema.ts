@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
+import { Schema as MSchema, Types } from 'mongoose';
 import type {
   ActivityMapMetrics,
   DateRange,
@@ -22,7 +22,7 @@ export class PagesView extends MetricsCommon implements IPageView {
 
   @Prop({
     type: {
-      _id: Types.ObjectId,
+      _id: MSchema.Types.ObjectId,
       url: String,
       title: String,
       lang: String,
@@ -61,10 +61,10 @@ export class PagesView extends MetricsCommon implements IPageView {
   })
   activity_map?: ActivityMapMetrics[];
 
-  @Prop({ type: [{ type: Types.ObjectId }], index: true })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId }], index: true })
   tasks?: Types.ObjectId[];
 
-  @Prop({ type: [{ type: Types.ObjectId }], index: true })
+  @Prop({ type: [{ type: MSchema.Types.ObjectId }], index: true })
   projects?: Types.ObjectId[];
 
   @Prop({ type: Date, required: true, default: () => new Date(), index: true })

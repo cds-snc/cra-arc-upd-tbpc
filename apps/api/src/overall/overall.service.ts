@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import quarterOfYear from 'dayjs/plugin/quarterOfYear';
@@ -572,17 +572,14 @@ export class OverallService {
             $toLower: `$${searchTermsPropName}.term`,
           },
         })
-        .match({
-          [`${searchTermsPropName}.term`]: {
-            $in: results.map(({ term }) => term),
-          },
-        })
         .group({
           _id: `$${searchTermsPropName}.term`,
           total_searches: {
             $sum: `$${searchTermsPropName}.num_searches`,
           },
         })
+        .sort({ total_searches: -1 })
+        .limit(500)
         .project({
           _id: 0,
           term: '$_id',

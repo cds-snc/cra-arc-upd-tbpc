@@ -23,6 +23,8 @@ export class OverviewComponent implements OnInit {
   currentLang$ = this.i18n.currentLang$;
   loading$ = this.overviewService.loading$;
   currentRoute$ = this.overviewService.currentRoute$;
+  
+  error = this.overviewService.error;
 
   ngOnInit() {
     this.overviewService.init();

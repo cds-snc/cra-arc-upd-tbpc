@@ -7,9 +7,22 @@
 ></upd-loading-spinner>
 
 <ng-template #elseBlock>
-  <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
-  <upd-date-selector
-    *ngIf="!((currentRoute$ | async) || '').endsWith('uxtests')"
-  ></upd-date-selector>
-  <router-outlet></router-outlet>
+  @if (error()) {
+    <div class="w-100">
+      <upd-card
+        [title]="'error' | translate"
+        styleClass="alert alert-danger"
+        role="alert"
+        titleSize="h3"
+      >
+        <p>{{ error() }}</p>
+      </upd-card>
+    </div>
+  } @else {
+    <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
+    <upd-date-selector
+      *ngIf="!((currentRoute$ | async) || '').endsWith('uxtests')"
+    ></upd-date-selector>
+    <router-outlet></router-outlet>
+  }
 </ng-template>
