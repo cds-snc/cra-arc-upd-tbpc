@@ -26,7 +26,7 @@ module "cra_upd_documentdb" {
   deletion_protection    = true
   backup_window          = var.docdb_backup_window
   storage_type           = var.docdb_storage_type
-  # engine_version         = "8.0.0"
+  engine_version         = "5.0.0"
 
   parameters = [
     {
