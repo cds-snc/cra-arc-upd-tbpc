@@ -17,6 +17,10 @@ locals {
         name  = "DATA_BUCKET_NAME"
         value = var.data_bucket_name
       },
+      {
+        name  = "COMPRESS_RESPONSES",
+        value = "true"
+      }
     ],
     var.env == "production" ? [
       {
