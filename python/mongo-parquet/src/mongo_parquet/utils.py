@@ -33,7 +33,7 @@ def month_range(
         if end.day == 1
         else last_day_of_month(end)
     )
-    while start < end:
+    while start <= end:
         next_month = last_day_of_month(start)
         yield (start, next_month)
         start = next_month + timedelta(days=1)
@@ -52,7 +52,7 @@ def year_range(
 
     end = end.replace(day=31, month=12)
 
-    while start < end:
+    while start <= end:
         next_year = start.replace(year=start.year + 1)
         yield (start, next_year)
         start = next_year

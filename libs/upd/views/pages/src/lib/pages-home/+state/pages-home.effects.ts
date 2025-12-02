@@ -12,7 +12,7 @@ import {
 import { PagesHomeData } from '@dua-upd/types-common';
 import { ApiService } from '@dua-upd/upd/services';
 
-const pagesRouteRegex = /\/pages\//;
+const pagesRouteRegex = /\/pages$/;
 
 @Injectable()
 export class PagesHomeEffects {

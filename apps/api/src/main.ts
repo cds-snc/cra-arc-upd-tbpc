@@ -9,7 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(helmet());
-  app.use(compression({ threshold: 4_194_304 })); // 4 MB threshold
+  
+  if (process.env.COMPRESS_RESPONSES === 'true') {
+    app.use(compression({ threshold: 4_194_304 })); // 4 MB threshold
+  }
+
   app.useBodyParser('json', { limit: '20mb' });
 
   const globalPrefix = 'api';
