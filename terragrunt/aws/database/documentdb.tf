@@ -34,10 +34,10 @@ module "cra_upd_documentdb" {
       name         = "tls"
       value        = "enabled"
     },
-    {
-      name  = "default_collection_compression"
-      value = "zstd"
-    },
+    # {
+    #   name  = "default_collection_compression"
+    #   value = "zstd"
+    # },
     {
       name  = "profiler"
       value = "disabled" # most queries will be considered "slow operations", so we'll disable this
