@@ -23,10 +23,12 @@ module "cra_upd_documentdb" {
   instance_class         = var.docdb_instance_class
   cluster_family         = "docdb5.0"
   cluster_size           = var.docdb_instance_count
-  deletion_protection    = true
+  deletion_protection    = false
   backup_window          = var.docdb_backup_window
   storage_type           = var.docdb_storage_type
   engine_version         = "8.0.0"
+
+  enable = false
 
   parameters = [
     {
