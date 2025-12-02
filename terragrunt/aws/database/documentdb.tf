@@ -36,7 +36,7 @@ module "cra_upd_documentdb" {
     },
     {
       name  = "default_collection_compression"
-      value = "zstd"
+      value = "enabled"
     },
     {
       name  = "profiler"
