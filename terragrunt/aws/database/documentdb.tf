@@ -21,7 +21,7 @@ module "cra_upd_documentdb" {
   vpc_security_group_ids = [aws_security_group.cra_upd_docdb_sg.id]
   storage_encrypted      = true
   instance_class         = var.docdb_instance_class
-  cluster_family         = "docdb8.0"
+  cluster_family         = "docdb5.0"
   cluster_size           = var.docdb_instance_count
   deletion_protection    = true
   backup_window          = var.docdb_backup_window
