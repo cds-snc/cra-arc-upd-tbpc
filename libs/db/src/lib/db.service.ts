@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import type {
   AnyBulkWriteOperation,
@@ -46,7 +46,6 @@ import {
   mapWithETALoggingAsync,
   prettyJson,
 } from '@dua-upd/utils-common';
-import { PageVisits, PageVisitsView } from './db.views';
 import {
   PagesView,
   type PagesViewModel,
@@ -73,7 +72,7 @@ import {
  * [Aggregation pipeline reference]{@link https://www.mongodb.com/docs/v4.4/reference/aggregation/}
  */
 @Injectable()
-export class DbService {
+export class DbService implements OnApplicationBootstrap {
   readonly collections = {
     callDrivers: this.callDrivers,
     feedback: this.feedback,
@@ -165,15 +164,55 @@ export class DbService {
     private connection: Connection,
   ) {}
 
-  async ensureIndexes() {
+  onApplicationBootstrap() {
+    this.ensureIndexes(true).catch((err) => {
+      console.error('Error ensuring indexes on application bootstrap:');
+      console.error(err);
+    });
+  }
+
+  async ensureIndexes(verbose = false) {
     for (const collection in this.collections) {
-      console.log(`Ensuring indexes for collection: ${collection}`);
-      await this.collections[collection].ensureIndexes();
+      const model =
+        this.collections[collection as keyof typeof this.collections];
+
+      if (verbose) {
+        console.log(`Ensuring indexes for collection: ${collection}`);
+
+        model.on('index', (error: Error) => {
+          if (error) {
+            console.error(`Index creation error for ${collection}:`);
+            console.error(error);
+          } else {
+            console.log(`Index creation successful for ${collection}`);
+          }
+        });
+      }
+
+      await model.ensureIndexes();
     }
 
     for (const view in this.views) {
-      console.log(`Ensuring indexes for view: ${view}`);
-      await this.views[view].model.ensureIndexes();
+      const model = this.views[view as keyof typeof this.views].model;
+
+      if (verbose) {
+        console.log(`Ensuring indexes for view: ${view}`);
+
+        model.on('index', (error: Error) => {
+          if (error) {
+            console.error(`Index creation error for ${view}:`);
+            console.error(error);
+          } else {
+            console.log(`Index creation successful for ${view}`);
+          }
+        });
+      }
+
+      await model.ensureIndexes();
+    }
+
+    if (verbose) {
+      console.log('Finished ensuring indexes for all collections and views.');
     }
   }
 

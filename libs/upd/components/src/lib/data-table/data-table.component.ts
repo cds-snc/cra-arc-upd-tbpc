@@ -162,7 +162,7 @@ export class DataTableComponent<T extends object> {
   }
 
   multiKeywordGlobalFilter(table: Table, event: Event) {
-    const input = (event.target as HTMLInputElement).value;
+    const input = this.getEventValue(event);
 
     const keywords = input
         .toLowerCase()
