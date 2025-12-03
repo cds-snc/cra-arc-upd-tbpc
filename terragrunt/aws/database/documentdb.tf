@@ -13,6 +13,8 @@ data "aws_ssm_parameter" "docdb_password" {
 module "cra_upd_documentdb" {
   source = "github.com/cds-snc/terraform-modules//DocumentDB?ref=v10.4.4"
 
+  enable = true
+
   database_name          = "upd"
   billing_code           = var.billing_code
   master_username        = data.aws_ssm_parameter.docdb_username.value
@@ -23,12 +25,10 @@ module "cra_upd_documentdb" {
   instance_class         = var.docdb_instance_class
   cluster_family         = "docdb8.0"
   cluster_size           = var.docdb_instance_count
-  deletion_protection    = false
+  deletion_protection    = true
   backup_window          = var.docdb_backup_window
   storage_type           = var.docdb_storage_type
   engine_version         = "8.0.0"
-
-  enable = false
 
   parameters = [
     {
