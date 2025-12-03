@@ -31,7 +31,7 @@ inputs = {
   vpc_private_subnet_ids = dependency.network.outputs.vpc_private_subnet_ids
   vpc_cidr_block         = dependency.network.outputs.vpc_cidr_block
   docdb_instance_class   = "db.r6g.large"
-  docdb_instance_count   = 0
+  docdb_instance_count   = 1
   docdb_storage_type     = "iopt1"
   docdb_backup_window    = "11:00-12:00" # Daily time range that backups execute (UTC time)
 }
