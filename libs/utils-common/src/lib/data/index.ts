@@ -103,8 +103,8 @@ export const getArraySelectedPercentChange = <
 >(
   props: Props extends readonly (string | number)[] ? Props : never,
   joinKey: keyof T2 & string,
-  data: T[],
-  comparisonData: T2[],
+  data: T[] = [],
+  comparisonData: T2[] = [],
   options: { round?: number; suffix: Suffix } = {
     suffix: 'PercentChange' as Suffix,
   } as const,
@@ -189,8 +189,8 @@ export const getArraySelectedAbsoluteChange = <
 >(
   props: Props extends readonly string[] ? Props : never,
   joinKey: keyof T2 & string,
-  data: T[],
-  comparisonData: T2[],
+  data: T[] = [],
+  comparisonData: T2[] = [],
   options: { round?: number; suffix: Suffix } = {
     suffix: 'Difference' as Suffix,
   } as const,
@@ -338,20 +338,17 @@ export function getAvgSuccessFromLastTests<
 
 export function getLatestTaskSuccessRate(
   uxTests: { date?: Date; success_rate?: number }[],
-  
 ) {
   const sortedTests = [...uxTests]
     .filter(
       (test) =>
         test.date && test.success_rate != null && test.success_rate >= 0,
-      
     )
     .sort(
       (a, b) => (b.date as Date).getTime() - (a.date as Date).getTime(),
     ) as { date: Date; success_rate: number }[];
-  
-  if (!sortedTests.length)
 
+  if (!sortedTests.length)
     return {
       avgTestSuccess: null,
       latestDate: null,
@@ -522,7 +519,7 @@ export interface TestSuccessWithPercentChange {
   total: number | null;
 }
 
-export function getLatestTestData<    
+export function getLatestTestData<
   T extends { date?: Date; success_rate?: number; test_type?: string },
 >(uxTests: T[]): TestSuccessWithPercentChange {
   const uxTestsWithSuccessRate = uxTests.filter(
@@ -591,7 +588,7 @@ export function getLatestTestData<
     percentChange: null,
     total: null,
   };
-} 
+}
 
 export type ProjectTestTypes = {
   Baseline: IUxTest[];
@@ -698,7 +695,10 @@ export const getWosImprovedKpiSuccessRates = (
   // filter bad stuff
   const filteredTests = uxTests.filter(
     (test) =>
-      (test.cops === true) && !isNullish(test.success_rate) && test.test_type && test!.tasks!.length,
+      test.cops === true &&
+      !isNullish(test.success_rate) &&
+      test.test_type &&
+      test!.tasks!.length,
   );
 
   const avgTestSuccessRates = piped(
@@ -760,11 +760,15 @@ export const getWosImprovedKpiSuccessRates = (
   };
 };
 
-
 export const getImprovedKpiTopSuccessRates = (
   topTaskIds: string[],
   uxTests: IUxTest[],
-): { uniqueTopTasks: number; allTopTasks: number; topSuccessRates: SuccessRates; totalTopTasksCount: number } => {
+): {
+  uniqueTopTasks: number;
+  allTopTasks: number;
+  topSuccessRates: SuccessRates;
+  totalTopTasksCount: number;
+} => {
   const groupByTaskByProjectByTestType = pipe(
     groupBy((test: IUxTest) => test!.tasks!.toString()), // group by task
     mapObject(groupBy((test: IUxTest) => test.project.toString())), // group by project
@@ -778,14 +782,13 @@ export const getImprovedKpiTopSuccessRates = (
     ),
   );
 
- 
   // Filter UX tests by top task IDs and filter bad stuff
   const filteredTests1 = uxTests.filter(
     (test) =>
       !isNullish(test.success_rate) &&
       test.test_type &&
       test!.tasks!.length &&
-      test!.tasks!.some(taskId => topTaskIds.includes(taskId.toString())),
+      test!.tasks!.some((taskId) => topTaskIds.includes(taskId.toString())),
   );
 
   const avgTestTopSuccessRates = piped(
@@ -845,7 +848,7 @@ export const getImprovedKpiTopSuccessRates = (
     // for tests with multiple tasks, unwind the tasks array
     map(unwind('tasks')),
     flatten,
-    //exclude tasks not in the topTaskIds 
+    //exclude tasks not in the topTaskIds
     filter((test: any) => topTaskIds.includes(test.tasks.toString())),
     (tests: IUxTest[]) =>
       groupByTaskByProjectByTestType(tests) as Dictionary<

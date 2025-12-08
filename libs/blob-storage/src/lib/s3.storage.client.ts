@@ -134,6 +134,10 @@ export class S3Bucket implements IStorageContainer<S3StorageClient> {
     public readonly bucketName: string,
   ) {}
 
+  get containerName() {
+    return this.bucketName;
+  }
+
   createBlobsClient(config: Omit<S3ObjectConfig, 'container'>): S3ObjectModel {
     return new S3ObjectModel({ ...config, container: this });
   }
@@ -250,7 +254,7 @@ export class S3ObjectClient implements IStorageBlob {
   public filename: string;
 
   constructor(objectName: string, config: S3ObjectConfig) {
-    this.path = config.path || '';
+    this.path = config.path.replace(/\/$/, '') || ''; // Remove trailing slash on path if present
     this.container = config.container;
     this.overwrite = !!config.overwrite;
 
@@ -267,8 +271,9 @@ export class S3ObjectClient implements IStorageBlob {
 
   get url() {
     const region = process.env.AWS_REGION || 'ca-central-1';
+    const objectKey = this.objectKey.replace(/^\//, ''); // Remove leading slash if present
     return escapeURL(
-      `https://${this.container.bucketName}.s3.${region}.amazonaws.com/${this.objectKey}`,
+      `https://${this.container.bucketName}.s3.${region}.amazonaws.com/${objectKey}`,
     );
   }
 

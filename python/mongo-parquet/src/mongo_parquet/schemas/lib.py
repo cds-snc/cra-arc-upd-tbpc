@@ -150,6 +150,8 @@ class MongoCollection(abc.ABC):
         "projects": [],
         "ux_tests": [],
         "attachments": [],
+        "calldriversEnquiry": [],
+        "callsByTopic": [],
     }
 
     def __init__(self, db: Database[Any], parquet_dir_path: str | None = None):

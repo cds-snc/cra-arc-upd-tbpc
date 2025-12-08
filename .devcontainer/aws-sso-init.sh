@@ -1,9 +1,10 @@
 #!/bin/bash
 # AWS SSO initialization script for Codespaces
+set -e
 
 determine_role() {
   echo "[aws-sso-init] Checking available roles..."
-  
+
   # Use stored role if valid
   if [[ -f "$CREDENTIALS_FILE" && -n "$stored_role_type" ]]; then
     local role_var="AWS_SSO_${stored_role_type^^}_ROLE"
@@ -21,18 +22,18 @@ determine_role() {
     if [[ -n "${!role_var}" ]]; then
       echo "[aws-sso-init] Testing ${role,,} role: ${!role_var}"
       aws configure set sso_role_name "${!role_var}"
-      
-      if [[ "$role" == "ADMIN" ]] && aws sso login 2>/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
+
+      if [[ "$role" == "ADMIN" ]] && aws sso login --no-browser 2>/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
         echo "[aws-sso-init] Successfully authenticated with admin role"
         role_type="admin"
-        return 2
+        return 0
       elif [[ "$role" == "USER" ]]; then
         role_type="user"
         return 0
       fi
     fi
   done
-  
+
   echo "[aws-sso-init] Error: No valid role found"
   return 1
 }
@@ -42,14 +43,14 @@ CREDENTIALS_FILE="$HOME/.aws/credentials.json"
 # Check existing credentials
 if [[ -f "$CREDENTIALS_FILE" ]]; then
   echo "[aws-sso-init] Checking existing credentials..."
-  
+
   aws_credential_expiration=$(jq -r '.aws_credential_expiration // empty' "$CREDENTIALS_FILE")
   stored_role_type=$(jq -r '.role_type // empty' "$CREDENTIALS_FILE")
-  
+
   if [[ -n "$aws_credential_expiration" ]]; then
     expiration_epoch=$(date -d "$aws_credential_expiration" +%s 2>/dev/null)
     current_epoch=$(date -u +%s)
-    
+
     if [[ -n "$expiration_epoch" && "$expiration_epoch" -gt "$current_epoch" ]]; then
       time_remaining=$(((expiration_epoch - current_epoch) / 60))
       echo "[aws-sso-init] Credentials valid until $aws_credential_expiration ($time_remaining minutes remaining)"
@@ -64,6 +65,7 @@ fi
 
 # Configure AWS CLI
 echo "[aws-sso-init] Configuring AWS CLI for SSO..."
+
 aws configure set sso_start_url "$AWS_SSO_START_URL"
 aws configure set sso_region "ca-central-1"
 aws configure set sso_account_id "$AWS_SSO_ACCOUNT_ID"
@@ -75,16 +77,19 @@ aws configure set cli_pager ""
 determine_role
 role_status=$?
 
-if [[ $role_status -eq 1 ]]; then
+if [[ $role_status -ne 0 ]]; then
   echo "[aws-sso-init] Failed to determine a valid role"
   exit 1
-elif [[ $role_status -eq 2 ]]; then
+elif [[ $role_type -eq "admin" ]]; then
   echo "[aws-sso-init] Already authenticated, skipping login"
   already_logged_in=true
-else
+elif [[ $role_type -eq "user" ]]; then
   echo "[aws-sso-init] Starting SSO login..."
-  aws sso login || { echo "[aws-sso-init] SSO login failed. Retry with: aws sso login --no-browser" && exit 1; }
+  aws sso login --no-browser || { echo "[aws-sso-init] SSO login failed. Retry with: aws sso login --no-browser" && exit 1; }
   already_logged_in=false
+else
+  echo "[aws-sso-init] Failed to determine a valid role"
+  exit 1
 fi
 
 # Verify credentials if we just logged in
@@ -96,6 +101,10 @@ fi
 # Export and save credentials
 echo "[aws-sso-init] Exporting credentials..."
 eval "$(aws configure export-credentials --format env)"
+
+aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+aws configure set aws_session_token "$AWS_SESSION_TOKEN"
 
 jq -n \
   --arg access_key "$AWS_ACCESS_KEY_ID" \

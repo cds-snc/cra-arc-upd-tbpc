@@ -6,7 +6,7 @@ import {
   type TableLikeHasEmptySelection,
 } from 'drizzle-orm/pg-core';
 import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
-import type { IStorageModel, S3Bucket } from '@dua-upd/blob-storage';
+import { type IStorageModel, S3Bucket } from '@dua-upd/blob-storage';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import type { ContainerClient } from '@azure/storage-blob';
@@ -203,11 +203,20 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     console.log(`Remote table update complete`);
   }
 
+  get remotePath() {
+    const container = `${this.blobClient.getContainer().containerName}/`;
+
+    const storagePath = this.storagePath.replace(/\/$/, ''); // Remove trailing slash if present
+
+    const filePath = `${storagePath}/${this.filename}`
+    
+    return `${getStorageUriPrefix()}${container}${filePath}`;
+  }
+
   selectRemote<TSelection extends SelectedFields>(selection?: TSelection) {
-    const fullRemotePath = `${getStorageUriPrefix()}${this.storagePath}/${this.filename}`;
 
     const parquetSql = sql.raw(
-      `read_parquet('${fullRemotePath}') as "${this.name}"`,
+      `read_parquet('${this.remotePath}') as "${this.name}"`,
     ) as unknown as DrizzleTable<Table>;
 
     return selection

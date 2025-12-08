@@ -120,6 +120,10 @@ export class AzureStorageContainer
 {
   constructor(private container: ContainerClient) {}
 
+  get containerName() {
+    return this.container.containerName;
+  }
+
   createBlobsClient(config: Omit<BlobsConfig, 'container'>): BlobModel {
     return new BlobModel({ ...config, container: this });
   }

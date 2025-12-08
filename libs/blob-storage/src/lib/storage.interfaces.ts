@@ -75,6 +75,11 @@ export interface IStorageClient<ContainerClientT> {
  */
 export interface IStorageContainer<ContainerClientT> {
   /**
+   * The name of the container/bucket
+   */
+  readonly containerName: string;
+
+  /**
    * Create a blob/object model client for this container
    */
   createBlobsClient(config: IStorageConfig): IStorageModel<ContainerClientT>;

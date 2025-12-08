@@ -1,6 +1,12 @@
 import type { ContainerClient } from '@azure/storage-blob';
 import { Injectable } from '@nestjs/common';
 import { normalize } from 'node:path/posix';
+import {
+  fromSSO,
+  createCredentialChain,
+  fromEnv,
+  fromContainerMetadata,
+} from '@aws-sdk/credential-providers';
 import { CompressionAlgorithm } from '@dua-upd/node-utils';
 import { S3StorageClient, type S3Bucket } from './s3.storage.client';
 import { AzureStorageClient } from './azure.storage.client';
@@ -127,7 +133,11 @@ export class BlobStorageService {
                 accessKeyId: options?.s3AccessKeyId,
                 secretAccessKey: options?.s3SecretAccessKey,
               }
-            : undefined,
+            : createCredentialChain(
+                fromContainerMetadata(),
+                fromEnv(),
+                fromSSO(),
+              ),
         );
       } catch (error) {
         console.error('Failed to initialize S3 storage client:', error);
