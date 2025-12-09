@@ -176,7 +176,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           field: 'latestSuccessRate',
           header: 'Latest success rate',
           pipe: 'percent',
-          tooltip: 'tooltip-latest-success-rate',
+          tooltip: 'tooltip-latest-success-rate-projectsection',
         },
       ];
     
