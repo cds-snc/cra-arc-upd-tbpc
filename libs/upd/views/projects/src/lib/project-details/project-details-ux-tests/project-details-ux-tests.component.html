@@ -6,7 +6,7 @@
         [comparison]="avgSuccessPercentChange$ | async"
         [comparisonValue]="avgSuccessValueChange$ | async"
         [title]="'Average task success from last UX test'"
-        [emptyMessage]="'task-not-tested'"
+        [emptyMessage]="'project-tasks-not-tested'"
         [displayKpis]="true"
         [displayComparison]="true"
         pipe="percent"
@@ -21,7 +21,7 @@
     <div class="col-lg-6 col-sm-12">
       <upd-data-card
         [current]="totalParticipants$ | async"
-        [emptyMessage]="'task-not-tested'"
+        [emptyMessage]="'project-tasks-not-tested'"
         [title]="'Total participants from all tests'"
       ></upd-data-card>
     </div>
@@ -46,7 +46,7 @@
         }"
         [table]="(taskSuccessByUxTest$ | async) || []"
         [tableCols]="taskSuccessRateCols"
-        [emptyMessage]="'task-not-tested'"
+        [emptyMessage]="'project-tasks-not-tested'"
       ></upd-apex-bar>
     </div>
   </div>
@@ -99,7 +99,7 @@
         [pagination]="false"
         [filter]="false"
         [title]="'Documents'"
-        [emptyStateMessage]="'task-not-tested'"
+        [emptyStateMessage]="'project-tasks-not-tested'"
       ></upd-data-table-card>
     </div>
   </div>
