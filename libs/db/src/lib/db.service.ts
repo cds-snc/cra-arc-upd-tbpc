@@ -173,18 +173,19 @@ export class DbService implements OnApplicationBootstrap {
 
   async ensureIndexes(verbose = false) {
     for (const collection in this.collections) {
+      if (collection === 'pageMetricsTS') {
+        // skip time series collection
+        continue;
+      }
+
       const model =
         this.collections[collection as keyof typeof this.collections];
 
       if (verbose) {
-        console.log(`Ensuring indexes for collection: ${collection}`);
-
         model.on('index', (error: Error) => {
           if (error) {
             console.error(`Index creation error for ${collection}:`);
             console.error(error);
-          } else {
-            console.log(`Index creation successful for ${collection}`);
           }
         });
       }
@@ -196,14 +197,10 @@ export class DbService implements OnApplicationBootstrap {
       const model = this.views[view as keyof typeof this.views].model;
 
       if (verbose) {
-        console.log(`Ensuring indexes for view: ${view}`);
-
         model.on('index', (error: Error) => {
           if (error) {
             console.error(`Index creation error for ${view}:`);
             console.error(error);
-          } else {
-            console.log(`Index creation successful for ${view}`);
           }
         });
       }

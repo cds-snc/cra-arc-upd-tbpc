@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CustomReportsCache } from './custom-reports.cache';
 import { CustomReportsController } from './custom-reports.controller';
-import { DbModule, DbService } from '@dua-upd/db';
+import { DbModule } from '@dua-upd/db';
 import { hours } from '@dua-upd/utils-common';
 import {
   ChildQueueEvents,
@@ -37,7 +37,6 @@ export class CustomReportsModule {
       providers: [
         CustomReportsService,
         CustomReportsCache,
-        DbService,
         PrepareReportDataProcessor,
         FetchAndProcessDataProcessor,
         ReportsQueueEvents,

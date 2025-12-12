@@ -45,7 +45,7 @@ import { omit } from 'rambdax';
 @Injectable()
 export class PagesService {
   constructor(
-    private db: DbService,
+    @Inject(DbService) private db: DbService,
     @InjectModel(PageMetrics.name, 'defaultConnection')
     private pageMetricsModel: PageMetricsModel,
     @InjectModel(Feedback.name, 'defaultConnection')

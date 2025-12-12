@@ -3,7 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import dayjs from 'dayjs';
 import { BlobStorageModule } from '@dua-upd/blob-storage';
 import { LoggerModule } from '@dua-upd/logger';
-import { DbModule, DbService } from '@dua-upd/db';
+import { DbModule } from '@dua-upd/db';
 import {
   AirtableClient,
   ExternalDataModule,
@@ -54,7 +54,6 @@ export class DbUpdateModule {
         AirtableService,
         CalldriversService,
         ConsoleLogger,
-        DbService,
         DbUpdateService,
         InternalSearchTermsService,
         ActivityMapService,
@@ -83,7 +82,6 @@ export class DbUpdateModule {
         AirtableService,
         CalldriversService,
         DbModule,
-        DbService,
         DbUpdateService,
         ExternalDataModule,
         FeedbackService,

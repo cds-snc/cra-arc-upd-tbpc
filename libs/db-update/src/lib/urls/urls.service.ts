@@ -1,9 +1,8 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import * as cheerio from 'cheerio/slim';
-import dayjs from 'dayjs';
 import { minify } from 'html-minifier-terser';
 import { type FilterQuery, Types, type AnyBulkWriteOperation } from 'mongoose';
-import { filter, mapObject, omit, pick, pipe } from 'rambdax';
+import { omit, pick, pipe } from 'rambdax';
 import {
   BlobStorageService,
   type IStorageModel,
@@ -14,8 +13,9 @@ import { BlobLogger } from '@dua-upd/logger';
 import { md5Hash } from '@dua-upd/node-utils';
 import type { IPage, IUrl, UrlHash } from '@dua-upd/types-common';
 import {
+  AbortController,
   arrayToDictionary,
-  collapseStrings,
+  hours,
   HttpClient,
   HttpClientResponse,
   prettyJson,
@@ -40,8 +40,6 @@ export type UpdateUrlsOptions = {
 
 @Injectable()
 export class UrlsService {
-  private readonly DATA_BLOB_NAME = 'urls-collection-data.json';
-  private readonly READABILITY_BLOB_NAME = 'readability-collection-data.json';
   private readonly urlsBlob: IStorageModel<S3Bucket | ContainerClient>;
 
   private rateLimitStats = true;
@@ -49,7 +47,7 @@ export class UrlsService {
     logger: this.logger,
     rateLimitStats: this.rateLimitStats,
     rateLimitDelay: 101,
-    batchSize: 10,
+    batchSize: 99,
   });
 
   constructor(
@@ -62,20 +60,6 @@ export class UrlsService {
   ) {
     assert(this.blobService.blobModels.urls, 'Urls blob model not found');
     this.urlsBlob = this.blobService.blobModels.urls!;
-  }
-
-  private async getBlobClient() {
-    return this.urlsBlob.blob(this.DATA_BLOB_NAME);
-  }
-
-  private async getArchiveBlobClient() {
-    const dateString = new Date().toISOString().slice(0, 10);
-
-    return this.urlsBlob.blob(`archive/${dateString}/${this.DATA_BLOB_NAME}`);
-  }
-
-  private async getReadabilityBlobClient() {
-    return this.urlsBlob.blob(this.READABILITY_BLOB_NAME);
   }
 
   private async preparePagesCollection() {
@@ -104,108 +88,6 @@ export class UrlsService {
     await this.db.collections.pages.bulkWrite(updateOps);
   }
 
-  async updateCollectionFromBlobStorage() {
-    this.logger.setContext(UrlsService.name);
-
-    try {
-      const blobClient = await this.getBlobClient();
-
-      if (!(await blobClient.exists())) {
-        this.logger.warn(
-          `Tried to sync local Urls collection, but data blob does not exist.`,
-        );
-        return;
-      }
-
-      const blobProperties = await blobClient.getProperties();
-
-      const blobDate = blobProperties.metadata?.date
-        ? new Date(blobProperties.metadata.date)
-        : blobProperties.lastModified;
-
-      const collectionDate = (
-        await this.db.collections.urls
-          .findOne({}, { last_checked: 1 }, { sort: { last_checked: -1 } })
-          .lean()
-          .exec()
-      )?.last_checked;
-
-      if (
-        collectionDate &&
-        dayjs(collectionDate).add(1, 'day').isAfter(blobDate)
-      ) {
-        this.logger.log(`Collection data is up to date.`);
-        return;
-      }
-
-      this.logger.log(`Downloading collection data from blob storage...`);
-
-      const blobData = await blobClient.downloadToString();
-
-      if (!blobData) {
-        this.logger.warn(`No data found in blob storage.`);
-        return;
-      }
-
-      this.logger.log(`Inserting data into collection...`);
-
-      const jsonReviver = (key, value) => {
-        if (key === 'last_checked' || key === 'last_updated') {
-          return new Date(value);
-        }
-
-        if (key === '_id' || key === 'page') {
-          return new Types.ObjectId(value);
-        }
-
-        if (key === 'hashes') {
-          return value.map((hash) => ({
-            ...hash,
-            date: new Date(hash.date),
-          }));
-        }
-
-        return value;
-      };
-
-      const bulkWriteOps: AnyBulkWriteOperation<Url>[] = JSON.parse(
-        blobData,
-        jsonReviver,
-      ).map((url: IUrl) => ({
-        updateOne: {
-          filter: { url: url.url },
-          update: {
-            $setOnInsert: {
-              _id: url._id,
-            },
-            $set: omit(['_id'], url),
-          },
-          upsert: true,
-        },
-      }));
-
-      const bulkWriteResults = await this.db.collections.urls.bulkWrite(
-        bulkWriteOps,
-        { ordered: true },
-      );
-
-      this.logger.accent(
-        `${
-          bulkWriteResults.modifiedCount + bulkWriteResults.upsertedCount
-        } urls updated.`,
-      );
-
-      this.logger.log(`Urls collection successfully updated.`);
-    } catch (err) {
-      this.logger.error('Error updating urls collection from blob storage:');
-      this.logger.error(err.stack);
-    }
-
-    await this.ensurePageRefs();
-
-    this.logger.resetContext();
-  }
-
   async updateUrls(options?: UpdateUrlsOptions) {
     if (
       options?.urls?.filter &&
@@ -219,8 +101,7 @@ export class UrlsService {
     await this.preparePagesCollection();
 
     if (!this.production) {
-      await this.updateCollectionFromBlobStorage();
-      // await this.readability.updateCollectionFromBlobStorage();
+      this.logger.warn('Running in non-production environment; skipping URLs update.');
 
       return;
     }
@@ -324,6 +205,13 @@ export class UrlsService {
   }
 
   private async checkAndUpdateUrlData(urls: Url[]) {
+    const abortController = new AbortController();
+
+    // Updating will stop after 3 hours
+    wait(hours(3)).then(() => {
+      abortController.abort();
+    })
+
     const urlsDataDict = arrayToDictionary(urls, 'url');
 
     const pageUrls = await this.db.collections.pages
@@ -681,8 +569,12 @@ export class UrlsService {
             }
           }
         },
-        true,
+        { logProgress: true, abortController },
       );
+
+      if (abortController.signal.aborted) {
+        this.logger.warn('URL checking stopped due to time limit being reached.');
+      }
     } catch (err) {
       this.logger.error('An error occurred during http.getAll():');
       this.logger.error(err.stack);
@@ -696,24 +588,6 @@ export class UrlsService {
     } catch (err) {
       this.logger.error(
         'An error occurred while syncing urls data with pages:',
-      );
-      this.logger.error(err);
-    }
-
-    try {
-      await this.saveCollectionToBlobStorage();
-    } catch (err) {
-      this.logger.error(
-        'An error occurred during saveCollectionToBlobStorage():',
-      );
-      this.logger.error(err);
-    }
-
-    try {
-      await this.readability.saveCollectionToBlobStorage();
-    } catch (err) {
-      this.logger.error(
-        'An error occurred during readability.saveCollectionToBlobStorage():',
       );
       this.logger.error(err);
     }
@@ -785,62 +659,37 @@ export class UrlsService {
 
     const noTitleUrls = urlsNoTitle.map(({ url }) => url);
 
-    const urlsTitlesMap = await this.urlsBlob
-      .blob('all-titles.json')
-      .downloadToString()
-      .then(
-        pipe(
-          JSON.parse,
-          filter((titles, url) => noTitleUrls.includes(url)),
-          mapObject(collapseStrings),
-        ),
-      );
+    const pagesWithTitles = await this.db.collections.pages
+      .find(
+        { url: { $in: noTitleUrls }, title: { $nin: [null, ''] } },
+        { url: 1, title: 1 },
+      )
+      .lean()
+      .exec();
 
-    const titlesFromPagesMap = await this.urlsBlob
-      .blob('titles-from-pages.json')
-      .downloadToString()
-      .then(JSON.parse);
+    const titlesFromPagesMap = arrayToDictionary(pagesWithTitles, 'url');
 
     this.logger.log(`${urlsNoTitle.length} urls with no title`);
 
-    const urlsNoTitleMatch = urlsNoTitle.filter(
-      (url) => !urlsTitlesMap[url.url],
-    );
-
-    this.logger.log(
-      `${urlsNoTitleMatch.length} urls with no title match - will use titles from Pages`,
-    );
-
     // get titles from pages if no match
-    const noMatchWithPageTitles = urlsNoTitleMatch
+    const noMatchWithPageTitles = urlsNoTitle
       .filter((url) => titlesFromPagesMap[url.url])
       .map((url) => ({
         ...url,
-        title: squishTrim(titlesFromPagesMap[url.url] as string),
+        title: squishTrim(titlesFromPagesMap[url.url].title),
       }));
 
     this.logger.log(
       `${noMatchWithPageTitles.length} urls with no title match but with title from Pages`,
     );
 
-    const urlsWithTitleMatch = urlsNoTitle
-      .filter((url) => urlsTitlesMap[url.url]?.length > 0)
-      .map((url) => ({
-        ...url,
-        title: urlsTitlesMap[url.url][0],
+    const bulkWriteOps: AnyBulkWriteOperation<Url>[] =
+      noMatchWithPageTitles.map(({ _id, title }) => ({
+        updateOne: {
+          filter: { _id },
+          update: { $set: { title } },
+        },
       }));
-
-    this.logger.log(`${urlsWithTitleMatch.length} urls with title matches:`);
-
-    const bulkWriteOps: AnyBulkWriteOperation<Url>[] = [
-      ...urlsWithTitleMatch,
-      ...noMatchWithPageTitles,
-    ].map(({ _id, title }) => ({
-      updateOne: {
-        filter: { _id },
-        update: { $set: { title } },
-      },
-    }));
 
     const bulkWriteResults =
       await this.db.collections.urls.bulkWrite(bulkWriteOps);
@@ -987,53 +836,6 @@ export class UrlsService {
     this.logger.log(`${urlDocs.length} new urls added.`);
 
     await this.ensurePageRefs();
-  }
-
-  async saveCollectionToBlobStorage(force = false) {
-    this.logger.info('Saving urls data to blob storage...');
-
-    try {
-      const blobClient = await this.getBlobClient();
-
-      if (await blobClient.exists()) {
-        const date = new Date((await blobClient.getProperties()).metadata?.date || '1970-01-01');
-
-        const newData = await this.db.collections.urls
-          .findOne({ last_modified: { $gt: date } })
-          .lean()
-          .exec();
-
-        if (!newData && !force) {
-          this.logger.log('No new data added. Skipping upload to storage.');
-
-          return;
-        }
-
-        this.logger.accent(
-          `Overwriting url data from date: ${date.toISOString()}`,
-        );
-      }
-
-      const data = await this.db.collections.urls.find().lean().exec();
-
-      const newDate = new Date();
-
-      await blobClient.uploadFromString(JSON.stringify(data), {
-        metadata: { date: newDate.toISOString() },
-        overwrite: true,
-      });
-
-      const archiveClient = await this.getArchiveBlobClient();
-
-      if (!(await archiveClient.exists())) {
-        await archiveClient.uploadFromString(JSON.stringify(data));
-      }
-    } catch (err) {
-      this.logger.error(
-        `An error occurred uploading collection to blob storage:`,
-      );
-      this.logger.error(err.stack);
-    }
   }
 
   async ensurePageRefs() {

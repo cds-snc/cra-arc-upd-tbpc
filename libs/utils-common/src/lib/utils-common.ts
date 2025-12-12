@@ -349,6 +349,19 @@ export function getOptimalTextcolour(backgroundColour: string): string {
   return luminance > 0.5 ? '#333' : '#FFF';
 }
 
+export class AbortController {
+  private controller: globalThis.AbortController;
+  public signal: globalThis.AbortSignal;
+  constructor() {
+    this.controller = new globalThis.AbortController();
+    this.signal = this.controller.signal;
+  }
+
+  abort() {
+    this.controller.abort();
+  }
+}
+
 /**
  * Performs async processing in batches of a given size, with
  * an optional delay between calls to handle rate-limiting.
@@ -362,6 +375,7 @@ export async function batchAwait<T, U>(
   fn: (param: T) => Promise<U>,
   batchSize: number,
   delay: number | { delay: number } = 0,
+  abortController?: AbortController,
 ): Promise<U[]> {
   const promises: Promise<U>[] = [];
 
@@ -376,6 +390,10 @@ export async function batchAwait<T, U>(
         currentDelay ? [...promises, wait(currentDelay)] : promises,
       );
       continue;
+    }
+
+    if (abortController?.signal.aborted) {
+      break;
     }
 
     currentDelay && (await wait(currentDelay));

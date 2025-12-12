@@ -4,7 +4,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { FlowService } from './flow.service';
 import { hours } from '@dua-upd/utils-common';
 import { FlowCache } from './flow.cache';
-import { DbModule, DbService } from '@dua-upd/db';
+import { DbModule } from '@dua-upd/db';
 
 @Module({})
 export class FlowModule {
@@ -13,7 +13,7 @@ export class FlowModule {
       module: FlowModule,
       imports: [CacheModule.register({ ttl: hours(3) }), DbModule],
       controllers: [FlowController],
-      providers: [FlowService, FlowCache, DbService],
+      providers: [FlowService, FlowCache],
       exports: [FlowService],
     };
   }

@@ -96,7 +96,8 @@ export class DuckDbService implements BeforeApplicationShutdown {
         CREATE OR REPLACE SECRET s3 (
           TYPE s3,
           PROVIDER credential_chain,
-          REGION 'ca-central-1'
+          REGION 'ca-central-1',
+          REFRESH auto
         ); 
       `);
       } catch (error) {

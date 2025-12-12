@@ -1,0 +1,6033 @@
+{
+  "graph": {
+    "nodes": {
+      "custom-reports": {
+        "name": "custom-reports",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/custom-reports",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/custom-reports",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/custom-reports/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "custom-reports",
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/upd/views/custom-reports/src",
+          "prefix": "dua-upd",
+          "projectType": "library",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "custom-reports-api": {
+        "name": "custom-reports-api",
+        "type": "lib",
+        "data": {
+          "root": "libs/api/custom-reports",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/api/custom-reports",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/api/custom-reports",
+                "main": "libs/api/custom-reports/src/index.ts",
+                "tsConfig": "libs/api/custom-reports/tsconfig.lib.json",
+                "assets": [
+                  "libs/api/custom-reports/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/api/custom-reports/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "custom-reports-api",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "custom-reports-api",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/api/custom-reports/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-about-us": {
+        "name": "upd-views-about-us",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/about-us",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/about-us",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/about-us"
+              ],
+              "options": {
+                "project": "libs/upd/views/about-us/ng-package.json",
+                "tsConfig": "libs/upd/views/about-us/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/about-us/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/about-us/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/about-us"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/about-us/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/upd/views/about-us/tsconfig.lib.json",
+                "outputPath": "dist/compodoc/upd-views-about-us"
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "upd-views-about-us",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/about-us",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/about-us/src",
+          "prefix": "dua-upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-overview": {
+        "name": "upd-views-overview",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/overview",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/overview",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/overview"
+              ],
+              "options": {
+                "project": "libs/upd/views/overview/ng-package.json",
+                "tsConfig": "libs/upd/views/overview/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/overview/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/overview/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/overview"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/overview/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-views-overview",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/overview",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/overview/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-projects": {
+        "name": "upd-views-projects",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/projects",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/projects",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/projects"
+              ],
+              "options": {
+                "project": "libs/upd/views/projects/ng-package.json",
+                "tsConfig": "libs/upd/views/projects/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/projects/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/projects/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/projects"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/projects/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-views-projects",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/projects",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/projects/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-reports": {
+        "name": "upd-views-reports",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/reports",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/reports",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/reports"
+              ],
+              "options": {
+                "project": "libs/upd/views/reports/ng-package.json",
+                "tsConfig": "libs/upd/views/reports/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/reports/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/reports/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/reports"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/reports/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-views-reports",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/reports",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/reports/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "workspace-plugin": {
+        "name": "workspace-plugin",
+        "type": "lib",
+        "data": {
+          "root": "tools/workspace-plugin",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "tools/workspace-plugin",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/tools/workspace-plugin",
+                "main": "tools/workspace-plugin/src/index.ts",
+                "tsConfig": "tools/workspace-plugin/tsconfig.lib.json",
+                "assets": [
+                  {
+                    "input": "./tools/workspace-plugin/src",
+                    "glob": "**/!(*.ts)",
+                    "output": "./src"
+                  },
+                  {
+                    "input": "./tools/workspace-plugin/src",
+                    "glob": "**/*.d.ts",
+                    "output": "./src"
+                  },
+                  {
+                    "input": "./tools/workspace-plugin",
+                    "glob": "generators.json",
+                    "output": "."
+                  },
+                  {
+                    "input": "./tools/workspace-plugin",
+                    "glob": "executors.json",
+                    "output": "."
+                  }
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "tools/workspace-plugin/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "workspace-plugin",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/workspace-plugin",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "tools/workspace-plugin/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-pages": {
+        "name": "upd-views-pages",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/pages",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/pages",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/pages"
+              ],
+              "options": {
+                "project": "libs/upd/views/pages/ng-package.json",
+                "tsConfig": "libs/upd/views/pages/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/pages/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/pages/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/pages"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/pages/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-views-pages",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/pages",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/pages/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-views-tasks": {
+        "name": "upd-views-tasks",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/views/tasks",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/views/tasks",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/views/tasks"
+              ],
+              "options": {
+                "project": "libs/upd/views/tasks/ng-package.json",
+                "tsConfig": "libs/upd/views/tasks/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/views/tasks/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/views/tasks/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/views/tasks"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/views/tasks/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-views-tasks",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/views/tasks",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/views/tasks/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "data-integrity": {
+        "name": "data-integrity",
+        "type": "lib",
+        "data": {
+          "root": "libs/data-integrity",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/data-integrity",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/data-integrity",
+                "tsConfig": "libs/data-integrity/tsconfig.lib.json",
+                "packageJson": "libs/data-integrity/package.json",
+                "main": "libs/data-integrity/src/index.ts",
+                "extractLicenses": false,
+                "assets": [],
+                "target": "node",
+                "compiler": "swc",
+                "generateIndexHtml": false,
+                "webpackConfig": "libs/data-integrity/webpack.config.js"
+              },
+              "configurations": {
+                "production": {
+                  "fileReplacements": [
+                    {
+                      "replace": "libs/data-integrity/src/environments/environment.ts",
+                      "with": "libs/data-integrity/src/environments/environment.prod.ts"
+                    }
+                  ]
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/data-integrity"
+              ],
+              "options": {
+                "jestConfig": "libs/data-integrity/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/data-integrity/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/data-integrity",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "data-integrity",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/data-integrity",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/data-integrity/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-components": {
+        "name": "upd-components",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/components",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/components",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/components"
+              ],
+              "options": {
+                "project": "libs/upd/components/ng-package.json",
+                "tsConfig": "libs/upd/components/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/components/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/components/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/components"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/components/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-components",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd-components",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/components/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "update-db-task": {
+        "name": "update-db-task",
+        "type": "app",
+        "data": {
+          "root": "apps/update-db-task",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/update-db-task",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "target": "node",
+                "compiler": "swc",
+                "outputPath": "dist/apps/update-db-task",
+                "main": "apps/update-db-task/src/main.ts",
+                "tsConfig": "apps/update-db-task/tsconfig.app.json",
+                "generateIndexHtml": false,
+                "runtimeChunk": false,
+                "webpackConfig": "apps/update-db-task/webpack.config.js",
+                "generatePackageJson": true,
+                "optimization": false,
+                "externalDependencies": "all",
+                "inspect": false,
+                "sourceMap": true,
+                "watch": false
+              },
+              "configurations": {
+                "development": {},
+                "production": {
+                  "fileReplacements": [
+                    {
+                      "replace": "apps/update-db-task/src/environments/environment.ts",
+                      "with": "apps/update-db-task/src/environments/environment.prod.ts"
+                    }
+                  ]
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "defaultConfiguration": "development",
+              "dependsOn": [
+                "build"
+              ],
+              "options": {
+                "buildTarget": "update-db-task:build",
+                "runBuildTargetDependencies": false,
+                "watch": false
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "update-db-task:build:development"
+                },
+                "production": {
+                  "buildTarget": "update-db-task:build:production"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "update-db-task",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/update-db-task/src",
+          "projectType": "application",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "external-data": {
+        "name": "external-data",
+        "type": "lib",
+        "data": {
+          "root": "libs/external-data",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/external-data",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/external-data",
+                "tsConfig": "libs/external-data/tsconfig.lib.json",
+                "packageJson": "libs/external-data/package.json",
+                "main": "libs/external-data/src/index.ts",
+                "extractLicenses": false
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/external-data"
+              ],
+              "options": {
+                "jestConfig": "libs/external-data/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/external-data/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/external-data",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "external-data",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/external-data",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/external-data/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "api-feedback": {
+        "name": "api-feedback",
+        "type": "lib",
+        "data": {
+          "root": "libs/api/feedback",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/api/feedback",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/api/feedback",
+                "tsConfig": "libs/api/feedback/tsconfig.lib.json",
+                "packageJson": "libs/api/feedback/package.json",
+                "main": "libs/api/feedback/src/index.ts",
+                "assets": [
+                  "libs/api/feedback/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/api/feedback/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "api-feedback",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "api-feedback",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/api/feedback/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "blob-storage": {
+        "name": "blob-storage",
+        "type": "lib",
+        "data": {
+          "root": "libs/blob-storage",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/blob-storage",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/blob-storage",
+                "main": "libs/blob-storage/src/index.ts",
+                "tsConfig": "libs/blob-storage/tsconfig.lib.json",
+                "assets": [
+                  "libs/blob-storage/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/blob-storage/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "blob-storage",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/blob-storage",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/blob-storage/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "types-common": {
+        "name": "types-common",
+        "type": "lib",
+        "data": {
+          "root": "libs/types-common",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/types-common",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/types-common",
+                "main": "libs/types-common/src/index.ts",
+                "tsConfig": "libs/types-common/tsconfig.lib.json",
+                "assets": [
+                  "libs/types-common/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/types-common"
+              ],
+              "options": {
+                "jestConfig": "libs/types-common/jest.config.js",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "types-common",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/types-common",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/types-common/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-services": {
+        "name": "upd-services",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/services",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/services",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/services"
+              ],
+              "options": {
+                "project": "libs/upd/services/ng-package.json",
+                "tsConfig": "libs/upd/services/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/services/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/services/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/services"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/services/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-services",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/services",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/services/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "utils-common": {
+        "name": "utils-common",
+        "type": "lib",
+        "data": {
+          "root": "libs/utils-common",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/utils-common",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/utils-common",
+                "main": "libs/utils-common/src/index.ts",
+                "tsConfig": "libs/utils-common/tsconfig.lib.json",
+                "assets": [
+                  "libs/utils-common/*.md"
+                ],
+                "updateBuildableProjectDepsInPackageJson": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/utils-common"
+              ],
+              "options": {
+                "jestConfig": "libs/utils-common/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/utils-common/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/utils-common",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "utils-common",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/utils-common",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/utils-common/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "api-hashes": {
+        "name": "api-hashes",
+        "type": "lib",
+        "data": {
+          "root": "libs/api/hashes",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/api/hashes",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/api/hashes",
+                "tsConfig": "libs/api/hashes/tsconfig.lib.json",
+                "packageJson": "libs/api/hashes/package.json",
+                "main": "libs/api/hashes/src/index.ts",
+                "assets": [
+                  "libs/api/hashes/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/api/hashes/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "api-hashes",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/api/hashes/src",
+          "projectType": "library",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "db-updater": {
+        "name": "db-updater",
+        "type": "app",
+        "data": {
+          "root": "apps/db-updater",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/db-updater",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/db-updater",
+                "main": "apps/db-updater/src/main.ts",
+                "tsConfig": "apps/db-updater/tsconfig.app.json",
+                "assets": [
+                  "apps/db-updater/src/assets"
+                ],
+                "deleteOutputPath": false,
+                "target": "node",
+                "generatePackageJson": true,
+                "compiler": "tsc",
+                "generateIndexHtml": false,
+                "runtimeChunk": false,
+                "optimization": false,
+                "externalDependencies": "none",
+                "inspect": false,
+                "webpackConfig": "apps/db-updater/webpack.config.js"
+              },
+              "configurations": {
+                "production": {
+                  "fileReplacements": [
+                    {
+                      "replace": "apps/db-updater/src/environments/environment.ts",
+                      "with": "apps/db-updater/src/environments/environment.prod.ts"
+                    },
+                    {
+                      "replace": "libs/data-integrity/src/environments/environment.ts",
+                      "with": "libs/data-integrity/src/environments/environment.prod.ts"
+                    }
+                  ]
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "db-updater:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/db-updater"
+              ],
+              "options": {
+                "jestConfig": "apps/db-updater/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "apps/db-updater/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/db-updater",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "db-updater",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/db-updater/src",
+          "projectType": "application",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "duckdb-lib": {
+        "name": "duckdb-lib",
+        "type": "lib",
+        "data": {
+          "root": "libs/duckdb-lib",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/duckdb-lib",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/duckdb-lib",
+                "tsConfig": "libs/duckdb-lib/tsconfig.lib.json",
+                "packageJson": "libs/duckdb-lib/package.json",
+                "main": "libs/duckdb-lib/src/index.ts",
+                "assets": [
+                  "libs/duckdb-lib/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/duckdb-lib/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "duckdb-lib",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/duckdb",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/duckdb-lib/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "log-viewer": {
+        "name": "log-viewer",
+        "type": "app",
+        "data": {
+          "root": "apps/log-viewer",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/log-viewer",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/vite:build",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "outputPath": "dist/apps/log-viewer"
+              },
+              "configurations": {
+                "development": {
+                  "mode": "development"
+                },
+                "production": {
+                  "mode": "production"
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/vite:dev-server",
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "log-viewer:build"
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "log-viewer:build:development",
+                  "hmr": true
+                },
+                "production": {
+                  "buildTarget": "log-viewer:build:production",
+                  "hmr": false
+                }
+              },
+              "parallelism": true
+            },
+            "preview": {
+              "executor": "@nx/vite:preview-server",
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "log-viewer:build"
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "log-viewer:build:development"
+                },
+                "production": {
+                  "buildTarget": "log-viewer:build:production"
+                }
+              },
+              "dependsOn": [
+                "build"
+              ],
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "log-viewer",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/log-viewer/src",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "node-utils": {
+        "name": "node-utils",
+        "type": "lib",
+        "data": {
+          "root": "libs/node-utils",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/node-utils",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/node-utils",
+                "tsConfig": "libs/node-utils/tsconfig.lib.json",
+                "packageJson": "libs/node-utils/package.json",
+                "main": "libs/node-utils/src/index.ts",
+                "assets": [
+                  "libs/node-utils/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/node-utils/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "node-utils",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/node-utils",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/node-utils/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "db-update": {
+        "name": "db-update",
+        "type": "lib",
+        "data": {
+          "root": "libs/db-update",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/db-update",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/db-update",
+                "tsConfig": "libs/db-update/tsconfig.lib.json",
+                "packageJson": "libs/db-update/package.json",
+                "main": "libs/db-update/src/index.ts",
+                "extractLicenses": false
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/db-update"
+              ],
+              "options": {
+                "jestConfig": "libs/db-update/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/db-update/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/db-update",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "db-update",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/db-update",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/db-update/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "query": {
+        "name": "query",
+        "type": "lib",
+        "data": {
+          "root": "libs/api/query",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/api/query",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/api/query",
+                "tsConfig": "libs/api/query/tsconfig.lib.json",
+                "packageJson": "libs/api/query/package.json",
+                "main": "libs/api/query/src/index.ts",
+                "assets": [
+                  "libs/api/query/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/api/query/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "query",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/api/query",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/api/query/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-pipes": {
+        "name": "upd-pipes",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/pipes",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/pipes",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/pipes"
+              ],
+              "options": {
+                "project": "libs/upd/pipes/ng-package.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/pipes/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/pipes/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/pipes"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/pipes/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-pipes",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/pipes",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/pipes/src",
+          "prefix": "dua-upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-state": {
+        "name": "upd-state",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/state",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/state",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/upd/state",
+                "main": "libs/upd/state/src/index.ts",
+                "tsConfig": "libs/upd/state/tsconfig.lib.json",
+                "assets": [
+                  "libs/upd/state/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/state"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/state/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-state",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/state",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/upd/state/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-utils": {
+        "name": "upd-utils",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/utils",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/utils",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/upd/utils",
+                "main": "libs/upd/utils/src/index.ts",
+                "tsConfig": "libs/upd/utils/tsconfig.lib.json",
+                "assets": [
+                  "libs/upd/utils/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/upd/utils"
+              ],
+              "options": {
+                "jestConfig": "libs/upd/utils/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-utils",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/utils",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/upd/utils/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "feedback": {
+        "name": "feedback",
+        "type": "lib",
+        "data": {
+          "root": "libs/feedback",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/feedback",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/feedback",
+                "main": "libs/feedback/src/index.ts",
+                "tsConfig": "libs/feedback/tsconfig.lib.json",
+                "assets": [
+                  "libs/feedback/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/feedback/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "feedback",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/feedback",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/feedback/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "flow-api": {
+        "name": "flow-api",
+        "type": "lib",
+        "data": {
+          "root": "libs/api/flow",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/api/flow",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/api/flow",
+                "main": "libs/api/flow/src/index.ts",
+                "tsConfig": "libs/api/flow/tsconfig.lib.json",
+                "assets": [
+                  "libs/api/flow/*.md"
+                ],
+                "external": [
+                  "@dua-upd/api/custom-reports"
+                ],
+                "clean": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/api/flow/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "flow-api",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "flow-api",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/api/flow/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "upd-i18n": {
+        "name": "upd-i18n",
+        "type": "lib",
+        "data": {
+          "root": "libs/upd/i18n",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/upd/i18n",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:ng-packagr-lite",
+              "outputs": [
+                "{workspaceRoot}/dist/libs/upd/i18n"
+              ],
+              "options": {
+                "project": "libs/upd/i18n/ng-package.json",
+                "tsConfig": "libs/upd/i18n/tsconfig.lib.json"
+              },
+              "configurations": {
+                "production": {
+                  "tsConfig": "libs/upd/i18n/tsconfig.lib.prod.json"
+                },
+                "development": {
+                  "tsConfig": "libs/upd/i18n/tsconfig.lib.json"
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-i18n",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/upd/i18n",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/upd/i18n/src",
+          "prefix": "upd",
+          "implicitDependencies": []
+        }
+      },
+      "upd-e2e": {
+        "name": "upd-e2e",
+        "type": "e2e",
+        "data": {
+          "root": "apps/upd-e2e",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/upd-e2e",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e": {
+              "executor": "@nx/cypress:cypress",
+              "options": {
+                "tsConfig": "apps/upd-e2e/tsconfig.json",
+                "cypressConfig": "apps/upd-e2e/cypress.json",
+                "devServerTarget": "upd:serve:development"
+              },
+              "configurations": {
+                "production": {
+                  "devServerTarget": "upd:serve:production"
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default"
+              ],
+              "cache": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            }
+          },
+          "name": "upd-e2e",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/upd-e2e/src",
+          "projectType": "application",
+          "tags": [],
+          "implicitDependencies": [
+            "upd"
+          ]
+        }
+      },
+      "db-cli": {
+        "name": "db-cli",
+        "type": "app",
+        "data": {
+          "root": "apps/db-cli",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/db-cli",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "defaultConfiguration": "production",
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/db-cli",
+                "main": "apps/db-cli/src/main.ts",
+                "tsConfig": "apps/db-cli/tsconfig.app.json",
+                "assets": [
+                  "apps/db-cli/src/assets"
+                ],
+                "deleteOutputPath": false,
+                "compiler": "tsc",
+                "generateIndexHtml": false,
+                "runtimeChunk": false,
+                "target": "node",
+                "webpackConfig": "apps/db-cli/webpack.config.js"
+              },
+              "configurations": {
+                "production": {
+                  "optimization": false,
+                  "externalDependencies": [
+                    "@adobe/aio-lib-analytics",
+                    "@mongodb-js/zstd",
+                    "@nestjs/microservices",
+                    "@nestjs/websockets/socket-module",
+                    "@nestjs/microservices/microservices-module",
+                    "class-transformer",
+                    "class-validator",
+                    "cache-manager",
+                    "mongoose",
+                    "duckdb"
+                  ],
+                  "extractLicenses": false,
+                  "inspect": false,
+                  "watch": false,
+                  "fileReplacements": [
+                    {
+                      "replace": "apps/db-cli/src/environments/environment.ts",
+                      "with": "apps/db-cli/src/environments/environment.prod.ts"
+                    }
+                  ]
+                },
+                "development": {
+                  "sourcemaps": true
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "db-cli:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/db-cli"
+              ],
+              "options": {
+                "jestConfig": "apps/db-cli/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "apps/db-cli/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/db-cli",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "db-cli",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/db-cli/src",
+          "projectType": "application",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "logger": {
+        "name": "logger",
+        "type": "lib",
+        "data": {
+          "root": "libs/logger",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/logger",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/logger",
+                "tsConfig": "libs/logger/tsconfig.lib.json",
+                "packageJson": "libs/logger/package.json",
+                "main": "libs/logger/src/index.ts",
+                "assets": [
+                  "libs/logger/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/logger/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "logger",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/logger",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/logger/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "api": {
+        "name": "api",
+        "type": "app",
+        "data": {
+          "root": "apps/api",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/api",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/api",
+                "main": "apps/api/src/main.ts",
+                "tsConfig": "apps/api/tsconfig.app.json",
+                "assets": [
+                  "apps/api/src/assets"
+                ],
+                "deleteOutputPath": false,
+                "compiler": "swc",
+                "generateIndexHtml": false,
+                "runtimeChunk": false,
+                "target": "node",
+                "generatePackageJson": true,
+                "optimization": false,
+                "externalDependencies": "all",
+                "inspect": false,
+                "sourceMap": true,
+                "webpackConfig": "apps/api/webpack.config.js"
+              },
+              "configurations": {
+                "production": {
+                  "fileReplacements": [
+                    {
+                      "replace": "apps/api/src/environments/environment.ts",
+                      "with": "apps/api/src/environments/environment.prod.ts"
+                    }
+                  ]
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "api:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "api:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/api"
+              ],
+              "options": {
+                "jestConfig": "apps/api/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "apps/api/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/api",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "api",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/api/src",
+          "projectType": "application",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "upd": {
+        "name": "upd",
+        "type": "app",
+        "data": {
+          "root": "apps/upd",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/upd",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/angular:browser-esbuild",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/upd",
+                "index": "apps/upd/src/index.html",
+                "main": "apps/upd/src/main.ts",
+                "polyfills": "apps/upd/src/polyfills.ts",
+                "tsConfig": "apps/upd/tsconfig.app.json",
+                "inlineStyleLanguage": "scss",
+                "assets": [
+                  "apps/upd/src/favicon.ico",
+                  "apps/upd/src/assets"
+                ],
+                "styles": [
+                  "apps/upd/src/styles.scss"
+                ],
+                "scripts": [],
+                "verbose": false,
+                "serviceWorker": true,
+                "ngswConfigPath": "apps/upd/ngsw-config.json"
+              },
+              "configurations": {
+                "production": {
+                  "budgets": [
+                    {
+                      "type": "initial",
+                      "maximumWarning": "500kb",
+                      "maximumError": "2.5mb"
+                    },
+                    {
+                      "type": "anyComponentStyle",
+                      "maximumWarning": "2kb",
+                      "maximumError": "20kb"
+                    }
+                  ],
+                  "fileReplacements": [
+                    {
+                      "replace": "apps/upd/src/environments/environment.ts",
+                      "with": "apps/upd/src/environments/environment.prod.ts"
+                    }
+                  ],
+                  "outputHashing": "all",
+                  "statsJson": true,
+                  "buildLibsFromSource": true,
+                  "externalDependencies": [
+                    "core-js",
+                    "html2canvas",
+                    "canvg",
+                    "dompurify"
+                  ]
+                },
+                "development": {
+                  "buildOptimizer": false,
+                  "optimization": false,
+                  "extractLicenses": false,
+                  "sourceMap": {
+                    "scripts": true,
+                    "styles": true,
+                    "vendor": true
+                  },
+                  "namedChunks": true,
+                  "vendorChunk": true,
+                  "verbose": false,
+                  "buildLibsFromSource": true,
+                  "serviceWorker": false
+                }
+              },
+              "defaultConfiguration": "production",
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/angular:dev-server",
+              "configurations": {
+                "development": {
+                  "host": "127.0.0.1",
+                  "port": 8080,
+                  "buildTarget": "upd:build:development",
+                  "hmr": true,
+                  "watch": true
+                }
+              },
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "upd:build:development",
+                "proxyConfig": "apps/upd/proxy.conf.mjs"
+              },
+              "parallelism": true
+            },
+            "preview": {
+              "executor": "@nx/vite:preview-server",
+              "options": {
+                "buildTarget": "upd:build:production",
+                "configFile": "apps/upd/vite.config.mts",
+                "watch": true
+              },
+              "dependsOn": [
+                "build"
+              ],
+              "configurations": {},
+              "parallelism": true
+            },
+            "extract-i18n": {
+              "executor": "@angular-devkit/build-angular:extract-i18n",
+              "options": {
+                "browserTarget": "upd:build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/apps/upd"
+              ],
+              "options": {
+                "jestConfig": "apps/upd/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "apps/upd/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/upd",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "upd",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/upd/src",
+          "prefix": "upd",
+          "tags": [],
+          "implicitDependencies": []
+        }
+      },
+      "db": {
+        "name": "db",
+        "type": "lib",
+        "data": {
+          "root": "libs/db",
+          "targets": {
+            "eslint:lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/db",
+                "env": {
+                  "ESLINT_USE_FLAT_CONFIG": "false"
+                },
+                "command": "eslint ."
+              },
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{projectRoot}/.eslintrc.json",
+                "{workspaceRoot}/tools/eslint-rules/**/*",
+                {
+                  "externalDependencies": [
+                    "eslint"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/db",
+                "main": "libs/db/src/index.ts",
+                "tsConfig": "libs/db/tsconfig.lib.json",
+                "assets": [
+                  "libs/db/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/db"
+              ],
+              "options": {
+                "jestConfig": "libs/db/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {
+                "ci": {
+                  "ci": true,
+                  "codeCoverage": true
+                }
+              },
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^default",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "cache": true
+            },
+            "compodoc": {
+              "executor": "@twittwer/compodoc:compodoc",
+              "options": {
+                "tsConfig": "libs/db/tsconfig.compodoc.json",
+                "outputPath": "dist/compodoc/db",
+                "workspaceDocs": true
+              },
+              "configurations": {
+                "json": {
+                  "exportFormat": "json"
+                }
+              },
+              "parallelism": true
+            }
+          },
+          "name": "db",
+          "tags": [
+            "npm:public"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@dua-upd/db",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/db/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "custom-reports": [
+        {
+          "source": "custom-reports",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports",
+          "target": "upd-components",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports",
+          "target": "utils-common",
+          "type": "static"
+        }
+      ],
+      "custom-reports-api": [
+        {
+          "source": "custom-reports-api",
+          "target": "node-utils",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports-api",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports-api",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "custom-reports-api",
+          "target": "db",
+          "type": "static"
+        }
+      ],
+      "upd-views-about-us": [
+        {
+          "source": "upd-views-about-us",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-about-us",
+          "target": "upd-state",
+          "type": "static"
+        }
+      ],
+      "upd-views-overview": [
+        {
+          "source": "upd-views-overview",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "upd-utils",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-overview",
+          "target": "upd-components",
+          "type": "static"
+        }
+      ],
+      "upd-views-projects": [
+        {
+          "source": "upd-views-projects",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-utils",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-components",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-projects",
+          "target": "upd-pipes",
+          "type": "static"
+        }
+      ],
+      "upd-views-reports": [
+        {
+          "source": "upd-views-reports",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-reports",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-reports",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-reports",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-reports",
+          "target": "upd-utils",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-reports",
+          "target": "upd-components",
+          "type": "static"
+        }
+      ],
+      "workspace-plugin": [],
+      "upd-views-pages": [
+        {
+          "source": "upd-views-pages",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-components",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-utils",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-pages",
+          "target": "upd-pipes",
+          "type": "static"
+        }
+      ],
+      "upd-views-tasks": [
+        {
+          "source": "upd-views-tasks",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-services",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-utils",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-components",
+          "type": "static"
+        },
+        {
+          "source": "upd-views-tasks",
+          "target": "upd-pipes",
+          "type": "static"
+        }
+      ],
+      "data-integrity": [
+        {
+          "source": "data-integrity",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "data-integrity",
+          "target": "db-update",
+          "type": "static"
+        },
+        {
+          "source": "data-integrity",
+          "target": "types-common",
+          "type": "static"
+        }
+      ],
+      "upd-components": [
+        {
+          "source": "upd-components",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-components",
+          "target": "upd-state",
+          "type": "static"
+        },
+        {
+          "source": "upd-components",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd-components",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-components",
+          "target": "upd-pipes",
+          "type": "static"
+        },
+        {
+          "source": "upd-components",
+          "target": "upd-utils",
+          "type": "static"
+        }
+      ],
+      "update-db-task": [
+        {
+          "source": "update-db-task",
+          "target": "data-integrity",
+          "type": "static"
+        },
+        {
+          "source": "update-db-task",
+          "target": "db-update",
+          "type": "static"
+        },
+        {
+          "source": "update-db-task",
+          "target": "db",
+          "type": "static"
+        }
+      ],
+      "external-data": [
+        {
+          "source": "external-data",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "external-data",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "external-data",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "external-data",
+          "target": "node-utils",
+          "type": "static"
+        },
+        {
+          "source": "external-data",
+          "target": "logger",
+          "type": "static"
+        },
+        {
+          "source": "external-data",
+          "target": "blob-storage",
+          "type": "static"
+        }
+      ],
+      "api-feedback": [
+        {
+          "source": "api-feedback",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "api-feedback",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "api-feedback",
+          "target": "types-common",
+          "type": "static"
+        }
+      ],
+      "blob-storage": [
+        {
+          "source": "blob-storage",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "blob-storage",
+          "target": "node-utils",
+          "type": "static"
+        }
+      ],
+      "types-common": [],
+      "upd-services": [
+        {
+          "source": "upd-services",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-services",
+          "target": "upd-i18n",
+          "type": "static"
+        }
+      ],
+      "utils-common": [
+        {
+          "source": "utils-common",
+          "target": "types-common",
+          "type": "static"
+        }
+      ],
+      "api-hashes": [
+        {
+          "source": "api-hashes",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "api-hashes",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "api-hashes",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "api-hashes",
+          "target": "blob-storage",
+          "type": "static"
+        },
+        {
+          "source": "api-hashes",
+          "target": "duckdb-lib",
+          "type": "static"
+        }
+      ],
+      "db-updater": [
+        {
+          "source": "db-updater",
+          "target": "data-integrity",
+          "type": "static"
+        },
+        {
+          "source": "db-updater",
+          "target": "db-update",
+          "type": "static"
+        },
+        {
+          "source": "db-updater",
+          "target": "db",
+          "type": "static"
+        }
+      ],
+      "duckdb-lib": [
+        {
+          "source": "duckdb-lib",
+          "target": "blob-storage",
+          "type": "static"
+        },
+        {
+          "source": "duckdb-lib",
+          "target": "node-utils",
+          "type": "static"
+        }
+      ],
+      "log-viewer": [
+        {
+          "source": "log-viewer",
+          "target": "blob-storage",
+          "type": "static"
+        }
+      ],
+      "node-utils": [
+        {
+          "source": "node-utils",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "node-utils",
+          "target": "types-common",
+          "type": "static"
+        }
+      ],
+      "db-update": [
+        {
+          "source": "db-update",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "blob-storage",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "external-data",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "node-utils",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "logger",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "duckdb-lib",
+          "type": "static"
+        },
+        {
+          "source": "db-update",
+          "target": "feedback",
+          "type": "static"
+        }
+      ],
+      "query": [
+        {
+          "source": "query",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "query",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "query",
+          "target": "types-common",
+          "type": "static"
+        }
+      ],
+      "upd-pipes": [
+        {
+          "source": "upd-pipes",
+          "target": "upd-i18n",
+          "type": "static"
+        }
+      ],
+      "upd-state": [
+        {
+          "source": "upd-state",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-state",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-state",
+          "target": "upd-i18n",
+          "type": "static"
+        }
+      ],
+      "upd-utils": [
+        {
+          "source": "upd-utils",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "upd-utils",
+          "target": "upd-i18n",
+          "type": "static"
+        }
+      ],
+      "feedback": [
+        {
+          "source": "feedback",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "feedback",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "feedback",
+          "target": "utils-common",
+          "type": "static"
+        }
+      ],
+      "flow-api": [
+        {
+          "source": "flow-api",
+          "target": "custom-reports-api",
+          "type": "static"
+        },
+        {
+          "source": "flow-api",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "flow-api",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "flow-api",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "flow-api",
+          "target": "node-utils",
+          "type": "static"
+        }
+      ],
+      "upd-i18n": [],
+      "upd-e2e": [
+        {
+          "source": "upd-e2e",
+          "target": "upd",
+          "type": "implicit"
+        }
+      ],
+      "db-cli": [
+        {
+          "source": "db-cli",
+          "target": "data-integrity",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "db-update",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "logger",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "blob-storage",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "api-feedback",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "external-data",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "feedback",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "node-utils",
+          "type": "static"
+        },
+        {
+          "source": "db-cli",
+          "target": "custom-reports-api",
+          "type": "static"
+        }
+      ],
+      "logger": [
+        {
+          "source": "logger",
+          "target": "blob-storage",
+          "type": "static"
+        }
+      ],
+      "api": [
+        {
+          "source": "api",
+          "target": "custom-reports-api",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "query",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "db",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "api-feedback",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "api-hashes",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "node-utils",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "flow-api",
+          "type": "static"
+        },
+        {
+          "source": "api",
+          "target": "external-data",
+          "type": "static"
+        }
+      ],
+      "upd": [
+        {
+          "source": "upd",
+          "target": "upd-views-overview",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-views-pages",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-views-tasks",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-views-projects",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-views-about-us",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-views-reports",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "custom-reports",
+          "type": "dynamic"
+        },
+        {
+          "source": "upd",
+          "target": "upd-i18n",
+          "type": "static"
+        },
+        {
+          "source": "upd",
+          "target": "upd-state",
+          "type": "static"
+        }
+      ],
+      "db": [
+        {
+          "source": "db",
+          "target": "utils-common",
+          "type": "static"
+        },
+        {
+          "source": "db",
+          "target": "types-common",
+          "type": "static"
+        },
+        {
+          "source": "db",
+          "target": "blob-storage",
+          "type": "static"
+        }
+      ]
+    }
+  }
+}

@@ -127,15 +127,31 @@ export class PagesDetailsEffects {
               }
 
               let errorKey = 'accessibility-error-generic';
-              if (error.status === 429) {
-                errorKey = 'accessibility-error-rate-limit';
-              } else if (error.status === 0 || error.name === 'NetworkError') {
-                errorKey = 'accessibility-error-network';
-              } else if (error.status === 400 && error.error?.message?.includes('Invalid URL')) {
-                errorKey = 'accessibility-error-invalid-url';
-              } else if (error.name === 'TimeoutError' || error.status === 504) {
+
+              if (error.code === 'ECONNRESET' || error.code === 'ECONNABORTED') {
+                errorKey = 'accessibility-error-connection-reset';
+              } else if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT') {
                 errorKey = 'accessibility-error-timeout';
+              } else if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN' || error.code === 'ECONNREFUSED') {
+                errorKey = 'accessibility-error-network';
+              } else if (error.name === 'TimeoutError') {
+                errorKey = 'accessibility-error-timeout';
+              } else if (error.name === 'NetworkError') {
+                errorKey = 'accessibility-error-network';
+              } else if (error.status === 429) {
+                errorKey = 'accessibility-error-rate-limit';
+              } else if (error.status === 504 || error.status === 408) {
+                errorKey = 'accessibility-error-timeout';
+              } else if (error.status === 0) {
+                errorKey = 'accessibility-error-network';
+              } else if (error.status === 400) {
+                errorKey = 'accessibility-error-invalid-url';
+              } else if (error.message?.toLowerCase().includes('timeout')) {
+                errorKey = 'accessibility-error-timeout';
+              } else if (error.message?.toLowerCase().includes('network')) {
+                errorKey = 'accessibility-error-network';
               }
+
               return of(loadAccessibilityError({ error: errorKey }));
             }),
           ),

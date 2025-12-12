@@ -134,9 +134,9 @@ export class BlobStorageService {
                 secretAccessKey: options?.s3SecretAccessKey,
               }
             : createCredentialChain(
-                fromContainerMetadata(),
                 fromEnv(),
                 fromSSO(),
+                fromContainerMetadata(),
               ),
         );
       } catch (error) {

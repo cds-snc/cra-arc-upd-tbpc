@@ -2,6 +2,7 @@ import { LoggerService } from '@nestjs/common';
 import { load } from 'cheerio';
 import chalk from 'chalk';
 import {
+  type AbortController,
   batchAwait,
   Retry,
   squishTrim,
@@ -164,8 +165,11 @@ export class HttpClient {
   async getAll<T>(
     urls: string[],
     callback: (data: HttpClientResponse) => T = (data) => data as T,
-    logProgress = false,
+    options?: { logProgress: boolean; abortController?: AbortController },
   ) {
+    const logProgress = options?.logProgress ?? false;
+    const abortController = options?.abortController;
+
     const progressTimer = new TimingUtility(urls.length);
 
     if (this.rateLimitStats && !this.rateLimitUtils.startTime) {
@@ -200,6 +204,7 @@ export class HttpClient {
       batchFunc,
       this.batchSize,
       this.delayContainer,
+      abortController,
     );
   }
 }

@@ -72,6 +72,25 @@ export const addMissingPageMetricsRefs = async (db: DbService) => {
   await db.addMissingAirtableRefsToPageMetrics();
 };
 
+export async function syncRefs(db: DbService) {
+  console.log('Syncing references...');
+
+  console.log('Validating page refs');
+  console.time('Validating page refs');
+  await db.validatePageMetricsRefs();
+  console.timeEnd('Validating page refs');
+
+  console.log('validating feedback refs...');
+  console.time('validating feedback refs');
+  await populateFeedbackReferences(db);
+  console.timeEnd('validating feedback refs');
+
+  console.log('Syncing call drivers refs...');
+  console.time('Syncing call drivers refs');
+  await syncCalldriversRefs(db);
+  console.timeEnd('Syncing call drivers refs');
+}
+
 export async function syncRemoteHtmlParquet() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
 
@@ -142,13 +161,6 @@ export async function syncUrlsCollection() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
 
   await urlsService.updateUrls();
-}
-
-// Don't run this unless you know what you're doing
-export async function uploadUrlsCollection() {
-  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
-
-  await urlsService.saveCollectionToBlobStorage(true);
 }
 
 export async function uploadFeedback2(_, __, ___, blob: BlobStorageService) {

@@ -12,6 +12,17 @@ determine_role() {
       echo "[aws-sso-init] Using stored $stored_role_type role: ${!role_var}"
       aws configure set sso_role_name "${!role_var}"
       role_type="$stored_role_type"
+
+      if [[ "$role_type" == "admin" ]]; then
+        if aws sso login --no-browser 2>/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
+          echo "[aws-sso-init] Successfully authenticated with stored admin role"
+          return 0
+        else
+          echo "[aws-sso-init] Tried to use stored admin role, but authentication failed."
+          exit 1
+        fi
+      fi
+
       return 0
     fi
   fi
@@ -118,6 +129,6 @@ jq -n \
     aws_session_token: $session_token,
     aws_credential_expiration: $expiration,
     role_type: $role_type
-  }' > ~/.aws/credentials.json
+  }' >~/.aws/credentials.json
 
 echo "[aws-sso-init] AWS SSO initialization complete."
