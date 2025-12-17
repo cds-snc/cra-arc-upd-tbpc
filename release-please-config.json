@@ -4,8 +4,7 @@
       "release-type": "node",
       "changelog-path": "CHANGELOG.md",
       "prerelease": false,
-      "pull-request-title-pattern": "chore: UPD release v${version}",
-      "release-as": "4.0.0"
+      "pull-request-title-pattern": "chore: UPD release v${version}"
     }
   },
   "changelog-sections": [
