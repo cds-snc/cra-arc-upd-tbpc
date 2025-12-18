@@ -94,7 +94,7 @@ jobs:
           NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
         working-directory: ${{ github.workspace }}
         run: |
-          npx nx-cloud start-ci-run --agent-count=0
+          npx nx-cloud start-ci-run --distribute-on="1 linux-small-js" && npx nx record -- echo "Check Nx Cloud availability"
     outputs:
       cloud-available: ${{ steps.check-cloud-availability.outcome == 'success' && 'true' || 'false' }}
 
@@ -114,7 +114,7 @@ jobs:
         if [ "${{ needs.check-cloud-available.outputs.cloud-available }}" != "true" ]; then
           echo "Nx Cloud is not available. Remote cache will not be used."
         else
-          npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
+          npx nx-cloud start-ci-run --distribute-on="manual" --stop-agents-after=build
         fi
       # Because separate jobs don't share the same filesystem, we'll upload the build
       # output as an artifact, and then download it in the `upload` job.
@@ -123,7 +123,7 @@ jobs:
       artifacts-retention-days: 1
       artifacts-overwrite: true
       parallel-commands-on-agents: |
-        npx nx run upd:build --parallel=3 --prod
+        npx nx run upd:build --parallel --prod
 
   agents:
     name: Nx Cloud - Build web - Agents
