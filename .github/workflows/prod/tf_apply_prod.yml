@@ -1,0 +1,177 @@
+name: 'Terraform apply - Production'
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+    paths:
+      - 'terragrunt/**'
+      - '!terragrunt/env/staging/**'
+      - '.github/workflows/prod/tf_apply_production.yml'
+
+env:
+  AWS_REGION: ca-central-1
+  TERRAFORM_VERSION: 1.11.2 # Align with plan workflow
+  TERRAGRUNT_VERSION: 0.78.0 # Align with plan workflow
+  AA_CREDS_POOL: ${{ secrets.AA_CREDS_POOL }}
+  AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+  AW_CLIENT_ID: ${{ secrets.AW_CLIENT_ID }}
+  AW_CLIENT_SECRET: ${{ secrets.AW_CLIENT_SECRET }}
+  AW_COMPANY_ID: ${{ secrets.AW_COMPANY_ID }}
+  AW_ORGANIZATION_ID: ${{ secrets.AW_ORGANIZATION_ID }}
+  AW_REPORTSUITE_ID: ${{ secrets.AW_REPORTSUITE_ID }}
+  AW_TECHNICAL_ID: ${{ secrets.AW_TECHNICAL_ID }}
+  CLOUDFRONT_WAF_ALLOWED_IPS: ${{ secrets.CLOUDFRONT_WAF_ALLOWED_IPS }}
+  DOCDB_USERNAME: ${{ secrets.DOCDB_USERNAME }}
+  DOCDB_PASSWORD: ${{ secrets.DOCDB_PASSWORD }}
+  FEEDBACK_API_HOST: ${{ secrets.FEEDBACK_API_HOST }}
+  FEEDBACK_API_USERNAME: ${{ secrets.FEEDBACK_API_USERNAME }}
+  FEEDBACK_API_PASSWORD: ${{ secrets.FEEDBACK_API_PASSWORD }}
+  GSC_EMAIL: ${{ secrets.GSC_EMAIL }}
+  GSC_KEY: ${{ secrets.GSC_KEY }}
+  NOTIFY_API_KEY: ${{ secrets.NOTIFY_API_KEY }}
+  NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+  NOTIFY_EMAIL_2: ${{ secrets.NOTIFY_EMAIL_2 }}
+  PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+  AIRTABLE_BASE_ANNOTATIONS: ${{ vars.AIRTABLE_BASE_ANNOTATIONS }}
+  AIRTABLE_BASE_GCTASKSMAPPINGS: ${{ vars.AIRTABLE_BASE_GCTASKSMAPPINGS }}
+  AIRTABLE_BASE_TASKS_INVENTORY: ${{ vars.AIRTABLE_BASE_TASKS_INVENTORY }}
+  AIRTABLE_BASE_FEEDBACK: ${{ vars.AIRTABLE_BASE_FEEDBACK }}
+  AIRTABLE_BASE_LIVE_FEEDBACK: ${{ vars.AIRTABLE_BASE_LIVE_FEEDBACK }}
+  AIRTABLE_BASE_PAGES: ${{ vars.AIRTABLE_BASE_PAGES }}
+  AIRTABLE_BASE_SEARCH_ASSESSMENT: ${{ vars.AIRTABLE_BASE_SEARCH_ASSESSMENT }}
+  AIRTABLE_BASE_DCD_2021_Q1: ${{ vars.AIRTABLE_BASE_DCD_2021_Q1 }}
+  AIRTABLE_BASE_DCD_2021_Q2: ${{ vars.AIRTABLE_BASE_DCD_2021_Q2 }}
+  AIRTABLE_BASE_DCD_2021_Q3: ${{ vars.AIRTABLE_BASE_DCD_2021_Q3 }}
+  AIRTABLE_BASE_DCD_2021_Q4: ${{ vars.AIRTABLE_BASE_DCD_2021_Q4 }}
+  AIRTABLE_BASE_DCD_2022_Q1: ${{ vars.AIRTABLE_BASE_DCD_2022_Q1 }}
+  AIRTABLE_BASE_DCD_2022_Q2: ${{ vars.AIRTABLE_BASE_DCD_2022_Q2 }}
+  AIRTABLE_BASE_DCD_2022_Q3: ${{ vars.AIRTABLE_BASE_DCD_2022_Q3 }}
+  AIRTABLE_BASE_DCD_2022_Q4: ${{ vars.AIRTABLE_BASE_DCD_2022_Q4 }}
+  AIRTABLE_BASE_DCD_2023_Q1: ${{ vars.AIRTABLE_BASE_DCD_2023_Q1 }}
+  AIRTABLE_BASE_DCD_2023_Q2: ${{ vars.AIRTABLE_BASE_DCD_2023_Q2 }}
+  AIRTABLE_BASE_DCD_2023_Q3: ${{ vars.AIRTABLE_BASE_DCD_2023_Q3 }}
+  AIRTABLE_BASE_DCD_2023_Q4: ${{ vars.AIRTABLE_BASE_DCD_2023_Q4 }}
+  AIRTABLE_BASE_DCD_2024_Q1: ${{ vars.AIRTABLE_BASE_DCD_2024_Q1 }}
+  AIRTABLE_BASE_DCD_2024_Q2: ${{ vars.AIRTABLE_BASE_DCD_2024_Q2 }}
+  AIRTABLE_BASE_DCD_2024_Q3: ${{ vars.AIRTABLE_BASE_DCD_2024_Q3 }}
+  AIRTABLE_BASE_DCD_2024_Q4: ${{ vars.AIRTABLE_BASE_DCD_2024_Q4 }}
+  AIRTABLE_BASE_DCD_2025_Q1: ${{ vars.AIRTABLE_BASE_DCD_2025_Q1 }}
+  AIRTABLE_BASE_DCD_2025_Q2: ${{ vars.AIRTABLE_BASE_DCD_2025_Q2 }}
+  AIRTABLE_BASE_DCD_2025_Q3: ${{ vars.AIRTABLE_BASE_DCD_2025_Q3 }}
+  AIRTABLE_BASE_DCD_2025_Q4: ${{ vars.AIRTABLE_BASE_DCD_2025_Q4 }}
+  AIRTABLE_BASE_DCD_2026_Q1: ${{ vars.AIRTABLE_BASE_DCD_2026_Q1 }}
+  AIRTABLE_BASE_DCD_2026_Q2: ${{ vars.AIRTABLE_BASE_DCD_2026_Q2 }}
+  AIRTABLE_BASE_DCD_2026_Q3: ${{ vars.AIRTABLE_BASE_DCD_2026_Q3 }}
+  AIRTABLE_BASE_DCD_2026_Q4: ${{ vars.AIRTABLE_BASE_DCD_2026_Q4 }}
+  NOTIFY_TEMPLATE_ID_EN: ${{ vars.NOTIFY_TEMPLATE_ID_EN }}
+  NOTIFY_TEMPLATE_ID_FR: ${{ vars.NOTIFY_TEMPLATE_ID_FR }}
+  STORAGE_URI_PREFIX: ${{ vars.STORAGE_URI_PREFIX }}
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+jobs:
+  # set up job groups to deploy resources in parallel where possible, while ensuring dependencies are met
+  terragrunt-apply-group1:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: ecr
+          - module: network
+          - module: s3
+          - module: ssm
+          - module: route53
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply ${{ matrix.module }}
+        working-directory: terragrunt/env/production/${{ matrix.module }}
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+  terragrunt-apply-group2:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    needs: terragrunt-apply-group1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: database
+          - module: elasticache
+          - module: load_balancer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group2
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply ${{ matrix.module }}
+        working-directory: terragrunt/env/production/${{ matrix.module }}
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+  terragrunt-apply-group3:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    needs: terragrunt-apply-group2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group3
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply ecs
+        working-directory: terragrunt/env/production/ecs
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Apply api_gateway
+        working-directory: terragrunt/env/production/api_gateway
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Apply web
+        working-directory: terragrunt/env/production/web
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        
+      - name: Apply data_import
+        working-directory: terragrunt/env/production/data_import
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        
+      - name: Apply update_db
+        working-directory: terragrunt/env/production/update_db
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
