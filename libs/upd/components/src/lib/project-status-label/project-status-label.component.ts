@@ -49,5 +49,6 @@ export class ProjectStatusLabelComponent {
 
   projectTypeClassMap: Record<ProjectType, string> = {
     COPS: 'bg-primary',
+    WOS_COPS: 'bg-info',
   };
 }

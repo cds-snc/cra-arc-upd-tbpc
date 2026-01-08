@@ -70,6 +70,7 @@ export class ProjectsDetailsFacade {
   status$ = this.projectsDetailsData$.pipe(map((data) => data?.status));
 
   cops$ = this.projectsDetailsData$.pipe(map((data) => data?.cops));
+  wos_cops$ = this.projectsDetailsData$.pipe(map((data) => data?.wos_cops));
 
   description$ = this.projectsDetailsData$.pipe(
     map((data) => data?.description),

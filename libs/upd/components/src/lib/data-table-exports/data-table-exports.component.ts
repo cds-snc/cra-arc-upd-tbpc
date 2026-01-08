@@ -59,6 +59,7 @@ export class DataTableExportsComponent<T> {
   async getFormattedExportData(replaceKeysWithHeaders = false) {
     const currentLang = this.i18n.service.currentLang;
     const cops = this.i18n.service.translate('COPS', currentLang);
+    const wos_cops = this.i18n.service.translate('WOS_COPS', currentLang);
 
     const projectStatusKeys: ProjectStatus[] = [
       'Unknown',
@@ -121,6 +122,8 @@ export class DataTableExportsComponent<T> {
             );
           } else if (col.typeParam === 'cops') {
             formattedRow[colKey] = cellValue ? cops : '';
+          } else if (col.typeParam === 'wos_cops') {
+            formattedRow[colKey] = cellValue ? wos_cops : ''; 
           } else if (col.filterConfig?.type === 'pageStatus') {
             formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
           } else if (col.type === 'label') {

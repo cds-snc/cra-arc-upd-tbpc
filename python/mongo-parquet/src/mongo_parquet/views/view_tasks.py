@@ -103,6 +103,7 @@ class TasksView(ParquetModel):
             "survey_completed": int32(),
             "tmf_ranking_index": int32(),
             "cops": bool_(),
+            "wos_cops": bool_(),
             "numComments": int32(),
             "aa_searchterms": list_(
                 struct(
@@ -190,6 +191,7 @@ class TasksView(ParquetModel):
                         "launch_date": timestamp("ms"),
                         "status": string(),
                         "cops": bool_(),
+                        "wos_cops": bool_(),
                         "attachments": list_(
                             struct(
                                 {
@@ -304,6 +306,7 @@ class TasksViewContext:
             .agg(
                 pl.struct(pl.all()).alias("ux_tests"),
                 pl.col("cops").max().alias("cops"),
+                pl.col("wos_cops").max().alias("wos_cops"),
             )
             .rename({"tasks": "_id"})
         )

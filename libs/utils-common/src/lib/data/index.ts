@@ -695,7 +695,7 @@ export const getWosImprovedKpiSuccessRates = (
   // filter bad stuff
   const filteredTests = uxTests.filter(
     (test) =>
-      test.cops === true &&
+      test.wos_cops === true &&
       !isNullish(test.success_rate) &&
       test.test_type &&
       test!.tasks!.length,

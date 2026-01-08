@@ -116,6 +116,9 @@ export class TasksView implements ITaskView {
 
   @Prop({ type: Boolean })
   cops: boolean;
+  
+  @Prop({ type: Boolean })
+  wos_cops: boolean;
 
   @Prop({ type: Number })
   numComments: number;
@@ -236,6 +239,7 @@ export class TasksView implements ITaskView {
         launch_date: Date,
         status: String,
         cops: Boolean,
+        wos_cops: Boolean,
         attachments: [
           {
             id: String,

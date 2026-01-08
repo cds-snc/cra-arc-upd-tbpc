@@ -339,6 +339,7 @@ export interface TasksHomeAggregatedData {
   tmf_ranking_index?: number;
   top_task?: boolean;
   cops?: boolean;
+  wos_cops?: boolean;
   ux_testing?: boolean;
   pages_mapped?: number;
   projects_mapped?: number;
@@ -494,7 +495,7 @@ export type ProjectStatus =
 
 export type PageStatus = 'Live' | '404' | 'Redirected';
 
-export type ProjectType = 'COPS';
+export type ProjectType = 'COPS' | 'WOS_COPS';
 
 export interface searchAssessmentColTypes {
   query: string;
@@ -506,6 +507,7 @@ export interface ProjectsHomeProject {
   _id: string;
   title: string;
   cops: boolean;
+  wos_cops: boolean,
   startDate?: Date;
   launchDate?: Date;
   avgSuccessRate?: number;
@@ -538,6 +540,7 @@ export type ReportsHomeProject = {
   _id: string;
   title: string;
   cops: boolean;
+  wos_cops: boolean;
   startDate?: Date;
   status: ProjectStatus;
   attachments: AttachmentData[];
@@ -585,6 +588,7 @@ export interface ProjectsDetailsData
   extends EntityDetailsData<ProjectDetailsAggregatedData> {
   status: ProjectStatus;
   cops?: boolean;
+  wos_cops?: boolean;
   description?: string;
   startDate: string | undefined;
   launchDate: string | undefined;

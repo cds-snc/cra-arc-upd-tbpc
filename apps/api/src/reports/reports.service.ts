@@ -152,6 +152,7 @@ export class ReportsService {
         _id: '$project',
         title: { $first: '$title' },
         cops: { $max: '$cops' },
+        wos_cops: { $max: '$wos_cops' },
         startDate: { $min: '$date' },
         statuses: { $addToSet: '$status' },
       })
@@ -162,6 +163,7 @@ export class ReportsService {
         _id: { $toString: '$_id' },
         title: 1,
         cops: 1,
+        wos_cops: 1,
         startDate: 1,
         status: 1,
       })
@@ -179,6 +181,7 @@ export class ReportsService {
         title: project.title,
         attachments: projectAttachmentsDict[project._id]?.attachments || [],
         cops: !!project.cops,
+        wos_cops: !!project.wos_cops,
         startDate: project.startDate,
         status: project.status,
       }));

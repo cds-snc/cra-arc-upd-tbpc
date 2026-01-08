@@ -18,6 +18,7 @@ export class ReportsComponent implements OnInit {
 
   error$ = this.reportsService.error$;
 
+
   ngOnInit() {
     this.reportsService.init();
   }
