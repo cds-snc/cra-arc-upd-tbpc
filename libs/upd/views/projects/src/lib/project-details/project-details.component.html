@@ -37,6 +37,13 @@
           [projectType]="'COPS'">
         </upd-project-status-label>
       </ng-container>
+
+      <ng-container *ngIf="wos_cops$ | async as wos_cops">
+        <upd-project-status-label
+          class="d-inline-block ms-2"
+          [projectType]="'WOS_COPS'">
+        </upd-project-status-label>
+      </ng-container>
     </span>
   </h2>
 

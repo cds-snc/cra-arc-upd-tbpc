@@ -41,6 +41,7 @@ class UxTests(ParquetModel):
             "launch_date": timestamp("ms"),
             "status": string(),
             "cops": bool_(),
+            "wos_cops": bool_(),
             "start_date": timestamp("ms"),
         }
     )

@@ -34,6 +34,7 @@ export declare class UxTest {
   launch_date?: Date;
   status?: string;
   cops?: boolean;
+  wos_cops?: boolean;
   attachments?: string[];
 }
 export declare const UxTestSchema: import('mongoose').Schema<

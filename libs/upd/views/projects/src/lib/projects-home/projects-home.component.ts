@@ -45,13 +45,50 @@ export class ProjectsHomeComponent implements OnInit {
             type: 'link',
             typeParam: '_id',
           },
+          // {
+          //   field: 'cops',
+          //   header: this.i18n.service.translate('type', lang),
+          //   type: 'label',
+          //   typeParam: 'cops',
+          //   filterConfig: {
+          //     type: 'boolean',
+          //   },
+          // },
+          // {
+          //   field: 'wos_cops',
+          //   header: this.i18n.service.translate('type', lang),
+          //   type: 'label',
+          //   typeParam: 'wos_cops',
+          //   filterConfig: {
+          //     type: 'boolean',
+          //   },
+          // },
+          // {
+          //   field: 'projectTypeLabel',
+          //   header: this.i18n.service.translate('type', lang),
+          //   type: 'label',
+          //   typeParam: 'projectType',
+          //   filterConfig: {
+          //     type: 'category',
+          //     categories: createCategoryConfig({
+          //       i18n: this.i18n.service,
+          //       data,
+          //       field: 'projectTypeLabel',
+          //     }),
+          //   },
+          // },
           {
-            field: 'cops',
+            field: 'projectTypeLabel',
             header: this.i18n.service.translate('type', lang),
             type: 'label',
-            typeParam: 'cops',
+            typeParam: 'projectType',
             filterConfig: {
-              type: 'boolean',
+              type: 'category',
+              categories: [
+                { name: this.i18n.service.translate('COPS', lang), value: 'COPS' },
+                { name: this.i18n.service.translate('WOS_COPS', lang), value: 'WOS_COPS' }
+              ],
+              matchMode: 'arrayContains'
             },
           },
           {

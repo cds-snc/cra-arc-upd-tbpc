@@ -748,6 +748,7 @@ async function getProjects(
     .group({
       _id: '$project',
       cops: { $max: '$cops' },
+      wos_cops: {$max: '$wos_cops'},
       startDate: { $min: '$date' },
       launchDate: { $max: '$launch_date' },
       avgSuccessRate: { $avg: '$success_rate' },
@@ -772,6 +773,7 @@ async function getProjects(
         $arrayElemAt: ['$uxTests.title', 0],
       },
       cops: 1,
+      wos_cops: 1,
       startDate: 1,
       launchDate: 1,
       avgSuccessRate: 1,
@@ -1142,6 +1144,7 @@ interface ProjectData {
   testTypes: Set<string>;
   tasks: Set<string>;
   cops: Set<string>;
+  wos_cops: Set<string>;
   lastQuarterTests: Set<string>;
   lastFiscalTests: Set<string>;
 }
@@ -1165,6 +1168,7 @@ async function getUxData(uxTests: UxTest[]): Promise<OverviewUxData> {
         testTypes: new Set(),
         tasks: new Set(),
         cops: new Set(),
+        wos_cops: new Set(),
         lastQuarterTests: new Set(),
         lastFiscalTests: new Set(),
       };

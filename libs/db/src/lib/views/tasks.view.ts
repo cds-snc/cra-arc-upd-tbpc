@@ -272,6 +272,7 @@ export class TasksViewService extends DbViewNew<
       callsByTopic,
       tmf_ranking_index,
       cops: !!task.ux_tests?.find((test) => test.cops),
+      wos_cops: !!task.ux_tests?.find((test) => test.wos_cops),
       numComments,
       survey: task.gc_survey_participants,
       survey_completed: task.gc_survey_completed,
@@ -878,6 +879,7 @@ export class TasksViewService extends DbViewNew<
       title: string;
       tmf_ranking_index: number;
       cops: boolean;
+      wos_cops: boolean;
       group: string;
       subgroup: string;
       topic: string;
@@ -908,6 +910,7 @@ export class TasksViewService extends DbViewNew<
       title: '$task.title',
       tmf_ranking_index: 1,
       cops: 1,
+      wos_cops: 1,
       group: '$task.group',
       subgroup: '$task.subgroup',
       topic: '$task.topic',

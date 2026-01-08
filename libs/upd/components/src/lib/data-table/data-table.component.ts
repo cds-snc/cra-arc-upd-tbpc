@@ -176,7 +176,7 @@ export class DataTableComponent<T extends object> {
     };
 
     table._filter();
-}
+  }
 
   selectedRows: T[] = [];
 
@@ -246,5 +246,13 @@ export class DataTableComponent<T extends object> {
       const val = String(value).toLowerCase();
       return filters.every((keyword) => val.includes(keyword));
     });
+    
+    // Custom filter for COPS types filter so its not using 'in' but 'contains' for an array of values
+    this.filterService.register('arrayContains', (rowValue: any[], filterValue: string[]): boolean => {
+      if (!filterValue || filterValue.length === 0) return true;
+      if (!Array.isArray(rowValue)) return false;
+      return filterValue.some(fv => rowValue.includes(fv));
+    });
   }
+  
 }
