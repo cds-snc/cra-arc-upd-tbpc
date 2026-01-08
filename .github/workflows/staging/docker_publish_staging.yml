@@ -1,4 +1,4 @@
-name: Create and publish Docker images
+name: Create and publish Docker images (Staging)
 
 on:
   workflow_dispatch:
