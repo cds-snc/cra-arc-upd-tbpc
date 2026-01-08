@@ -3,10 +3,12 @@ name: Terraform Plan - Staging
 on:
   workflow_dispatch:
   pull_request:
+    branches:
+      - staging
     paths:
       - 'terragrunt/**'
       - '!terragrunt/env/production/**'
-      - '.github/workflows/staging/tf_apply_staging.yml'
+      - '.github/workflows/staging/tf_plan_staging.yml'
 
 env:
   AWS_REGION: ca-central-1
