@@ -35,7 +35,7 @@
       <upd-data-table-card
         [filter]="false"
         [sort]="true"
-        [pagination]="false"
+        [pagination]="true"
         [data]="(GSCSearchTerms$ | async) || []"
         [cols]="GSCSearchTermsCols"
         [title]="'top10-terms-google'"

@@ -26,4 +26,8 @@ export const getBases = () => ({
   DCD_2025_Q2: process.env.AIRTABLE_BASE_DCD_2025_Q2,
   DCD_2025_Q3: process.env.AIRTABLE_BASE_DCD_2025_Q3,
   DCD_2025_Q4: process.env.AIRTABLE_BASE_DCD_2025_Q4,
+  DCD_2026_Q1: process.env.AIRTABLE_BASE_DCD_2026_Q1,
+  DCD_2026_Q2: process.env.AIRTABLE_BASE_DCD_2026_Q2,
+  DCD_2026_Q3: process.env.AIRTABLE_BASE_DCD_2026_Q3,
+  DCD_2026_Q4: process.env.AIRTABLE_BASE_DCD_2026_Q4,
 });
