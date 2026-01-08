@@ -1,0 +1,123 @@
+name: Terraform Plan - Production
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terragrunt/**'
+      - '!terragrunt/env/staging/**'
+      - '.github/workflows/tf_plan_production.yml'
+
+env:
+  AWS_REGION: ca-central-1
+  TERRAFORM_VERSION: 1.11.2
+  TERRAGRUNT_VERSION: 0.78.0
+  AA_CREDS_POOL: ${{ secrets.AA_CREDS_POOL }}
+  AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+  AW_CLIENT_ID: ${{ secrets.AW_CLIENT_ID }}
+  AW_CLIENT_SECRET: ${{ secrets.AW_CLIENT_SECRET }}
+  AW_COMPANY_ID: ${{ secrets.AW_COMPANY_ID }}
+  AW_ORGANIZATION_ID: ${{ secrets.AW_ORGANIZATION_ID }}
+  AW_REPORTSUITE_ID: ${{ secrets.AW_REPORTSUITE_ID }}
+  AW_TECHNICAL_ID: ${{ secrets.AW_TECHNICAL_ID }}
+  CLOUDFRONT_WAF_ALLOWED_IPS: ${{ secrets.CLOUDFRONT_WAF_ALLOWED_IPS }}
+  DOCDB_USERNAME: ${{ secrets.DOCDB_USERNAME }}
+  DOCDB_PASSWORD: ${{ secrets.DOCDB_PASSWORD }}
+  FEEDBACK_API_HOST: ${{ secrets.FEEDBACK_API_HOST }}
+  FEEDBACK_API_USERNAME: ${{ secrets.FEEDBACK_API_USERNAME }}
+  FEEDBACK_API_PASSWORD: ${{ secrets.FEEDBACK_API_PASSWORD }}
+  GSC_EMAIL: ${{ secrets.GSC_EMAIL }}
+  GSC_KEY: ${{ secrets.GSC_KEY }}
+  NOTIFY_API_KEY: ${{ secrets.NOTIFY_API_KEY }}
+  NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+  NOTIFY_EMAIL_2: ${{ secrets.NOTIFY_EMAIL_2 }}
+  PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
+  AIRTABLE_BASE_ANNOTATIONS: ${{ vars.AIRTABLE_BASE_ANNOTATIONS }}
+  AIRTABLE_BASE_GCTASKSMAPPINGS: ${{ vars.AIRTABLE_BASE_GCTASKSMAPPINGS }}
+  AIRTABLE_BASE_TASKS_INVENTORY: ${{ vars.AIRTABLE_BASE_TASKS_INVENTORY }}
+  AIRTABLE_BASE_FEEDBACK: ${{ vars.AIRTABLE_BASE_FEEDBACK }}
+  AIRTABLE_BASE_LIVE_FEEDBACK: ${{ vars.AIRTABLE_BASE_LIVE_FEEDBACK }}
+  AIRTABLE_BASE_PAGES: ${{ vars.AIRTABLE_BASE_PAGES }}
+  AIRTABLE_BASE_SEARCH_ASSESSMENT: ${{ vars.AIRTABLE_BASE_SEARCH_ASSESSMENT }}
+  AIRTABLE_BASE_DCD_2021_Q1: ${{ vars.AIRTABLE_BASE_DCD_2021_Q1 }}
+  AIRTABLE_BASE_DCD_2021_Q2: ${{ vars.AIRTABLE_BASE_DCD_2021_Q2 }}
+  AIRTABLE_BASE_DCD_2021_Q3: ${{ vars.AIRTABLE_BASE_DCD_2021_Q3 }}
+  AIRTABLE_BASE_DCD_2021_Q4: ${{ vars.AIRTABLE_BASE_DCD_2021_Q4 }}
+  AIRTABLE_BASE_DCD_2022_Q1: ${{ vars.AIRTABLE_BASE_DCD_2022_Q1 }}
+  AIRTABLE_BASE_DCD_2022_Q2: ${{ vars.AIRTABLE_BASE_DCD_2022_Q2 }}
+  AIRTABLE_BASE_DCD_2022_Q3: ${{ vars.AIRTABLE_BASE_DCD_2022_Q3 }}
+  AIRTABLE_BASE_DCD_2022_Q4: ${{ vars.AIRTABLE_BASE_DCD_2022_Q4 }}
+  AIRTABLE_BASE_DCD_2023_Q1: ${{ vars.AIRTABLE_BASE_DCD_2023_Q1 }}
+  AIRTABLE_BASE_DCD_2023_Q2: ${{ vars.AIRTABLE_BASE_DCD_2023_Q2 }}
+  AIRTABLE_BASE_DCD_2023_Q3: ${{ vars.AIRTABLE_BASE_DCD_2023_Q3 }}
+  AIRTABLE_BASE_DCD_2023_Q4: ${{ vars.AIRTABLE_BASE_DCD_2023_Q4 }}
+  AIRTABLE_BASE_DCD_2024_Q1: ${{ vars.AIRTABLE_BASE_DCD_2024_Q1 }}
+  AIRTABLE_BASE_DCD_2024_Q2: ${{ vars.AIRTABLE_BASE_DCD_2024_Q2 }}
+  AIRTABLE_BASE_DCD_2024_Q3: ${{ vars.AIRTABLE_BASE_DCD_2024_Q3 }}
+  AIRTABLE_BASE_DCD_2024_Q4: ${{ vars.AIRTABLE_BASE_DCD_2024_Q4 }}
+  AIRTABLE_BASE_DCD_2025_Q1: ${{ vars.AIRTABLE_BASE_DCD_2025_Q1 }}
+  AIRTABLE_BASE_DCD_2025_Q2: ${{ vars.AIRTABLE_BASE_DCD_2025_Q2 }}
+  AIRTABLE_BASE_DCD_2025_Q3: ${{ vars.AIRTABLE_BASE_DCD_2025_Q3 }}
+  AIRTABLE_BASE_DCD_2025_Q4: ${{ vars.AIRTABLE_BASE_DCD_2025_Q4 }}
+  AIRTABLE_BASE_DCD_2026_Q1: ${{ vars.AIRTABLE_BASE_DCD_2026_Q1 }}
+  AIRTABLE_BASE_DCD_2026_Q2: ${{ vars.AIRTABLE_BASE_DCD_2026_Q2 }}
+  AIRTABLE_BASE_DCD_2026_Q3: ${{ vars.AIRTABLE_BASE_DCD_2026_Q3 }}
+  AIRTABLE_BASE_DCD_2026_Q4: ${{ vars.AIRTABLE_BASE_DCD_2026_Q4 }}
+  NOTIFY_TEMPLATE_ID_EN: ${{ vars.NOTIFY_TEMPLATE_ID_EN }}
+  NOTIFY_TEMPLATE_ID_FR: ${{ vars.NOTIFY_TEMPLATE_ID_FR }}
+  STORAGE_URI_PREFIX: ${{ vars.STORAGE_URI_PREFIX }}
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  actions: write
+  checks: write
+  statuses: write
+
+jobs:
+  terraform-plan:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # List the environment directories under terragrunt/env/production/
+          - module: api_gateway
+          - module: database
+          - module: ecr
+          - module: ecs
+          - module: elasticache
+          - module: load_balancer
+          - module: network
+          - module: s3
+          - module: ssm
+          - module: route53
+          - module: web
+          - module: data_import
+          - module: update_db
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-plan
+          role-session-name: TFPlan
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform plan
+        uses: cds-snc/terraform-plan@e710cb1446e5dfe69a0182603fb06b5282d7eb07 # v3.4.3
+        with:
+          comment-delete: true
+          comment-title: 'Production: ${{ matrix.module }}'
+          directory: ./terragrunt/env/production/${{ matrix.module }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          terragrunt: true
