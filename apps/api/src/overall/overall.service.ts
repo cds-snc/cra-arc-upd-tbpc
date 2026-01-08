@@ -587,7 +587,10 @@ export class OverallService {
         })
         .exec()) || [];
 
-    const prevResultsDict = arrayToDictionary(prevResults, 'term');
+    const prevResultsDict = arrayToDictionary(
+      prevResults.filter(({ term }) => term),
+      'term',
+    );
 
     return results.map((result) => {
       const prevSearches = prevResultsDict[result.term]?.total_searches;
@@ -1072,7 +1075,7 @@ async function getOverviewMetrics(
         position: { $avg: '$gsc_searchterms.position' },
       })
       .sort({ clicks: -1 })
-      .limit(10)
+      .limit(100)
       .exec(),
     // aggregatedMetrics
     overallModel
