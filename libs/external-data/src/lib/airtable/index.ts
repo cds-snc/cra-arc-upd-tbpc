@@ -344,6 +344,7 @@ export class AirtableClient {
           launch_date: fields['Launch Date'],
           status: fields['Status'],
           cops: fields['COPS'],
+          wos_cops: fields['WOS COPS'],
           attachments: fields['Attachments (Ex. Scorecard)'],
           description: fields['Project Description'],
           start_date: fields['Start Date'],

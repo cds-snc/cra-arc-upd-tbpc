@@ -74,6 +74,7 @@ export interface UxTestData {
   launch_date?: Date;
   status?: string;
   cops?: boolean;
+  wos_cops?: boolean;
   attachments?: AttachmentData[];
   description?: string;
 }

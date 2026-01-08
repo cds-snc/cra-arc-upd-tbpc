@@ -78,6 +78,9 @@ export class UxTest implements IUxTest {
   @Prop({ type: Boolean })
   cops?: boolean;
 
+  @Prop({ type: Boolean })
+  wos_cops?: boolean;
+
   @Prop({ type: Date })
   start_date?: Date;
 }
