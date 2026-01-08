@@ -1,10 +1,10 @@
-name: Create and publish Docker images
+name: Create and publish Docker images (Staging)
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - staging
 
 env:
   GITHUB_SHA: ${{ github.sha }}

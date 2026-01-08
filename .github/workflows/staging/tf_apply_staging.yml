@@ -1,21 +1,19 @@
-name: Build and upload web files - Staging
+name: 'Terraform apply - Staging'
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ['Terraform apply - Staging']
-    types:
-      - completed
   push:
     branches:
-      - main
+      - staging
+    paths:
+      - 'terragrunt/**'
+      - '!terragrunt/env/production/**'
+      - '.github/workflows/staging/tf_apply_staging.yml'
 
 env:
   AWS_REGION: ca-central-1
-  TERRAFORM_VERSION: 1.11.2
-  TERRAGRUNT_VERSION: 0.78.0
-  NX_CLOUD_DISTRIBUTED_EXECUTION: true
-  NX_CLOUD_DISTRIBUTED_EXECUTION_AGENT_COUNT: 3
+  TERRAFORM_VERSION: 1.11.2 # Align with plan workflow
+  TERRAGRUNT_VERSION: 0.78.0 # Align with plan workflow
   AA_CREDS_POOL: ${{ secrets.AA_CREDS_POOL_STAGING }}
   AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
   AW_CLIENT_ID: ${{ secrets.AW_CLIENT_ID_STAGING }}
@@ -30,8 +28,8 @@ env:
   FEEDBACK_API_HOST: ${{ secrets.FEEDBACK_API_HOST }}
   FEEDBACK_API_USERNAME: ${{ secrets.FEEDBACK_API_USERNAME }}
   FEEDBACK_API_PASSWORD: ${{ secrets.FEEDBACK_API_PASSWORD }}
-  GSC_EMAIL: ${{ secrets.GSC_EMAIL }}
-  GSC_KEY: ${{ secrets.GSC_KEY }}
+  GSC_EMAIL: ${{ secrets.GSC_EMAIL_STAGING }}
+  GSC_KEY: ${{ secrets.GSC_KEY_STAGING }}
   NOTIFY_API_KEY: ${{ secrets.NOTIFY_API_KEY }}
   NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
   NOTIFY_EMAIL_2: ${{ secrets.NOTIFY_EMAIL_2 }}
@@ -71,10 +69,6 @@ env:
   NOTIFY_TEMPLATE_ID_FR: ${{ vars.NOTIFY_TEMPLATE_ID_FR }}
   STORAGE_URI_PREFIX: ${{ vars.STORAGE_URI_PREFIX }}
 
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: true
-
 permissions:
   id-token: write
   contents: read
@@ -84,76 +78,22 @@ permissions:
   statuses: write
 
 jobs:
-  check-cloud-available:
-    name: Check Nx Cloud availability
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check Nx Cloud Availability
-        id: check-cloud-availability
-        continue-on-error: true
-        env:
-          NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
-        working-directory: ${{ github.workspace }}
-        run: |
-          npx nx-cloud start-ci-run --distribute-on="1 linux-small-js" && npx nx record -- echo "Check Nx Cloud availability"
-    outputs:
-      cloud-available: ${{ steps.check-cloud-availability.outcome == 'success' && 'true' || 'false' }}
-
-  build:
-    name: Nx Cloud - Build web - Main Job
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success')
-    needs: check-cloud-available
-    uses: ./.github/workflows/nx-cloud-main.yml
-    secrets:
-      NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
-    with:
-      node-version: 24.11.0
-      number-of-agents: ${{ needs.check-cloud-available.outputs.cloud-available == 'true' && 3 || 0 }}
-      skip-start-ci-run: true
-      skip-cloud: ${{ needs.check-cloud-available.outputs.cloud-available == 'false' }}
-      init-commands: |
-        if [ "${{ needs.check-cloud-available.outputs.cloud-available }}" != "true" ]; then
-          echo "Nx Cloud is not available. Remote cache will not be used."
-        else
-          npx nx-cloud start-ci-run --distribute-on="manual" --stop-agents-after=build
-        fi
-      # Because separate jobs don't share the same filesystem, we'll upload the build
-      # output as an artifact, and then download it in the `upload` job.
-      artifacts-name: upd-web-files-staging
-      artifacts-path: dist/apps/upd
-      artifacts-retention-days: 1
-      artifacts-overwrite: true
-      parallel-commands-on-agents: |
-        npx nx run upd:build --parallel --prod
-
-  agents:
-    name: Nx Cloud - Build web - Agents
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true'
-    needs: check-cloud-available
-    uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.15.0
-    secrets:
-      NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
-    with:
-      node-version: 24.11.0
-      number-of-agents: 3
-
-  upload:
-    name: Upload web files to S3
+  # set up job groups to deploy resources in parallel where possible, while ensuring dependencies are met
+  terragrunt-apply-group1:
     if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
-    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: ecr
+          - module: network
+          - module: s3
+          - module: ssm
+          - module: route53
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: upd-web-files-staging
-          path: dist/apps/upd
+        uses: actions/checkout@v3
 
       - name: Setup Terraform Tools
         uses: cds-snc/terraform-tools-setup@v1
@@ -162,9 +102,76 @@ jobs:
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
-          role-session-name: TFApply-uploadWebFiles
+          role-session-name: TFApply-group1
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Upload web files to S3
-        working-directory: terragrunt/env/staging/s3_web_files
+      - name: Apply ${{ matrix.module }}
+        working-directory: terragrunt/env/staging/${{ matrix.module }}
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+  terragrunt-apply-group2:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    needs: terragrunt-apply-group1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: database
+          - module: elasticache
+          - module: load_balancer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group2
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply ${{ matrix.module }}
+        working-directory: terragrunt/env/staging/${{ matrix.module }}
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+  terragrunt-apply-group3:
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    needs: terragrunt-apply-group2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform Tools
+        uses: cds-snc/terraform-tools-setup@v1
+
+      - name: Configure aws credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-apply
+          role-session-name: TFApply-group3
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply ecs
+        working-directory: terragrunt/env/staging/ecs
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Apply api_gateway
+        working-directory: terragrunt/env/staging/api_gateway
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Apply web
+        working-directory: terragrunt/env/staging/web
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        
+      - name: Apply data_import
+        working-directory: terragrunt/env/staging/data_import
+        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+        
+      - name: Apply update_db
+        working-directory: terragrunt/env/staging/update_db
         run: terragrunt apply --terragrunt-non-interactive -auto-approve
