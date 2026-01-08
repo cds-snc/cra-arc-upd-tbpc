@@ -1,23 +1,23 @@
-name: 'Terraform apply - Production'
+name: Terraform Plan - Staging
 
 on:
   workflow_dispatch:
-  release:
-    types:
-      - published
+  pull_request:
+    branches:
+      - staging
     paths:
       - 'terragrunt/**'
-      - '!terragrunt/env/staging/**'
-      - '.github/workflows/prod/tf_apply_production.yml'
+      - '!terragrunt/env/production/**'
+      - '.github/workflows/tf_plan_staging.yml'
 
 env:
   AWS_REGION: ca-central-1
-  TERRAFORM_VERSION: 1.11.2 # Align with plan workflow
-  TERRAGRUNT_VERSION: 0.78.0 # Align with plan workflow
-  AA_CREDS_POOL: ${{ secrets.AA_CREDS_POOL }}
+  TERRAFORM_VERSION: 1.11.2
+  TERRAGRUNT_VERSION: 0.78.0
+  AA_CREDS_POOL: ${{ secrets.AA_CREDS_POOL_STAGING }}
   AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
-  AW_CLIENT_ID: ${{ secrets.AW_CLIENT_ID }}
-  AW_CLIENT_SECRET: ${{ secrets.AW_CLIENT_SECRET }}
+  AW_CLIENT_ID: ${{ secrets.AW_CLIENT_ID_STAGING }}
+  AW_CLIENT_SECRET: ${{ secrets.AW_CLIENT_SECRET_STAGING }}
   AW_COMPANY_ID: ${{ secrets.AW_COMPANY_ID }}
   AW_ORGANIZATION_ID: ${{ secrets.AW_ORGANIZATION_ID }}
   AW_REPORTSUITE_ID: ${{ secrets.AW_REPORTSUITE_ID }}
@@ -28,8 +28,8 @@ env:
   FEEDBACK_API_HOST: ${{ secrets.FEEDBACK_API_HOST }}
   FEEDBACK_API_USERNAME: ${{ secrets.FEEDBACK_API_USERNAME }}
   FEEDBACK_API_PASSWORD: ${{ secrets.FEEDBACK_API_PASSWORD }}
-  GSC_EMAIL: ${{ secrets.GSC_EMAIL }}
-  GSC_KEY: ${{ secrets.GSC_KEY }}
+  GSC_EMAIL: ${{ secrets.GSC_EMAIL_STAGING }}
+  GSC_KEY: ${{ secrets.GSC_KEY_STAGING }}
   NOTIFY_API_KEY: ${{ secrets.NOTIFY_API_KEY }}
   NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
   NOTIFY_EMAIL_2: ${{ secrets.NOTIFY_EMAIL_2 }}
@@ -78,18 +78,26 @@ permissions:
   statuses: write
 
 jobs:
-  # set up job groups to deploy resources in parallel where possible, while ensuring dependencies are met
-  terragrunt-apply-group1:
+  terraform-plan:
     if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
     strategy:
       fail-fast: false
       matrix:
         include:
+          # List the environment directories under terragrunt/env/staging/
+          - module: api_gateway
+          - module: database
           - module: ecr
+          - module: ecs
+          - module: elasticache
+          - module: load_balancer
           - module: network
           - module: s3
           - module: ssm
           - module: route53
+          - module: web
+          - module: data_import
+          - module: update_db
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,77 +109,15 @@ jobs:
       - name: Configure aws credentials using OIDC
         uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
-          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
-          role-session-name: TFApply-group1
+          role-to-assume: arn:aws:iam::211125499457:role/cra-arc-upd-tbpc-plan
+          role-session-name: TFPlan
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Apply ${{ matrix.module }}
-        working-directory: terragrunt/env/production/${{ matrix.module }}
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-
-  terragrunt-apply-group2:
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
-    needs: terragrunt-apply-group1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - module: database
-          - module: elasticache
-          - module: load_balancer
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform Tools
-        uses: cds-snc/terraform-tools-setup@v1
-
-      - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+      - name: Terraform plan
+        uses: cds-snc/terraform-plan@e710cb1446e5dfe69a0182603fb06b5282d7eb07 # v3.4.3
         with:
-          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
-          role-session-name: TFApply-group2
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Apply ${{ matrix.module }}
-        working-directory: terragrunt/env/production/${{ matrix.module }}
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-
-  terragrunt-apply-group3:
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
-    needs: terragrunt-apply-group2
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Terraform Tools
-        uses: cds-snc/terraform-tools-setup@v1
-
-      - name: Configure aws credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
-        with:
-          role-to-assume: arn:aws:iam::480754269604:role/cra-arc-upd-tbpc-apply
-          role-session-name: TFApply-group3
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Apply ecs
-        working-directory: terragrunt/env/production/ecs
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-
-      - name: Apply api_gateway
-        working-directory: terragrunt/env/production/api_gateway
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-
-      - name: Apply web
-        working-directory: terragrunt/env/production/web
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-        
-      - name: Apply data_import
-        working-directory: terragrunt/env/production/data_import
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
-        
-      - name: Apply update_db
-        working-directory: terragrunt/env/production/update_db
-        run: terragrunt apply --terragrunt-non-interactive -auto-approve
+          comment-delete: true
+          comment-title: 'Staging: ${{ matrix.module }}'
+          directory: ./terragrunt/env/staging/${{ matrix.module }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          terragrunt: true
