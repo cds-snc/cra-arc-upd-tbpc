@@ -81,8 +81,52 @@ permissions:
   statuses: write
 
 jobs:
+  check-affected:
+    name: Check if web app is affected
+    runs-on: ubuntu-latest
+    outputs:
+      is_affected: ${{ contains(fromJson(steps.affected-apps.outputs.affected_apps), 'upd') }}
+    steps:
+      - name: Checkout [staging branch]
+        uses: actions/checkout@v4
+        with:
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0
+          filter: tree:0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.0
+
+      - name: Use the node_modules cache if available [npm]
+        id: use-npm-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-24.11.0-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.use-npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Find affected SHAs
+        id: affected-shas
+        uses: nrwl/nx-set-shas@v4 # Sets the NX_BASE and NX_HEAD env variables
+        with:
+          main-branch-name: main # The branch used to find the base SHA
+
+      - name: Determine affected apps
+        id: affected-apps
+        run: |
+          AFFECTED_APPS=$(npx nx show projects --affected --with-target build --type app --json --base ${{ env.NX_BASE }} --head ${{ env.NX_HEAD }})
+
+          echo "affected_apps=$AFFECTED_APPS" >> $GITHUB_OUTPUT
+      
+
   check-cloud-available:
     name: Check Nx Cloud availability
+    needs: check-affected
+    # if: needs.check-affected.outputs.is_affected == 'true' # after initial deployment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,8 +145,9 @@ jobs:
 
   build:
     name: Nx Cloud - Build web - Main Job
+    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success') && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
     if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success')
-    needs: check-cloud-available
+    needs: [check-cloud-available, check-affected]
     uses: ./.github/workflows/nx-cloud-main.yml
     secrets:
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
@@ -128,8 +173,9 @@ jobs:
 
   agents:
     name: Nx Cloud - Build web - Agents
+    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true' && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
     if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true'
-    needs: check-cloud-available
+    needs: [check-cloud-available, check-affected]
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.15.0
     secrets:
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
@@ -139,8 +185,9 @@ jobs:
 
   upload:
     name: Upload web files to S3
+    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
     if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
-    needs: build
+    needs: [build, check-affected]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
