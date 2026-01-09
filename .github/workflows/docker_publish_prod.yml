@@ -23,13 +23,16 @@ env:
 
 jobs:
   cache-deps:
-    name: Pull request merge - Validate npm cache for main branch
+    name: Validate npm cache for main branch and get affected apps
     runs-on: ubuntu-latest
+    outputs:
+      affected_apps: ${{ steps.affected-apps.outputs.affected_apps }}
     steps:
       - name: Checkout [main]
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          filter: tree:0
 
       - uses: actions/setup-node@v4
         with:
@@ -45,6 +48,41 @@ jobs:
       - name: Install dependencies
         if: steps.use-npm-cache.outputs.cache-hit != 'true'
         run: npm ci
+
+      - name: Find affected SHAs
+        id: affected-shas
+        uses: nrwl/nx-set-shas@v4 # Sets the NX_BASE and NX_HEAD env variables
+        with:
+          main-branch-name: main
+
+      - name: Check if Python projects are affected
+        id: check-python
+        # Manually check if files under the python directory have changed with git using the SHAs set in the previous step
+        run: |
+          AFFECTED_PYTHON_FILES=$(git diff --name-only ${{ env.NX_BASE }} ${{ env.NX_HEAD }} | grep "^python/" || true)
+          if [ -z "$AFFECTED_PYTHON_FILES" ]; then
+            echo "No Python files affected."
+            echo "python_affected=false" >> $GITHUB_OUTPUT
+          else
+            echo "Python files affected: $AFFECTED_PYTHON_FILES"
+            echo "python_affected=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine affected apps
+        id: affected-apps
+        run: |
+          AFFECTED_APPS=$(npx nx show projects --affected --with-target build --type app --json --base ${{ env.NX_BASE }} --head ${{ env.NX_HEAD }})
+
+          if [ "${{ steps.check-python.outputs.python_affected }}" == "true" ]; then
+            if [ -z "$AFFECTED_APPS" ]; then
+              AFFECTED_APPS="[\"python\"]"
+            else
+              AFFECTED_APPS=$(echo $AFFECTED_APPS | jq '. + ["python"]')
+            fi
+          fi
+
+          echo "Affected apps: $AFFECTED_APPS"
+          echo "affected_apps=$AFFECTED_APPS" >> $GITHUB_OUTPUT
 
   build-and-push-image:
     needs: cache-deps
@@ -91,6 +129,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image (web)
+        # if: contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -102,6 +141,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (nginx)
+        # if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'upd') # after initial deployment
         if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
@@ -114,6 +154,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (db-updater)
+        # if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'db-updater') # after initial deployment
         if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
@@ -126,6 +167,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (data-import)
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python') # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
@@ -137,6 +179,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (update-db)
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (contains(fromJson(needs.cache-deps.outputs.affected_apps), 'update-db-task') || contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python')) # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         uses: docker/build-push-action@v6
         with:
@@ -148,12 +191,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Restart ECS
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         run: |
           aws ecs update-service --cluster cra-upd-dashboard-cluster --service cra-upd-dashboard-app-service --force-new-deployment > /dev/null 2>&1
 
       # Allow this step to fail so we can handle success/failure and report it to slack. By default it waits for 10 minutes
       - name: Wait for ECS Stability
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         id: ecs_wait
         continue-on-error: true
@@ -167,13 +212,14 @@ jobs:
       # todo: add this back in once we have a stable deployment
       # # Slack notification on failed ECS wait
       # - name: Slack Notify Failure
-      #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && steps.ecs_wait.outcome == 'failure'
+      #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'failure'
       #   run: |
       #     curl -X POST -H 'Content-type: application/json' \
       #     --data '{"text": "❌ ECS deployment for cra-upd-dashboard (production) failed to stabilize."}' \
       #     ${{ secrets.SLACK_NOTIFY_WEBHOOK }}
 
       - name: Report deployment to Sentinel
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'success' # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && steps.ecs_wait.outcome == 'success'
         uses: cds-snc/sentinel-forward-data-action@main
         with:
@@ -183,6 +229,7 @@ jobs:
           log_analytics_workspace_key: ${{ secrets.LOG_ANALYTICS_WORKSPACE_KEY }}
 
       - name: Docker generate SBOM
+        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
         uses: cds-snc/security-tools/.github/actions/generate-sbom@34794baf2af592913bb5b51d8df4f8d0acc49b6f # v3.2.0
         env:
