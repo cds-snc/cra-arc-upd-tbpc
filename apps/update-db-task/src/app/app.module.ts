@@ -1,7 +1,6 @@
 import { ConsoleLogger, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import {
-  DataIntegrityModule,
   DataIntegrityService,
 } from '@dua-upd/data-integrity';
 import { DbUpdateModule } from '@dua-upd/db-update';
@@ -16,7 +15,6 @@ import { UpdateTaskService } from './app.service';
       cache: true,
       isGlobal: true,
     }),
-    DataIntegrityModule,
     DbUpdateModule.register(environment.production),
     DbModule.forRoot(environment.production, environment.dbHost),
   ],

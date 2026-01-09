@@ -807,6 +807,11 @@ export class AirtableService {
             'project_attachments blob model not found',
           );
 
+          if (filename.endsWith('.svg')) {
+            this.logger.log(`Skipping SVG attachment: ${filename}`);
+            return;
+          }
+
           const blobClient =
             this.blobService.blobModels.project_attachments.blob(filename);
 
@@ -829,7 +834,9 @@ export class AirtableService {
         }),
       )
         .then((results) => {
-          for (const { blobFilename, storagePath } of results) {
+          for (const { blobFilename, storagePath } of results.filter(
+            (attachment) => !!attachment,
+          )) {
             if (!project.attachments) {
               continue;
             }
@@ -896,6 +903,11 @@ export class AirtableService {
           );
 
           for (const [i, { url, filename, size }] of attachments.entries()) {
+            if (filename.endsWith('.svg')) {
+              this.logger.log(`Skipping SVG attachment: ${filename}`);
+              continue;
+            }
+
             const blobClient =
               this.blobService.blobModels.reports.blob(filename);
 
