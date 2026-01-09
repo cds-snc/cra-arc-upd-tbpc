@@ -39,7 +39,7 @@ remote_state {
   }
   config = {
     encrypt             = true
-    bucket              = "${local.vars.inputs.cost_center_code}-tf"
+    bucket              = "${local.vars.inputs.cost_center_code}-${local.vars.inputs.env}-tf"
     dynamodb_table      = "terraform-state-lock-dynamo"
     region              = "ca-central-1"
     key                 = "${path_relative_to_include()}/terraform.tfstate"
