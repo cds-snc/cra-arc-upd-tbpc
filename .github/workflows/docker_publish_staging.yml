@@ -105,6 +105,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.repository == 'cds-snc/cra-arc-upd-tbpc' && 'staging' || 'main' }}
 
       - name: Configure aws credentials using OIDC
         if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
