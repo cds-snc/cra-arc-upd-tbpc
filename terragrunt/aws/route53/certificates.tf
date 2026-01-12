@@ -20,7 +20,7 @@ resource "aws_route53_record" "cra_upd_cloudfront_cert_validation_record" {
   zone_id = aws_route53_zone.cra_upd_hosted_zone.zone_id
 
   for_each = {
-    for dvo in one(aws_acm_certificate.cra_upd_cloudfront_acm[*].domain_validation_options) : dvo.domain_name => {
+    for dvo in coalesce(one(aws_acm_certificate.cra_upd_cloudfront_acm[*].domain_validation_options), []) : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
