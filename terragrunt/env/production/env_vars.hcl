@@ -7,5 +7,6 @@ inputs = {
   billing_tag_value  = "CraUpdDashboard"
   domain             = "prod.cra-arc.cdssandbox.xyz" # temporary until we switch the domain
   # domain             = "cra-arc.alpha.canada.ca"
+  validate_domain    = false
   ecs_instance_count = 1
 }
