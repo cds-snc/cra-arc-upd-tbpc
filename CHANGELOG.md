@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.0...v4.0.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* filter out empty search terms to avoid throwing an error in overview ([0037577](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/0037577eeb34e19997b271df314a0402dcce2f98))
+* filter out empty search terms to avoid throwing an error in overview ([447d50f](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/447d50fb6791e14a316baebd41a568d4535672d9))
+* Remove unnecessary import in db-update-task causing strange issues ([f4119dc](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f4119dc3ddde83ccb2ff3cc83a2cf4ebeceb1085))
+* Skip uploading svg attachments for projects and reports ([b3de6aa](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b3de6aaf5fa0b6f017f05c4dbbf97f3e02589093))
+* Use proper GSC secrets and path for staging actions ([700b04e](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/700b04e4435dc03178952111ef8e7357dbe04918))
+
 ## [4.0.0](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.0...v4.0.0) (2025-12-17)
 
 
