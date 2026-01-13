@@ -83,7 +83,7 @@ resource "aws_cloudfront_vpc_origin" "load_balancer_vpc_origin" {
 
 resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   enabled             = true
-  aliases             = [var.domain]
+  aliases             = var.validate_domain ? [var.domain] : []
   default_root_object = "index.html"
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
