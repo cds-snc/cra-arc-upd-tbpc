@@ -228,6 +228,7 @@ export class PagesService {
       'visits_referrer_searchengine',
       'visits_referrer_social',
       'visits_referrer_typed_bookmarked',
+      'visits_referrer_convo_ai',
     ] as (keyof PageAggregatedData | MetricsConfig<PageAggregatedData>)[];
 
     const dateRangeData: PageAggregatedData = (

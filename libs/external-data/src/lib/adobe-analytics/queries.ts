@@ -66,6 +66,7 @@ export const overallMetricsQueryConfig: MetricsConfig = {
   visits_referrer_searchengine: CALCULATED_METRICS.REF_SEARCH_ENGINE,
   visits_referrer_social: CALCULATED_METRICS.REF_SOCIAL_NETWORKS,
   visits_referrer_typed_bookmarked: CALCULATED_METRICS.REF_TYPED_BOOKMARKS,
+  visits_referrer_convo_ai: CALCULATED_METRICS.REF_CONVO_AI,
   visits_device_other: CALCULATED_METRICS.DEVICES_OTHER,
   visits_device_desktop: CALCULATED_METRICS.DEVICES_DESKTOP,
   visits_device_mobile: CALCULATED_METRICS.DEVICES_MOBILE,
