@@ -520,6 +520,7 @@ export class PagesDetailsFacade {
     visits_referrer_searchengine: 'Search Engines',
     visits_referrer_typed_bookmarked: 'Typed/Bookmarked',
     visits_referrer_social: 'Social Networks',
+    visits_referrer_convo_ai: 'Conversational AI Tools',
   } as Record<keyof PageAggregatedData, string>;
 
   referrerType$ = combineLatest([

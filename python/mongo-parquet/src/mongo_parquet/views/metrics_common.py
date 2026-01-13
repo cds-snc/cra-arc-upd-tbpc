@@ -49,6 +49,7 @@ metrics_common_schema = {
     "visits_referrer_searchengine": int32(),
     "visits_referrer_social": int32(),
     "visits_referrer_typed_bookmarked": int32(),
+    "visits_referrer_convo_ai": int32(),
 }
 
 metrics_common_top_level_aggregations_expr = [
@@ -84,6 +85,7 @@ metrics_common_top_level_aggregations_expr = [
     pl.col("visits_referrer_searchengine").sum(),
     pl.col("visits_referrer_social").sum(),
     pl.col("visits_referrer_typed_bookmarked").sum(),
+    pl.col("visits_referrer_convo_ai").sum(),
     pl.col("visits_device_other").sum(),
     pl.col("visits_device_desktop").sum(),
     pl.col("visits_device_mobile").sum(),

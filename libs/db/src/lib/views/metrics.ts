@@ -33,6 +33,7 @@ export const topLevelMetricsGrouping = {
   visits_referrer_typed_bookmarked: {
     $sum: '$visits_referrer_typed_bookmarked',
   },
+  visits_referrer_convo_ai: { $sum: '$visits_referrer_convo_ai' },
   visits_device_other: { $sum: '$visits_device_other' },
   visits_device_desktop: { $sum: '$visits_device_desktop' },
   visits_device_mobile: { $sum: '$visits_device_mobile' },

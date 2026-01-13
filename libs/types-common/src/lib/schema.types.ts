@@ -140,6 +140,7 @@ export interface IMetrics {
   visits_referrer_searchengine: number;
   visits_referrer_social: number;
   visits_referrer_typed_bookmarked: number;
+  visits_referrer_convo_ai: number;
   visits_device_other: number;
   visits_device_desktop: number;
   visits_device_mobile: number;

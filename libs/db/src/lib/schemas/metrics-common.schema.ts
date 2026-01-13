@@ -127,4 +127,7 @@ export class MetricsCommon implements IMetrics {
 
   @Prop({ type: Number })
   visits_referrer_typed_bookmarked = 0;
+
+  @Prop({ type: Number })
+  visits_referrer_convo_ai = 0;
 }
