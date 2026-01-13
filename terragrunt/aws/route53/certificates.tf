@@ -3,8 +3,6 @@
 
 # CloudFront
 resource "aws_acm_certificate" "cra_upd_cloudfront_acm" {
-  count = var.validate_domain ? 1 : 0
-
   domain_name               = var.domain
   subject_alternative_names = ["*.${var.domain}"]
   validation_method         = "DNS"
@@ -20,7 +18,7 @@ resource "aws_route53_record" "cra_upd_cloudfront_cert_validation_record" {
   zone_id = aws_route53_zone.cra_upd_hosted_zone.zone_id
 
   for_each = {
-    for dvo in coalesce(one(aws_acm_certificate.cra_upd_cloudfront_acm[*].domain_validation_options), []) : dvo.domain_name => {
+    for dvo in aws_acm_certificate.cra_upd_cloudfront_acm.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
@@ -37,7 +35,7 @@ resource "aws_route53_record" "cra_upd_cloudfront_cert_validation_record" {
 resource "aws_acm_certificate_validation" "cra_upd_cloudfront_cert_validation" {
   count = var.validate_domain ? 1 : 0
 
-  certificate_arn         = one(aws_acm_certificate.cra_upd_cloudfront_acm[*].arn)
+  certificate_arn         = aws_acm_certificate.cra_upd_cloudfront_acm.arn
   validation_record_fqdns = [for record in aws_route53_record.cra_upd_cloudfront_cert_validation_record : record.fqdn]
 
   provider = aws.us-east-1

@@ -7,5 +7,5 @@ output "loadbalancer_certificate_arn" {
 }
 
 output "cloudfront_certificate_arn" {
-  value = one(aws_acm_certificate.cra_upd_cloudfront_acm[*].arn)
+  value = aws_acm_certificate.cra_upd_cloudfront_acm.arn
 }
