@@ -174,7 +174,7 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = false
+    cloudfront_default_certificate = local.certificate_options.cloudfront_default_certificate
     acm_certificate_arn            = local.certificate_options.acm_certificate_arn
     ssl_support_method             = local.certificate_options.ssl_support_method
     minimum_protocol_version       = local.certificate_options.minimum_protocol_version
