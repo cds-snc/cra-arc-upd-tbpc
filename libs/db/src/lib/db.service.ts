@@ -37,7 +37,7 @@ import {
   type GcTasksModel,
   type FeedbackModel,
   type PageModel,
-} from '../';
+} from './db.schemas';
 import {
   arrayToDictionary,
   AsyncLogTiming,
