@@ -2,6 +2,18 @@ locals {
   cloudfront_web_origin_id       = "upd_web"
   cloudfront_api_origin_id       = "upd_api"
   cloudfront_documents_origin_id = "upd_documents"
+
+  certificate_options = var.validate_domain ? {
+    cloudfront_default_certificate = false
+    acm_certificate_arn            = var.cloudfront_acm_cert
+    ssl_support_method             = "sni-only"
+    minimum_protocol_version       = "TLSv1.2_2021"
+    } : {
+    cloudfront_default_certificate = true
+    acm_certificate_arn            = null
+    ssl_support_method             = null
+    minimum_protocol_version       = null
+  }
 }
 
 resource "aws_cloudfront_origin_access_identity" "origin_access_identity" {
@@ -163,9 +175,9 @@ resource "aws_cloudfront_distribution" "cra_upd_cf_distribution" {
 
   viewer_certificate {
     cloudfront_default_certificate = false
-    acm_certificate_arn            = var.cloudfront_acm_cert
-    ssl_support_method             = "sni-only"
-    minimum_protocol_version       = "TLSv1.2_2021"
+    acm_certificate_arn            = local.certificate_options.acm_certificate_arn
+    ssl_support_method             = local.certificate_options.ssl_support_method
+    minimum_protocol_version       = local.certificate_options.minimum_protocol_version
   }
 }
 

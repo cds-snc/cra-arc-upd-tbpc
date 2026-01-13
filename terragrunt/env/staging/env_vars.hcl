@@ -6,4 +6,5 @@ inputs = {
   billing_tag_value  = "CraUpdDashboard"
   domain             = "cra-arc.cdssandbox.xyz"
   ecs_instance_count = 1
+  validate_domain    = true
 }

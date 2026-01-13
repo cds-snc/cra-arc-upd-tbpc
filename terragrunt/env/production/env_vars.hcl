@@ -8,4 +8,5 @@ inputs = {
   domain             = "prod.cra-arc.cdssandbox.xyz" # temporary until we switch the domain
   # domain             = "cra-arc.alpha.canada.ca"
   ecs_instance_count = 1
+  validate_domain    = false
 }
