@@ -2,6 +2,22 @@
 # Application Load Balancer for ECS
 #
 
+locals {
+  # Without a valid domain/certificate, we need to use regular HTTP
+  # If validate_domain is false, the ALB will be non-functional, but allows for a successful deployment
+  listener_options = var.validate_domain ? {
+    port            = 443
+    protocol        = "HTTPS"
+    ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+    certificate_arn = var.loadbalancer_certificate_arn
+  } : {
+    port            = 80
+    protocol        = "HTTP"
+    ssl_policy      = null
+    certificate_arn = null
+  }
+}
+
 resource "aws_lb" "cra_upd_ecs_alb" {
   load_balancer_type = "application"
   internal           = true
@@ -31,10 +47,10 @@ resource "aws_lb_target_group" "cra_upd_ecs_lb_target_group" {
 
 resource "aws_lb_listener" "cra_upd_ecs_alb_listener" {
   load_balancer_arn = aws_lb.cra_upd_ecs_alb.arn
-  port              = 443
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
-  certificate_arn   = var.loadbalancer_certificate_arn
+  port              = local.listener_options.port
+  protocol          = local.listener_options.protocol
+  ssl_policy        = local.listener_options.ssl_policy
+  certificate_arn   = local.listener_options.certificate_arn
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.cra_upd_ecs_lb_target_group.arn

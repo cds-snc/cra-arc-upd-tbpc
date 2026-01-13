@@ -46,8 +46,15 @@ variable "environment" {
   }))
   sensitive = true
 }
+
 variable "secrets" {
   description = "The secrets to use for deployment"
   type        = map(string)
   sensitive   = true
+}
+
+variable "validate_domain" {
+  description = "Whether to validate the domain (will make CloudFront/ALB non-functional if false)"
+  type        = bool
+  default     = true
 }

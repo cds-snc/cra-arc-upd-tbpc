@@ -5,7 +5,3 @@ include "root" {
 terraform {
   source = "../../../aws//route53"
 }
-
-inputs = {
-  validate_domain = false
-}

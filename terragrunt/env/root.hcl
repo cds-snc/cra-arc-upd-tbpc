@@ -14,9 +14,10 @@ inputs = {
   billing_code              = "${local.vars.inputs.cost_center_code}"
   billing_tag_value         = "${local.vars.inputs.billing_tag_value}"
   cbs_satellite_bucket_name = "cbs-satellite-${local.vars.inputs.account_id}"
-  secrets                   = local.env.inputs.secrets
-  # runtime environment variables
-  environment = local.env.inputs.env
+
+  secrets         = local.env.inputs.secrets
+  environment     = local.env.inputs.env # runtime environment variables (not to be confused with `env` above)
+  validate_domain = local.vars.inputs.validate_domain
 }
 
 generate "provider" {
