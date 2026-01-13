@@ -10,7 +10,7 @@ locals {
     protocol        = "HTTPS"
     ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
     certificate_arn = var.loadbalancer_certificate_arn
-  } : {
+    } : {
     port            = 80
     protocol        = "HTTP"
     ssl_policy      = null
