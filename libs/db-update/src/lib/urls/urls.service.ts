@@ -210,7 +210,7 @@ export class UrlsService {
     // Updating will stop after 3 hours
     wait(hours(3)).then(() => {
       abortController.abort();
-    })
+    });
 
     const urlsDataDict = arrayToDictionary(urls, 'url');
 
@@ -374,10 +374,16 @@ export class UrlsService {
             if (!urls.includes(response.url)) {
               urls.push(response.url);
 
-              await urlBlob.setMetadata({
-                ...blobMetadata,
-                urls: JSON.stringify(urls),
-              });
+              try {
+                await urlBlob.setMetadata({
+                  ...blobMetadata,
+                  urls: JSON.stringify(urls),
+                });
+              } catch (err) {
+                this.logger.error(
+                  `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${err.message}`,
+                );
+              }
             }
           } else {
             try {
@@ -424,10 +430,16 @@ export class UrlsService {
                 if (!urls.includes(response.url)) {
                   urls.push(response.url);
 
-                  await urlBlob.setMetadata({
-                    ...blobMetadata,
-                    urls: JSON.stringify(urls),
-                  });
+                  try {
+                    await urlBlob.setMetadata({
+                      ...blobMetadata,
+                      urls: JSON.stringify(urls),
+                    });
+                  } catch (err) {
+                    this.logger.error(
+                      `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${err.message}`,
+                    );
+                  }
                 }
               } else {
                 await urlBlob.uploadFromString(processedHtml.body, {

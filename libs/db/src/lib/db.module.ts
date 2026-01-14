@@ -56,7 +56,7 @@ export class DbModule {
     return MongooseModule.forRoot(connectionString, {
       connectionName: 'defaultConnection',
       dbName,
-      compressors: ['zstd', 'snappy', 'zlib'],
+      compressors: ['zstd', 'snappy'],
       retryWrites: true,
       ...config,
     });

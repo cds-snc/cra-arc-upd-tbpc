@@ -3,9 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { UpdateTaskService } from './app/app.service';
 
-const app = await NestFactory.create(AppModule);
-const globalPrefix = 'db-update-task';
-app.setGlobalPrefix(globalPrefix);
+const app = await NestFactory.createApplicationContext(AppModule);
 
 Logger.log(
   `🚀 DB Update task starting`,
@@ -13,4 +11,4 @@ Logger.log(
 
 await app.select(AppModule).get(UpdateTaskService).updateDatabase();
 
-await app.close();
+await app.enableShutdownHooks().close();

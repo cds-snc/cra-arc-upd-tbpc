@@ -1,4 +1,4 @@
-import { Injectable, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import type {
   AnyBulkWriteOperation,
@@ -72,7 +72,7 @@ import {
  * [Aggregation pipeline reference]{@link https://www.mongodb.com/docs/v4.4/reference/aggregation/}
  */
 @Injectable()
-export class DbService implements OnApplicationBootstrap {
+export class DbService implements OnApplicationBootstrap, OnApplicationShutdown {
   readonly collections = {
     callDrivers: this.callDrivers,
     feedback: this.feedback,
@@ -165,10 +165,14 @@ export class DbService implements OnApplicationBootstrap {
   ) {}
 
   onApplicationBootstrap() {
-    this.ensureIndexes(true).catch((err) => {
+    this.ensureIndexes().catch((err) => {
       console.error('Error ensuring indexes on application bootstrap:');
       console.error(err);
     });
+  }
+  
+  async onApplicationShutdown() {
+    await this.connection.close();
   }
 
   async ensureIndexes(verbose = false) {
@@ -182,7 +186,7 @@ export class DbService implements OnApplicationBootstrap {
         this.collections[collection as keyof typeof this.collections];
 
       if (verbose) {
-        model.on('index', (error: Error) => {
+        model.once('index', (error: Error) => {
           if (error) {
             console.error(`Index creation error for ${collection}:`);
             console.error(error);
@@ -197,7 +201,7 @@ export class DbService implements OnApplicationBootstrap {
       const model = this.views[view as keyof typeof this.views].model;
 
       if (verbose) {
-        model.on('index', (error: Error) => {
+        model.once('index', (error: Error) => {
           if (error) {
             console.error(`Index creation error for ${view}:`);
             console.error(error);
