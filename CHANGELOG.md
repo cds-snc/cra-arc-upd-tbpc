@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.1...v4.0.2) (2026-01-14)
+
+
+### Bug Fixes
+
+* Catch and ignore errors when blob metadata exceeds size limit ([d661d74](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/d661d745ab846fb32cab197af6dd4cb4eb9b3239))
+* Prevent node process from hanging during db updates ([2fcf132](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2fcf132da1f057a64ed6a17ff8aaf45b2f6caea8))
+* Weird import issue causing db-scripts to error ([7b4d3bb](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/7b4d3bbc186d1b2df603b8e307768bb126cd0976))
+
 ## [4.0.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.0...v4.0.1) (2026-01-12)
 
 
