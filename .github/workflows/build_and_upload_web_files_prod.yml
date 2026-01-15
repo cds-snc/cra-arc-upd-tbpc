@@ -126,7 +126,7 @@ jobs:
   check-cloud-available:
     name: Check Nx Cloud availability
     needs: check-affected
-    # if: needs.check-affected.outputs.is_affected == 'true' # after initial deployment
+    if: needs.check-affected.outputs.is_affected == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -145,8 +145,7 @@ jobs:
 
   build:
     name: Nx Cloud - Build web - Main Job
-    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success') && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success')
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (github.event_name == 'push' || github.event.workflow_run.conclusion == 'success') && needs.check-affected.outputs.is_affected == 'true'
     needs: [check-cloud-available, check-affected]
     uses: ./.github/workflows/nx-cloud-main.yml
     secrets:
@@ -173,8 +172,7 @@ jobs:
 
   agents:
     name: Nx Cloud - Build web - Agents
-    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true' && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true'
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-cloud-available.outputs.cloud-available == 'true' && needs.check-affected.outputs.is_affected == 'true'
     needs: [check-cloud-available, check-affected]
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.15.0
     secrets:
@@ -185,8 +183,7 @@ jobs:
 
   upload:
     name: Upload web files to S3
-    # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-affected.outputs.is_affected == 'true' # after initial deployment
-    if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+    if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && needs.check-affected.outputs.is_affected == 'true'
     needs: [build, check-affected]
     runs-on: ubuntu-latest
     steps:
