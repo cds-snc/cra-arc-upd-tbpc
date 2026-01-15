@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.2...v4.0.3) (2026-01-15)
+
+
+### Bug Fixes
+
+* Add 5 minute timeout to prevent hanging process in update-db-task ([7e3d7c3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/7e3d7c35d81dcc02d94ddefbb1bc6da10233c5e9))
+* Omit content-md5 from copy operation & automatically renew aws credentials ([97adcc3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/97adcc348576d0e0b888ef1a11d903375a995d5d))
+
 ## [4.0.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.1...v4.0.2) (2026-01-14)
 
 
