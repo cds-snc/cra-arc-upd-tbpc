@@ -73,5 +73,4 @@ inputs = {
   update_db_ecs_cpu            = 4096
   update_db_ecs_memory         = 8192
   schedule_cron_expression     = "cron(0 3 * * ? *)" # Every day at 3:00am EST
-  # schedule_cron_expression     = "cron(0 0 1 1 ? *)" # Essentially disable until issues are fixed (would run once a year on Jan 1)
 }

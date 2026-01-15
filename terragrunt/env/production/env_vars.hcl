@@ -5,8 +5,7 @@ inputs = {
   cost_center_code   = "cra-upd-dashboard"
   billing_tag_key    = "CostCentre"
   billing_tag_value  = "CraUpdDashboard"
-  domain             = "prod.cra-arc.cdssandbox.xyz" # temporary until we switch the domain
-  # domain             = "cra-arc.alpha.canada.ca"
+  domain             = "cra-arc.alpha.canada.ca"
   ecs_instance_count = 1
-  validate_domain    = false
+  validate_domain    = true
 }
