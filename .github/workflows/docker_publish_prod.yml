@@ -129,7 +129,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image (web)
-        # if: contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
+        if: contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -141,8 +141,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (nginx)
-        # if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'upd') # after initial deployment
-        if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'upd')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -154,8 +153,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (db-updater)
-        # if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'db-updater') # after initial deployment
-        if: github.repository != 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'db-updater')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -167,8 +165,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (data-import)
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python') # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -179,8 +176,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (update-db)
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (contains(fromJson(needs.cache-deps.outputs.affected_apps), 'update-db-task') || contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python')) # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (contains(fromJson(needs.cache-deps.outputs.affected_apps), 'update-db-task') || contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python'))
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -191,15 +187,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Restart ECS
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
         run: |
           aws ecs update-service --cluster cra-upd-dashboard-cluster --service cra-upd-dashboard-app-service --force-new-deployment > /dev/null 2>&1
 
       # Allow this step to fail so we can handle success/failure and report it to slack. By default it waits for 10 minutes
       - name: Wait for ECS Stability
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
         id: ecs_wait
         continue-on-error: true
         run: |
@@ -219,8 +213,7 @@ jobs:
       #     ${{ secrets.SLACK_NOTIFY_WEBHOOK }}
 
       - name: Report deployment to Sentinel
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'success' # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && steps.ecs_wait.outcome == 'success'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'success'
         uses: cds-snc/sentinel-forward-data-action@main
         with:
           input_data: '{"product": "cra-upd-dashboard", "version": "${{ github.sha }}", "repository": "${{ github.repository }}", "environment": "production"}'
@@ -229,8 +222,7 @@ jobs:
           log_analytics_workspace_key: ${{ secrets.LOG_ANALYTICS_WORKSPACE_KEY }}
 
       - name: Docker generate SBOM
-        # if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') # after initial deployment
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
         uses: cds-snc/security-tools/.github/actions/generate-sbom@34794baf2af592913bb5b51d8df4f8d0acc49b6f # v3.2.0
         env:
           TRIVY_DB_REPOSITORY: ${{ vars.TRIVY_DB_REPOSITORY }}
