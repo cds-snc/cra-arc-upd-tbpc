@@ -137,7 +137,7 @@ export class BlobStorageService {
                 fromEnv(),
                 fromSSO(),
                 fromContainerMetadata(),
-              ),
+              ).expireAfter(30 * 60_000), // automatically refresh credentials every 30 minutes
         );
       } catch (error) {
         console.error('Failed to initialize S3 storage client:', error);

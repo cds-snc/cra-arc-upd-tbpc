@@ -403,7 +403,6 @@ export class S3ObjectClient implements IStorageBlob {
           parseInt(headers.get('content-length') || '0', 10),
         ContentType: headers.get('content-type') || undefined,
         CacheControl: headers.get('cache-control') || undefined,
-        ContentMD5: headers.get('etag') || undefined,
       });
     } catch (err) {
       console.error(chalk.red('Error copying from url to storage'));
