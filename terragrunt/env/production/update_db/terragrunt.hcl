@@ -72,6 +72,5 @@ inputs = {
   container_secrets            = dependency.ssm.outputs.ssm_secret_arns
   update_db_ecs_cpu            = 4096
   update_db_ecs_memory         = 8192
-  # schedule_cron_expression     = "cron(0 2 * * ? *)" # Every day at 2:00am EST
-  schedule_cron_expression     = "cron(0 0 1 1 ? *)" # Essentially disable updates are stopped in Azure (would run once a year on Jan 1)
+  schedule_cron_expression     = "cron(0 2 * * ? *)" # Every day at 2:00am EST
 }
