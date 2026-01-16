@@ -2,6 +2,10 @@ name: Run Update DB ECS Task (Staging)
 on:
   workflow_dispatch: # Only run on manual triggering of the workflow
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write
   contents: read

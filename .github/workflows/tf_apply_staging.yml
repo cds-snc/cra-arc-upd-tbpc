@@ -69,6 +69,10 @@ env:
   NOTIFY_TEMPLATE_ID_FR: ${{ vars.NOTIFY_TEMPLATE_ID_FR }}
   STORAGE_URI_PREFIX: ${{ vars.STORAGE_URI_PREFIX }}
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write
   contents: read
