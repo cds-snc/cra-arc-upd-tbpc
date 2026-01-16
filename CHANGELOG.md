@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.3...v4.0.4) (2026-01-16)
+
+
+### Bug Fixes
+
+* Use S3 client for `copyFromUrl` if source is in S3 ([98623b4](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/98623b4199543a2990a0d3b296ab9d53333bbef0))
+
 ## [4.0.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.2...v4.0.3) (2026-01-15)
 
 
