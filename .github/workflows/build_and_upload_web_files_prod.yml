@@ -6,6 +6,9 @@ on:
     workflows: ['Terraform apply - Production']
     types:
       - completed
+  release:
+    types:
+      - published
 
 env:
   AWS_REGION: ca-central-1
@@ -87,7 +90,7 @@ jobs:
     outputs:
       is_affected: ${{ contains(fromJson(steps.affected-apps.outputs.affected_apps), 'upd') }}
     steps:
-      - name: Checkout [staging branch]
+      - name: Checkout [main branch]
         uses: actions/checkout@v4
         with:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
