@@ -246,6 +246,7 @@ export class S3ObjectModel implements IStorageModel<S3StorageClient> {
 export class S3ObjectClient implements IStorageBlob {
   private readonly path: string = '';
   private readonly container: S3Bucket;
+  private readonly bucketUrl: string;
   private overwrite = false;
   private compression?: CompressionAlgorithm | void;
 
@@ -264,17 +265,18 @@ export class S3ObjectClient implements IStorageBlob {
     this.name = objectPath;
     this.filename = objectName;
 
+    this.bucketUrl = `https://${this.container.bucketName}.s3.${
+      process.env.AWS_REGION || 'ca-central-1'
+    }.amazonaws.com`;
+
     if (config.compression) {
       this.setCompression(config.compression);
     }
   }
 
   get url() {
-    const region = process.env.AWS_REGION || 'ca-central-1';
     const objectKey = this.objectKey.replace(/^\//, ''); // Remove leading slash if present
-    return escapeURL(
-      `https://${this.container.bucketName}.s3.${region}.amazonaws.com/${objectKey}`,
-    );
+    return escapeURL(`${this.bucketUrl}/${objectKey}`);
   }
 
   async exists() {
@@ -378,7 +380,7 @@ export class S3ObjectClient implements IStorageBlob {
     return fileSizeBytes !== objectSize;
   }
 
-  async copyFromUrl(sourceUrl: string) {
+  async copyFromUrl(sourceUrl: string): Promise<void> {
     const objectExists = await this.exists();
 
     if (objectExists && !this.overwrite) {
@@ -388,22 +390,68 @@ export class S3ObjectClient implements IStorageBlob {
     }
 
     try {
+      // check if the source URL is actually in the same bucket, and if so, use CopyObjectCommand
+      const sourceHost = new URL(sourceUrl).hostname;
+
+      if (sourceHost === new URL(this.bucketUrl).hostname) {
+        const sourceKey = normalize(new URL(sourceUrl).pathname).replace(
+          /^\//,
+          '',
+        );
+
+        if (sourceKey === this.objectKey) {
+          console.log(
+            chalk.yellow(
+              `Source and destination are the same object: ${this.objectKey}. No action taken.`,
+            ),
+          );
+          return;
+        }
+
+        // Source is the same bucket, use CopyObjectCommand
+        const copyCommand = new CopyObjectCommand({
+          Bucket: this.container.bucketName,
+          CopySource: `${this.container.bucketName}/${sourceKey}`,
+          Key: this.objectKey,
+        });
+
+        const result = await this.container.getClient().send(copyCommand);
+
+        if (result.CopyObjectResult.LastModified) {
+          console.log(
+            `Successfully copied object within bucket: ${this.objectKey}`,
+          );
+        }
+
+        return;
+      }
+
+      // For external URLs, fetch the data and upload
+
       const response = await fetch(sourceUrl);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.error(chalk.red(`Error fetching from URL: ${sourceUrl}`));
+        throw new Error(
+          `HTTP error! status: ${response.status} ${response.statusText}`,
+        );
       }
 
       const headers = response.headers;
 
       const data = await response.blob();
 
-      await this.uploadStream(data.stream(), this.overwrite, {
-        ContentLength:
-          headers.get('content-length') &&
-          parseInt(headers.get('content-length') || '0', 10),
-        ContentType: headers.get('content-type') || undefined,
-        CacheControl: headers.get('cache-control') || undefined,
-      });
+      try {
+        await this.uploadStream(data.stream(), this.overwrite, {
+          ContentLength:
+            headers.get('content-length') &&
+            parseInt(headers.get('content-length') || '0', 10),
+          ContentType: headers.get('content-type') || undefined,
+          CacheControl: headers.get('cache-control') || undefined,
+        });
+      } catch (err) {
+        console.error(chalk.red('Error uploading fetched data to storage'));
+        throw err;
+      }
     } catch (err) {
       console.error(chalk.red('Error copying from url to storage'));
       throw err;
