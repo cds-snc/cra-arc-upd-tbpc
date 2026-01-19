@@ -19,7 +19,12 @@ COPY --from=builder /builder/dist/apps/ .
 
 
 FROM node:24.11.0-bookworm-slim AS node_base
-RUN apt-get update && apt-get install -y tzdata curl
+RUN apt-get update && apt-get install -y tzdata curl \
+    # Playwright/Chromium dependencies
+    libnss3 libatk-bridge2.0-0 libdrm2 libxkbcommon0 \
+    libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+    libgbm1 libasound2 libpango-1.0-0 libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
 ENV TZ=America/Toronto
 
 
@@ -28,6 +33,8 @@ WORKDIR /app
 RUN chown node:node ./
 COPY --from=apps ["apps/api/package.json", "apps/api/package-lock.json", "./"]
 RUN --mount=type=cache,target=/root/.npm npm ci --only-production
+# Install Playwright Chromium browser for accessibility testing
+RUN npx playwright install chromium
 COPY --from=apps apps/api/ .
 RUN curl -o /etc/ssl/global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 EXPOSE 9000
@@ -39,6 +46,8 @@ FROM node_base AS web-dev-base
 WORKDIR /app
 COPY ["dist/apps/api/package.json", "dist/apps/api/package-lock.json", "./"]
 RUN --mount=type=cache,target=/root/.npm npm ci --only-production
+# Install Playwright Chromium browser for accessibility testing
+RUN npx playwright install chromium
 
 
 FROM node_base AS web-dev

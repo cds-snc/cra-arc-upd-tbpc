@@ -8,6 +8,7 @@ import { globalColours } from '@dua-upd/utils-common';
 import type {
   ColumnConfig,
   AccessibilityAudit,
+  AccessibilityAuditNode,
 } from '@dua-upd/types-common';
 
 @Component({
@@ -97,40 +98,56 @@ export class PagesDetailsAccessibilityComponent {
     ];
   });
 
-  private manualVerificationMapping: { [key: string]: string } = {
-    'Interactive controls are keyboard focusable': 'accessibility-manual-interactive-control',
-    'Interactive elements indicate their purpose and state': 'accessibility-manual-interactive-elements',
-    'The page has a logical tab order': 'accessibility-manual-logical-tab',
-    'Visual order on the page follows DOM order': 'accessibility-manual-dom-order',
-    'User focus is not accidentally trapped in a region': 'accessibility-manual-focus-trap',
-    'The user\'s focus is directed to new content added to the page': 'accessibility-manual-new-content',
-    'HTML5 landmark elements are used to improve navigation': 'accessibility-manual-html5-landmark',
-    'Offscreen content is hidden from assistive technology': 'accessibility-manual-offscreen-content',
-    'Custom controls have associated labels': 'accessibility-manual-custom-control',
-    'Custom controls have ARIA roles': 'accessibility-manual-aria-roles'
+  // Impact order for sorting (lower = more severe)
+  private readonly impactOrder: Record<string, number> = {
+    critical: 0,
+    serious: 1,
+    moderate: 2,
+    minor: 3,
   };
 
+  // Categorized audits with failed tests sorted by impact severity
+  categorizedAudits = computed(() => {
+    const results = this.testResults();
+    if (!results?.data?.desktop?.audits) return null;
 
-  getCategorizedAudits(audits: AccessibilityAudit[]) {
-    const processedAudits = audits.map(audit => {
-      if (audit.category === 'manual_check') {
-        const translationKey = this.manualVerificationMapping[audit.title];
-        if (translationKey) {
-          return {
-            ...audit,
-            title: this.translateService.instant(translationKey),
-            description: this.translateService.instant(`${translationKey}-description`)
-          };
-        }
-      }
-      return audit;
+    const categorized = this.getCategorizedAudits(results.data.desktop.audits);
+
+    // Sort failed audits by impact severity
+    const sortedFailed = [...categorized.failed].sort((a, b) => {
+      const aOrder = this.impactOrder[a.impact || 'minor'] ?? 3;
+      const bOrder = this.impactOrder[b.impact || 'minor'] ?? 3;
+      return aOrder - bOrder;
     });
 
     return {
-      failed: processedAudits.filter(audit => audit.category === 'failed'),
-      passed: processedAudits.filter(audit => audit.category === 'passed'),
-      manual: processedAudits.filter(audit => audit.category === 'manual_check'),
-      notApplicable: processedAudits.filter(audit => audit.category === 'not_applicable')
+      ...categorized,
+      failed: sortedFailed,
+    };
+  });
+
+  // Impact breakdown for summary
+  impactBreakdown = computed(() => {
+    const categorized = this.categorizedAudits();
+    if (!categorized) return null;
+
+    const violations = categorized.failed;
+    return {
+      critical: violations.filter(v => v.impact === 'critical').length,
+      serious: violations.filter(v => v.impact === 'serious').length,
+      moderate: violations.filter(v => v.impact === 'moderate').length,
+      minor: violations.filter(v => v.impact === 'minor').length,
+    };
+  });
+
+
+  getCategorizedAudits(audits: AccessibilityAudit[]) {
+    // axe-core provides titles and descriptions directly - no mapping needed
+    return {
+      failed: audits.filter(audit => audit.category === 'failed'),
+      passed: audits.filter(audit => audit.category === 'passed'),
+      manual: audits.filter(audit => audit.category === 'manual_check'),
+      notApplicable: audits.filter(audit => audit.category === 'not_applicable')
     };
   }
 
@@ -243,5 +260,23 @@ export class PagesDetailsAccessibilityComponent {
     if (currentUrl) {
       this.pageDetailsService.refreshAccessibilityTest(currentUrl);
     }
+  }
+
+  getImpactBadgeClass(impact: string | undefined): string {
+    switch (impact) {
+      case 'critical':
+        return 'bg-danger';
+      case 'serious':
+        return 'bg-warning text-dark';
+      case 'moderate':
+        return 'bg-info';
+      case 'minor':
+      default:
+        return 'bg-secondary';
+    }
+  }
+
+  trackByNodeTarget(_index: number, node: AccessibilityAuditNode): string {
+    return node.target.join(' ');
   }
 }

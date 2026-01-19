@@ -39,7 +39,7 @@ import type { InternalSearchTerm } from '@dua-upd/types-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
 import { FlowService } from '@dua-upd/api/flow';
-import { PageSpeedInsightsService } from '@dua-upd/external-data';
+import { AxeCoreService } from '@dua-upd/external-data';
 import { omit } from 'rambdax';
 
 @Injectable()
@@ -57,7 +57,7 @@ export class PagesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private feedbackService: FeedbackService,
     private flowService: FlowService,
-    private pageSpeedInsightsService: PageSpeedInsightsService,
+    private axeCoreService: AxeCoreService,
   ) {}
 
   async listPages({ projection, populate }): Promise<Page[]> {
@@ -584,18 +584,15 @@ export class PagesService {
   }
 
   async runAccessibilityTest(url: string) {
-    try {
-      // Ensure URL has https:// protocol for PageSpeed Insights API
-      const fullUrl =
-        url.startsWith('http://') || url.startsWith('https://')
-          ? url
-          : `https://${url}`;
+    // Ensure URL has https:// protocol
+    const fullUrl =
+      url.startsWith('http://') || url.startsWith('https://')
+        ? url
+        : `https://${url}`;
 
-      // Run desktop tests for both locales (English and French)
+    try {
       const results =
-        await this.pageSpeedInsightsService.runAccessibilityTestForBothLocales(
-          fullUrl,
-        );
+        await this.axeCoreService.runAccessibilityTestForBothLocales(fullUrl);
 
       return {
         en: {
@@ -612,63 +609,72 @@ export class PagesService {
         },
       };
     } catch (error) {
-      // Map error types to translation keys
-      let errorKey = 'accessibility-error-generic';
-
-      // Check HTTP status codes first (from axios error.response)
-      if (error.response?.status === 429) {
-        errorKey = 'accessibility-error-rate-limit';
-      } else if (error.response?.status === 500) {
-        errorKey = 'accessibility-error-server-error';
-      } else if (error.response?.status === 503) {
-        errorKey = 'accessibility-error-service-unavailable';
-      } else if (error.response?.status === 504) {
-        errorKey = 'accessibility-error-gateway-timeout';
-      } else if (error.response?.status === 502) {
-        errorKey = 'accessibility-error-bad-gateway';
-      }
-      // Check error codes for network/socket issues
-      else if (
-        error.code === 'ECONNRESET' ||
-        error.message?.includes('socket hang up') ||
-        error.message?.includes('ECONNRESET')
-      ) {
-        errorKey = 'accessibility-error-connection-reset';
-      } else if (
-        error.code === 'ETIMEDOUT' ||
-        error.message?.includes('timeout') ||
-        error.message?.includes('ETIMEDOUT')
-      ) {
-        errorKey = 'accessibility-error-timeout';
-      } else if (
-        error.code === 'ENOTFOUND' ||
-        error.message?.includes('network') ||
-        error.message?.includes('ENOTFOUND')
-      ) {
-        errorKey = 'accessibility-error-network';
-      }
-      // Check error message strings as fallback
-      else if (
-        error.message?.includes('429') ||
-        error.message?.includes('rate limit')
-      ) {
-        errorKey = 'accessibility-error-rate-limit';
-      } else if (
-        error.message?.includes('Invalid URL') ||
-        error.message?.includes('invalid url')
-      ) {
-        errorKey = 'accessibility-error-invalid-url';
-      }
-
-      const errorResponse = {
-        success: false,
-        error: errorKey,
-      };
-      return {
-        en: errorResponse,
-        fr: errorResponse,
-      };
+      return this.buildAccessibilityErrorResponse(error);
     }
+  }
+
+  private buildAccessibilityErrorResponse(error: any) {
+    // Map error types to translation keys
+    let errorKey = 'accessibility-error-generic';
+
+    // Check Playwright-specific errors
+    if (
+      error.message?.includes('net::ERR_NAME_NOT_RESOLVED') ||
+      error.message?.includes('Invalid URL') ||
+      error.message?.includes('invalid url')
+    ) {
+      errorKey = 'accessibility-error-invalid-url';
+    } else if (
+      error.message?.includes('Timeout') ||
+      error.message?.includes('timeout') ||
+      error.name === 'TimeoutError' ||
+      error.response?.status === 504
+    ) {
+      errorKey = 'accessibility-error-timeout';
+    } else if (
+      error.message?.includes('net::ERR_CONNECTION_REFUSED') ||
+      error.code === 'ECONNRESET' ||
+      error.message?.includes('socket hang up') ||
+      error.message?.includes('ECONNRESET')
+    ) {
+      errorKey = 'accessibility-error-connection-reset';
+    } else if (
+      error.message?.includes('Browser closed') ||
+      error.response?.status === 500
+    ) {
+      errorKey = 'accessibility-error-server-error';
+    } else if (
+      error.message?.includes('net::ERR_INTERNET_DISCONNECTED') ||
+      error.code === 'ENOTFOUND' ||
+      error.message?.includes('network') ||
+      error.message?.includes('ENOTFOUND')
+    ) {
+      errorKey = 'accessibility-error-network';
+    }
+    // Check HTTP status codes (from axios error.response)
+    else if (error.response?.status === 429) {
+      errorKey = 'accessibility-error-rate-limit';
+    } else if (error.response?.status === 503) {
+      errorKey = 'accessibility-error-service-unavailable';
+    } else if (error.response?.status === 502) {
+      errorKey = 'accessibility-error-bad-gateway';
+    }
+    // Check error message strings as fallback
+    else if (
+      error.message?.includes('429') ||
+      error.message?.includes('rate limit')
+    ) {
+      errorKey = 'accessibility-error-rate-limit';
+    }
+
+    const errorResponse = {
+      success: false,
+      error: errorKey,
+    };
+    return {
+      en: errorResponse,
+      fr: errorResponse,
+    };
   }
 }
 

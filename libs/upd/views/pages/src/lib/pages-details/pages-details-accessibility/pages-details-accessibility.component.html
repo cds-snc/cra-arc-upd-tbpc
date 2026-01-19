@@ -224,115 +224,192 @@
     <div class="container-fluid mt-5 gx-0">
       <div class="row">
         <div class="col">
-          @let categorized = getCategorizedAudits(testResults()!.data!.desktop.audits);
+          @if (categorizedAudits(); as categorized) {
+            <!-- Impact Breakdown Summary -->
+            @if (impactBreakdown(); as breakdown) {
+              @if (breakdown.critical > 0 || breakdown.serious > 0 || breakdown.moderate > 0 || breakdown.minor > 0) {
+                <div class="mb-4">
+                  <div class="d-flex flex-wrap gap-3">
+                    @if (breakdown.critical > 0) {
+                      <span class="badge bg-danger">{{ 'accessibility-impact-critical' | translate }}: {{ breakdown.critical }}</span>
+                    }
+                    @if (breakdown.serious > 0) {
+                      <span class="badge bg-warning text-dark">{{ 'accessibility-impact-serious' | translate }}: {{ breakdown.serious }}</span>
+                    }
+                    @if (breakdown.moderate > 0) {
+                      <span class="badge bg-info">{{ 'accessibility-impact-moderate' | translate }}: {{ breakdown.moderate }}</span>
+                    }
+                    @if (breakdown.minor > 0) {
+                      <span class="badge bg-secondary">{{ 'accessibility-impact-minor' | translate }}: {{ breakdown.minor }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            }
 
-          <!-- All tests passed message -->
-          @if (categorized.failed.length === 0 && categorized.passed.length > 0) {
-            <div class="alert alert-success mb-4" role="alert">
-              <i class="pi pi-check-circle"></i>
-              {{ 'accessibility-all-tests-passed' | translate }}
-            </div>
-          }
+            <!-- All tests passed message -->
+            @if (categorized.failed.length === 0 && categorized.passed.length > 0) {
+              <div class="alert alert-success mb-4" role="alert">
+                <i class="pi pi-check-circle"></i>
+                {{ 'accessibility-all-tests-passed' | translate }}
+              </div>
+            }
 
-          <!-- Failed Tests Section -->
-          @if (categorized.failed.length > 0) {
-            <div class="mb-4">
-              <upd-accordion
-                [title]="'accessibility-failed-tests-count' | translate: {count: categorized.failed.length}"
-                [expanded]="true"
-                [styleClass]="'failed-section'"
-                [headerClass]="'text-danger'">
-                <div>
-                  @for (audit of categorized.failed; track trackByAuditId($index, audit)) {
-                    <div class="mb-3 p-3 border rounded">
-                      <h6 class="text-danger">
-                        {{ audit.title }}
-                        @if (audit.helpUrl || audit.id) {
-                          <a [href]="getDequeUrl(audit)"
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             class="ms-2 small">
-                            <i class="pi pi-external-link"></i> {{ 'accessibility-learn-more' | translate }}
-                          </a>
+            <!-- Failed Tests Section -->
+            @if (categorized.failed.length > 0) {
+              <div class="mb-4">
+                <upd-accordion
+                  [title]="'accessibility-failed-tests-count' | translate: {count: categorized.failed.length}"
+                  [expanded]="true"
+                  [styleClass]="'failed-section'"
+                  [headerClass]="'text-danger'">
+                  <div>
+                    @for (audit of categorized.failed; track trackByAuditId($index, audit)) {
+                      <div class="mb-3 p-3 border rounded">
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                          <h6 class="text-danger mb-0">
+                            {{ audit.title }}
+                            @if (audit.helpUrl || audit.id) {
+                              <a [href]="getDequeUrl(audit)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="ms-2 small">
+                                <i class="pi pi-external-link"></i> {{ 'accessibility-learn-more' | translate }}
+                              </a>
+                            }
+                          </h6>
+                          <!-- Impact Badge -->
+                          @if (audit.impact) {
+                            <span class="badge {{ getImpactBadgeClass(audit.impact) }}">
+                              {{ audit.impact | titlecase }}
+                            </span>
+                          }
+                        </div>
+
+                        <!-- WCAG Criteria -->
+                        @if (audit.wcagCriteria && audit.wcagCriteria.length > 0) {
+                          <div class="mt-2">
+                            <small class="text-muted">
+                              {{ 'accessibility-wcag-criteria' | translate }}:
+                              @for (criterion of audit.wcagCriteria; track criterion) {
+                                <span class="me-2">WCAG {{ criterion }}</span>
+                              }
+                            </small>
+                          </div>
                         }
-                      </h6>
-                      <p class="mb-2">{{ audit.description }}</p>
-                      @if (audit.snippet) {
-                        <div class="bg-light p-2 rounded" style="white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; font-family: monospace; font-size: 0.875rem;">{{ audit.snippet }}</div>
-                      }
-                      @if (audit.helpText) {
-                        <div class="mt-2 text-muted small">
-                          <strong>{{ 'accessibility-help' | translate }}:</strong> {{ audit.helpText }}
-                        </div>
-                      }
-                      @if (audit.selector) {
-                        <div class="mt-2 text-muted small">
-                          <strong>{{ 'accessibility-element' | translate }}:</strong> <code>{{ audit.selector }}</code>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </upd-accordion>
-            </div>
-          }
 
-          <!-- Passed Tests Section -->
-          @if (categorized.passed.length > 0) {
-            <div class="mb-4">
-              <upd-accordion
-                [title]="'accessibility-passed-tests-count' | translate: {count: categorized.passed.length}"
-                [expanded]="false"
-                [styleClass]="'passed-section'"
-                [headerClass]="'text-success'">
-                <div>
-                  @for (audit of categorized.passed; track trackByAuditId($index, audit)) {
-                    <div class="mb-2 p-2 border rounded">
-                      <h6 class="text-success">{{ audit.title }}</h6>
-                    </div>
-                  }
-                </div>
-              </upd-accordion>
-            </div>
-          }
+                        <p class="mb-2 mt-2">{{ audit.description }}</p>
 
-          <!-- Manual Verification Section -->
-          @if (categorized.manual.length > 0) {
-            <div class="mb-4">
-              <upd-accordion
-                [title]="'accessibility-manual-checks-count' | translate: {count: categorized.manual.length}"
-                [expanded]="false"
-                [styleClass]="'manual-section'"
-                [headerClass]="'text-warning'">
-                <div>
-                  @for (audit of categorized.manual; track trackByAuditId($index, audit)) {
-                    <div class="mb-3 p-3 border rounded">
-                      <h6 class="text-warning">{{ audit.title }}</h6>
-                      <p [innerHTML]="parseMarkdownLinks(audit.description)"></p>
-                    </div>
-                  }
-                </div>
-              </upd-accordion>
-            </div>
-          }
+                        <!-- How to Fix Section -->
+                        @if (audit.howToFix) {
+                          <div class="alert alert-info mt-2 mb-2">
+                            <strong>{{ 'accessibility-how-to-fix' | translate }}:</strong>
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ audit.howToFix }}</p>
+                          </div>
+                        }
 
-          <!-- Not Applicable Section -->
-          @if (categorized.notApplicable.length > 0) {
-            <div class="mb-4">
-              <upd-accordion
-                [title]="'accessibility-not-applicable-count' | translate: {count: categorized.notApplicable.length}"
-                [expanded]="false"
-                [styleClass]="'na-section'"
-                [headerClass]="'text-muted'">
-                <div>
-                  @for (audit of categorized.notApplicable; track trackByAuditId($index, audit)) {
-                    <div class="mb-2 p-2 border rounded">
-                      <h6 class="text-muted">{{ audit.title }}</h6>
-                    </div>
-                  }
-                </div>
-              </upd-accordion>
-            </div>
+                        <!-- Affected Elements (Collapsible) -->
+                        @if (audit.nodes && audit.nodes.length > 0) {
+                          <div class="mt-2">
+                            <upd-accordion
+                              [title]="('accessibility-affected-elements' | translate) + ' (' + audit.nodes.length + ')'"
+                              [expanded]="false"
+                              [styleClass]="'affected-elements'"
+                              [headerClass]="'small text-muted'">
+                              <div class="small">
+                                @for (node of audit.nodes; track trackByNodeTarget($index, node)) {
+                                  <div class="p-2 border-bottom">
+                                    <code class="small">{{ node.target.join(' > ') }}</code>
+                                    <pre class="bg-light p-2 mt-1 mb-1 small" style="white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;">{{ node.html }}</pre>
+                                    @if (node.failureSummary) {
+                                      <p class="text-danger small mb-0">{{ node.failureSummary }}</p>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            </upd-accordion>
+                          </div>
+                        } @else {
+                          <!-- Fallback to old snippet/selector display if no nodes -->
+                          @if (audit.snippet) {
+                            <div class="bg-light p-2 rounded" style="white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; font-family: monospace; font-size: 0.875rem;">{{ audit.snippet }}</div>
+                          }
+                          @if (audit.selector) {
+                            <div class="mt-2 text-muted small">
+                              <strong>{{ 'accessibility-element' | translate }}:</strong> <code>{{ audit.selector }}</code>
+                            </div>
+                          }
+                        }
+
+                        @if (audit.helpText) {
+                          <div class="mt-2 text-muted small">
+                            <strong>{{ 'accessibility-help' | translate }}:</strong> {{ audit.helpText }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </upd-accordion>
+              </div>
+            }
+
+            <!-- Passed Tests Section -->
+            @if (categorized.passed.length > 0) {
+              <div class="mb-4">
+                <upd-accordion
+                  [title]="'accessibility-passed-tests-count' | translate: {count: categorized.passed.length}"
+                  [expanded]="false"
+                  [styleClass]="'passed-section'"
+                  [headerClass]="'text-success'">
+                  <div>
+                    @for (audit of categorized.passed; track trackByAuditId($index, audit)) {
+                      <div class="mb-2 p-2 border rounded">
+                        <h6 class="text-success">{{ audit.title }}</h6>
+                      </div>
+                    }
+                  </div>
+                </upd-accordion>
+              </div>
+            }
+
+            <!-- Manual Verification Section -->
+            @if (categorized.manual.length > 0) {
+              <div class="mb-4">
+                <upd-accordion
+                  [title]="'accessibility-manual-checks-count' | translate: {count: categorized.manual.length}"
+                  [expanded]="false"
+                  [styleClass]="'manual-section'"
+                  [headerClass]="'text-warning'">
+                  <div>
+                    @for (audit of categorized.manual; track trackByAuditId($index, audit)) {
+                      <div class="mb-3 p-3 border rounded">
+                        <h6 class="text-warning">{{ audit.title }}</h6>
+                        <p [innerHTML]="parseMarkdownLinks(audit.description)"></p>
+                      </div>
+                    }
+                  </div>
+                </upd-accordion>
+              </div>
+            }
+
+            <!-- Not Applicable Section -->
+            @if (categorized.notApplicable.length > 0) {
+              <div class="mb-4">
+                <upd-accordion
+                  [title]="'accessibility-not-applicable-count' | translate: {count: categorized.notApplicable.length}"
+                  [expanded]="false"
+                  [styleClass]="'na-section'"
+                  [headerClass]="'text-muted'">
+                  <div>
+                    @for (audit of categorized.notApplicable; track trackByAuditId($index, audit)) {
+                      <div class="mb-2 p-2 border rounded">
+                        <h6 class="text-muted">{{ audit.title }}</h6>
+                      </div>
+                    }
+                  </div>
+                </upd-accordion>
+              </div>
+            }
           }
         </div>
       </div>

@@ -5,8 +5,8 @@ import { BlobProxyService } from './blob-proxy.service';
 import { GoogleSearchConsoleService } from './google-search-console/google-search-console.service';
 import { AdobeAnalyticsClient } from './adobe-analytics';
 import { SearchAnalyticsClient } from './google-search-console';
-import { PageSpeedInsightsService } from './pagespeed-insights/pagespeed-insights.service';
-import { PageSpeedInsightsClient } from './pagespeed-insights/pagespeed-insights.client';
+import { AxeCoreService } from './axe-core/axe-core.service';
+import { AxeCoreClient } from './axe-core/axe-core.client';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -15,7 +15,7 @@ import { ConfigService } from '@nestjs/config';
     AdobeAnalyticsService,
     BlobProxyService,
     GoogleSearchConsoleService,
-    PageSpeedInsightsService,
+    AxeCoreService,
     ConsoleLogger,
     {
       provide: AdobeAnalyticsClient.name,
@@ -27,8 +27,8 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     },
     {
-      provide: PageSpeedInsightsClient.name,
-      useFactory: () => new PageSpeedInsightsClient(),
+      provide: AxeCoreClient.name,
+      useFactory: () => new AxeCoreClient(),
       inject: [ConfigService],
     },
   ],
@@ -38,8 +38,8 @@ import { ConfigService } from '@nestjs/config';
     BlobProxyService,
     GoogleSearchConsoleService,
     SearchAnalyticsClient.name,
-    PageSpeedInsightsService,
-    PageSpeedInsightsClient.name,
+    AxeCoreService,
+    AxeCoreClient.name,
   ],
 })
 export class ExternalDataModule {}

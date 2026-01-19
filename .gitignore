@@ -58,5 +58,8 @@ vitest.config.*.timestamp*
 # Project documentation files
 CLAUDE.md
 
+# Claude Code local settings
+.claude/
+
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
