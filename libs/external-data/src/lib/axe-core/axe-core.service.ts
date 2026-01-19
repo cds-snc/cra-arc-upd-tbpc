@@ -50,9 +50,9 @@ export class AxeCoreService {
         await page.setViewportSize({ width: 1920, height: 1080 });
       }
 
-      // Navigate to URL with timeout (reduced for faster testing)
+      // Navigate to URL - use domcontentloaded (faster, sufficient for DOM testing)
       await page.goto(url, {
-        waitUntil: 'networkidle',
+        waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
 
