@@ -117,6 +117,7 @@ export const mockData: UxData = {
       launch_date: new Date('2020-11-23T00:00:00.000Z'),
       status: 'Complete',
       cops: true,
+      wos_cops: false,
       _id: new Types.ObjectId('621d280492982ac8c344d272'),
       project: new Types.ObjectId('6238cbeccb3e0440ed2d7167'),
     },

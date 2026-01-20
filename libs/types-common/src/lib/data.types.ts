@@ -486,7 +486,7 @@ export type ProjectStatus =
 
 export type PageStatus = 'Live' | '404' | 'Redirected';
 
-export type ProjectType = 'COPS';
+export type ProjectType = 'COPS' | 'WOS_COPS';
 
 export interface searchAssessmentColTypes {
   query: string;
@@ -498,6 +498,7 @@ export interface ProjectsHomeProject {
   _id: string;
   title: string;
   cops: boolean;
+  wos_cops: boolean,
   startDate?: Date;
   launchDate?: Date;
   avgSuccessRate?: number;
@@ -530,6 +531,7 @@ export type ReportsHomeProject = {
   _id: string;
   title: string;
   cops: boolean;
+  wos_cops: boolean;
   startDate?: Date;
   status: ProjectStatus;
   attachments: AttachmentData[];

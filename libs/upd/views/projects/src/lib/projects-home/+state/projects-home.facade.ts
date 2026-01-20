@@ -35,6 +35,18 @@ export class ProjectsHomeFacade {
           ? this.i18n.service.translate(d.title.replace(/\s+/g, ' '), lang)
           : '',
         cops: !!d.cops,
+        wos_cops: !!d.wos_cops,
+        // projectTypeLabel: d.cops && d.wos_cops
+        //     ? 'COPS + WOS_COPS'
+        //     : d.cops
+        //       ? 'COPS'
+        //       : d.wos_cops
+        //         ? 'WOS_COPS'
+        //         : null,
+        projectTypeLabel: [
+          ...(d.cops ? ['COPS'] : []),
+          ...(d.wos_cops ? ['WOS_COPS'] : []),
+        ],            
         startDate: d.startDate || '',
       }));
 

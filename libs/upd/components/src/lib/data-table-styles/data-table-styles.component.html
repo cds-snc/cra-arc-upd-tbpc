@@ -35,6 +35,30 @@
     [projectType]="'COPS'"
   ></upd-project-status-label>
 
+  <!-- WOS COPS Type -->
+  <upd-project-status-label
+  *ngIf="
+    config.type === 'label' &&
+    config.typeParam === 'wos_cops' &&
+    data[config.field]
+  "
+  [projectType]="'WOS_COPS'"
+  ></upd-project-status-label>
+
+    <!-- COMBINED WOS COPS Type -->
+  <ng-container *ngIf="config.type === 'label' && config.typeParam === 'projectType'">
+    <upd-project-status-label
+      *ngIf="data['cops']"
+      [projectType]="'COPS'"
+      style="margin-bottom: 4px;"
+    ></upd-project-status-label>
+
+    <upd-project-status-label
+       *ngIf="data['wos_cops']"
+      [projectType]="'WOS_COPS'"
+    ></upd-project-status-label>
+  </ng-container>
+
   <!-- Pass/Fail Label -->
   <span
     *ngIf="
@@ -144,7 +168,7 @@
 </ng-container>
 
 <!-- Array Data -->
-<ng-container *ngIf="isArray(data[config.field])">
+<ng-container *ngIf="isArray(data[config.field]) && config.typeParam !== 'projectType'">
   {{ array | translateArray | arrayToText }}
 </ng-container>
 

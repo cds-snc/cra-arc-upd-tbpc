@@ -280,6 +280,7 @@ export interface ITaskView {
   survey_completed: number;
   tmf_ranking_index: number;
   cops: boolean;
+  wos_cops: boolean;
   numComments: number;
   aa_searchterms?: AASearchTermMetrics[];
   metricsByDay: {

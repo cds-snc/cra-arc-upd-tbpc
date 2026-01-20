@@ -34,6 +34,7 @@ export class ProjectDetailsComponent implements OnInit {
 
   status$ = this.projectsDetailsService.status$;
   cops$ = this.projectsDetailsService.cops$;
+  wos_cops$ = this.projectsDetailsService.wos_cops$;
 
   error$ = this.projectsDetailsService.error$;
   loading$ = this.projectsDetailsService.loading$;

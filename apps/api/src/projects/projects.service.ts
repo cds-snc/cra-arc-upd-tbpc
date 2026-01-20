@@ -253,6 +253,7 @@ export class ProjectsService {
       .group({
         _id: '$project',
         cops: { $max: '$cops' },
+        wos_cops: { $max: '$wos_cops' },
         startDate: { $min: '$date' },
         launchDate: { $max: '$launch_date' },
         avgSuccessRate: { $avg: '$success_rate' },
@@ -274,6 +275,7 @@ export class ProjectsService {
           $arrayElemAt: ['$uxTests.title', 0],
         },
         cops: 1,
+        wos_cops: 1,
         startDate: 1,
         launchDate: 1,
         avgSuccessRate: 1,
@@ -380,6 +382,8 @@ export class ProjectsService {
     console.timeEnd('getProjectStatus');
 
     const cops = populatedProjectDoc.ux_tests.some((test) => test.cops);
+
+    const wos_cops = populatedProjectDoc.ux_tests.some((test) => test.wos_cops);
 
     const description = populatedProjectDoc.description;
 
@@ -495,6 +499,7 @@ export class ProjectsService {
       title,
       status,
       cops,
+      wos_cops,
       description,
       startDate,
       launchDate,

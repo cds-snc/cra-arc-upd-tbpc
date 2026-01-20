@@ -7,6 +7,7 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { EN_CA, FR_CA } from '@dua-upd/upd/i18n';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
+import { any } from 'rambdax';
 
 @Injectable()
 export class ReportsFacade {
@@ -74,13 +75,17 @@ export class ReportsFacade {
           startDate: project.startDate || '',
           status: project.status,
           cops: !!project.cops,
+          wos_cops: !!project.wos_cops,
+          projectTypeLabel: [
+            ...(project.cops ? ['COPS'] : []),
+            ...(project.wos_cops ? ['WOS_COPS'] : []),
+          ],    
           filename: attachment.filename,
           url: attachment.storage_url,
         }));
       });
     }),
   );
-
   projectsReportsColumns$ = combineLatest([
     this.projectsReports$,
     this.i18n.currentLang$,
@@ -97,13 +102,36 @@ export class ReportsFacade {
           type: 'link',
           typeParams: { link: 'url', external: true },
         },
+        // {
+        //   field: 'cops',
+        //   header: this.i18n.service.translate('type', lang),
+        //   type: 'label',
+        //   typeParam: 'cops',
+        //   filterConfig: {
+        //     type: 'boolean',
+        //   },
+        // },
+        // {
+        //   field: 'wos_cops',
+        //   header: this.i18n.service.translate('type', lang),
+        //   type: 'label',
+        //   typeParam: 'wos_cops',
+        //   filterConfig: {
+        //     type: 'boolean',
+        //   },
+        // },
         {
-          field: 'cops',
+          field: 'projectTypeLabel',
           header: this.i18n.service.translate('type', lang),
           type: 'label',
-          typeParam: 'cops',
+          typeParam: 'projectType',
           filterConfig: {
-            type: 'boolean',
+            type: 'category',
+            categories: [
+              { name: this.i18n.service.translate('COPS', lang), value: 'COPS' },
+              { name: this.i18n.service.translate('WOS_COPS', lang), value: 'WOS_COPS' }
+            ],
+            matchMode: 'arrayContains'
           },
         },
         {

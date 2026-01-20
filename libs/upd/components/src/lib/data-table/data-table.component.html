@@ -163,7 +163,7 @@
                     <ng-template pTemplate="header">
                       <div class="px-3 pt-3 pb-0">
                         <span class="fw-bold">
-                          @if (col.field === 'cops') {
+                          @if (col.field === 'cops' || col.field == 'wos_cops') {
                             {{ col.field | uppercase | translate }}
                           } @else {
                             {{ col.field | translate }}
@@ -183,7 +183,7 @@
                 >
                   <p-columnFilter
                     [field]="col.field"
-                    matchMode="in"
+                    [matchMode]="col.filterConfig?.matchMode || 'in'"
                     display="menu"
                     [showMatchModes]="false"
                     [showOperator]="false"
