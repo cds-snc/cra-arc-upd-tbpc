@@ -1,4 +1,3 @@
-import { TasksHomeAggregatedData } from '@dua-upd/types-common';
 import chalk from 'chalk';
 
 // Utility function for to help with rate-limiting within async functions
@@ -859,26 +858,31 @@ export const $trunc = (
   ],
 });
 
-type Metric = 'visits' | 'calls' | 'dyf_total' | 'survey';
-const METRIC_KEYS: Metric[] = ['visits', 'calls', 'dyf_total', 'survey'];
+const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
 
-interface DistributionStats {
+type Metric = (typeof METRIC_KEYS)[number];
+
+type DistributionStats = {
   min: number;
   max: number;
   p5: number;
   p95: number;
-}
-type StatsByMetric = {
-  visits: DistributionStats;
-  calls: DistributionStats;
-  dyf_total: DistributionStats;
-  survey: DistributionStats;
 };
+
+type StatsByMetric = {
+  [key in Metric]: DistributionStats;
+};
+
 type MetricWeights = {
+  [key in Metric]: number;
+};
+
+export type TaskRankingParams = {
   visits: number;
   calls: number;
   dyf_total: number;
   survey: number;
+  status?: string; // For excluding inactive tasks from global stats/ranking
 };
 
 export const METRIC_WEIGHTS: MetricWeights = {
@@ -896,110 +900,177 @@ const calculatePercentile = (
   const rank = 1 + (size - 1) * percentile;
   const lowerRank = Math.floor(rank);
   const fraction = rank - lowerRank;
-  const lowerValue = sortedAsc[lowerRank - 1]!;
-  const upperValue = sortedAsc[lowerRank]!;
+  const lowerValue = sortedAsc[lowerRank - 1];
+  const upperValue = sortedAsc[lowerRank];
 
   return lowerValue + fraction * (upperValue - lowerValue);
 };
 
 const computeDistributionStats = (arr: number[]): DistributionStats => {
   const data = arr.filter((v) => typeof v === 'number' && Number.isFinite(v));
-  if (data.length === 0) return { min: NaN, max: NaN, p5: NaN, p95: NaN };
-  let min = data[0]!,
-    max = data[0]!;
-  for (let i = 1; i < data.length; i++) {
-    const v = data[i]!;
-    if (v < min) min = v;
-    if (v > max) max = v;
+
+  if (data.length === 0) {
+    return { min: NaN, max: NaN, p5: NaN, p95: NaN };
   }
-  const sorted = [...data].sort((a, b) => a - b);
+
+  const sorted = data.toSorted((a, b) => a - b);
+
+  const min = sorted[0];
+  const max = sorted[sorted.length - 1];
   const p5 = calculatePercentile(sorted, 0.05);
   const p95 = calculatePercentile(sorted, 0.95);
+
   return { min, max, p5, p95 };
 };
 
 const normalizeWithinPercentileRange = (
-  rawValue: unknown,
-  p5th: unknown,
-  p95th: unknown,
-): number | undefined => {
-  const value = Number(rawValue),
-    low = Number(p5th),
-    high = Number(p95th);
+  rawValue: number,
+  p5th: number,
+  p95th: number,
+): number | null => {
   if (
-    !Number.isFinite(value) ||
-    !Number.isFinite(low) ||
-    !Number.isFinite(high)
-  )
-    return undefined;
-  const span = high - low;
-  if (!(span > 0)) return undefined;
-  const clamped = Math.max(Math.min(value, high), low);
-  return (clamped - low) / span;
+    !Number.isFinite(rawValue) ||
+    !Number.isFinite(p5th) ||
+    !Number.isFinite(p95th)
+  ) {
+    return null;
+  }
+
+  const span = p95th - p5th;
+
+  if (!(span > 0)) {
+    return null;
+  }
+
+  const clamped = Math.max(Math.min(rawValue, p95th), p5th);
+
+  return (clamped - p5th) / span;
 };
 
 const tailBonusAboveP95 = (
-  rawValue: unknown,
-  p95th: unknown,
-  rawMax: unknown,
+  rawValue: number,
+  p95th: number,
+  rawMax: number,
   tailCap: number,
 ): number => {
-  const value = Number(rawValue),
-    p95 = Number(p95th),
-    maxVal = Number(rawMax);
   if (
-    !Number.isFinite(value) ||
-    !Number.isFinite(p95) ||
-    !Number.isFinite(maxVal)
-  )
+    !Number.isFinite(rawValue) ||
+    !Number.isFinite(p95th) ||
+    !Number.isFinite(rawMax) ||
+    !(rawValue > p95th) ||
+    !(rawMax > p95th) ||
+    !(tailCap > 0)
+  ) {
     return 0;
-  if (!(value > p95) || !(maxVal > p95) || !(tailCap > 0)) return 0;
-  const tailSpan = maxVal - p95;
-  const proportion = (value - p95) / tailSpan;
+  }
+
+  const tailSpan = rawMax - p95th;
+  const proportion = (rawValue - p95th) / tailSpan;
+
   return Math.max(0, Math.min(1, proportion)) * tailCap;
 };
 
 export function computeMetricWeightedScore(
-  rawValue: unknown,
+  rawValue: number,
   p5th: number,
   p95th: number,
   maxVal: number,
   weight: number,
-): number | undefined {
+): number {
   const base = normalizeWithinPercentileRange(rawValue, p5th, p95th);
-  if (base === undefined) return undefined;
+
+  if (isNullish(base)) {
+    return 0;
+  }
+
   const tailCap = 1 / weight;
   const tail = tailBonusAboveP95(rawValue, p95th, maxVal, tailCap);
+
   return base * (weight - 1) + tail * weight;
 }
 
-export async function getGlobalMetricStats(
-  tasks: TasksHomeAggregatedData[],
-): Promise<StatsByMetric> {
-  const metrics = {
-    visits: [],
-    calls: [],
-    dyf_total: [],
-    survey: [],
-  } as Record<Metric, number[]>;
+export function getGlobalMetricStats(
+  tasks: TaskRankingParams[],
+): StatsByMetric {
+  const visits: number[] = [];
+  const calls: number[] = [];
+  const dyf_total: number[] = [];
+  const survey: number[] = [];
+
+  const pushValid = (array: number[], n: number) => {
+    if (Number.isFinite(n) && n !== 0) {
+      array.push(n);
+    }
+  };
 
   for (const t of tasks ?? []) {
-    const dyfNo = Number(t['dyf_no']);
-    const dyfYes = Number(t['dyf_yes']);
-
-    const dyfTotal =
-      (Number.isFinite(dyfNo) ? dyfNo : 0) +
-      (Number.isFinite(dyfYes) ? dyfYes : 0);
-
-    if (dyfTotal !== 0) metrics['dyf_total'].push(dyfTotal);
-
-    for (const k of ['visits', 'calls', 'survey'] as const) {
-      const n = Number(t[k]);
-      if (Number.isFinite(n) && n !== 0) metrics[k].push(n);
+    // Skip inactive tasks for global stats
+    if (t.status === 'Inactive') {
+      continue;
     }
+
+    pushValid(visits, t['visits']);
+    pushValid(calls, t['calls']);
+    pushValid(dyf_total, t['dyf_total']);
+    pushValid(survey, t['survey']);
   }
 
-  return Object.fromEntries(
-    Object.entries(metrics).map(([k, v]) => [k, computeDistributionStats(v)]),
-  ) as StatsByMetric;
+  return {
+    visits: computeDistributionStats(visits),
+    calls: computeDistributionStats(calls),
+    dyf_total: computeDistributionStats(dyf_total),
+    survey: computeDistributionStats(survey),
+  };
+}
+
+type TmfScoresAndRank = {
+  [key in `${Metric}_score`]: number;
+} & {
+  overall_score: number;
+  tmf_rank: number;
+};
+
+export function calculateTaskScores<T extends TaskRankingParams>(
+  task: T,
+  globalStats: StatsByMetric,
+) {
+  const taskScores = Object.fromEntries(
+    METRIC_KEYS.map((metric) => [
+      `${metric}_score`,
+      computeMetricWeightedScore(
+        task[metric],
+        globalStats[metric].p5,
+        globalStats[metric].p95,
+        globalStats[metric].max,
+        METRIC_WEIGHTS[metric],
+      ),
+    ]),
+  ) as {
+    [key in Metric as `${key}_score`]: number;
+  };
+
+  return {
+    ...task,
+    ...taskScores,
+    overall_score: Object.values(taskScores).reduce((a, b) => a + b, 0),
+  };
+}
+
+export function addTmfScoresToTasks<T extends TaskRankingParams>(
+  tasks: T[],
+): (T & TmfScoresAndRank)[] {
+  const globalStats = getGlobalMetricStats(tasks);
+
+  return tasks
+    .map((t: T) => calculateTaskScores(t, globalStats))
+    .sort((a, b) => {
+      // Inactive tasks always rank lowest
+      const aIfActive = a.status === 'Inactive' ? 0 : a.overall_score;
+      const bIfActive = b.status === 'Inactive' ? 0 : b.overall_score;
+      return bIfActive - aIfActive;
+    })
+    .map((t, i) => ({
+      ...t,
+      tmf_rank: i + 1,
+    }));
 }
