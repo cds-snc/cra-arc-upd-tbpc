@@ -52,18 +52,16 @@ import {
   AsyncLogTiming,
   avg,
   chunkMap,
-  computeMetricWeightedScore,
   dateRangeSplit,
   getAvgSuccessFromLatestTests,
-  getGlobalMetricStats,
   getImprovedKpiSuccessRates,
   getWosImprovedKpiSuccessRates,
   getImprovedKpiTopSuccessRates,
   getLatestTestData,
   getStructuredDateRangesWithComparison,
-  METRIC_WEIGHTS,
   parseDateRangeString,
   percentChange,
+  addTmfScoresToTasks,
 } from '@dua-upd/utils-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
@@ -223,92 +221,36 @@ export class OverallService {
 
     const totalTasks = await this.taskModel.countDocuments().exec();
 
-    const topTasksTable = (
-      await this.db.views.tasks.getAllWithComparisons(
+    const topTasksTable = await this.db.views.tasks
+      .getAllWithComparisons(
         parseDateRangeString(params.dateRange),
         parseDateRangeString(params.comparisonDateRange),
       )
-    )
-      .map((taskData) => {
-        const { avgTestSuccess, percentChange: avgSuccessPercentChange } =
-          getAvgSuccessFromLatestTests(taskData.ux_tests);
+      .then((tasks) =>
+        addTmfScoresToTasks(tasks)
+          .slice(0, 50)
+          .map((taskData) => {
+            const { avgTestSuccess, percentChange: avgSuccessPercentChange } =
+              getAvgSuccessFromLatestTests(taskData.ux_tests);
 
-        const latest_success_rate_percent_change = percentChange(
-          avgTestSuccess,
-          avgTestSuccess - avgSuccessPercentChange,
-        );
+            const latest_success_rate_percent_change = percentChange(
+              avgTestSuccess,
+              avgTestSuccess - avgSuccessPercentChange,
+            );
 
-        const latest_success_rate_difference = avgSuccessPercentChange * 100;
+            const latest_success_rate_difference =
+              avgSuccessPercentChange * 100;
 
-        return {
-          ...taskData,
-          _id: taskData._id.toString(),
-          latest_ux_success: avgTestSuccess,
-          latest_success_rate_difference,
-          latest_success_rate_percent_change,
-        };
-      });
-      console.timeEnd('tasks');
-
-    const globalStats = await getGlobalMetricStats(topTasksTable);
-
-    const scoredTasks = topTasksTable
-      .map((t) => {
-        const dyf_total = (t.dyf_yes || 0) + (t.dyf_no || 0);
-
-        const visits_score = computeMetricWeightedScore(
-          t.visits,
-          globalStats.visits.p5,
-          globalStats.visits.p95,
-          globalStats.visits.max,
-          METRIC_WEIGHTS.visits,
-        );
-
-        const calls_score = computeMetricWeightedScore(
-          t.calls,
-          globalStats.calls.p5,
-          globalStats.calls.p95,
-          globalStats.calls.max,
-          METRIC_WEIGHTS.calls,
-        );
-
-        const dyf_total_score = computeMetricWeightedScore(
-          dyf_total,
-          globalStats.dyf_total.p5,
-          globalStats.dyf_total.p95,
-          globalStats.dyf_total.max,
-          METRIC_WEIGHTS.dyf_total,
-        );
-
-        const survey_score = computeMetricWeightedScore(
-          t.survey,
-          globalStats.survey.p5,
-          globalStats.survey.p95,
-          globalStats.survey.max,
-          METRIC_WEIGHTS.survey,
-        );
-
-        const overall_score =
-          (visits_score || 0) +
-          (calls_score || 0) +
-          (dyf_total_score || 0) +
-          (survey_score || 0);
-
-        return {
-          ...t,
-          visits_score,
-          calls_score,
-          dyf_total_score,
-          survey_score,
-          overall_score,
-        };
-      })
-      .sort((a, b) => b.overall_score - a.overall_score)
-      .slice(0, 50)
-      .map((t, i) => ({
-        ...t,
-        tmf_rank: i + 1,
-      }));
+            return {
+              ...taskData,
+              _id: taskData._id.toString(),
+              latest_ux_success: avgTestSuccess,
+              latest_success_rate_difference,
+              latest_success_rate_percent_change,
+            };
+          }),
+      );
+    console.timeEnd('tasks');
 
     const results = {
       dateRange: params.dateRange,
@@ -355,7 +297,7 @@ export class OverallService {
       searchTermsEn: await this.getTopSearchTerms(params, 'en'),
       searchTermsFr: await this.getTopSearchTerms(params, 'fr'),
       totalTasks,
-      topTasksTable: scoredTasks,
+      topTasksTable,
     };
 
     await this.cacheManager.set(

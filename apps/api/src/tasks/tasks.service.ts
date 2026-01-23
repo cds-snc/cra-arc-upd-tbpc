@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import type { Cache } from 'cache-manager';
 import { DbService } from '@dua-upd/db';
@@ -9,7 +8,6 @@ import type {
   IReports,
   TaskDetailsData,
   TasksHomeData,
-  TasksHomeAggregatedData,
   DateRange,
 } from '@dua-upd/types-common';
 import {
@@ -19,9 +17,7 @@ import {
   getSelectedPercentChange,
   parseDateRangeString,
   percentChange,
-  getGlobalMetricStats,
-  computeMetricWeightedScore,
-  METRIC_WEIGHTS,
+  addTmfScoresToTasks,
 } from '@dua-upd/utils-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { omit } from 'rambdax';
@@ -88,7 +84,7 @@ export class TasksService {
         { start: comparisonStart, end: comparisonEnd },
       )
       .then((tasks) =>
-        tasks.map((task) => {
+        addTmfScoresToTasks(tasks).map((task) => {
           const { avgTestSuccess, percentChange: latest_success_rate } =
             getAvgSuccessFromLatestTests(task.ux_tests);
 
@@ -108,67 +104,8 @@ export class TasksService {
         }),
       );
     console.timeEnd('tasks');
-    
+
     const documentsUrl = DOCUMENTS_URL();
-    
-    const globalStats = await getGlobalMetricStats(tasks);
-    
-    const scoredTasks = tasks
-      .map((t: TasksHomeAggregatedData) => {
-        const dyf_total = (t.dyf_yes || 0) + (t.dyf_no || 0);
-
-        const visits_score = computeMetricWeightedScore(
-          t.visits,
-          globalStats.visits.p5,
-          globalStats.visits.p95,
-          globalStats.visits.max,
-          METRIC_WEIGHTS.visits,
-        );
-
-        const calls_score = computeMetricWeightedScore(
-          t.calls,
-          globalStats.calls.p5,
-          globalStats.calls.p95,
-          globalStats.calls.max,
-          METRIC_WEIGHTS.calls,
-        );
-
-        const dyf_total_score = computeMetricWeightedScore(
-          dyf_total,
-          globalStats.dyf_total.p5,
-          globalStats.dyf_total.p95,
-          globalStats.dyf_total.max,
-          METRIC_WEIGHTS.dyf_total,
-        );
-
-        const survey_score = computeMetricWeightedScore(
-          t.survey,
-          globalStats.survey.p5,
-          globalStats.survey.p95,
-          globalStats.survey.max,
-          METRIC_WEIGHTS.survey,
-        );
-
-        const overall_score =
-          (visits_score || 0) +
-          (calls_score || 0) +
-          (dyf_total_score || 0) +
-          (survey_score || 0);
-
-        return {
-          ...t,
-          visits_score,
-          calls_score,
-          dyf_total_score,
-          survey_score,
-          overall_score,
-        };
-      })
-      .sort((a, b) => b.overall_score - a.overall_score)
-      .map((t, i) => ({
-        ...t,
-        tmf_rank: i + 1,
-      }));
 
     const reports = (await this.db.collections.reports
       .find(
@@ -186,18 +123,18 @@ export class TasksService {
           ...omit(['_id'], report),
           en_attachment: report.en_attachment?.map((attachment) => ({
             ...attachment,
-            storage_url: `${DOCUMENTS_URL()}${attachment.storage_url}`,
+            storage_url: `${documentsUrl}${attachment.storage_url}`,
           })),
           fr_attachment: report.fr_attachment?.map((attachment) => ({
             ...attachment,
-            storage_url: `${DOCUMENTS_URL()}${attachment.storage_url}`,
+            storage_url: `${documentsUrl}${attachment.storage_url}`,
           })),
         })),
       )) as IReports[];
 
     const results = {
       dateRange,
-      dateRangeData: scoredTasks.map(omit(['ux_tests'])),
+      dateRangeData: tasks.map(omit(['ux_tests'])),
       totalVisits,
       percentChange: totalVisitsPercentChange,
       totalCalls,

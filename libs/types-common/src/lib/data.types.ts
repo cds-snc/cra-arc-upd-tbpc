@@ -358,7 +358,7 @@ export interface TasksHomeAggregatedData {
   user_type: string[];
   calls: number;
   dyf_no: number;
-  dyf_yes?: number;
+  dyf_yes: number;
   latest_ux_success: number;
   survey: number;
   survey_percent_change: number | null;
@@ -375,11 +375,11 @@ export interface TasksHomeAggregatedData {
   dyf_no_difference: number | null;
   latest_success_rate_difference: number | null;
   latest_success_rate_percent_change: number | null;
-  visits_score?: number | null;
-  calls_score?: number | null;
-  dyf_total_score?: number | null;
-  survey_score?: number | null;
-  overall_score?: number | null;
+  visits_score: number;
+  calls_score: number;
+  dyf_total_score: number;
+  survey_score: number;
+  overall_score: number;
 }
 
 export type TasksHomeData = ViewData<TasksHomeAggregatedData[]> & {
