@@ -63,6 +63,7 @@ class PageMetrics(ParquetModel):
             "visits_referrer_searchengine": int32(),
             "visits_referrer_social": int32(),
             "visits_referrer_typed_bookmarked": int32(),
+            "visits_referrer_convo_ai": int32(),
         }
     )
 
