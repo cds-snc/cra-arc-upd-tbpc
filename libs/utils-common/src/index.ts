@@ -4,3 +4,4 @@ export * from './lib/types';
 export * from './lib/date';
 export * from './lib/data';
 export * from './lib/http';
+export * from './lib/tmf-ranking';
