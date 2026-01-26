@@ -76,6 +76,9 @@ export class HttpClient {
     try {
       const response = await fetch(requestUrl, {
         keepalive: true,
+        headers: {
+          'User-Agent': `Node/${process.version}`,
+        }
       });
 
       const responseUrl: string = response.url.replace('https://', '');
