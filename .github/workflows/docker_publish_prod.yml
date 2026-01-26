@@ -75,13 +75,13 @@ jobs:
       - name: Determine affected apps
         id: affected-apps
         run: |
-          AFFECTED_APPS=$(npx nx show projects --affected --with-target build --type app --json --base ${{ env.NX_BASE }} --head ${{ env.NX_HEAD }})
+          AFFECTED_APPS=$(npx nx show projects --affected --with-target build --type app --json --base ${{ env.NX_BASE }} --head ${{ env.NX_HEAD }} | jq -c .)
 
           if [ "${{ steps.check-python.outputs.python_affected }}" == "true" ]; then
             if [ -z "$AFFECTED_APPS" ]; then
               AFFECTED_APPS="[\"python\"]"
             else
-              AFFECTED_APPS=$(echo $AFFECTED_APPS | jq '. + ["python"]')
+              AFFECTED_APPS=$(echo $AFFECTED_APPS | jq -c '. + ["python"]')
             fi
           fi
 
