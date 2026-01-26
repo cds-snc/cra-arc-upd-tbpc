@@ -562,7 +562,8 @@
   "WOS_COPS": "POC | ESH",
   "Inquiry line": "Ligne de renseignements",
   "inquiry line": "Ligne de renseignements",
-  "calldrivers-notification": "Ce rapport présente les résultats des sujets d’appel pour les principales files d’attente des agents, basés sur un échantillon aléatoire d’appels recueillis au moyen d’un sondage auprès des agents. Les données d’appels ne doivent pas être interprétées seules comme une mesure de la performance du site Web. Elles doivent être examinées conjointement avec les autres données disponibles dans l’TBPC pour obtenir un portrait complet.",
+  "calldrivers-notification-new": "Ce rapport présente les résultats des sujets d’appel pour les principales files d’attente des agents, basés sur un échantillon aléatoire d’appels recueillis au moyen d’un sondage auprès des agents. Les données d’appels ne doivent pas être interprétées seules comme une mesure de la performance du site Web. Elles doivent être examinées conjointement avec les autres données disponibles dans l’TBPC pour obtenir un portrait complet.",
+  "calldrivers-notification": "Ce rapport présente les résultats des sujets d'appel pour les principales files d'attente d'agents sur la base d'un échantillon aléatoire d'appels.",
 
   "about-us": "À propos de nous",
   "about-upd": "À propos du Tableau de bord des performances de convivialité",
