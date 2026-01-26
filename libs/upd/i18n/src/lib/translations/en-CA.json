@@ -562,7 +562,8 @@
   "WOS_COPS": "COPS | SSE",
   "Inquiry line": "Inquiry line",
   "inquiry line": "Inquiry line",
-  "calldrivers-notification": "This report presents call topic results for the main agent queues based on a random sample of calls captured through an agent survey. Call data should not be interpreted on its own as a measure of website performance. It should be considered alongside other data available in UPD for a complete view.",
+  "calldrivers-notification-new": "This report presents call topic results for the main agent queues based on a random sample of calls captured through an agent survey. Call data should not be interpreted on its own as a measure of website performance. It should be considered alongside other data available in UPD for a complete view.",
+  "calldrivers-notification": "This report presents call topic results for the main agent queues based on a random sample of calls.",
 
   "about-us": "About Us",
   "about-upd": "About the Usability Performance Dashboard",
