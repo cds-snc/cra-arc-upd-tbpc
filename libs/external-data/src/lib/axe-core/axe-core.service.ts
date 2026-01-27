@@ -18,13 +18,66 @@ import frLocale from 'axe-core/locales/fr.json';
 const axeSourceDefault = axe.source;
 const axeSourceFrench = `${axe.source};axe.configure(${JSON.stringify({ locale: frLocale })});`;
 
+// CSS selectors to exclude from accessibility testing (canada.ca template elements)
+const EXCLUDED_SELECTORS = [
+  '.global-header nav',   // Skip links in global header
+  '#wb-tphp',             // Skip links list (directly targets the element)
+  '.gcweb-menu',          // GC Web main menu
+  '#wb-bc',               // Breadcrumb navigation
+  '.gc-contextual nav',   // Footer contextual nav
+  '.gc-main-footer nav',  // Main footer nav
+  '.gc-sub-footer nav',   // Sub footer nav
+  'header nav',           // Any nav in header
+  'footer nav',           // Any nav in footer
+];
+
 @Injectable()
 export class AxeCoreService {
+  private static readonly BLOCKED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '::1',
+    '10.',
+    '172.16.',
+    '172.17.',
+    '172.18.',
+    '172.19.',
+    '172.20.',
+    '172.21.',
+    '172.22.',
+    '172.23.',
+    '172.24.',
+    '172.25.',
+    '172.26.',
+    '172.27.',
+    '172.28.',
+    '172.29.',
+    '172.30.',
+    '172.31.',
+    '192.168.',
+  ];
+
   constructor(
     @Inject(AxeCoreClient.name)
     private readonly client: AxeCoreClient,
     private readonly logger: ConsoleLogger,
   ) {}
+
+  private validateUrl(url: string): void {
+    const parsed = new URL(url);
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error('Only HTTP/HTTPS protocols are allowed');
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+    for (const blocked of AxeCoreService.BLOCKED_HOSTS) {
+      if (hostname === blocked || hostname.startsWith(blocked)) {
+        throw new Error('Access to internal networks is not allowed');
+      }
+    }
+  }
 
   @Retry(3, 1000)
   async runAccessibilityTest(
@@ -32,6 +85,8 @@ export class AxeCoreService {
     strategy: 'mobile' | 'desktop' = 'desktop',
     locale?: string,
   ): Promise<AccessibilityTestResult> {
+    this.validateUrl(url);
+
     this.logger.log(
       `Running axe-core accessibility test for ${url} (${strategy}) with locale: ${locale}`,
     );
@@ -43,29 +98,41 @@ export class AxeCoreService {
       context = await this.client.createContext();
       page = await this.client.createPage(context);
 
-      // Set viewport based on strategy
       if (strategy === 'mobile') {
         await page.setViewportSize({ width: 375, height: 812 });
       } else {
         await page.setViewportSize({ width: 1920, height: 1080 });
       }
 
-      // Navigate to URL - use domcontentloaded (faster, sufficient for DOM testing)
       await page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000,
+        waitUntil: 'networkidle',
+        timeout: 60000,
       });
 
-      // Select axe source based on locale (French or default English)
+      // Additional wait to ensure JavaScript has fully rendered the page
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(2000); // Give JS time to render dynamic content
+
       const isFrench = locale?.startsWith('fr');
       const axeSource = isFrench ? axeSourceFrench : axeSourceDefault;
 
-      // Run axe-core analysis with WCAG tags and appropriate locale
-      const results: AxeResults = await new AxeBuilder({ page, axeSource })
-        .withTags([...WCAG_TAGS])
-        .analyze();
+      // Build AxeBuilder with exclusions (exclude() must be called once per selector)
+      let axeBuilder = new AxeBuilder({ page, axeSource }).withTags([...WCAG_TAGS]);
+      for (const selector of EXCLUDED_SELECTORS) {
+        axeBuilder = axeBuilder.exclude(selector);
+      }
+      const results: AxeResults = await axeBuilder.analyze();
 
-      // Map results to our AccessibilityTestResult type
+      // Debug logging
+      this.logger.log(`Axe-core results for ${url}:`);
+      this.logger.log(`  Violations: ${results.violations.length}`);
+      this.logger.log(`  Passes: ${results.passes.length}`);
+      this.logger.log(`  Incomplete: ${results.incomplete.length}`);
+      this.logger.log(`  Inapplicable: ${results.inapplicable.length}`);
+      if (results.violations.length > 0) {
+        this.logger.log(`  Violation IDs: ${results.violations.map(v => v.id).join(', ')}`);
+      }
+
       const audits = this.mapAxeResultsToAudits(results);
       const score = this.calculateScore(results);
       const scoreDisplay = `${Math.round(score * 100)}%`;
@@ -82,12 +149,19 @@ export class AxeCoreService {
       this.logger.error(`Failed to run axe-core test for ${url}:`, error);
       throw error;
     } finally {
-      // Clean up resources
       if (page) {
-        await page.close().catch(() => {});
+        try {
+          await page.close();
+        } catch (e) {
+          this.logger.warn(`Failed to close page: ${e}`);
+        }
       }
       if (context) {
-        await context.close().catch(() => {});
+        try {
+          await context.close();
+        } catch (e) {
+          this.logger.warn(`Failed to close context: ${e}`);
+        }
       }
     }
   }
@@ -99,17 +173,32 @@ export class AxeCoreService {
     return await this.runAccessibilityTest(url, 'desktop', locale);
   }
 
+  async runAccessibilityTestMobileOnly(
+    url: string,
+    locale?: string,
+  ): Promise<AccessibilityTestResult> {
+    return await this.runAccessibilityTest(url, 'mobile', locale);
+  }
+
   async runAccessibilityTestForBothLocales(url: string): Promise<{
-    en: AccessibilityTestResult;
-    fr: AccessibilityTestResult;
+    en: { desktop: AccessibilityTestResult; mobile: AccessibilityTestResult };
+    fr: { desktop: AccessibilityTestResult; mobile: AccessibilityTestResult };
   }> {
-    // Run English and French tests in parallel for faster execution
-    const [enResults, frResults] = await Promise.all([
+    // Run tests in 2 batches to reduce resource strain (2 parallel, then 2 parallel)
+    const [enDesktop, frDesktop] = await Promise.all([
       this.runAccessibilityTestDesktopOnly(url, 'en-US'),
       this.runAccessibilityTestDesktopOnly(url, 'fr-CA'),
     ]);
 
-    return { en: enResults, fr: frResults };
+    const [enMobile, frMobile] = await Promise.all([
+      this.runAccessibilityTestMobileOnly(url, 'en-US'),
+      this.runAccessibilityTestMobileOnly(url, 'fr-CA'),
+    ]);
+
+    return {
+      en: { desktop: enDesktop, mobile: enMobile },
+      fr: { desktop: frDesktop, mobile: frMobile },
+    };
   }
 
   /**

@@ -588,3 +588,28 @@ h3 span.title-suffix {
   font-weight: normal;
   color: #555;
 }
+
+/* Icon size utilities */
+.icon-lg {
+  font-size: 2rem;
+}
+
+.icon-xl {
+  font-size: 3rem;
+}
+
+/* Pre-wrap text utility for code/snippet display */
+.pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Monospace pre-wrap for code blocks */
+.pre-wrap-mono {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  font-family: monospace;
+  font-size: 0.875rem;
+}

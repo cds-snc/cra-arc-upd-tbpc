@@ -584,11 +584,26 @@ export class PagesService {
   }
 
   async runAccessibilityTest(url: string) {
-    // Ensure URL has https:// protocol
-    const fullUrl =
-      url.startsWith('http://') || url.startsWith('https://')
-        ? url
-        : `https://${url}`;
+    if (!url || typeof url !== 'string') {
+      return this.buildAccessibilityErrorResponse(new Error('URL is required'));
+    }
+
+    if (url.length > 2048) {
+      return this.buildAccessibilityErrorResponse(new Error('URL too long'));
+    }
+
+    let fullUrl: string;
+    try {
+      const lowerUrl = url.toLowerCase();
+      if (!lowerUrl.startsWith('http://') && !lowerUrl.startsWith('https://')) {
+        fullUrl = `https://${url}`;
+      } else {
+        fullUrl = url;
+      }
+      new URL(fullUrl);
+    } catch {
+      return this.buildAccessibilityErrorResponse(new Error('Invalid URL format'));
+    }
 
     try {
       const results =
@@ -598,13 +613,15 @@ export class PagesService {
         en: {
           success: true,
           data: {
-            desktop: results.en,
+            desktop: results.en.desktop,
+            mobile: results.en.mobile,
           },
         },
         fr: {
           success: true,
           data: {
-            desktop: results.fr,
+            desktop: results.fr.desktop,
+            mobile: results.fr.mobile,
           },
         },
       };
@@ -613,68 +630,88 @@ export class PagesService {
     }
   }
 
-  private buildAccessibilityErrorResponse(error: any) {
-    // Map error types to translation keys
-    let errorKey = 'accessibility-error-generic';
-
-    // Check Playwright-specific errors
-    if (
-      error.message?.includes('net::ERR_NAME_NOT_RESOLVED') ||
-      error.message?.includes('Invalid URL') ||
-      error.message?.includes('invalid url')
-    ) {
-      errorKey = 'accessibility-error-invalid-url';
-    } else if (
-      error.message?.includes('Timeout') ||
-      error.message?.includes('timeout') ||
-      error.name === 'TimeoutError' ||
-      error.response?.status === 504
-    ) {
-      errorKey = 'accessibility-error-timeout';
-    } else if (
-      error.message?.includes('net::ERR_CONNECTION_REFUSED') ||
-      error.code === 'ECONNRESET' ||
-      error.message?.includes('socket hang up') ||
-      error.message?.includes('ECONNRESET')
-    ) {
-      errorKey = 'accessibility-error-connection-reset';
-    } else if (
-      error.message?.includes('Browser closed') ||
-      error.response?.status === 500
-    ) {
-      errorKey = 'accessibility-error-server-error';
-    } else if (
-      error.message?.includes('net::ERR_INTERNET_DISCONNECTED') ||
-      error.code === 'ENOTFOUND' ||
-      error.message?.includes('network') ||
-      error.message?.includes('ENOTFOUND')
-    ) {
-      errorKey = 'accessibility-error-network';
-    }
-    // Check HTTP status codes (from axios error.response)
-    else if (error.response?.status === 429) {
-      errorKey = 'accessibility-error-rate-limit';
-    } else if (error.response?.status === 503) {
-      errorKey = 'accessibility-error-service-unavailable';
-    } else if (error.response?.status === 502) {
-      errorKey = 'accessibility-error-bad-gateway';
-    }
-    // Check error message strings as fallback
-    else if (
-      error.message?.includes('429') ||
-      error.message?.includes('rate limit')
-    ) {
-      errorKey = 'accessibility-error-rate-limit';
-    }
-
+  private buildAccessibilityErrorResponse(error: unknown) {
+    const errorKey = this.categorizeAccessibilityError(error);
     const errorResponse = {
-      success: false,
+      success: false as const,
       error: errorKey,
     };
     return {
       en: errorResponse,
       fr: errorResponse,
     };
+  }
+
+  private categorizeAccessibilityError(error: unknown): string {
+    if (!(error instanceof Error)) {
+      return 'accessibility-error-generic';
+    }
+
+    const message = error.message?.toLowerCase() || '';
+    const errorWithCode = error as Error & { code?: string; response?: { status?: number } };
+
+    if (
+      message.includes('url is required') ||
+      message.includes('url too long') ||
+      message.includes('invalid url') ||
+      message.includes('net::err_name_not_resolved')
+    ) {
+      return 'accessibility-error-invalid-url';
+    }
+
+    if (message.includes('internal networks is not allowed')) {
+      return 'accessibility-error-invalid-url';
+    }
+
+    if (message.includes('only http/https protocols')) {
+      return 'accessibility-error-invalid-url';
+    }
+
+    if (
+      error.name === 'TimeoutError' ||
+      message.includes('timeout') ||
+      errorWithCode.response?.status === 504
+    ) {
+      return 'accessibility-error-timeout';
+    }
+
+    if (
+      message.includes('net::err_connection_refused') ||
+      errorWithCode.code === 'ECONNRESET' ||
+      message.includes('socket hang up') ||
+      message.includes('econnreset')
+    ) {
+      return 'accessibility-error-connection-reset';
+    }
+
+    if (
+      message.includes('browser closed') ||
+      errorWithCode.response?.status === 500
+    ) {
+      return 'accessibility-error-server-error';
+    }
+
+    if (
+      message.includes('net::err_internet_disconnected') ||
+      errorWithCode.code === 'ENOTFOUND' ||
+      message.includes('enotfound')
+    ) {
+      return 'accessibility-error-network';
+    }
+
+    if (errorWithCode.response?.status === 429) {
+      return 'accessibility-error-rate-limit';
+    }
+
+    if (errorWithCode.response?.status === 503) {
+      return 'accessibility-error-service-unavailable';
+    }
+
+    if (errorWithCode.response?.status === 502) {
+      return 'accessibility-error-bad-gateway';
+    }
+
+    return 'accessibility-error-generic';
   }
 }
 

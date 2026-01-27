@@ -7,6 +7,7 @@ export type AccessibilityTestResponse = {
   success: boolean;
   data?: {
     desktop: AccessibilityTestResult;
+    mobile: AccessibilityTestResult;
   };
   error?: string;
 };

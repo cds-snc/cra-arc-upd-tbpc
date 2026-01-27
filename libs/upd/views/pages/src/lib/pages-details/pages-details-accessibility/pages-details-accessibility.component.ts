@@ -1,4 +1,4 @@
-import { Component, inject, computed, SecurityContext } from '@angular/core';
+import { Component, inject, computed, SecurityContext, signal } from '@angular/core';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,7 +9,10 @@ import type {
   ColumnConfig,
   AccessibilityAudit,
   AccessibilityAuditNode,
+  AccessibilityTestResult,
 } from '@dua-upd/types-common';
+
+type DeviceTab = 'desktop' | 'mobile';
 
 @Component({
     selector: 'upd-pages-details-accessibility',
@@ -23,20 +26,16 @@ export class PagesDetailsAccessibilityComponent {
   private sanitizer = inject(DomSanitizer);
   private translateService = inject(TranslateService);
 
-  currentLang$ = this.i18n.currentLang$;
-  pageUrl$ = this.pageDetailsService.pageUrl$;
-  currentLang = toSignal(this.currentLang$);
-  url = toSignal(this.pageUrl$);
+  currentLang = toSignal(this.i18n.currentLang$);
+  url = toSignal(this.pageDetailsService.pageUrl$);
 
   accessibilityData = toSignal(this.pageDetailsService.accessibility$);
   accessibilityError = toSignal(this.pageDetailsService.accessibilityError$);
   private _accessibilityLoading = toSignal(this.pageDetailsService.accessibilityLoading$);
 
-  // Only show loading if we don't have cached data for current page
   isTestRunning = computed(() => {
     const data = this.accessibilityData();
     const loading = this._accessibilityLoading();
-    // Show loading only if loading is true AND we don't have data yet
     return loading && !data;
   });
 
@@ -56,23 +55,34 @@ export class PagesDetailsAccessibilityComponent {
     return null;
   });
 
-  desktopChartData = computed(() => {
+  selectedDevice = signal<DeviceTab>('desktop');
+
+  currentDeviceData = computed<AccessibilityTestResult | null>(() => {
     const results = this.testResults();
-    if (results?.data?.desktop?.audits) {
-      return this.getAuditDistributionData(results.data.desktop.audits);
+    const device = this.selectedDevice();
+    return results?.data?.[device] ?? null;
+  });
+
+  hasDesktopData = computed(() => !!this.testResults()?.data?.desktop);
+  hasMobileData = computed(() => !!this.testResults()?.data?.mobile);
+
+  chartData = computed(() => {
+    const deviceData = this.currentDeviceData();
+    if (deviceData?.audits) {
+      return this.getAuditDistributionData(deviceData.audits);
     }
     return null;
   });
 
-  desktopMetrics = computed(() => {
-    const results = this.testResults();
-    if (results?.data?.desktop?.audits) {
-      return this.getAutomatedTestMetrics(results.data.desktop.audits);
+  metrics = computed(() => {
+    const deviceData = this.currentDeviceData();
+    if (deviceData?.audits) {
+      return this.getAutomatedTestMetrics(deviceData.audits);
     }
     return null;
   });
 
-  auditTableCols = computed<ColumnConfig<{ category: string; count: number }>[]>(() => [
+  readonly auditTableCols: ColumnConfig<{ category: string; count: number }>[] = [
     {
       field: 'category',
       header: 'Category',
@@ -80,16 +90,17 @@ export class PagesDetailsAccessibilityComponent {
     },
     {
       field: 'count',
-      header: 'Count',
+      header: 'count',
+      translate: true,
       pipe: 'number',
     }
-  ]);
+  ];
 
   auditTableData = computed(() => {
-    const results = this.testResults();
-    if (!results?.data?.desktop?.audits) return null;
+    const deviceData = this.currentDeviceData();
+    if (!deviceData?.audits) return null;
 
-    const categorized = this.getCategorizedAudits(results.data.desktop.audits);
+    const categorized = this.getCategorizedAudits(deviceData.audits);
     return [
       { category: 'accessibility-failed-tests', count: categorized.failed.length },
       { category: 'accessibility-passed-tests', count: categorized.passed.length },
@@ -98,7 +109,6 @@ export class PagesDetailsAccessibilityComponent {
     ];
   });
 
-  // Impact order for sorting (lower = more severe)
   private readonly impactOrder: Record<string, number> = {
     critical: 0,
     serious: 1,
@@ -106,14 +116,12 @@ export class PagesDetailsAccessibilityComponent {
     minor: 3,
   };
 
-  // Categorized audits with failed tests sorted by impact severity
   categorizedAudits = computed(() => {
-    const results = this.testResults();
-    if (!results?.data?.desktop?.audits) return null;
+    const deviceData = this.currentDeviceData();
+    if (!deviceData?.audits) return null;
 
-    const categorized = this.getCategorizedAudits(results.data.desktop.audits);
+    const categorized = this.getCategorizedAudits(deviceData.audits);
 
-    // Sort failed audits by impact severity
     const sortedFailed = [...categorized.failed].sort((a, b) => {
       const aOrder = this.impactOrder[a.impact || 'minor'] ?? 3;
       const bOrder = this.impactOrder[b.impact || 'minor'] ?? 3;
@@ -126,7 +134,6 @@ export class PagesDetailsAccessibilityComponent {
     };
   });
 
-  // Impact breakdown for summary
   impactBreakdown = computed(() => {
     const categorized = this.categorizedAudits();
     if (!categorized) return null;
@@ -142,13 +149,31 @@ export class PagesDetailsAccessibilityComponent {
 
 
   getCategorizedAudits(audits: AccessibilityAudit[]) {
-    // axe-core provides titles and descriptions directly - no mapping needed
-    return {
-      failed: audits.filter(audit => audit.category === 'failed'),
-      passed: audits.filter(audit => audit.category === 'passed'),
-      manual: audits.filter(audit => audit.category === 'manual_check'),
-      notApplicable: audits.filter(audit => audit.category === 'not_applicable')
-    };
+    return audits.reduce(
+      (acc, audit) => {
+        switch (audit.category) {
+          case 'failed':
+            acc.failed.push(audit);
+            break;
+          case 'passed':
+            acc.passed.push(audit);
+            break;
+          case 'manual_check':
+            acc.manual.push(audit);
+            break;
+          case 'not_applicable':
+            acc.notApplicable.push(audit);
+            break;
+        }
+        return acc;
+      },
+      {
+        failed: [] as AccessibilityAudit[],
+        passed: [] as AccessibilityAudit[],
+        manual: [] as AccessibilityAudit[],
+        notApplicable: [] as AccessibilityAudit[],
+      }
+    );
   }
 
   getAuditDistributionData(audits: AccessibilityAudit[]) {
@@ -243,6 +268,11 @@ export class PagesDetailsAccessibilityComponent {
     const isEnglish = this.currentLang() === 'en-CA';
 
     const htmlDescription = description.replace(markdownLinkRegex, (_match, linkText, url) => {
+      // Validate URL is HTTP/HTTPS to prevent XSS via javascript: or data: URLs
+      if (!url.startsWith('https://') && !url.startsWith('http://')) {
+        return linkText;
+      }
+
       let processedUrl = url;
       if (!isEnglish && url.includes('https://developer.chrome.com/docs/lighthouse/accessibility')) {
         processedUrl = url.includes('?') ? `${url}&hl=fr` : `${url}?hl=fr`;
@@ -260,6 +290,10 @@ export class PagesDetailsAccessibilityComponent {
     if (currentUrl) {
       this.pageDetailsService.refreshAccessibilityTest(currentUrl);
     }
+  }
+
+  selectDevice(device: DeviceTab) {
+    this.selectedDevice.set(device);
   }
 
   getImpactBadgeClass(impact: string | undefined): string {

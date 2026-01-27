@@ -10,25 +10,33 @@ import { chromium, Browser, BrowserContext, Page } from 'playwright';
 @Injectable()
 export class AxeCoreClient implements OnModuleDestroy {
   private browser: Browser | null = null;
+  private browserPromise: Promise<Browser> | null = null;
   private readonly logger = new ConsoleLogger(AxeCoreClient.name);
 
-  /**
-   * Get or create the browser instance (lazy initialization)
-   */
   async getBrowser(): Promise<Browser> {
-    if (!this.browser) {
-      this.logger.log('Launching Chromium browser for axe-core testing');
-      this.browser = await chromium.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--disable-gpu',
-        ],
-      });
+    if (this.browser?.isConnected()) {
+      return this.browser;
     }
+
+    if (!this.browserPromise) {
+      this.browserPromise = this.initBrowser();
+    }
+
+    return this.browserPromise;
+  }
+
+  private async initBrowser(): Promise<Browser> {
+    this.logger.log('Launching Chromium browser for axe-core testing');
+    this.browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+      ],
+    });
     return this.browser;
   }
 
