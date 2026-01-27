@@ -77,7 +77,7 @@ export class HttpClient {
       const response = await fetch(requestUrl, {
         keepalive: true,
         headers: {
-          'User-Agent': `Node/${process.version}`,
+          'User-Agent': 'UPDCrawler/1.0',
         }
       });
 
