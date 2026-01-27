@@ -9,14 +9,10 @@ import type {
   AccessibilityAuditNode,
   AccessibilityTestResult,
 } from '@dua-upd/types-common';
-import type { AxeResults, Result, Locale } from 'axe-core';
+import type { AxeResults, Result } from 'axe-core';
 
-// Import French locale for axe-core
+// Import French locale for translation lookup (not for running axe-core)
 import frLocale from 'axe-core/locales/fr.json';
-
-// Create French axe source by appending locale configuration
-const axeSourceDefault = axe.source;
-const axeSourceFrench = `${axe.source};axe.configure(${JSON.stringify({ locale: frLocale })});`;
 
 // CSS selectors to exclude from accessibility testing (canada.ca template elements)
 const EXCLUDED_SELECTORS = [
@@ -83,12 +79,11 @@ export class AxeCoreService {
   async runAccessibilityTest(
     url: string,
     strategy: 'mobile' | 'desktop' = 'desktop',
-    locale?: string,
   ): Promise<AccessibilityTestResult> {
     this.validateUrl(url);
 
     this.logger.log(
-      `Running axe-core accessibility test for ${url} (${strategy}) with locale: ${locale}`,
+      `Running axe-core accessibility test for ${url} (${strategy})`,
     );
 
     let context = null;
@@ -113,11 +108,8 @@ export class AxeCoreService {
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000); // Give JS time to render dynamic content
 
-      const isFrench = locale?.startsWith('fr');
-      const axeSource = isFrench ? axeSourceFrench : axeSourceDefault;
-
       // Build AxeBuilder with exclusions (exclude() must be called once per selector)
-      let axeBuilder = new AxeBuilder({ page, axeSource }).withTags([...WCAG_TAGS]);
+      let axeBuilder = new AxeBuilder({ page, axeSource: axe.source }).withTags([...WCAG_TAGS]);
       for (const selector of EXCLUDED_SELECTORS) {
         axeBuilder = axeBuilder.exclude(selector);
       }
@@ -168,35 +160,33 @@ export class AxeCoreService {
 
   async runAccessibilityTestDesktopOnly(
     url: string,
-    locale?: string,
   ): Promise<AccessibilityTestResult> {
-    return await this.runAccessibilityTest(url, 'desktop', locale);
+    return await this.runAccessibilityTest(url, 'desktop');
   }
 
   async runAccessibilityTestMobileOnly(
     url: string,
-    locale?: string,
   ): Promise<AccessibilityTestResult> {
-    return await this.runAccessibilityTest(url, 'mobile', locale);
+    return await this.runAccessibilityTest(url, 'mobile');
   }
 
   async runAccessibilityTestForBothLocales(url: string): Promise<{
     en: { desktop: AccessibilityTestResult; mobile: AccessibilityTestResult };
     fr: { desktop: AccessibilityTestResult; mobile: AccessibilityTestResult };
   }> {
-    // Run tests in 2 batches to reduce resource strain (2 parallel, then 2 parallel)
-    const [enDesktop, frDesktop] = await Promise.all([
-      this.runAccessibilityTestDesktopOnly(url, 'en-US'),
-      this.runAccessibilityTestDesktopOnly(url, 'fr-CA'),
+    // Run only 2 tests (desktop + mobile) in parallel
+    // French translations are generated from locale file lookup, not by re-running axe-core
+    const [desktop, mobile] = await Promise.all([
+      this.runAccessibilityTest(url, 'desktop'),
+      this.runAccessibilityTest(url, 'mobile'),
     ]);
 
-    const [enMobile, frMobile] = await Promise.all([
-      this.runAccessibilityTestMobileOnly(url, 'en-US'),
-      this.runAccessibilityTestMobileOnly(url, 'fr-CA'),
-    ]);
+    // Generate French versions by translating the audit text
+    const frDesktop = this.translateResultToFrench(desktop);
+    const frMobile = this.translateResultToFrench(mobile);
 
     return {
-      en: { desktop: enDesktop, mobile: enMobile },
+      en: { desktop, mobile },
       fr: { desktop: frDesktop, mobile: frMobile },
     };
   }
@@ -341,5 +331,38 @@ export class AxeCoreService {
       return 1;
     }
     return IMPACT_WEIGHTS[impact] || 1;
+  }
+
+  /**
+   * Translate an AccessibilityTestResult to French using the locale file lookup.
+   * This avoids re-running axe-core just to get French output.
+   */
+  private translateResultToFrench(
+    result: AccessibilityTestResult,
+  ): AccessibilityTestResult {
+    const frRules = (frLocale as { rules: Record<string, { help?: string; description?: string }> }).rules;
+
+    return {
+      ...result,
+      audits: result.audits.map((audit) => ({
+        ...audit,
+        title: frRules[audit.id]?.help ?? audit.title,
+        description: frRules[audit.id]?.description ?? audit.description,
+        howToFix: audit.howToFix ? this.translateFailureSummary(audit.howToFix) : audit.howToFix,
+        nodes: audit.nodes?.map((node) => ({
+          ...node,
+          failureSummary: node.failureSummary ? this.translateFailureSummary(node.failureSummary) : node.failureSummary,
+        })),
+      })),
+    };
+  }
+
+  /**
+   * Translate axe-core failureSummary prefixes from English to French.
+   */
+  private translateFailureSummary(summary: string): string {
+    return summary
+      .replace('Fix all of the following:', 'Corriger tous les éléments suivants :')
+      .replace('Fix any of the following:', "Corriger l'un des éléments suivants :");
   }
 }
