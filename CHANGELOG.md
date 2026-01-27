@@ -5,45 +5,27 @@
 
 ### Features
 
-* add Conversational AI referrer type metric ([c5c9929](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c5c99295c51ccc21583f5c5433bd11c7370abbb4))
-* add Conversational AI referrer type metric ([e91500c](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/e91500c9366ed8fed8ccc160c715543348ad3bba))
 * add Conversational AI referrer type metric ([b1626fc](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b1626fc6ea31bf3e5eb053530f6a60cd4559a346))
-* Add new wos_cops field across the project ([3b773e1](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/3b773e160fdf2ed858f1c124622d67ba51aeaa76))
-* Add new wos_cops field across the project ([cc457b8](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/cc457b8b8ef071aa39d177a41e92e6f515846cda))
 * Add new wos_cops field across the project ([3300dd5](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/3300dd507ab9adadc0d05c9a9efe5196ecb884a8))
-* tmf ranking ([282e79f](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/282e79f107481cafa3762baa4df8d3ccf823091e))
-* tmf ranking ([a000e79](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/a000e79a372bc63e30de220b7ed21f2aa740e5ce))
 * tmf ranking ([9d78e18](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/9d78e18c03e2fe7ade5c0c1e4b10c48b44ddb10d))
 
 
 ### Bug Fixes
 
-* Add convo ai referrer type to page metrics mongo-parquet schema ([a072b39](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/a072b39cdea3c9cbc8ce981fd71a3479a9df9cd6))
-* Add convo ai referrer type to page metrics mongo-parquet schema ([b1abb71](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b1abb7173948d7d7553a40c2431649abe17c1fbc))
 * Add convo ai referrer type to page metrics mongo-parquet schema ([a59fddc](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/a59fddcdb12a94e81f01907087574790c03d6400))
-* Add User-Agent header to HTTP client ([f29cc12](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f29cc12035b5c8ebb60c583aa29e311bc3bbc8b5))
-* Add User-Agent header to HTTP client ([156a3f5](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/156a3f5d96a594cb5cc5ee9fbc21acf77ab8512a))
 * Add User-Agent header to HTTP client ([81b2d52](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/81b2d52389f52788040d245c16e53fc0ae0e03b9))
 * Change HTTP client user-agent to avoid blocking ([c8f5854](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c8f58542edd81d5fce4f85676b7832954451e729))
-* Projects empty state, tooltip updates ([d1fdf0d](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/d1fdf0d17aec3eb46d9fbeafb0b3a66d85e2a38f))
-* Projects empty state, tooltip updates ([c219e4e](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c219e4ed7254103db8419f739fa59d5e1d71daae))
 * Projects empty state, tooltip updates ([32a0f68](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/32a0f68e1be463e4e2d3e2baf1578c49e8158d95))
-* Revert Call drivers notification message ([72fd797](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/72fd7977f985fe9220c50d57970b581de3dfcfc6))
-* Revert Call drivers notification message ([6403774](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/6403774192b3e0771ce5826cbe6616af83c8a229))
 * Revert Call drivers notification message ([9b89df6](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/9b89df6a1abecd8c8bdf21b55eba63e32bc324a6))
 
 
 ### Miscellaneous Chores
 
-* Move TMF ranking code to a separate file ([f61cf28](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f61cf28d3cfe5457ec5483cf6331a70dc4f3a881))
-* Move TMF ranking code to a separate file ([f66fb8c](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f66fb8c798ee9c8f1d05b1ddca14f4e89cb3a6da))
 * Move TMF ranking code to a separate file ([df2356c](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/df2356cc2d7f3566effcddb3e76d9b26bea19025))
 
 
 ### Code Refactoring
 
-* Improve/cleanup types and consolidate logic for TMF ranking ([e6a78d6](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/e6a78d61678f8b7e02546e48fed53c5a2fc40be7))
-* Improve/cleanup types and consolidate logic for TMF ranking ([f9802f2](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f9802f25585a56377ca1afcf6fb58a8c90972f65))
 * Improve/cleanup types and consolidate logic for TMF ranking ([b135b1c](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b135b1cd0b967ffc6605a114c8311eba41854af2))
 
 ## [4.0.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.3...v4.0.4) (2026-01-16)
