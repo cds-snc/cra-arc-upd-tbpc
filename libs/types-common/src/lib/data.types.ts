@@ -270,6 +270,7 @@ export interface OverviewData
   };
   wosImprovedTasksKpi?: {
     uniqueTasks: number;
+    testedTasks: number;
     successRates: SuccessRates;
   };
   improvedKpiTopSuccessRate?: {

@@ -147,6 +147,10 @@ export class OverviewFacade {
     map((improvedKpi) => improvedKpi?.uniqueTasks || 0),
   );
 
+  wosImprovedKpiTestedTasks$ = this.wosImprovedKpi$.pipe(
+    map((improvedKpi) => improvedKpi?.testedTasks || 0),
+  );
+
   improvedKpiSuccessRate$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates || 0),
   );

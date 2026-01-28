@@ -678,7 +678,7 @@ export const getImprovedKpiSuccessRates = (
 
 export const getWosImprovedKpiSuccessRates = (
   uxTests: IUxTest[],
-): { uniqueTasks: number; successRates: SuccessRates } => {
+): { uniqueTasks: number; testedTasks: number; successRates: SuccessRates } => {
   const groupByTaskByProjectByTestType = pipe(
     groupBy((test: IUxTest) => test!.tasks!.toString()), // group by task
     mapObject(groupBy((test: IUxTest) => test.project.toString())), // group by project
@@ -754,8 +754,17 @@ export const getWosImprovedKpiSuccessRates = (
     difference: avg(pluck('difference', successRates), 4) as number,
   };
 
+  // Count tasks tested at least once
+  const avgTestedTestSuccessRates = piped(
+    filteredTests,
+    map(unwind('tasks')),
+    flatten,
+    groupBy((test: IUxTest) => test!.tasks!.toString()),
+  ) as Dictionary<IUxTest[]>;
+
   return {
-    uniqueTasks: keys(avgTestSuccessRates).length,
+    uniqueTasks: keys(avgTestSuccessRates).length, // improved (tested in Baseline and Validation)
+    testedTasks: keys(avgTestedTestSuccessRates).length, // tested at least once
     successRates: overallAvgs,
   };
 };
