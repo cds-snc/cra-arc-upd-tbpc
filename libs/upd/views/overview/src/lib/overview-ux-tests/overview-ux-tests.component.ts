@@ -65,6 +65,7 @@ export class OverviewUxTestsComponent implements OnInit {
   improvedKpiUniqueTasks$ = this.overviewService.improvedKpiUniqueTasks$;
 
   wosImprovedKpiUniqueTasks$ = this.overviewService.wosImprovedKpiUniqueTasks$;
+  wosImprovedKpiTestedTasks$ = this.overviewService.wosImprovedKpiTestedTasks$;
 
   improvedKpiTopSuccessRate$ = this.overviewService.improvedKpiTopSuccessRate$;
   improvedKpiTopSuccessRateDifference$ =
