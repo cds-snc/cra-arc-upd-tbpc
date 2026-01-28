@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.1...v4.3.2) (2026-01-28)
+
+
+### Bug Fixes
+
+* WOS Kpi fixes - label and calculations ([2021acb](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2021acb061685aa86e1ce10376d3f2108405ef8f))
+* WOS Kpi fixes - label and calculations ([f1c63c7](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f1c63c73b21eab0cdae411a110921cf51c50874d))
+
 ## [4.3.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.0...v4.3.1) (2026-01-28)
 
 
