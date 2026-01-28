@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.0...v4.3.1) (2026-01-28)
+
+
+### Bug Fixes
+
+* Bump version to create a release ([d39de34](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/d39de348b1599f3f5138e3668627057ee81d7d0a))
+
 ## [4.3.0](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.0.4...v4.3.0) (2026-01-27)
 
 
