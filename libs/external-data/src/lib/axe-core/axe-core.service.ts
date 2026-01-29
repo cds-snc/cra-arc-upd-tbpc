@@ -7,6 +7,7 @@ import { WCAG_TAGS, IMPACT_WEIGHTS, type ImpactLevel } from './axe-core.types';
 import type {
   AccessibilityAudit,
   AccessibilityAuditNode,
+  AccessibilityCheckResult,
   AccessibilityTestResult,
 } from '@dua-upd/types-common';
 import type { AxeResults, Result } from 'axe-core';
@@ -227,12 +228,23 @@ export class AxeCoreService {
     result: Result,
     category: AccessibilityAudit['category'],
   ): AccessibilityAudit {
-    // Map nodes to AccessibilityAuditNode array
-    const nodes: AccessibilityAuditNode[] = result.nodes.map((node) => ({
-      html: node.html,
-      target: node.target.map((t) => (Array.isArray(t) ? t.join(' ') : t)),
-      failureSummary: node.failureSummary,
-    }));
+    // Map nodes to AccessibilityAuditNode array, including raw check data for translation
+    const nodes: AccessibilityAuditNode[] = result.nodes.map((node) => {
+      // Extract check results from any/all/none arrays for translation support
+      // For failed nodes, all checks in these arrays contribute to the failure message
+      const checkResults: AccessibilityCheckResult[] = [
+        ...(node.any || []).map(c => ({ id: c.id, data: c.data, checkType: 'any' as const })),
+        ...(node.all || []).map(c => ({ id: c.id, data: c.data, checkType: 'all' as const })),
+        ...(node.none || []).map(c => ({ id: c.id, data: c.data, checkType: 'none' as const })),
+      ];
+
+      return {
+        html: node.html,
+        target: node.target.map((t) => (Array.isArray(t) ? t.join(' ') : t)),
+        failureSummary: node.failureSummary,
+        checkResults: checkResults.length > 0 ? checkResults : undefined,
+      };
+    });
 
     // Extract WCAG criteria from tags (e.g., 'wcag143' -> '1.4.3')
     const wcagCriteria = this.extractWcagCriteria(result.tags);
@@ -348,19 +360,145 @@ export class AxeCoreService {
         ...audit,
         title: frRules[audit.id]?.help ?? audit.title,
         description: frRules[audit.id]?.description ?? audit.description,
-        howToFix: audit.howToFix ? this.translateFailureSummary(audit.howToFix) : audit.howToFix,
+        howToFix: audit.nodes?.[0]?.checkResults
+          ? this.buildFrenchFailureSummary(audit.nodes[0].checkResults)
+          : (audit.howToFix ? this.translateFailureSummaryFallback(audit.howToFix) : audit.howToFix),
         nodes: audit.nodes?.map((node) => ({
           ...node,
-          failureSummary: node.failureSummary ? this.translateFailureSummary(node.failureSummary) : node.failureSummary,
+          failureSummary: node.checkResults
+            ? this.buildFrenchFailureSummary(node.checkResults)
+            : (node.failureSummary ? this.translateFailureSummaryFallback(node.failureSummary) : node.failureSummary),
         })),
       })),
     };
   }
 
   /**
-   * Translate axe-core failureSummary prefixes from English to French.
+   * Build a French failureSummary from raw check results.
    */
-  private translateFailureSummary(summary: string): string {
+  private buildFrenchFailureSummary(checkResults: AccessibilityCheckResult[]): string {
+    const frChecks = (frLocale as { checks: Record<string, unknown> }).checks;
+
+    // Group checks by type
+    const anyChecks = checkResults.filter(c => c.checkType === 'any');
+    const allNoneChecks = checkResults.filter(c => c.checkType === 'all' || c.checkType === 'none');
+
+    const messages: string[] = [];
+
+    // Process "any" checks (fix ANY of the following)
+    if (anyChecks.length > 0) {
+      const anyMessages = anyChecks
+        .map(check => this.renderFrenchCheckMessage(check.id, check.data, frChecks))
+        .filter(Boolean);
+      if (anyMessages.length > 0) {
+        messages.push("Corriger l'un des éléments suivants :\n  " + anyMessages.join('\n  '));
+      }
+    }
+
+    // Process "all"/"none" checks (fix ALL of the following)
+    if (allNoneChecks.length > 0) {
+      const allMessages = allNoneChecks
+        .map(check => this.renderFrenchCheckMessage(check.id, check.data, frChecks))
+        .filter(Boolean);
+      if (allMessages.length > 0) {
+        messages.push('Corriger tous les éléments suivants :\n  ' + allMessages.join('\n  '));
+      }
+    }
+
+    return messages.join('\n');
+  }
+
+  /**
+   * Render a French check message by looking up the template and substituting data.
+   */
+  private renderFrenchCheckMessage(
+    checkId: string,
+    data: unknown,
+    frChecks: Record<string, unknown>,
+  ): string {
+    const checkLocale = frChecks[checkId] as {
+      fail?: string | { singular?: string; plural?: string; default?: string; [key: string]: string | undefined };
+    } | undefined;
+
+    if (!checkLocale?.fail) {
+      return ''; // No French translation available
+    }
+
+    // Get the template string
+    let template: string;
+    if (typeof checkLocale.fail === 'string') {
+      template = checkLocale.fail;
+    } else {
+      // Handle object with singular/plural or default/specific keys
+      const dataObj = data as Record<string, unknown> | undefined;
+      const messageKey = dataObj?.messageKey as string | undefined;
+
+      if (messageKey && checkLocale.fail[messageKey]) {
+        template = checkLocale.fail[messageKey]!;
+      } else if (checkLocale.fail.default) {
+        template = checkLocale.fail.default;
+      } else if (checkLocale.fail.singular) {
+        // Use singular by default, could check data for count
+        template = checkLocale.fail.singular;
+      } else {
+        // Get first available key
+        const firstKey = Object.keys(checkLocale.fail)[0];
+        template = firstKey ? checkLocale.fail[firstKey]! : '';
+      }
+    }
+
+    if (!template) {
+      return '';
+    }
+
+    // Substitute ${data.xxx} placeholders with actual values
+    return this.substituteTemplateData(template, data);
+  }
+
+  /**
+   * Substitute ${data.xxx} placeholders in a template with actual data values.
+   * Mimics axe-core's processMessage behavior.
+   */
+  private substituteTemplateData(template: string, data: unknown): string {
+    if (!data) {
+      return template;
+    }
+
+    // If data is an array, axe-core adds a 'values' property = array.join(', ')
+    // We need to mimic this behavior
+    if (Array.isArray(data)) {
+      const values = data.join(', ');
+      return template.replace(/\$\{data\.values\}/g, values);
+    }
+
+    if (typeof data !== 'object') {
+      return template;
+    }
+
+    const dataObj = data as Record<string, unknown>;
+
+    return template.replace(/\$\{data\.(\w+)\}/g, (_match, key) => {
+      // Use hasOwnProperty to avoid accessing prototype methods like Object.values
+      if (!Object.prototype.hasOwnProperty.call(dataObj, key)) {
+        return '';
+      }
+      const value = dataObj[key];
+      if (value === undefined || value === null) {
+        return '';
+      }
+      // Handle arrays by joining them
+      if (Array.isArray(value)) {
+        return value.join(', ');
+      }
+      return String(value);
+    });
+  }
+
+  /**
+   * Fallback: Translate axe-core failureSummary prefixes from English to French.
+   * Used when raw check data is not available.
+   */
+  private translateFailureSummaryFallback(summary: string): string {
     return summary
       .replace('Fix all of the following:', 'Corriger tous les éléments suivants :')
       .replace('Fix any of the following:', "Corriger l'un des éléments suivants :");

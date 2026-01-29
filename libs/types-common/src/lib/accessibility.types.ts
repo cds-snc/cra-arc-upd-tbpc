@@ -21,11 +21,19 @@ export type AccessibilityTestResult = {
   testedAt: Date;
 };
 
+// Raw check result data for translation support
+export type AccessibilityCheckResult = {
+  id: string;                     // Check ID (e.g., 'aria-valid-attr-value')
+  data?: unknown;                 // Dynamic data for template rendering
+  checkType: 'any' | 'all' | 'none';  // Which array this check came from
+};
+
 // New type for affected element details (axe-core nodes)
 export type AccessibilityAuditNode = {
   html: string;                    // HTML snippet
   target: string[];               // CSS selector path (handles iframes)
-  failureSummary?: string;        // Why this specific element failed
+  failureSummary?: string;        // Why this specific element failed (pre-rendered)
+  checkResults?: AccessibilityCheckResult[];  // Raw check data for translation
 };
 
 export type AccessibilityAudit = {
