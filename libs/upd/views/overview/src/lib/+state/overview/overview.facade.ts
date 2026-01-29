@@ -20,7 +20,6 @@ import {
   round,
   getArraySelectedAbsoluteChange,
   type UnwrapObservable,
-  logJson,
 } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import * as OverviewActions from './overview.actions';
@@ -40,7 +39,6 @@ import {
   selectVisitsByDayChartData,
   selectVisitsByDayChartTable,
 } from './overview.selectors';
-import { data } from 'cheerio/dist/commonjs/api/attributes';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -138,7 +136,7 @@ export class OverviewFacade {
     map((overviewData) => overviewData?.improvedTasksKpi),
   );
 
-   wosImprovedKpi$ = this.overviewData$.pipe(
+  wosImprovedKpi$ = this.overviewData$.pipe(
     map((overviewData) => overviewData?.wosImprovedTasksKpi),
   );
 
@@ -163,13 +161,22 @@ export class OverviewFacade {
   );
 
   improvedKpiSuccessRateDifferencePoints$ = this.improvedKpi$.pipe(
-    map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
+    map(
+      (improvedKpi) =>
+        round((improvedKpi?.successRates.difference as number) * 100, 0) || 0,
+    ),
   );
-  
+
   improvedKpiSuccessRateDifferencePointsRounded$ = this.improvedKpi$.pipe(
     map((improvedKpi) => {
-      const baselinePoints = round((improvedKpi?.successRates.baseline ?? 0) * 100, 0);
-      const validationPoints = round((improvedKpi?.successRates.validation ?? 0) * 100, 0);
+      const baselinePoints = round(
+        (improvedKpi?.successRates.baseline ?? 0) * 100,
+        0,
+      );
+      const validationPoints = round(
+        (improvedKpi?.successRates.validation ?? 0) * 100,
+        0,
+      );
       return validationPoints - baselinePoints;
     }),
   );
@@ -177,13 +184,16 @@ export class OverviewFacade {
   improvedKpiSuccessRateValidation$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates.validation || 0),
   );
-  
+
   improvedKpiSuccessRateBaseline$ = this.improvedKpi$.pipe(
     map((improvedKpi) => improvedKpi?.successRates.baseline || 0),
   );
 
   wosImprovedKpiSuccessRateDifferencePoints$ = this.wosImprovedKpi$.pipe(
-    map((improvedKpi) => round(improvedKpi?.successRates.difference as number * 100, 0) || 0),
+    map(
+      (improvedKpi) =>
+        round((improvedKpi?.successRates.difference as number) * 100, 0) || 0,
+    ),
   );
 
   wosImprovedKpiSuccessRateDifferencePointsRounded$ = this.wosImprovedKpi$.pipe(
@@ -229,7 +239,7 @@ export class OverviewFacade {
   improvedKpiTopSuccessRateDifferencePoints$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => round(improvedTopKpi?.topSuccessRates.difference as number * 100, 0) || 0),
   );
-  
+
   improvedKpiTopSuccessRateDifferencePointsRounded$ = this.improvedTopKpi$.pipe(
     map((improvedTopKpi) => {
       const baselinePoints = round((improvedTopKpi?.topSuccessRates.baseline ?? 0) * 100, 0);
@@ -773,7 +783,11 @@ export class OverviewFacade {
     map((data) =>
       data?.dateRangeData?.gcTasksData.map((d) => {
         const data_reliability = evaluateDataReliability(d.margin_of_error);
-        const baseData = { ...d, data_reliability, gc_task_theme: `${d.gc_task}-${d.theme}` };
+        const baseData = {
+          ...d,
+          data_reliability,
+          gc_task_theme: `${d.gc_task}-${d.theme}`,
+        };
 
         return data_reliability === 'Insufficient data'
           ? {
@@ -792,7 +806,11 @@ export class OverviewFacade {
     map((data) =>
       data?.comparisonDateRangeData?.gcTasksData.map((d) => {
         const data_reliability = evaluateDataReliability(d.margin_of_error);
-        const baseData = { ...d, data_reliability, gc_task_theme: `${d.gc_task}-${d.theme}` };
+        const baseData = {
+          ...d,
+          data_reliability,
+          gc_task_theme: `${d.gc_task}-${d.theme}`,
+        };
 
         return data_reliability === 'Insufficient data'
           ? {
@@ -806,22 +824,22 @@ export class OverviewFacade {
       }),
     ),
   );
- 
+
   gcTasksTableWithComparison$ = combineLatest([
     this.gcTasksTable$,
     this.comparisonGcTasksTable$,
   ]).pipe(
-    map(([gcTasksTableData,gcTasksTableComparisonData]) => {
+    map(([gcTasksTableData, gcTasksTableComparisonData]) => {
       if (!gcTasksTableData || !gcTasksTableComparisonData) return [];
-      
+
       return getArraySelectedAbsoluteChange(
-        ['able_to_complete','ease','satisfaction'],
+        ['able_to_complete', 'ease', 'satisfaction'],
         'gc_task_theme',
         gcTasksTableData,
         gcTasksTableComparisonData,
         { suffix: '_difference' },
       );
-    })
+    }),
   );
 
   gcTasksCompletionAvg$ = this.gcTasksTable$.pipe(
