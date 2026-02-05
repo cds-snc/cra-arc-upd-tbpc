@@ -26,6 +26,7 @@ const EXCLUDED_SELECTORS = [
   '.gc-sub-footer nav',   // Sub footer nav
   'header nav',           // Any nav in header
   'footer nav',           // Any nav in footer
+  'iframe',               // Exclude iframes (tracking pixels, analytics, third-party content)
 ];
 
 @Injectable()
@@ -108,6 +109,12 @@ export class AxeCoreService {
       // Additional wait to ensure JavaScript has fully rendered the page
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000); // Give JS time to render dynamic content
+
+      // Remove all iframes from the page before testing to avoid false positives
+      // from tracking pixels, analytics, and third-party content
+      await page.evaluate(`
+        document.querySelectorAll('iframe').forEach(iframe => iframe.remove());
+      `);
 
       // Build AxeBuilder with exclusions (exclude() must be called once per selector)
       let axeBuilder = new AxeBuilder({ page, axeSource: axe.source }).withTags([...WCAG_TAGS]);
