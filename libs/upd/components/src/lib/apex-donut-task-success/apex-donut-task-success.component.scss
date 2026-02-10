@@ -1,0 +1,46 @@
+.task-success-donut {
+  position: relative;
+}
+
+.donut-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.percentage {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  display: block;
+}
+
+.change {
+  font-size: 1rem;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.change.positive {
+  color: #26a69a;
+}
+
+.change.negative {
+  color: #df2929;
+}
+
+.launch-date {
+  font-size: 0.875rem;
+  color: #666;
+}

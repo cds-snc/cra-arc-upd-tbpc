@@ -43,13 +43,17 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   fullComparisonDateRangeLabel$ =
     this.projectsDetailsService.fullComparisonDateRangeLabel$;
 
+  documents$ = this.projectsDetailsService.documents$;
+  documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
+
+  baselineTestData$ = this.projectsDetailsService.baselineTestData$;
+  validationTestData$ = this.projectsDetailsService.validationTestData$;
+  taskSuccessChange$ = this.projectsDetailsService.taskSuccessChange$;
+
   feedbackKpiObjectiveCriteria = feedbackKpiObjectiveCriteria;
 
   apexCallDrivers$ = this.projectsDetailsService.apexCallDrivers$;
   apexKpiFeedback$ = this.projectsDetailsService.apexKpiFeedback$;
-
-  documents$ = this.projectsDetailsService.documents$;
-  documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
 
   callPerVisits$ = this.projectsDetailsService.callPerVisits$;
   apexCallPercentChange$ = this.projectsDetailsService.apexCallPercentChange$;
@@ -59,14 +63,6 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   kpiFeedbackPercentChange$ =
     this.projectsDetailsService.kpiFeedbackPercentChange$;
   kpiFeedbackDifference$ = this.projectsDetailsService.kpiFeedbackDifference$;
-
-  avgTaskSuccessFromLastTest$ =
-    this.projectsDetailsService.avgTaskSuccessFromLastTest$;
-  avgSuccessPercentChange$ =
-    this.projectsDetailsService.avgSuccessPercentChange$;
-  avgSuccessValueChange$ = this.projectsDetailsService.avgSuccessValueChange$;
-  dateFromLastTest$ = this.projectsDetailsService.dateFromLastTest$;
-  taskSuccessByUxTest$ = this.projectsDetailsService.taskSuccessByUxTest$;
 
   visits$ = this.projectsDetailsService.visits$;
   visitsPercentChange$ = this.projectsDetailsService.visitsPercentChange$;

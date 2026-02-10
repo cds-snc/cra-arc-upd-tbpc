@@ -11,24 +11,46 @@
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
-    <div class="col-lg-4 col-sm-12">
-      <upd-data-card
-        [current]="(avgTaskSuccessFromLastTest$ | async) || null"
-        [comparison]="avgSuccessPercentChange$ | async"
-        [comparisonValue]="avgSuccessValueChange$ | async"
-        [title]="'Average task success from last UX test'"
-        [emptyMessage]="'project-tasks-not-tested'"
-        [displayKpis]="true"
-        [displayComparison]="true"
-        pipe="percent"
-      >
-        <p>
-          ({{ 'Last UX test date:' | translate }}
-          {{ dateFromLastTest$ | async | localeDate }})
-        </p>
-      </upd-data-card>
+    <div class="col">
+      <upd-card [title]="'Average Task Success'">
+        <div class="row">
+          <div class="col-6">
+            <upd-card
+              [title]="'Baseline'"
+              [titleTooltip]="'tooltip-baseline-task-success'"
+            >
+              <upd-apex-donut-task-success
+                [successRate]="(baselineTestData$ | async)?.successRate"
+                [launchDate]="(baselineTestData$ | async)?.launchDate"
+              ></upd-apex-donut-task-success>
+            </upd-card>
+          </div>
+          <div class="col-6">
+            <upd-card
+              [title]="'Validation'"
+              [titleTooltip]="'tooltip-validation-task-success'"
+            >
+              <upd-apex-donut-task-success
+                [successRate]="(validationTestData$ | async)?.successRate"
+                [launchDate]="(validationTestData$ | async)?.launchDate"
+                [change]="taskSuccessChange$ | async"
+                [showChange]="true"
+              ></upd-apex-donut-task-success>
+            </upd-card>
+          </div>
+        </div>
+        <div class="mt-3 d-flex align-items-center justify-content-start">
+          <span class="badge rounded-circle me-2" style="background-color: #FBC02D; width: 12px; height: 12px;">&nbsp;</span>
+          <small>{{ 'task-success-objective-legend' | translate }}</small>
+        </div>
+      </upd-card>
     </div>
-    <div class="col-lg-4 col-md-12 col-sm-12">
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col-lg-6 col-md-12 col-sm-12">
       <upd-apex-spark-line
         [title]="'kpi-calls-per-100-title'"
         [titleTooltip]="'kpi-calls-per-100-tooltip-project'"
@@ -41,7 +63,7 @@
         modal=" {{ 'kpi-calls-per-100-guidance-project' | translate }}"
       ></upd-apex-spark-line>
     </div>
-    <div class="col-lg-4 col-md-12 col-sm-12">
+    <div class="col-lg-6 col-md-12 col-sm-12">
       <upd-apex-spark-line
         [title]="'kpi-feedback-per-1000-title'"
         [titleTooltip]="'kpi-feedback-per-1000-tooltip-project'"

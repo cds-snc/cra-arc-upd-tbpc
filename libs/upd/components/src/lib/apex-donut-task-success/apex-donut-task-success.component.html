@@ -1,0 +1,38 @@
+<div class="task-success-donut">
+  <div class="donut-container">
+    <ng-container *ngIf="successRate; else noData">
+      <div *ngIf="vm$ | async as vm">
+        <apx-chart
+          #chart
+          [series]="series"
+          [labels]="vm.labels"
+          [chart]="vm.chart"
+          [colors]="vm.colors"
+          [plotOptions]="vm.plotOptions"
+          [dataLabels]="vm.dataLabels"
+          [legend]="vm.legend"
+          [stroke]="vm.stroke"
+        ></apx-chart>
+      </div>
+      <div class="center-label">
+        <span class="percentage">{{ centerLabel }}</span>
+        <span
+          *ngIf="showChange && change != null"
+          class="change"
+          [class.positive]="change > 0"
+          [class.negative]="change < 0"
+        >
+          {{ change > 0 ? '↑' : '↓' }}{{ change > 0 ? change : -change }}%
+        </span>
+      </div>
+    </ng-container>
+    <ng-template #noData>
+      <p>
+        <span [translate]="'nodata-available'"></span>
+      </p>
+    </ng-template>
+  </div>
+  <p *ngIf="launchDate" class="launch-date text-center mt-2">
+    {{ 'Launched:' | translate }} {{ launchDate | localeDate }}
+  </p>
+</div>

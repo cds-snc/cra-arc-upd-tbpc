@@ -88,6 +88,65 @@ export class ProjectsDetailsFacade {
     map((data) => data?.avgSuccessValueChange),
   );
 
+  baselineTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const baselineTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          t.test_type === 'Baseline' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!baselineTests?.length) return null;
+      const avgSuccessRate =
+        baselineTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        baselineTests.length;
+      const latest = baselineTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
+  validationTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const validationTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          t.test_type === 'Validation' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!validationTests?.length) return null;
+      const avgSuccessRate =
+        validationTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        validationTests.length;
+      const latest = validationTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
+  taskSuccessChange$ = combineLatest([
+    this.baselineTestData$,
+    this.validationTestData$,
+  ]).pipe(
+    map(([baseline, validation]) => {
+      if (baseline?.successRate == null || validation?.successRate == null)
+        return null;
+      const change = Math.round(
+        (validation.successRate - baseline.successRate) * 100,
+      );
+      // Don't return 0 change - only show when there's actual improvement/decline
+      return change !== 0 ? change : null;
+    }),
+  );
+
   dateFromLastTest$ = this.projectsDetailsData$.pipe(
     map((data) =>
       data?.dateFromLastTest

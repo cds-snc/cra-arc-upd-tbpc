@@ -1980,5 +1980,12 @@
   "accessibility-error-connection-reset": "La connexion au service de test a été perdue. Veuillez réessayer.",
   "positive": "Positif",
   "neutral": "Neutre",
-  "negative": "Négatif"
+  "negative": "Négatif",
+  "Average Task Success": "Taux de réussite moyen des tâches",
+  "Baseline": "Base de référence",
+  "Validation": "Validation",
+  "Launched:": "Lancé :",
+  "task-success-objective-legend": "A atteint l'objectif d'augmentation de 20 points mais n'a pas atteint 80 % de réussite des tâches",
+  "tooltip-baseline-task-success": "Taux de réussite moyen des tâches des tests UX de référence",
+  "tooltip-validation-task-success": "Taux de réussite moyen des tâches des tests UX de validation"
 }

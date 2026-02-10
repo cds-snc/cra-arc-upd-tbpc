@@ -36,3 +36,4 @@ export * from './lib/heatmap/heatmap.component';
 export * from './lib/page-flow/page-flow.component';
 export * from './lib/arrow-connect/arrow-connect.component';
 export * from './lib/page-version/page-version.component';
+export * from './lib/apex-donut-task-success/apex-donut-task-success.component';

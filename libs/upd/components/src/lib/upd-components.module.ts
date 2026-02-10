@@ -68,6 +68,7 @@ import { HeatmapComponent } from './heatmap/heatmap.component';
 import { PageFlowComponent } from './page-flow/page-flow.component';
 import { ArrowConnectComponent } from './arrow-connect/arrow-connect.component';
 import { PageVersionComponent } from './page-version/page-version.component';
+import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-donut-task-success.component';
 
 @NgModule({
   imports: [
@@ -141,6 +142,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    ApexDonutTaskSuccessComponent,
   ],
   exports: [
     NgbPopoverModule,
@@ -195,6 +197,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    ApexDonutTaskSuccessComponent,
   ],
 })
 export class UpdComponentsModule {}

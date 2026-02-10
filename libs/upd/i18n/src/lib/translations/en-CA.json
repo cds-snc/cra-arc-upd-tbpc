@@ -1595,5 +1595,12 @@
   "accessibility-error-connection-reset": "Connection to the testing service was lost. Please try again.",
   "positive": "Positive",
   "neutral": "Neutral",
-  "negative": "Negative"
+  "negative": "Negative",
+  "Average Task Success": "Average Task Success",
+  "Baseline": "Baseline",
+  "Validation": "Validation",
+  "Launched:": "Launched:",
+  "task-success-objective-legend": "Met objective of 20 point increase but did not meet 80% task success",
+  "tooltip-baseline-task-success": "Average task success rate from baseline UX tests",
+  "tooltip-validation-task-success": "Average task success rate from validation UX tests"
 }
