@@ -1,5 +1,66 @@
 <div class="container-fluid my-4 gx-0">
   <div class="row">
+    <div class="col">
+      <upd-card [title]="'Average Task Success'">
+        <div class="row">
+          <div class="col-6">
+            <upd-card
+              [title]="'Baseline'"
+              [titleTooltip]="'tooltip-baseline-task-success'"
+            >
+              <upd-apex-donut-task-success
+                [successRate]="(baselineTestData$ | async)?.successRate"
+                [launchDate]="(baselineTestData$ | async)?.launchDate"
+              ></upd-apex-donut-task-success>
+              <ng-container *ngIf="baselineDocs$ | async as baselineDocs">
+                <div *ngIf="baselineDocs.length" class="mt-2">
+                  <ng-container *ngFor="let doc of baselineDocs">
+                    <div *ngIf="doc.url">
+                      <a [href]="doc.url" target="_blank" rel="noopener noreferrer">
+                        <small>{{ doc.filename }} <i class="pi pi-external-link"></i></small>
+                      </a>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </upd-card>
+          </div>
+          <div class="col-6">
+            <upd-card
+              [title]="'Validation'"
+              [titleTooltip]="'tooltip-validation-task-success'"
+            >
+              <upd-apex-donut-task-success
+                [successRate]="(validationTestData$ | async)?.successRate"
+                [launchDate]="(validationTestData$ | async)?.launchDate"
+                [change]="taskSuccessChange$ | async"
+                [showChange]="true"
+              ></upd-apex-donut-task-success>
+              <ng-container *ngIf="validationDocs$ | async as validationDocs">
+                <div *ngIf="validationDocs.length" class="mt-2">
+                  <ng-container *ngFor="let doc of validationDocs">
+                    <div *ngIf="doc.url">
+                      <a [href]="doc.url" target="_blank" rel="noopener noreferrer">
+                        <small>{{ doc.filename }} <i class="pi pi-external-link"></i></small>
+                      </a>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </upd-card>
+          </div>
+        </div>
+        <div class="mt-3 d-flex align-items-center justify-content-start">
+          <span class="badge rounded-circle me-2" style="background-color: #FBC02D; width: 12px; height: 12px;">&nbsp;</span>
+          <small>{{ 'task-success-objective-legend' | translate }}</small>
+        </div>
+      </upd-card>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
     <div class="col-lg-6 col-sm-12">
       <upd-data-card
         [current]="avgTaskSuccessFromLastTest$ | async"
