@@ -101,7 +101,9 @@ export class UrlsService {
     await this.preparePagesCollection();
 
     if (!this.production) {
-      this.logger.warn('Running in non-production environment; skipping URLs update.');
+      this.logger.warn(
+        'Running in non-production environment; skipping URLs update.',
+      );
 
       return;
     }
@@ -585,7 +587,9 @@ export class UrlsService {
       );
 
       if (abortController.signal.aborted) {
-        this.logger.warn('URL checking stopped due to time limit being reached.');
+        this.logger.warn(
+          'URL checking stopped due to time limit being reached.',
+        );
       }
     } catch (err) {
       this.logger.error('An error occurred during http.getAll():');
@@ -925,7 +929,7 @@ export class UrlsService {
 
     await htmlTable.backupRemote();
     await htmlTable.createLocalTable();
-    await htmlTable.insertLocal(snapshots);
+    await htmlTable.insertLocal(snapshots, { batchSize: 500 });
 
     await htmlTable.appendLocalToRemote({
       rowGroupSize: 10000,
@@ -936,7 +940,7 @@ export class UrlsService {
     await htmlTable.deleteLocalTable();
   }
 
-  async syncRemoteParquet(runBackup = true) {
+  async syncRemoteParquet(runBackup = true, ensureDistinct = false) {
     this.logger.info('Syncing remote parquet...');
     console.time('syncRemoteParquet time');
 
@@ -966,6 +970,8 @@ export class UrlsService {
       .then((rows) => rows.map(({ hash }) => hash));
     console.timeEnd('Missing hashes query time');
 
+    console.log(`Found ${missingHashes.length} missing hashes`);
+
     if (missingHashes.length === 0) {
       this.logger.info(
         'No missing hashes found in parquet file, skipping updates.',
@@ -977,16 +983,19 @@ export class UrlsService {
     runBackup && (await htmlTable.backupRemote());
     await htmlTable.createLocalTable();
 
-    const missingHashDocs = (
-      await this.db.collections.urls
-        .find(
-          { 'hashes.hash': { $in: missingHashes } },
-          { url: 1, page: 1, hashes: 1 },
-        )
-        .lean()
-        .exec()
-    ).flatMap((urlDoc) =>
-    (urlDoc.hashes || [])
+    console.time('Mongo fetch missing hashes time');
+    const missingHashDocs = await this.db.collections.urls
+      .find(
+        { 'hashes.hash': { $in: missingHashes } },
+        { url: 1, page: 1, hashes: 1 },
+      )
+      .lean()
+      .exec();
+    console.timeEnd('Mongo fetch missing hashes time');
+
+    console.time('Preparing missing hashes data time');
+    const missingHashDocsFlat = missingHashDocs.flatMap((urlDoc) =>
+      (urlDoc.hashes || [])
         .filter((hashDoc) => missingHashes.includes(hashDoc.hash))
         .map((hashDoc) => ({
           url: urlDoc.url,
@@ -995,8 +1004,9 @@ export class UrlsService {
           date: hashDoc.date,
         })),
     );
+    console.timeEnd('Preparing missing hashes data time');
 
-    console.log(`Found ${missingHashDocs.length} missing hashes`);
+    console.log(`Found ${missingHashDocsFlat.length} missing hashes to add`);
 
     const promises: Promise<{
       url: string;
@@ -1007,7 +1017,7 @@ export class UrlsService {
     } | null>[] = [];
 
     console.time('HTML blob download time');
-    for (const hashDoc of missingHashDocs) {
+    for (const hashDoc of missingHashDocsFlat) {
       const promise = this.urlsBlob
         .blob(hashDoc.hash)
         .downloadToString({ decompressData: true })
@@ -1049,7 +1059,7 @@ export class UrlsService {
     }
 
     console.time('Local DuckDB insert time');
-    await htmlTable.insertLocal(rowsToInsert);
+    await htmlTable.insertLocal(rowsToInsert, { batchSize: 500 });
     console.timeEnd('Local DuckDB insert time');
 
     console.time('Remote DuckDB append time');
