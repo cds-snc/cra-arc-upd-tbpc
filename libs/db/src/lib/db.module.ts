@@ -34,7 +34,8 @@ export class DbModule {
 
     // Settings for DocumentDB
     const config: MongooseModuleOptions =
-      production && (process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME)
+      (production || USE_PROD_DB_HOST) &&
+      (process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME)
         ? {
             ssl: true,
             tlsCAFile:
