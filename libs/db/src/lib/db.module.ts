@@ -1,10 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import zstd from '@mongodb-js/zstd'; // need to import this for it to be included in the build output
-import {
-  Module,
-  type DynamicModule,
-  type InjectionToken,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule, type MongooseModuleOptions } from '@nestjs/mongoose';
 import { models, views } from './db.models';
 import { DbService } from './db.service';
@@ -27,10 +23,12 @@ const MongooseFeatureModule = MongooseModule.forFeature(
 export class DbModule {
   static forRoot(
     production: boolean,
-    prodHost = 'mongodb',
+    prodHost = process.env.DB_HOST || 'mongodb',
     dbName = 'upd-test',
   ) {
-    const connectionString = `mongodb://${production ? prodHost : '127.0.0.1'}:27017/`;
+    const USE_PROD_DB_HOST = process.env.USE_PROD_DB_HOST === 'true';
+
+    const connectionString = `mongodb://${production || USE_PROD_DB_HOST ? prodHost : '127.0.0.1'}:27017/`;
 
     console.log(connectionString);
 

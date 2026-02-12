@@ -1,6 +1,6 @@
 import { availableParallelism, freemem } from 'os';
 import { Inject, Injectable, BeforeApplicationShutdown } from '@nestjs/common';
-import { drizzle, DuckDBDatabase } from '@duckdbfan/drizzle-duckdb2';
+import { drizzle, DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
 import { type DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { BlobStorageService } from '@dua-upd/blob-storage';
@@ -21,11 +21,11 @@ export type DuckDBClientOptions = {
 };
 
 export const htmlSnapshotTable = pgTable('html', {
-  url: text('url'),
+  url: text('url').notNull(),
   page: text('page'), // objectId hex string
-  hash: text('hash'),
+  hash: text('hash').notNull(),
   html: text('html'),
-  date: timestamp('date'),
+  date: timestamp('date').notNull(),
 });
 
 export type HtmlSnapshot = typeof htmlSnapshotTable.$inferSelect;
@@ -82,7 +82,17 @@ export class DuckDbService implements BeforeApplicationShutdown {
 
     const duckDb = drizzle(client, { logger: options?.logger ?? false });
 
-    return new DuckDbService(connectionString, client, duckDb, blob, options);
+    const service = new DuckDbService(
+      connectionString,
+      client,
+      duckDb,
+      blob,
+      options,
+    );
+
+    await service.configure(options);
+
+    return service;
   }
 
   async setupRemoteExtensions() {
@@ -141,17 +151,19 @@ export class DuckDbService implements BeforeApplicationShutdown {
   }
 
   async configure(options?: DuckDBClientOptions) {
-    this.connectionString !== ':memory:' &&
-      options?.readOnly &&
+    options?.readOnly &&
       (await this.db.execute(`SET access_mode = 'READ_ONLY';`));
 
     const systemMemoryMB = freemem() / (1024 * 1024);
     const memoryLimit =
       options?.memoryLimit || Math.floor(systemMemoryMB * 0.7); // default to 70% of available system memory
+
+    console.log(`Setting DuckDB memory limit to ${memoryLimit} MB`);
     await this.db.execute(`SET memory_limit = '${memoryLimit}MB';`);
 
     const numThreads = options?.numThreads || availableParallelism() - 1 || 1;
-    numThreads && (await this.db.execute(`SET threads = ${numThreads};`));
+    console.log(`Setting DuckDB threads to ${numThreads}`);
+    await this.db.execute(`SET threads = ${numThreads};`);
   }
 
   async disconnect() {
