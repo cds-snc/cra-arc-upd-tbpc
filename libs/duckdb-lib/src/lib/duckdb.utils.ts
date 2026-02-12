@@ -3,6 +3,9 @@ import { existsSync } from 'fs';
 import path from 'path';
 import { gunzip } from '@dua-upd/node-utils';
 import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
+import type { ParquetWriteOptions } from './duckdb.table';
+import type { PgTableWithColumns } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export class DuckDbExtensionsManager {
   constructor(private readonly db: DuckDBDatabase) {}
@@ -84,4 +87,28 @@ export class DuckDbExtensionsManager {
       console.error(`Error installing ${name} extension:`, error);
     }
   }
+}
+
+export function writeParquetOptionsToSql<Table extends PgTableWithColumns<any>>(
+  options?: ParquetWriteOptions<Table>,
+) {
+  // todo maybe: add dedicated parquet options parsing/formatting?
+  const compressionLevel = options?.compressionLevel
+    ? `COMPRESSION_LEVEL ${options.compressionLevel}`
+    : 'COMPRESSION_LEVEL 7';
+
+  const rowGroupSize = options?.rowGroupSize
+    ? `ROW_GROUP_SIZE ${options.rowGroupSize}`
+    : null;
+
+  const useTmpFile =
+    typeof options?.useTmpFile === 'boolean'
+      ? `USE_TMP_FILE ${options.useTmpFile}`
+      : null;
+
+  const optionsSql = [compressionLevel, rowGroupSize, useTmpFile]
+    .filter(Boolean)
+    .join(', ');
+
+  return sql.raw(`FORMAT parquet, COMPRESSION zstd, ${optionsSql}`);
 }

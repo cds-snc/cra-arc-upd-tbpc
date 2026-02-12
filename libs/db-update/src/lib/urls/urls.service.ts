@@ -29,6 +29,7 @@ import { DuckDbService, type HtmlSnapshot } from '@dua-upd/duckdb';
 import { sql } from 'drizzle-orm';
 import { assert } from 'node:console';
 import type { ContainerClient } from '@azure/storage-blob';
+import { createReadStream } from 'node:fs';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -940,7 +941,7 @@ export class UrlsService {
     await htmlTable.deleteLocalTable();
   }
 
-  async syncRemoteParquet(runBackup = true, ensureDistinct = false) {
+  async syncRemoteParquet(runBackup = true) {
     this.logger.info('Syncing remote parquet...');
     console.time('syncRemoteParquet time');
 
@@ -958,7 +959,7 @@ export class UrlsService {
 
     const dbHashesSql = sql.raw(`unnest([${dbHashes}]) db(hash)`);
 
-    const differenceSql = sql`
+    const differenceSql = sql<{ hash: string }>`
       SELECT * from ${dbHashesSql}
       EXCEPT
       ${htmlTable.selectRemote({ hash: htmlTable.table.hash })}
@@ -966,7 +967,7 @@ export class UrlsService {
 
     console.time('Missing hashes query time');
     const missingHashes = await this.duckDb.db
-      .execute(differenceSql)
+      .execute<{ hash: string }>(differenceSql)
       .then((rows) => rows.map(({ hash }) => hash));
     console.timeEnd('Missing hashes query time');
 
@@ -984,31 +985,96 @@ export class UrlsService {
     await htmlTable.createLocalTable();
 
     console.time('Mongo fetch missing hashes time');
-    const missingHashDocs = await this.db.collections.urls
-      .find(
-        { 'hashes.hash': { $in: missingHashes } },
-        { url: 1, page: 1, hashes: 1 },
-      )
-      .lean()
-      .exec();
+
+    // Find the missing hashes from Mongo in batches
+    const missingHashDocsBatchSize = 10000;
+    const missingHashDocs: {
+      url: string;
+      page: string | null;
+      hash: string;
+      date: Date;
+    }[] = [];
+
+    const missingHashesSet = new Set(missingHashes);
+
+    const missingHashesQueue = [...missingHashes];
+    const missingHashQueryPromises: Promise<void>[] = [];
+
+    // keep track of urls we've already seen, because all relevant hashes
+    // for a url will already be processed
+    const urlsFoundSet = new Set<string>();
+
+    while (missingHashesQueue.length) {
+      this.logger.log(
+        `Processing batch of missing hashes. Remaining: ${missingHashesQueue.length}`,
+      );
+
+      // for every 10 batches, wait for all the queries to finish before starting
+      //  new ones, to avoid having too many pending queries at once
+      if (missingHashQueryPromises.length % 10 === 0) {
+        await Promise.allSettled(missingHashQueryPromises);
+      }
+
+      const batch = missingHashesQueue.splice(0, missingHashDocsBatchSize);
+
+      const queryBatchPromise = this.db.collections.urls
+        .find({ 'hashes.hash': { $in: batch } }, { url: 1, page: 1, hashes: 1 })
+        .lean()
+        .then((docs) => {
+          if (!docs) {
+            return;
+          }
+
+          for (const doc of docs) {
+            if (urlsFoundSet.has(doc.url)) {
+              continue;
+            }
+
+            urlsFoundSet.add(doc.url);
+          }
+
+          const batchDocsFlat = docs.flatMap((urlDoc) =>
+            (urlDoc.hashes || [])
+              .filter((hashDoc) => missingHashesSet.has(hashDoc.hash))
+              .map((hashDoc) => ({
+                url: urlDoc.url,
+                page: urlDoc.page?.toString() || null,
+                hash: hashDoc.hash,
+                date: hashDoc.date,
+              })),
+          );
+
+          missingHashDocs.push(...batchDocsFlat);
+        })
+        .catch((err) => {
+          this.logger.error(
+            `Error occurred fetching missing hash batch from MongoDB: ${err.message}`,
+          );
+        });
+
+      missingHashQueryPromises.push(queryBatchPromise);
+
+      // wait a bit between batches to avoid overwhelming the db
+      await wait(500);
+    }
+
+    // await any remaining queries
+    const results = await Promise.allSettled(missingHashQueryPromises);
     console.timeEnd('Mongo fetch missing hashes time');
 
-    console.time('Preparing missing hashes data time');
-    const missingHashDocsFlat = missingHashDocs.flatMap((urlDoc) =>
-      (urlDoc.hashes || [])
-        .filter((hashDoc) => missingHashes.includes(hashDoc.hash))
-        .map((hashDoc) => ({
-          url: urlDoc.url,
-          page: urlDoc.page?.toString() || null,
-          hash: hashDoc.hash,
-          date: hashDoc.date,
-        })),
+    console.log(`Found ${missingHashDocs.length} missing hashes to add`);
+
+    const rejectedResults = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
     );
-    console.timeEnd('Preparing missing hashes data time');
 
-    console.log(`Found ${missingHashDocsFlat.length} missing hashes to add`);
+    if (rejectedResults.length) {
+      this.logger.error(
+        `${rejectedResults.length} batches failed to fetch from MongoDB.`,
+      );
+    }
 
-    const promises: Promise<{
+    const blobDownloadPromises: Promise<{
       url: string;
       page: string | null;
       hash: string;
@@ -1017,7 +1083,7 @@ export class UrlsService {
     } | null>[] = [];
 
     console.time('HTML blob download time');
-    for (const hashDoc of missingHashDocsFlat) {
+    for (const hashDoc of missingHashDocs) {
       const promise = this.urlsBlob
         .blob(hashDoc.hash)
         .downloadToString({ decompressData: true })
@@ -1032,12 +1098,12 @@ export class UrlsService {
           return null;
         });
 
-      promises.push(promise);
+      blobDownloadPromises.push(promise);
 
       await wait(20);
     }
 
-    const rowsToInsert = (await Promise.allSettled(promises))
+    const rowsToInsert = (await Promise.allSettled(blobDownloadPromises))
       .map((result) => {
         if (result.status === 'rejected') {
           this.logger.error(`Error occurred downloading html blob:`);
@@ -1074,6 +1140,287 @@ export class UrlsService {
 
     this.logger.info('Sync process completed successfully.');
     console.timeEnd('syncRemoteParquet time');
+  }
+
+  // Manual steps for syncRemoteParquet(): (because of cloud shell issues/limitations)
+  // 1. (remote) Get mongo hashes and compare with remote parquet hashes to get missing hashes (comparison might need to be done locally if remote fails)
+  //    1.5 (local--if remote fails) Get uploaded hashes list and compare with remote parquet hashes to get missing hashes
+  // 2. (remote) With missing hashes, get the data from mongo -> upload data as parquet file to blob storage
+  // 3. (local) Download missing hashes -> finish as usual: get html from blob storage -> appendToRemote()
+
+  // Manual sync step 1 (remote)
+  async getAndUploadMissingHashes() {
+    this.logger.info(
+      '[Syncing remote parquet] - Getting missing hashes and uploading to blob storage...',
+    );
+    const htmlTable = this.duckDb.remote.html;
+
+    console.time('mongo fetch time');
+    const dbHashes = await this.db.collections.urls
+      .aggregate<{ hashes: string }>()
+      .project({ hashes: '$hashes.hash' })
+      .unwind('hashes')
+      .exec()
+      .then((hashes) => hashes.map(({ hashes }) => `'${hashes}'`).join(','));
+    console.timeEnd('mongo fetch time');
+
+    // in case the next part fails
+    await this.blobService.blobModels.html_snapshots
+      ?.blob('dbHashes.txt')
+      .uploadFromString(dbHashes);
+
+    const dbHashesSql = sql.raw(`unnest([${dbHashes}]) db(hash)`);
+
+    const differenceSql = sql<{ hash: string }>`
+      SELECT * from ${dbHashesSql}
+      EXCEPT
+      ${htmlTable.selectRemote({ hash: htmlTable.table.hash })}
+    `;
+
+    console.time('Missing hashes query time');
+    const missingHashes = await this.duckDb.db
+      .execute<{ hash: string }>(differenceSql)
+      .then((rows) => rows.map(({ hash }) => hash));
+    console.timeEnd('Missing hashes query time');
+
+    console.log(`Found ${missingHashes.length} missing hashes`);
+
+    if (missingHashes.length === 0) {
+      this.logger.info(
+        'No missing hashes found in parquet file, skipping updates.',
+      );
+
+      return;
+    }
+
+    const missingHashesJson = JSON.stringify(missingHashes);
+
+    await this.blobService.blobModels.html_snapshots
+      ?.blob(`missing-hashes.json`)
+      .uploadFromString(missingHashesJson, {
+        compression: 'zstd',
+        overwrite: true,
+      });
+
+    this.logger.info('Missing hashes uploaded to blob storage.');
+  }
+
+  // Manual sync step 2 (remote)
+  async getMissingHashesDataAndUploadParquet() {
+    this.logger.info(
+      '[Syncing remote parquet] - Getting missing hashes data and uploading parquet...',
+    );
+    const htmlTable = this.duckDb.remote.html;
+
+    // get missing hashes list from blob storage
+    const missingHashes: string[] = JSON.parse(
+      (await this.blobService.blobModels.html_snapshots
+        ?.blob(`missing-hashes.json`)
+        .downloadToString({ decompressData: true })) || '[]',
+    );
+
+    if (missingHashes.length === 0) {
+      this.logger.info(
+        'No missing hashes found in blob storage, skipping update.',
+      );
+
+      return;
+    }
+
+    await htmlTable.createLocalTable();
+
+    console.time('Mongo fetch missing hashes time');
+
+    // Find the missing hashes from Mongo in batches
+    const missingHashDocsBatchSize = 10000;
+    const missingHashDocs: {
+      url: string;
+      page: string | null;
+      hash: string;
+      date: Date;
+    }[] = [];
+
+    const missingHashesSet = new Set(missingHashes);
+
+    const missingHashesQueue = [...missingHashes];
+    const missingHashQueryPromises: Promise<void>[] = [];
+
+    // keep track of urls we've already seen, because all relevant hashes
+    // for a url will already be processed
+    const urlsFoundSet = new Set<string>();
+
+    while (missingHashesQueue.length) {
+      this.logger.log(
+        `Processing batch of missing hashes. Remaining: ${missingHashesQueue.length}`,
+      );
+
+      // for every 10 batches, wait for all the queries to finish before starting
+      //  new ones, to avoid having too many pending queries at once
+      if (missingHashQueryPromises.length % 10 === 0) {
+        await Promise.allSettled(missingHashQueryPromises);
+      }
+
+      const batch = missingHashesQueue.splice(0, missingHashDocsBatchSize);
+
+      const queryBatchPromise = this.db.collections.urls
+        .find({ 'hashes.hash': { $in: batch } }, { url: 1, page: 1, hashes: 1 })
+        .lean()
+        .then((docs) => {
+          if (!docs) {
+            return;
+          }
+
+          for (const doc of docs) {
+            if (urlsFoundSet.has(doc.url)) {
+              continue;
+            }
+
+            urlsFoundSet.add(doc.url);
+          }
+
+          const batchDocsFlat = docs.flatMap((urlDoc) =>
+            (urlDoc.hashes || [])
+              .filter((hashDoc) => missingHashesSet.has(hashDoc.hash))
+              .map((hashDoc) => ({
+                url: urlDoc.url,
+                page: urlDoc.page?.toString() || null,
+                hash: hashDoc.hash,
+                date: hashDoc.date,
+              })),
+          );
+
+          missingHashDocs.push(...batchDocsFlat);
+        })
+        .catch((err) => {
+          this.logger.error(
+            `Error occurred fetching missing hash batch from MongoDB: ${err.message}`,
+          );
+        });
+
+      missingHashQueryPromises.push(queryBatchPromise);
+
+      // wait a bit between batches to avoid overwhelming the db
+      await wait(500);
+    }
+
+    // await any remaining queries
+    const results = await Promise.allSettled(missingHashQueryPromises);
+    console.timeEnd('Mongo fetch missing hashes time');
+
+    console.log(`Found ${missingHashDocs.length} missing hashes to add`);
+
+    const rejectedResults = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+
+    if (rejectedResults.length) {
+      this.logger.error(
+        `${rejectedResults.length} batches failed to fetch from MongoDB.`,
+      );
+    }
+
+    await htmlTable.insertLocal(missingHashDocs, { batchSize: 500 });
+
+    const missingHashesDataFilename = 'missing_hashes_data.parquet';
+    const missingHashesDataBlob =
+      this.blobService.blobModels.html_snapshots!.blob(
+        missingHashesDataFilename,
+      );
+
+    await htmlTable.writeParquet(missingHashesDataFilename);
+
+    await missingHashesDataBlob.uploadStream(
+      createReadStream(missingHashesDataFilename, {
+        highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
+      }),
+    );
+    // if this were to keep running, you would need to clear and reinitialize the table,
+    // so let's do that anyways
+    await htmlTable.deleteLocalTable();
+  }
+
+  // Manual sync step 3 (local)
+  async getMissingHashesHtmlAndAppendToRemote() {
+    this.logger.info(
+      '[Syncing remote parquet] - Getting missing hashes html and appending to remote...',
+    );
+    const htmlTable = this.duckDb.remote.html;
+
+    const missingHashesDataFilename = 'missing_hashes_data.parquet';
+    const missingHashesDataBlob =
+      this.blobService.blobModels.html_snapshots!.blob(
+        missingHashesDataFilename,
+      );
+
+    await missingHashesDataBlob.downloadToFile(missingHashesDataFilename);
+
+    const missingHashDocs = await this.duckDb.db.select().from(htmlTable.table);
+
+    const blobDownloadPromises: Promise<{
+      url: string;
+      page: string | null;
+      hash: string;
+      html: string | null;
+      date: Date;
+    } | null>[] = [];
+
+    console.time('HTML blob download time');
+    for (const hashDoc of missingHashDocs) {
+      const promise = this.urlsBlob
+        .blob(hashDoc.hash)
+        .downloadToString({ decompressData: true })
+        .then((html) => ({
+          ...hashDoc,
+          html: html || null,
+        }))
+        .catch((err) => {
+          this.logger.error(`Error occurred downloading html blob:`);
+          this.logger.error(err);
+
+          return null;
+        });
+
+      blobDownloadPromises.push(promise);
+
+      await wait(20);
+    }
+
+    const rowsToInsert = (await Promise.allSettled(blobDownloadPromises))
+      .map((result) => {
+        if (result.status === 'rejected') {
+          this.logger.error(`Error occurred downloading html blob:`);
+          this.logger.error(result.reason);
+
+          return null;
+        }
+
+        return result.value;
+      })
+      .filter((result) => result !== null);
+
+    console.timeEnd('HTML blob download time');
+
+    if (!rowsToInsert.length) {
+      this.logger.info('No new rows to insert, skipping update.');
+
+      return;
+    }
+
+    console.time('Local DuckDB insert time');
+    await htmlTable.insertLocal(rowsToInsert, { batchSize: 500 });
+    console.timeEnd('Local DuckDB insert time');
+
+    console.time('Remote DuckDB append time');
+    await htmlTable.appendLocalToRemote({
+      rowGroupSize: 10000,
+      compressionLevel: 7,
+    });
+    console.timeEnd('Remote DuckDB append time');
+
+    // clear data and free memory
+    await htmlTable.deleteLocalTable();
+
+    this.logger.info('Sync process completed successfully.');
   }
 }
 

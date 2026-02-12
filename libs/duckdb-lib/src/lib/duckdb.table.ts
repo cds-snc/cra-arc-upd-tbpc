@@ -5,11 +5,12 @@ import {
   type SelectedFields,
   type TableLikeHasEmptySelection,
 } from 'drizzle-orm/pg-core';
-import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb2';
+import type { DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
 import { type IStorageModel, S3Bucket } from '@dua-upd/blob-storage';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import type { ContainerClient } from '@azure/storage-blob';
+import { writeParquetOptionsToSql } from './duckdb.utils';
 
 type BlobModel = IStorageModel<S3Bucket | ContainerClient>;
 
@@ -37,6 +38,19 @@ export type DistinctOn<Table extends PgTableWithColumns<any>> = (
   | Table['_']['columns'][keyof Table['_']['columns']]
   | string
 )[];
+
+export type QueryOptions<Table extends PgTableWithColumns<any>> = {
+  orderBy?: OrderBy<Table>;
+  distinctOn?: DistinctOn<Table> | false;
+};
+
+// todo: remove QueryOptions from this type once selection is separated
+export type ParquetWriteOptions<Table extends PgTableWithColumns<any>> =
+  QueryOptions<Table> & {
+    compressionLevel?: number;
+    rowGroupSize?: number;
+    useTmpFile?: boolean;
+  };
 
 const getStorageUriPrefix = () => process.env['STORAGE_URI_PREFIX'];
 
@@ -109,13 +123,45 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     }
   }
 
-  async appendLocalToRemote(options?: {
-    orderBy?: OrderBy<Table>;
-    distinctOn?: DistinctOn<Table> | false;
-    compressionLevel?: number;
-    rowGroupSize?: number;
-    useTmpFile?: boolean;
-  }) {
+  async insertLocalFromParquet(filepath: string) {
+    await this.db.execute(
+      sql`INSERT INTO ${this.table} SELECT * FROM read_parquet('${sql.raw(filepath)}')`,
+    );
+  }
+
+  // todo: include selection as param, for more flexible writes and not coupling write options to query options
+  async writeParquet(filepath: string, options?: ParquetWriteOptions<Table>) {
+    // to get around bug in drizzle-duckdb causing column names to be "tableName.columnName"
+    // and the "fake" table causing the select to be empty
+    const selectAll = Object.fromEntries(
+      Object.keys(this.table)
+        .filter((key) => key !== 'enableRLS')
+        .map((key) => [key, this.table[key]]),
+    );
+
+    const selectSql = this.db
+      .select(selectAll)
+      .from(this.table as DrizzleTable<Table>);
+
+    const orderByClause = options?.orderBy
+      ? `ORDER BY ${Object.entries(options.orderBy)
+          .map(([column, direction]) => `${column} ${direction}`)
+          .join(', ')}`
+      : '';
+
+    const distinctOnClause = options?.distinctOn
+      ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
+      : '';
+
+    const parquetOptionsSql = writeParquetOptionsToSql(options);
+
+    await this.db.execute(
+      sql`COPY (${selectSql} ${sql.raw(orderByClause)} ${distinctOnClause})
+      TO '${sql.raw(filepath)}' (${parquetOptionsSql})`,
+    );
+  }
+
+  async appendLocalToRemote(options?: ParquetWriteOptions<Table>) {
     // to get around bug in drizzle-duckdb causing column names to be "tableName.columnName"
     // and the "fake" table causing the select to be empty
     const selectAll = Object.fromEntries(
@@ -145,30 +191,11 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
       ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
       : '';
 
-    // todo maybe: add dedicated parquet options parsing/formatting?
-    const compressionLevel = options?.compressionLevel
-      ? `COMPRESSION_LEVEL ${options.compressionLevel}`
-      : 'COMPRESSION_LEVEL 7';
-
-    const rowGroupSize = options?.rowGroupSize
-      ? `ROW_GROUP_SIZE ${options.rowGroupSize}`
-      : null;
-
-    const useTmpFile =
-      typeof options?.useTmpFile === 'boolean'
-        ? `USE_TMP_FILE ${options.useTmpFile}`
-        : null;
-
-    const optionsSql = [compressionLevel, rowGroupSize, useTmpFile]
-      .filter(Boolean)
-      .join(', ');
+    const parquetOptionsSql = writeParquetOptionsToSql(options);
 
     console.log(`Creating new ${newDataFilename}...`);
     console.time('Creating new data file');
-    await this.db.execute(
-      sql`COPY (${selectLocalSql})
-      TO '${sql.raw(newDataFilename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})`,
-    );
+    await this.writeParquet(newDataFilename, options);
     console.timeEnd('Creating new data file');
 
     console.log(`Downloading ${this.filename} to ${currentRemoteFilename}`);
@@ -186,7 +213,7 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
             '${sql.raw(newDataFilename)}'
           ])
           ${sql.raw(orderByClause)}
-        ) TO '${sql.raw(this.filename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})
+        ) TO '${sql.raw(this.filename)}' (${parquetOptionsSql})
       `,
     );
     console.timeEnd('Creating combined parquet');
