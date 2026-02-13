@@ -106,19 +106,26 @@ export async function syncRemoteHtmlParquet() {
 // Run on remote
 export async function manualParquetSyncStep1() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+  
+  await urlsService.getAndUploadDbHashes();
+}
 
-  await urlsService.getAndUploadMissingHashes();
+// Run on local
+export async function manualParquetSyncStep2() {
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+
+  await urlsService.getMissingHashes();
 }
 
 // Run on remote
-export async function manualParquetSyncStep2() {
+export async function manualParquetSyncStep3() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
 
   await urlsService.getMissingHashesDataAndUploadParquet();
 }
 
 // Run on local
-export async function manualParquetSyncStep3() {
+export async function manualParquetSyncStep4() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
 
   await urlsService.getMissingHashesHtmlAndAppendToRemote();
