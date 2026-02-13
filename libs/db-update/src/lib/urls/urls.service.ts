@@ -10,7 +10,12 @@ import {
 } from '@dua-upd/blob-storage';
 import { DbService, Page, Readability, Url } from '@dua-upd/db';
 import { BlobLogger } from '@dua-upd/logger';
-import { compressString, decompressString, md5Hash } from '@dua-upd/node-utils';
+import {
+  compressString,
+  decompressString,
+  md5Hash,
+  writeCompressedStream,
+} from '@dua-upd/node-utils';
 import type { IPage, IUrl, UrlHash } from '@dua-upd/types-common';
 import {
   AbortController,
@@ -1341,13 +1346,13 @@ export class UrlsService {
     // Write to json file instead...
     const missingHashesDataFilename = 'missing_hashes_data.json';
 
-    console.log('Compressing missing hashes data');
-    console.time('Compressing missing hashes data');
-    await writeFile(
+    console.log('Writing missing hashes data');
+    console.time('Writing missing hashes data');
+    await writeCompressedStream(
       missingHashesDataFilename,
-      await compressString(JSON.stringify(missingHashDocs), 'zstd'),
+      ReadableStream.from(JSON.stringify(missingHashDocs)),
     );
-    console.timeEnd('Compressing missing hashes data');
+    console.timeEnd('Writing missing hashes data');
 
     const missingHashesDataBlob =
       this.blobService.blobModels.html_snapshots!.blob(
