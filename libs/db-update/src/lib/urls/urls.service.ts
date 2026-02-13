@@ -1341,10 +1341,13 @@ export class UrlsService {
     // Write to json file instead...
     const missingHashesDataFilename = 'missing_hashes_data.json';
 
+    console.log('Compressing missing hashes data');
+    console.time('Compressing missing hashes data');
     await writeFile(
       missingHashesDataFilename,
       await compressString(JSON.stringify(missingHashDocs), 'zstd'),
     );
+    console.timeEnd('Compressing missing hashes data');
 
     const missingHashesDataBlob =
       this.blobService.blobModels.html_snapshots!.blob(
