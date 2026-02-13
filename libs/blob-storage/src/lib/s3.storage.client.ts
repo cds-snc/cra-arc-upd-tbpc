@@ -711,9 +711,14 @@ export class S3ObjectClient implements IStorageBlob {
 
         const destinationBuffer = Buffer.concat(chunks);
 
-        return this.compression && options?.decompressData !== false
-          ? await decompressString(destinationBuffer, this.compression)
-          : destinationBuffer.toString('utf-8');
+        if (
+          options?.decompressData ||
+          (this.compression && options?.decompressData !== false)
+        ) {
+          return await decompressString(destinationBuffer, 'zstd'); // Assuming zstd for decompression, adjust if needed
+        }
+
+        return destinationBuffer.toString('utf-8');
       }
     } catch (err) {
       console.error(chalk.red('Error downloading file to string:'));
