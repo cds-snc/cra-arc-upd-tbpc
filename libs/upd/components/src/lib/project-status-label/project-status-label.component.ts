@@ -45,6 +45,7 @@ export class ProjectStatusLabelComponent {
     Live: 'bg-complete',
     '404': 'bg-404',
     Redirected: 'bg-redirect',
+    Archived: 'archived',
   };
 
   projectTypeClassMap: Record<ProjectType, string> = {

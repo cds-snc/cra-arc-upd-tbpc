@@ -176,6 +176,7 @@ export class PagesService {
         projects: 1,
         is_404: 1,
         redirect: 1,
+        is_archive: 1,
         altLangHref: 1,
       })
       .populate('tasks')
@@ -317,6 +318,7 @@ export class PagesService {
       _id: page._id.toString(),
       ...omit(['_id'], page),
       is404: page.is_404,
+      isArchive: page.is_archive,
       isRedirect: !!page.redirect,
       redirectUrl: page.redirect || null,
       projects,

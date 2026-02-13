@@ -192,6 +192,7 @@ export interface IPage {
   altLangHref?: string;
   redirect?: string;
   is_404?: boolean;
+  is_archive?: boolean;
   lastChecked?: Date;
   lastModified?: Date;
   owners?: string;
@@ -381,6 +382,7 @@ export interface IUrl {
   last_checked?: Date;
   last_modified?: Date;
   is_404?: boolean;
+  is_archive?: boolean;
   hashes?: UrlHash[];
   latest_snapshot?: string;
 }

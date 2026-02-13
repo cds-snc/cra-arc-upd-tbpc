@@ -56,6 +56,11 @@ export class PagesHomeComponent implements OnInit {
             header: 'visits',
             pipe: 'number',
           },
+          {
+            field: 'archived',
+            header: 'Archived',
+            pipe: 'boolean',
+          },
         ] as ColumnConfig<PagesHomeAggregatedData>[],
     ),
   );

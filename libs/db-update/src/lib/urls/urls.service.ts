@@ -18,6 +18,7 @@ import {
   hours,
   HttpClient,
   HttpClientResponse,
+  logJson,
   prettyJson,
   squishTrim,
   today,
@@ -35,6 +36,7 @@ export type UpdateUrlsOptions = {
     check404s?: boolean;
     checkAll?: boolean;
     filter?: FilterQuery<Page>;
+    checkArchive?: boolean;
   };
 };
 
@@ -204,7 +206,7 @@ export class UrlsService {
     };
   }
 
-  private async checkAndUpdateUrlData(urls: Url[]) {
+  async checkAndUpdateUrlData(urls: Url[]) {
     const abortController = new AbortController();
 
     // Updating will stop after 3 hours
@@ -326,6 +328,7 @@ export class UrlsService {
               last_modified: date,
               is_404: true,
               ...redirect,
+              is_archive: false,
             });
           }
 
@@ -345,6 +348,7 @@ export class UrlsService {
               // if the body is empty, it's technically not a 404, but may as well be.
               is_404: true,
               ...redirect,
+              is_archive: false,
             });
           }
 
@@ -497,6 +501,7 @@ export class UrlsService {
                     ...langHrefs,
                     links: processedHtml.links,
                     ...redirect,
+                    is_archive: processedHtml.archived,
                   },
                   readabilityScore,
                 );
@@ -1073,6 +1078,7 @@ type ProcessedHtml = {
   metadata: Record<string, string>;
   links: { href: string; text: string }[];
   langHrefs: { [lang: string]: string };
+  archived: boolean;
 };
 
 export const processHtml = (html: string): ProcessedHtml | null => {
@@ -1084,6 +1090,11 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     false,
   );
   $('script, meta[property="fb:pages"]').remove();
+
+  /* Check for archived class banner */
+  const archived = $('.gc-archv') ? true:false;
+
+  logJson(archived);
 
   const body = $('main').html() || '';
 
@@ -1145,5 +1156,6 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     metadata,
     links,
     langHrefs,
+    archived,
   };
 };
