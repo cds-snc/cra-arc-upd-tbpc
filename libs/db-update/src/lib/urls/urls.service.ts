@@ -1340,13 +1340,19 @@ export class UrlsService {
         missingHashesDataFilename,
       );
 
+    this.logger.info('Writing missing hashes data to parquet...');
     await htmlTable.writeParquet(missingHashesDataFilename);
 
+    this.logger.info('Uploading missing hashes data parquet to blob storage...');
     await missingHashesDataBlob.uploadStream(
       createReadStream(missingHashesDataFilename, {
         highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
       }),
+      true, // overwrite if exists
     );
+
+    this.logger.info('Missing hashes data parquet uploaded to blob storage.');
+
     // if this were to keep running, you would need to clear and reinitialize the table,
     // so let's do that anyways
     await htmlTable.deleteLocalTable();
