@@ -1143,17 +1143,16 @@ export class UrlsService {
   }
 
   // Manual steps for syncRemoteParquet(): (because of cloud shell issues/limitations)
-  // 1. (remote) Get mongo hashes and compare with remote parquet hashes to get missing hashes (comparison might need to be done locally if remote fails)
-  //    1.5 (local--if remote fails) Get uploaded hashes list and compare with remote parquet hashes to get missing hashes
-  // 2. (remote) With missing hashes, get the data from mongo -> upload data as parquet file to blob storage
-  // 3. (local) Download missing hashes -> finish as usual: get html from blob storage -> appendToRemote()
+  // 1. (remote) Get mongo hashes and upload to storage to fetch from local
+  // 2. (local) Get uploaded hashes list and compare with remote parquet hashes to get missing hashes -> upload
+  // 3. (remote) Download missing hashes, get the data from mongo -> upload data as parquet file to blob storage
+  // 4. (local) Download parquet data -> finish as usual: get html from blob storage -> appendToRemote()
 
   // Manual sync step 1 (remote)
-  async getAndUploadMissingHashes() {
+  async getAndUploadDbHashes() {
     this.logger.info(
       '[Syncing remote parquet] - Getting missing hashes and uploading to blob storage...',
     );
-    const htmlTable = this.duckDb.remote.html;
 
     console.time('mongo fetch time');
     const dbHashes = await this.db.collections.urls
@@ -1164,10 +1163,24 @@ export class UrlsService {
       .then((hashes) => hashes.map(({ hashes }) => `'${hashes}'`).join(','));
     console.timeEnd('mongo fetch time');
 
-    // in case the next part fails
     await this.blobService.blobModels.html_snapshots
       ?.blob('dbHashes.txt')
       .uploadFromString(dbHashes);
+
+    this.logger.info('DB hashes uploaded to blob storage.');
+  }
+
+  // Manual sync step 2 (local)
+  async getMissingHashes() {
+    this.logger.info(
+      '[Syncing remote parquet] - Getting missing hashes by comparing db hashes with remote parquet hashes...',
+    );
+    const htmlTable = this.duckDb.remote.html;
+
+    // get db hashes list from blob storage
+    const dbHashes = await this.blobService.blobModels.html_snapshots
+      ?.blob('dbHashes.txt')
+      .downloadToString();
 
     const dbHashesSql = sql.raw(`unnest([${dbHashes}]) db(hash)`);
 
@@ -1205,7 +1218,7 @@ export class UrlsService {
     this.logger.info('Missing hashes uploaded to blob storage.');
   }
 
-  // Manual sync step 2 (remote)
+  // Manual sync step 3 (remote)
   async getMissingHashesDataAndUploadParquet() {
     this.logger.info(
       '[Syncing remote parquet] - Getting missing hashes data and uploading parquet...',
@@ -1339,7 +1352,7 @@ export class UrlsService {
     await htmlTable.deleteLocalTable();
   }
 
-  // Manual sync step 3 (local)
+  // Manual sync step 4 (local)
   async getMissingHashesHtmlAndAppendToRemote() {
     this.logger.info(
       '[Syncing remote parquet] - Getting missing hashes html and appending to remote...',
