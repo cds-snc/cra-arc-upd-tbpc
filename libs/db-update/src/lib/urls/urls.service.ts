@@ -1332,7 +1332,9 @@ export class UrlsService {
       );
     }
 
+    this.logger.info('Inserting missing hashes data to local DuckDB table...');
     await htmlTable.insertLocal(missingHashDocs, { batchSize: 500 });
+    this.logger.info('Missing hashes data inserted to local DuckDB table.');
 
     const missingHashesDataFilename = 'missing_hashes_data.parquet';
     const missingHashesDataBlob =
