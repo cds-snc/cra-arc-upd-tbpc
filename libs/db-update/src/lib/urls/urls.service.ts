@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import * as cheerio from 'cheerio/slim';
 import { minify } from 'html-minifier-terser';
@@ -34,8 +35,9 @@ import { DuckDbService, type HtmlSnapshot } from '@dua-upd/duckdb';
 import { sql } from 'drizzle-orm';
 import { assert } from 'node:console';
 import type { ContainerClient } from '@azure/storage-blob';
-import { createReadStream } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { readFile, stat, writeFile } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -1343,13 +1345,52 @@ export class UrlsService {
     missingHashDocs.sort((a, b) => a.url.localeCompare(b.url));
     console.timeEnd('Missing hashes data sorted.');
 
-    // print current memory usage in MB
-    const memoryUsage = process.memoryUsage();
-    console.log(
-      `Current memory usage: ${(memoryUsage.rss / (1024 * 1024)).toFixed(
-        2,
-      )} MB`,
+    console.log('Memory usage before writing:');
+    printMemoryUsage();
+
+    // write uncompressed to be able to release memory before uploading
+    const tempMissingHashesDataFilename = 'temp_missing_hashes_data.json';
+
+    const tempWriteStream = createWriteStream(tempMissingHashesDataFilename, {
+      highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
+    });
+
+    const tempReadableStream = ReadableStream.from(
+      JSON.stringify(missingHashDocs),
     );
+
+    console.log('Writing missing hashes data to temporary file');
+    console.time('Writing missing hashes data to temporary file');
+    await pipeline(tempReadableStream, tempWriteStream);
+    console.timeEnd('Writing missing hashes data to temporary file');
+
+    // print size of temp file
+    const tempFileStats = await stat(tempMissingHashesDataFilename);
+    console.log(
+      `Size of temporary missing hashes data file: ${(
+        tempFileStats.size /
+        (1024 * 1024)
+      ).toFixed(2)} MB`,
+    );
+
+    console.log('Memory usage after writing:');
+    printMemoryUsage();
+
+    // delete the large missingHashDocs array to free memory before uploading
+    missingHashDocs.length = 0;
+
+    // force garbage collection to free memory before uploading, if available
+    if (globalThis.gc) {
+      console.log('Forcing garbage collection');
+      globalThis.gc();
+    } else {
+      this.logger.warn(
+        'Garbage collection is not exposed. Run Node with --expose-gc to enable manual garbage collection.',
+      );
+    }
+
+    console.log('Memory usage after freeing memory:');
+    printMemoryUsage();
 
     const missingHashesDataFilename = 'missing_hashes_data.json';
 
@@ -1357,7 +1398,9 @@ export class UrlsService {
     console.time('Writing missing hashes data');
     await writeCompressedStream(
       missingHashesDataFilename,
-      ReadableStream.from(JSON.stringify(missingHashDocs)),
+      createReadStream(tempMissingHashesDataFilename, {
+        highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
+      }),
     );
     console.timeEnd('Writing missing hashes data');
 
@@ -1565,3 +1608,16 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     langHrefs,
   };
 };
+
+function printMemoryUsage() {
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+
+  console.log(
+    `Total System Memory: ${Math.round(totalMemory / 1024 / 1024)} MB`,
+  );
+  console.log(`Free System Memory: ${Math.round(freeMemory / 1024 / 1024)} MB`);
+  console.log(
+    `Used System Memory: ${Math.round((totalMemory - freeMemory) / 1024 / 1024)} MB`,
+  );
+}
