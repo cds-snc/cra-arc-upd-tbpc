@@ -10,7 +10,7 @@ import {
 } from '@dua-upd/blob-storage';
 import { DbService, Page, Readability, Url } from '@dua-upd/db';
 import { BlobLogger } from '@dua-upd/logger';
-import { md5Hash } from '@dua-upd/node-utils';
+import { compressString, decompressString, md5Hash } from '@dua-upd/node-utils';
 import type { IPage, IUrl, UrlHash } from '@dua-upd/types-common';
 import {
   AbortController,
@@ -30,6 +30,7 @@ import { sql } from 'drizzle-orm';
 import { assert } from 'node:console';
 import type { ContainerClient } from '@azure/storage-blob';
 import { createReadStream } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -1250,7 +1251,7 @@ export class UrlsService {
       url: string;
       page: string | null;
       hash: string;
-      date: Date;
+      date: string; // using string for date to simplify JSON serialization/deserialization
     }[] = [];
 
     const missingHashesSet = new Set(missingHashes);
@@ -1298,7 +1299,7 @@ export class UrlsService {
                 url: urlDoc.url,
                 page: urlDoc.page?.toString() || null,
                 hash: hashDoc.hash,
-                date: hashDoc.date,
+                date: hashDoc.date.toISOString(), // convert date to string for JSON serialization
               })),
           );
 
@@ -1332,20 +1333,25 @@ export class UrlsService {
       );
     }
 
-    this.logger.info('Inserting missing hashes data to local DuckDB table...');
-    await htmlTable.insertLocal(missingHashDocs, { batchSize: 500 });
-    this.logger.info('Missing hashes data inserted to local DuckDB table.');
+    // Sort rows by url for better compression
+    console.time('Missing hashes data sorted.');
+    missingHashDocs.sort((a, b) => a.url.localeCompare(b.url));
+    console.timeEnd('Missing hashes data sorted.');
 
-    const missingHashesDataFilename = 'missing_hashes_data.parquet';
+    // Write to json file instead...
+    const missingHashesDataFilename = 'missing_hashes_data.json';
+
+    await writeFile(
+      missingHashesDataFilename,
+      await compressString(JSON.stringify(missingHashDocs), 'zstd'),
+    );
+
     const missingHashesDataBlob =
       this.blobService.blobModels.html_snapshots!.blob(
         missingHashesDataFilename,
       );
 
-    this.logger.info('Writing missing hashes data to parquet...');
-    await htmlTable.writeParquet(missingHashesDataFilename);
-
-    this.logger.info('Uploading missing hashes data parquet to blob storage...');
+    this.logger.info('Uploading missing hashes data json to blob storage...');
     await missingHashesDataBlob.uploadStream(
       createReadStream(missingHashesDataFilename, {
         highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
@@ -1353,7 +1359,7 @@ export class UrlsService {
       true, // overwrite if exists
     );
 
-    this.logger.info('Missing hashes data parquet uploaded to blob storage.');
+    this.logger.info('Missing hashes data json uploaded to blob storage.');
 
     // if this were to keep running, you would need to clear and reinitialize the table,
     // so let's do that anyways
@@ -1367,7 +1373,7 @@ export class UrlsService {
     );
     const htmlTable = this.duckDb.remote.html;
 
-    const missingHashesDataFilename = 'missing_hashes_data.parquet';
+    const missingHashesDataFilename = 'missing_hashes_data.json';
     const missingHashesDataBlob =
       this.blobService.blobModels.html_snapshots!.blob(
         missingHashesDataFilename,
@@ -1375,7 +1381,26 @@ export class UrlsService {
 
     await missingHashesDataBlob.downloadToFile(missingHashesDataFilename);
 
-    const missingHashDocs = await this.duckDb.db.select().from(htmlTable.table);
+    const jsonReviver = (key: string, value: any) => {
+      if (key === 'date') {
+        return new Date(value);
+      }
+
+      return value;
+    };
+
+    const missingHashDocs: {
+      url: string;
+      page: string | null;
+      hash: string;
+      date: Date;
+    }[] = JSON.parse(
+      await decompressString(
+        await readFile(missingHashesDataFilename, 'utf-8'),
+        'zstd',
+      ),
+      jsonReviver,
+    );
 
     const blobDownloadPromises: Promise<{
       url: string;
