@@ -36,8 +36,8 @@ import { sql } from 'drizzle-orm';
 import { assert } from 'node:console';
 import type { ContainerClient } from '@azure/storage-blob';
 import { createReadStream, createWriteStream } from 'node:fs';
+import { once } from 'node:events';
 import { readFile, stat, writeFile } from 'node:fs/promises';
-import { pipeline } from 'node:stream/promises';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -1248,18 +1248,57 @@ export class UrlsService {
       return;
     }
 
-    await htmlTable.createLocalTable();
+    // write uncompressed to be able to release memory before uploading
+    const tempMissingHashesDataFilename = 'temp_missing_hashes_data.json';
+    const tempWriteStream = createWriteStream(tempMissingHashesDataFilename, {
+      highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
+    });
+
+    const writeChunk = async (chunk: string) => {
+      if (!tempWriteStream.write(chunk)) {
+        await once(tempWriteStream, 'drain');
+      }
+    };
+
+    let hasWrittenAnyRow = false;
+    let writtenRowsCount = 0;
+    let writeQueue: Promise<void> = Promise.resolve();
+
+    const appendRowsToTempFile = (
+      rows: {
+        url: string;
+        page: string | null;
+        hash: string;
+        date: string;
+      }[],
+    ) => {
+      if (!rows.length) {
+        return writeQueue;
+      }
+
+      const rowsJson = rows.map((row) => JSON.stringify(row)).join(',');
+
+      writeQueue = writeQueue.then(async () => {
+        const prefix = hasWrittenAnyRow ? ',' : '';
+        await writeChunk(`${prefix}${rowsJson}`);
+        hasWrittenAnyRow = true;
+        writtenRowsCount += rows.length;
+      });
+
+      return writeQueue;
+    };
+
+    console.log('Memory usage before writing:');
+    printMemoryUsage();
+
+    console.log('Writing missing hashes data to temporary file');
+    console.time('Writing missing hashes data to temporary file');
+    await writeChunk('[');
 
     console.time('Mongo fetch missing hashes time');
 
     // Find the missing hashes from Mongo in batches
     const missingHashDocsBatchSize = 10000;
-    const missingHashDocs: {
-      url: string;
-      page: string | null;
-      hash: string;
-      date: string; // using string for date to simplify JSON serialization/deserialization
-    }[] = [];
 
     const missingHashesSet = new Set(missingHashes);
 
@@ -1274,6 +1313,7 @@ export class UrlsService {
       this.logger.log(
         `Processing batch of missing hashes. Remaining: ${missingHashesQueue.length}`,
       );
+      printMemoryUsage();
 
       // for every 10 batches, wait for all the queries to finish before starting
       //  new ones, to avoid having too many pending queries at once
@@ -1286,7 +1326,7 @@ export class UrlsService {
       const queryBatchPromise = this.db.collections.urls
         .find({ 'hashes.hash': { $in: batch } }, { url: 1, page: 1, hashes: 1 })
         .lean()
-        .then((docs) => {
+        .then(async (docs) => {
           if (!docs) {
             return;
           }
@@ -1310,7 +1350,9 @@ export class UrlsService {
               })),
           );
 
-          missingHashDocs.push(...batchDocsFlat);
+          // keep rows grouped by URL as much as possible for better compression
+          batchDocsFlat.sort((a, b) => a.url.localeCompare(b.url));
+          await appendRowsToTempFile(batchDocsFlat);
         })
         .catch((err) => {
           this.logger.error(
@@ -1326,9 +1368,20 @@ export class UrlsService {
 
     // await any remaining queries
     const results = await Promise.allSettled(missingHashQueryPromises);
+    await writeQueue;
+    await writeChunk(']');
+
+    const tempWriteFinished = new Promise<void>((resolve, reject) => {
+      tempWriteStream.once('finish', resolve);
+      tempWriteStream.once('error', reject);
+    });
+    tempWriteStream.end();
+    await tempWriteFinished;
+    console.timeEnd('Writing missing hashes data to temporary file');
+
     console.timeEnd('Mongo fetch missing hashes time');
 
-    console.log(`Found ${missingHashDocs.length} missing hashes to add`);
+    console.log(`Found ${writtenRowsCount} missing hashes to add`);
 
     const rejectedResults = results.filter(
       (result): result is PromiseRejectedResult => result.status === 'rejected',
@@ -1339,30 +1392,6 @@ export class UrlsService {
         `${rejectedResults.length} batches failed to fetch from MongoDB.`,
       );
     }
-
-    // Sort rows by url for better compression
-    console.time('Missing hashes data sorted.');
-    missingHashDocs.sort((a, b) => a.url.localeCompare(b.url));
-    console.timeEnd('Missing hashes data sorted.');
-
-    console.log('Memory usage before writing:');
-    printMemoryUsage();
-
-    // write uncompressed to be able to release memory before uploading
-    const tempMissingHashesDataFilename = 'temp_missing_hashes_data.json';
-
-    const tempWriteStream = createWriteStream(tempMissingHashesDataFilename, {
-      highWaterMark: 8 * 1024 * 1024, // 8MB buffer size
-    });
-
-    const tempReadableStream = ReadableStream.from(
-      JSON.stringify(missingHashDocs),
-    );
-
-    console.log('Writing missing hashes data to temporary file');
-    console.time('Writing missing hashes data to temporary file');
-    await pipeline(tempReadableStream, tempWriteStream);
-    console.timeEnd('Writing missing hashes data to temporary file');
 
     // print size of temp file
     const tempFileStats = await stat(tempMissingHashesDataFilename);
@@ -1375,9 +1404,6 @@ export class UrlsService {
 
     console.log('Memory usage after writing:');
     printMemoryUsage();
-
-    // delete the large missingHashDocs array to free memory before uploading
-    missingHashDocs.length = 0;
 
     // force garbage collection to free memory before uploading, if available
     if (globalThis.gc) {
