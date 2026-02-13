@@ -6,6 +6,7 @@ import {
   createCredentialChain,
   fromEnv,
   fromContainerMetadata,
+  fromInstanceMetadata,
 } from '@aws-sdk/credential-providers';
 import { CompressionAlgorithm } from '@dua-upd/node-utils';
 import { S3StorageClient, type S3Bucket } from './s3.storage.client';
@@ -137,6 +138,7 @@ export class BlobStorageService {
                 fromEnv(),
                 fromSSO(),
                 fromContainerMetadata(),
+                fromInstanceMetadata(),
               ).expireAfter(30 * 60_000), // automatically refresh credentials every 30 minutes
         );
       } catch (error) {
