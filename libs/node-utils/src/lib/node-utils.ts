@@ -5,7 +5,16 @@ import {
 } from '@mongodb-js/zstd';
 import * as brotli from 'brotli-wasm';
 import { createHash } from 'node:crypto';
-import { createGunzip } from 'node:zlib';
+import {
+  createGunzip,
+  createZstdCompress,
+  createZstdDecompress,
+  constants as zstdConstants,
+} from 'node:zlib';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
+import { type ReadableStream } from 'node:stream/web';
+import { Readable } from 'node:stream';
 
 const compressBrotli = brotli.compress;
 const decompressBrotli = brotli.decompress;
@@ -83,3 +92,32 @@ export const gunzip = (buffer: Buffer) =>
     gunzip.write(buffer);
     gunzip.end();
   });
+
+export const writeCompressedStream = async <
+  T extends Readable | ReadableStream,
+>(
+  outputPath: string,
+  input: T,
+) => {
+  const inputStream =
+    input instanceof Readable ? input : Readable.fromWeb(input);
+
+  const outputStream = createWriteStream(outputPath);
+  const compressStream = createZstdCompress({
+    params: {
+      [zstdConstants.ZSTD_c_compressionLevel]: 5,
+      [zstdConstants.ZSTD_c_strategy]: zstdConstants.ZSTD_btopt,
+    },
+  });
+
+  return await pipeline(inputStream, compressStream, outputStream);
+};
+
+export const readCompressedStream = (
+  inputPath: string,
+): NodeJS.ReadableStream => {
+  const inputStream = createReadStream(inputPath);
+  const decompressStream = createZstdDecompress();
+
+  return inputStream.pipe(decompressStream);
+};
