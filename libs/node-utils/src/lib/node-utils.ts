@@ -105,8 +105,8 @@ export const writeCompressedStream = async <
   const outputStream = createWriteStream(outputPath);
   const compressStream = createZstdCompress({
     params: {
-      [zstdConstants.ZSTD_c_compressionLevel]: 5,
-      [zstdConstants.ZSTD_c_strategy]: zstdConstants.ZSTD_btopt,
+      [zstdConstants.ZSTD_c_compressionLevel]: 3,
+      [zstdConstants.ZSTD_c_strategy]: zstdConstants.ZSTD_lazy2,
     },
   });
 

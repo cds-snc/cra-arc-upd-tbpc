@@ -1343,7 +1343,14 @@ export class UrlsService {
     missingHashDocs.sort((a, b) => a.url.localeCompare(b.url));
     console.timeEnd('Missing hashes data sorted.');
 
-    // Write to json file instead...
+    // print current memory usage in MB
+    const memoryUsage = process.memoryUsage();
+    console.log(
+      `Current memory usage: ${(memoryUsage.rss / (1024 * 1024)).toFixed(
+        2,
+      )} MB`,
+    );
+
     const missingHashesDataFilename = 'missing_hashes_data.json';
 
     console.log('Writing missing hashes data');
