@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   Input,
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ApexNonAxisChartSeries } from 'ng-apexcharts';
 import { ChartComponent } from 'ng-apexcharts';
 import { I18nFacade } from '@dua-upd/upd/state';
@@ -22,6 +24,7 @@ import { ApexStore } from './apex.store';
 export class ApexDonutTaskSuccessComponent implements OnInit {
   private i18n = inject(I18nFacade);
   private readonly apexStore = inject(ApexStore);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('chart', { static: true }) chart!: ChartComponent;
 
@@ -48,8 +51,10 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.i18n.currentLang$.subscribe((lang) => {
-      this.apexStore.setLocale(lang);
-    });
+    this.i18n.currentLang$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((lang) => {
+        this.apexStore.setLocale(lang);
+      });
   }
 }

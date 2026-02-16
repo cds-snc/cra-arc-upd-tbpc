@@ -969,6 +969,156 @@ export class ProjectsDetailsFacade {
     }),
   );
 
+  tasksTestedData$ = combineLatest([
+    this.projectsDetailsData$,
+    this.projectTasks$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, projectTasks, lang]) => {
+      const uxTests = data?.taskSuccessByUxTest;
+
+      if (!uxTests?.length) {
+        return [];
+      }
+
+      const taskTitles = uxTests
+        .map((uxTest) => uxTest.tasks.split('; '))
+        .reduce((acc, val) => acc.concat(val), [])
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .sort((a, b) => a.localeCompare(b));
+
+      return taskTitles.map((taskTitle, index) => {
+        const relevantTests = uxTests.filter((uxTest) =>
+          uxTest.tasks.split('; ').includes(taskTitle),
+        );
+
+        const testsByType: Record<
+          string,
+          { rates: number[]; totalUsers: number }
+        > = {};
+
+        for (const test of relevantTests) {
+          const type = test.test_type || 'Unknown';
+          if (!testsByType[type]) {
+            testsByType[type] = { rates: [], totalUsers: 0 };
+          }
+          if (test.success_rate != null) {
+            testsByType[type].rates.push(test.success_rate);
+          }
+          testsByType[type].totalUsers = Math.max(
+            testsByType[type].totalUsers,
+            test.total_users || 0,
+          );
+        }
+
+        const tests = Object.entries(testsByType)
+          .map(([type, { rates, totalUsers }]) => ({
+            testType: type,
+            testTypeLabel: this.i18n.service.translate(type, lang),
+            successRate: rates.length ? avg(rates) : null,
+            successRatePercent:
+              rates.length && avg(rates) != null
+                ? round(avg(rates)! * 100, 1)
+                : null,
+            avgTimeOnTask: null as number | null,
+            totalUsers: totalUsers,
+          }))
+          .sort((a, b) => {
+            const order: Record<string, number> = {
+              Baseline: 0,
+              Validation: 1,
+            };
+            return (order[a.testType] ?? 2) - (order[b.testType] ?? 2);
+          });
+
+        const baselineRate = tests.find(
+          (t) => t.testType === 'Baseline',
+        )?.successRate;
+        const validationRate = tests.find(
+          (t) => t.testType === 'Validation',
+        )?.successRate;
+
+        let avgTaskSuccessChange: number | null = null;
+        let avgTaskSuccessPercentChange: number | null = null;
+
+        if (baselineRate != null && validationRate != null) {
+          avgTaskSuccessChange = round(
+            (validationRate - baselineRate) * 100,
+            1,
+          );
+          avgTaskSuccessPercentChange = percentChange(
+            round(validationRate, 2),
+            round(baselineRate, 2),
+          );
+        }
+
+        const scenariosByTestType: Record<string, string[]> = {};
+        for (const test of relevantTests) {
+          if (!test.scenario) continue;
+          const type = test.test_type || 'Unknown';
+          if (!scenariosByTestType[type]) {
+            scenariosByTestType[type] = [];
+          }
+          if (!scenariosByTestType[type].includes(test.scenario)) {
+            scenariosByTestType[type].push(test.scenario);
+          }
+        }
+
+        const taskId =
+          projectTasks.find((t) => t.title === taskTitle)?._id?.toString() ||
+          '';
+
+        return {
+          taskNumber: index + 1,
+          taskTitle: taskTitle
+            ? this.i18n.service.translate(taskTitle, lang)
+            : taskTitle,
+          taskId,
+          scenariosByTestType,
+          tests,
+          avgTaskSuccessChange,
+          avgTaskSuccessPercentChange,
+          avgTimeOnTaskChange: null as number | null,
+        };
+      });
+    }),
+  );
+
+  tasksTestedSummary$ = combineLatest([
+    this.tasksTestedData$,
+    this.totalParticipants$,
+  ]).pipe(
+    map(([tasks, totalParticipants]) => {
+      if (!tasks?.length) {
+        return null;
+      }
+
+      const testTypes = new Set<string>();
+      for (const task of tasks) {
+        for (const test of task.tests) {
+          testTypes.add(test.testType);
+        }
+      }
+
+      return {
+        tasksCount: tasks.length,
+        scenariosCount: tasks.reduce(
+          (sum, t) =>
+            sum +
+            Object.values(t.scenariosByTestType).reduce(
+              (s, arr) => s + arr.length,
+              0,
+            ),
+          0,
+        ),
+        participantsPerTest:
+          testTypes.size > 0
+            ? Math.round(totalParticipants / testTypes.size)
+            : null,
+      };
+    }),
+  );
+
   documents$ = this.projectsDetailsData$.pipe(
     map((data) =>
       data?.attachments.map((attachment) => ({

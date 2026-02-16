@@ -1600,5 +1600,13 @@
   "Launched:": "Launched:",
   "task-success-objective-legend": "Met objective of 20 point increase but did not meet 80% task success",
   "tooltip-baseline-task-success": "Average task success rate from baseline UX tests",
-  "tooltip-validation-task-success": "Average task success rate from validation UX tests"
+  "tooltip-validation-task-success": "Average task success rate from validation UX tests",
+  "tasks-tested": "Tasks Tested",
+  "scenarios": "Scenarios",
+  "participants-per-test": "Participants per test",
+  "view-task-scenario": "View task scenario",
+  "avg-task-success": "Avg. Task Success",
+  "avg-time-on-task": "Avg. Time on Task",
+  "coming-soon": "Coming soon",
+  "pp": "pp"
 }

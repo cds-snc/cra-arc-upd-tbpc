@@ -19,7 +19,7 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { combineLatest, map as rxMap } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import type { GetTableProps } from '@dua-upd/utils-common';
 
 type DocumentsColTypes = GetTableProps<
@@ -46,14 +46,6 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
   taskSuccessChange$ = this.projectsDetailsService.taskSuccessChange$;
 
   documents$ = this.projectsDetailsService.documents$;
-
-  baselineDocs$ = this.documents$.pipe(
-    rxMap(docs => docs?.filter(d => d.filename?.toLowerCase().includes('baseline')) ?? [])
-  );
-
-  validationDocs$ = this.documents$.pipe(
-    rxMap(docs => docs?.filter(d => d.filename?.toLowerCase().includes('validation')) ?? [])
-  );
 
   apexTaskSuccessByUxTest$ =
     this.projectsDetailsService.apexTaskSuccessByUxTest$;

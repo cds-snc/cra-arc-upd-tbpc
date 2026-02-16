@@ -5,6 +5,7 @@ import type { ApexChart, ApexNonAxisChartSeries } from 'ng-apexcharts';
 import fr from 'apexcharts/dist/locales/fr.json';
 import en from 'apexcharts/dist/locales/en.json';
 import { EN_CA } from '@dua-upd/upd/i18n';
+import { globalColours } from '@dua-upd/utils-common';
 
 export interface ChartOptions {
   chart: ApexChart;
@@ -31,7 +32,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
         toolbar: { show: false },
         sparkline: { enabled: true },
       },
-      colors: ['#26A69A', '#e0e0e0'],
+      colors: [globalColours[2], '#e0e0e0'],
       series: [],
       labels: ['Success', 'Remaining'],
       plotOptions: {
@@ -51,7 +52,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
   readonly setColours = this.updater(
     (state, value: string[]): ChartOptions => ({
       ...state,
-      colors: value ?? ['#26A69A', '#e0e0e0'],
+      colors: value ? value : [],
     }),
   );
 

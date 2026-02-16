@@ -12,17 +12,6 @@
                 [successRate]="(baselineTestData$ | async)?.successRate"
                 [launchDate]="(baselineTestData$ | async)?.launchDate"
               ></upd-apex-donut-task-success>
-              <ng-container *ngIf="baselineDocs$ | async as baselineDocs">
-                <div *ngIf="baselineDocs.length" class="mt-2">
-                  <ng-container *ngFor="let doc of baselineDocs">
-                    <div *ngIf="doc.url">
-                      <a [href]="doc.url" target="_blank" rel="noopener noreferrer">
-                        <small>{{ doc.filename }} <i class="pi pi-external-link"></i></small>
-                      </a>
-                    </div>
-                  </ng-container>
-                </div>
-              </ng-container>
             </upd-card>
           </div>
           <div class="col-6">
@@ -36,17 +25,6 @@
                 [change]="taskSuccessChange$ | async"
                 [showChange]="true"
               ></upd-apex-donut-task-success>
-              <ng-container *ngIf="validationDocs$ | async as validationDocs">
-                <div *ngIf="validationDocs.length" class="mt-2">
-                  <ng-container *ngFor="let doc of validationDocs">
-                    <div *ngIf="doc.url">
-                      <a [href]="doc.url" target="_blank" rel="noopener noreferrer">
-                        <small>{{ doc.filename }} <i class="pi pi-external-link"></i></small>
-                      </a>
-                    </div>
-                  </ng-container>
-                </div>
-              </ng-container>
             </upd-card>
           </div>
         </div>
@@ -58,6 +36,23 @@
     </div>
   </div>
 </div>
+
+<ng-container *ngIf="documents$ | async as docs">
+  <div *ngIf="docs.length" class="container-fluid my-4 gx-0">
+    <div class="row">
+      <div class="col">
+        <upd-data-table-card
+          [data]="docs"
+          [cols]="documentsCols"
+          [sort]="false"
+          [pagination]="false"
+          [filter]="false"
+          [title]="'Documents'"
+        ></upd-data-table-card>
+      </div>
+    </div>
+  </div>
+</ng-container>
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
@@ -88,6 +83,8 @@
     </div>
   </div>
 </div>
+
+<upd-tasks-tested></upd-tasks-tested>
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
@@ -150,18 +147,3 @@
   </div>
 </ng-container>
 
-<div *ngIf="documents$ | async as documents" class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-data-table-card
-        [data]="documents || []"
-        [cols]="documentsCols"
-        [sort]="false"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'Documents'"
-        [emptyStateMessage]="'project-tasks-not-tested'"
-      ></upd-data-table-card>
-    </div>
-  </div>
-</div>
