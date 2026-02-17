@@ -534,7 +534,7 @@ export async function testPagesArchived() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
     UrlsService,
   );
-  const blob = (<RunScriptCommand>this).inject<BlobStorageService>(BlobStorageService.name);
+  // const blob = (<RunScriptCommand>this).inject<BlobStorageService>(BlobStorageService.name);
 
   const urlTest = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html";
 
@@ -544,15 +544,29 @@ export async function testPagesArchived() {
     })
     .exec();
 
-  const latestHash = urlDb[0].hashes[urlDb[0].hashes.length - 1];
-  const blobs = await blob.blobModels.urls.blob(latestHash.hash).downloadToString();
+  // const latestHash = urlDb[0].hashes[urlDb[0].hashes.length - 1];
+  // const blobs = await blob.blobModels.urls.blob(latestHash.hash).downloadToString();
 
   // const processHtml = await urlsService.processHtml(blobs);
 
   // console.log('Updated hash with website attributes: ')
   // console.log(processHtml)
 
-  const syncDataWithPages = await urlsService.syncDataWithPages();
+  // const syncDataWithPages = await urlsService.syncDataWithPages();
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+
+  const urlsDb = await db.collections.urls.aggregate()
+      .match({
+        url: urlTest,
+      })
+      .project({
+        is_archive: 1,
+      })
+      .exec();
+
+    logJson("urlsDb: ");
+    logJson(urlsDb);
 
   const pagesDb = await db.collections.pages.aggregate()
     .match({
