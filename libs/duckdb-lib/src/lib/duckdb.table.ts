@@ -151,7 +151,7 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     const distinctOnClause = options?.distinctOn
       ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
-      : '';
+      : sql.raw('');
 
     const parquetOptionsSql = writeParquetOptionsToSql(options);
 
@@ -161,19 +161,9 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     );
   }
 
-  async appendLocalToRemote(options?: ParquetWriteOptions<Table>) {
-    // to get around bug in drizzle-duckdb causing column names to be "tableName.columnName"
-    // and the "fake" table causing the select to be empty
-    const selectAll = Object.fromEntries(
-      Object.keys(this.table)
-        .filter((key) => key !== 'enableRLS')
-        .map((key) => [key, this.table[key]]),
-    );
-
-    const selectLocalSql = this.db
-      .select(selectAll)
-      .from(this.table as DrizzleTable<Table>);
-
+  async appendLocalToRemote(
+    options?: ParquetWriteOptions<Table> & { cleanupLocalFiles?: boolean },
+  ) {
     const currentRemoteFilename = this.filename.replace(
       /\.parquet$/,
       '.current.parquet',
@@ -182,14 +172,16 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     const newDataFilename = this.filename.replace(/\.parquet$/, '.new.parquet');
 
     const orderByClause = options?.orderBy
-      ? `ORDER BY ${Object.entries(options.orderBy)
-          .map(([column, direction]) => `${column} ${direction}`)
-          .join(', ')}`
-      : '';
+      ? sql.raw(
+          `ORDER BY ${Object.entries(options.orderBy)
+            .map(([column, direction]) => `${column} ${direction}`)
+            .join(', ')}`,
+        )
+      : sql.raw('');
 
     const distinctOnClause = options?.distinctOn
       ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
-      : '';
+      : sql.raw('');
 
     const parquetOptionsSql = writeParquetOptionsToSql(options);
 
@@ -212,7 +204,7 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
             '${sql.raw(currentRemoteFilename)}',
             '${sql.raw(newDataFilename)}'
           ])
-          ${sql.raw(orderByClause)}
+          ${orderByClause}
         ) TO '${sql.raw(this.filename)}' (${parquetOptionsSql})
       `,
     );
@@ -242,15 +234,17 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
       );
     }
 
-    console.log(
-      `Uploaded ${this.filename} to remote storage, deleting local copy...`,
-    );
+    console.log(`Uploaded ${this.filename} to remote storage`);
 
-    await rm(this.filename);
-    await rm(currentRemoteFilename);
-    await rm(newDataFilename);
+    if (options?.cleanupLocalFiles) {
+      console.log('Cleaning up local files...');
 
-    console.log(`Deleted local copies of ${this.filename}`);
+      await rm(this.filename);
+      await rm(currentRemoteFilename);
+      await rm(newDataFilename);
+
+      console.log(`Deleted local copies of ${this.filename}`);
+    }
 
     console.log(`Remote table update complete`);
   }
