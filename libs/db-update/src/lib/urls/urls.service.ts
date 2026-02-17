@@ -12,9 +12,8 @@ import {
 import { DbService, Page, Readability, Url } from '@dua-upd/db';
 import { BlobLogger } from '@dua-upd/logger';
 import {
-  compressString,
-  decompressString,
   md5Hash,
+  readCompressedJsonStream,
   writeCompressedStream,
 } from '@dua-upd/node-utils';
 import type { IPage, IUrl, UrlHash } from '@dua-upd/types-common';
@@ -26,6 +25,7 @@ import {
   HttpClientResponse,
   prettyJson,
   squishTrim,
+  TimingUtility,
   today,
   wait,
 } from '@dua-upd/utils-common';
@@ -37,7 +37,7 @@ import { assert } from 'node:console';
 import type { ContainerClient } from '@azure/storage-blob';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { once } from 'node:events';
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 
 export type UpdateUrlsOptions = {
   urls?: {
@@ -1473,17 +1473,36 @@ export class UrlsService {
       return value;
     };
 
-    const missingHashDocs: {
+    type HashDataDoc = {
       url: string;
       page: string | null;
       hash: string;
       date: Date;
-    }[] = JSON.parse(
-      await decompressString(
-        await readFile(missingHashesDataFilename, 'utf-8'),
-        'zstd',
-      ),
-      jsonReviver,
+    };
+
+    console.log('Getting existing files in blob');
+    console.time('get existing files in blob time');
+    const existingFilesInBlobArray = (
+      await this.urlsBlob.getContainer().listBlobs('raw-data/urls/')
+    ).map((blob) => blob.replaceAll(/raw-data\/urls\/|\.zstd$/g, ''));
+    console.timeEnd('get existing files in blob time');
+
+    console.log(
+      `Found ${existingFilesInBlobArray.length} existing files in blob`,
+    );
+
+    const existingFilesInBlob = new Set(existingFilesInBlobArray);
+
+    console.log('Streaming and parsing missing hashes data');
+    console.time('Streaming and parsing missing hashes data time');
+    const missingHashDocs = await readCompressedJsonStream<HashDataDoc[]>(
+      missingHashesDataFilename,
+      { reviver: jsonReviver },
+    ).then((docs) => docs.filter((doc) => existingFilesInBlob.has(doc.hash)));
+    console.timeEnd('Streaming and parsing missing hashes data time');
+
+    console.log(
+      `Found ${missingHashDocs.length} missing hash docs with existing html blobs to process and insert into DuckDB.`,
     );
 
     const blobDownloadPromises: Promise<{
@@ -1494,15 +1513,37 @@ export class UrlsService {
       date: Date;
     } | null>[] = [];
 
+    const progress = new TimingUtility(missingHashDocs.length);
+
+    const hashContentMap = new Map<string, string>();
+
     console.time('HTML blob download time');
     for (const hashDoc of missingHashDocs) {
+      if (hashContentMap.has(hashDoc.hash)) {
+        const html = hashContentMap.get(hashDoc.hash) || '';
+
+        blobDownloadPromises.push(
+          Promise.resolve({
+            ...hashDoc,
+            html: html || null,
+          }),
+        );
+
+        progress.logIteration();
+        continue;
+      }
+
       const promise = this.urlsBlob
         .blob(hashDoc.hash)
         .downloadToString({ decompressData: true })
-        .then((html) => ({
-          ...hashDoc,
-          html: html || null,
-        }))
+        .then((html) => {
+          hashContentMap.set(hashDoc.hash, html || '');
+
+          return {
+            ...hashDoc,
+            html: html || null,
+          };
+        })
         .catch((err) => {
           this.logger.error(`Error occurred downloading html blob:`);
           this.logger.error(err);
@@ -1512,7 +1553,13 @@ export class UrlsService {
 
       blobDownloadPromises.push(promise);
 
-      await wait(20);
+      if (blobDownloadPromises.length % 50 === 0) {
+        await Promise.allSettled(blobDownloadPromises);
+      } else {
+        await wait(20);
+      }
+
+      progress.logIteration();
     }
 
     const rowsToInsert = (await Promise.allSettled(blobDownloadPromises))
@@ -1536,13 +1583,15 @@ export class UrlsService {
       return;
     }
 
+    await htmlTable.createLocalTable();
+
     console.time('Local DuckDB insert time');
     await htmlTable.insertLocal(rowsToInsert, { batchSize: 500 });
     console.timeEnd('Local DuckDB insert time');
 
     console.time('Remote DuckDB append time');
     await htmlTable.appendLocalToRemote({
-      rowGroupSize: 10000,
+      rowGroupSize: 5000,
       compressionLevel: 7,
     });
     console.timeEnd('Remote DuckDB append time');
