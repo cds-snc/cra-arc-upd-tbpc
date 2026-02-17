@@ -516,6 +516,7 @@ export class UrlsService {
                 ...langHrefs,
                 links: processedHtml.links,
                 ...redirect,
+                is_archive: processedHtml.archived,
               });
             } catch (err) {
               this.logger.error(
@@ -564,6 +565,7 @@ export class UrlsService {
                 is_404: false,
                 hash: { hash, date },
                 latest_snapshot: hash,
+                is_archive: processedHtml.archived,
               },
               readabilityScore,
             );
