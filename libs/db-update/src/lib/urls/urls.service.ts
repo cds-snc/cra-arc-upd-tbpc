@@ -726,6 +726,7 @@ export class UrlsService {
           title: string;
           redirect?: string;
           is_404?: boolean;
+          is_archive?: boolean;
           metadata?: { [prop: string]: string | Date };
           page: IPage;
           langHrefs?: {
@@ -742,6 +743,7 @@ export class UrlsService {
           metadata: 1,
           page: 1,
           langHrefs: 1,
+          is_archive: 1,
         })
         .match({
           page: { $exists: true },
@@ -777,6 +779,7 @@ export class UrlsService {
       'redirect',
       'is_404',
       'metadata',
+      'is_archive',
     ]);
 
     const toComparisonString = pipe(pickUrlsProps, JSON.stringify);
