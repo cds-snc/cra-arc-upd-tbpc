@@ -31,4 +31,6 @@ RUN echo 'export BUN_INSTALL="/home/node/.bun"' >> /home/node/.bashrc \
   && echo 'eval "$(uv generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uvx --generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/node/.zshrc \
-  && echo 'eval "$(uvx --generate-shell-completion zsh)"' >> /home/node/.zshrc
+  && echo 'eval "$(uvx --generate-shell-completion zsh)"' >> /home/node/.zshrc \
+  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.bashrc \
+  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.zshrc
