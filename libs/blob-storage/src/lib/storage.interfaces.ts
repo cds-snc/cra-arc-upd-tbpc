@@ -87,14 +87,14 @@ export interface IStorageContainer<ContainerClientT> {
   /**
    * List blobs/objects in the container
    */
-  listBlobs(prefix?: RegisteredBlobModel): Promise<void>;
+  listBlobs(prefix?: string): Promise<string[]>;
 
   /**
    * Map over blobs/objects in the container
    */
   mapBlobs<T>(
     mapFunc: (item: any) => T,
-    prefix?: RegisteredBlobModel,
+    prefix?: string,
   ): Promise<T[]>;
 }
 
