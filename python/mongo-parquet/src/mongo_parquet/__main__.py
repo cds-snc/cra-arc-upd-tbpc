@@ -195,6 +195,7 @@ def main():
         data_dir=data_dir,
         sample_dir=sample_dir,
         remote_storage_type=args.storage,
+        remote_container=args.remote_container,
     )
 
     mongo_config = MongoConfig(
