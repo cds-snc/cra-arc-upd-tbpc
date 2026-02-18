@@ -71,11 +71,12 @@ class StorageClient:
         data_dir: str,
         sample_dir: str,
         remote_storage_type: Literal["azure"] | Literal["s3"],
+        remote_container: str | None = None,
     ):
         self.data_dir = data_dir
         self.sample_dir = sample_dir
 
-        self.remote_storage = RemoteStorageConfig(remote_storage_type)
+        self.remote_storage = RemoteStorageConfig(remote_storage_type, remote_container)
         self.remote_fs = self.remote_storage.fs
         self.remote_container = self.remote_storage.remote_container
 
