@@ -2,7 +2,8 @@
 set -e
 
 echo "Starting data import task..."
-uv run --no-sync --directory=src mongo_parquet --import-to-mongo --from-remote --storage=s3
+cd src
+python -m mongo_parquet --import-to-mongo --from-remote --storage=s3
 
 if [ $? -ne 0 ]; then
   echo "An error occurred during the data import."
@@ -12,7 +13,7 @@ fi
 echo "Data import completed successfully."
 
 echo "Recalculating views..."
-uv run --no-sync --directory=src mongo_parquet --recalculate-views --storage=s3
+python -m mongo_parquet --recalculate-views --storage=s3
 
 if [ $? -ne 0 ]; then
   echo "An error occurred during views recalculation."
