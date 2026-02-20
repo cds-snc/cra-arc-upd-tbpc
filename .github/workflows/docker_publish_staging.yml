@@ -42,14 +42,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.11.0
+          node-version: 24.13.1
 
       - name: Use the node_modules cache if available [npm]
         id: use-npm-cache
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-24.11.0-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-24.13.1-modules-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
         if: steps.use-npm-cache.outputs.cache-hit != 'true'
@@ -141,34 +141,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/performance_base/Dockerfile
-          target: web
+          file: docker/Dockerfile
+          target: api
           push: true
           tags: ${{ env.WEB_TAGS }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (nginx)
-        if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'upd')
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/performance_base/Dockerfile
-          target: nginx
-          push: true
-          tags: ${{ env.GHCR_REPO }}/nginx:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (db-updater)
-        if: github.repository != 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'db-updater')
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/performance_base/Dockerfile
-          target: db-updater
-          push: true
-          tags: ${{ env.GHCR_REPO }}/db-updater:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -177,7 +153,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ecs-tasks/data-import/Dockerfile
+          file: docker/Dockerfile
+          target: data-import-task
           push: true
           tags: ${{ env.DATA_IMPORT_TAGS }}
           cache-from: type=gha
@@ -188,7 +165,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ecs-tasks/update-db/Dockerfile
+          file: docker/Dockerfile
+          target: update-db-task
           push: true
           tags: ${{ env.UPDATE_DB_TAGS }}
           cache-from: type=gha
