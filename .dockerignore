@@ -23,3 +23,5 @@ scripts
 **/*.parquet
 **/.venv/
 **/.env
+**/.sync_temp/
+**/.views_temp/
