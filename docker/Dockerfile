@@ -90,10 +90,10 @@ RUN groupadd --gid 1000 $USER \
   && useradd --uid 1000 --gid $USER --shell /bin/bash --create-home $USER
 
 # Copy Python
-COPY --from=python-builder --chown=$USER:$USER --link /python/ /python/
+COPY --from=python-builder --chown=1000:1000 --link /python/ /python/
 
 # Copy the application from the builder
-COPY --from=python-builder --chown=$USER:$USER --link /builder/ /app/
+COPY --from=python-builder --chown=1000:1000 --link /builder/ /app/
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
