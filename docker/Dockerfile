@@ -8,6 +8,7 @@ FROM node:24.13.1-trixie-slim AS node-image
 
 ## Build stage for node base
 FROM node-image AS node-base
+ENV NX_DAEMON=true
 WORKDIR /builder
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
@@ -15,14 +16,30 @@ COPY ./nx.json ./tsconfig.base.json ./tsconfig.json ./.eslintrc.json ./
 COPY ./libs/ ./libs
 
 
+## Build stage for api build
+FROM node-base AS api-build
+WORKDIR /builder
+COPY ./apps/api ./apps/api
+RUN --mount=type=cache,target=/builder/.nx npx nx run api:build --prod --parallel
+RUN rm -r /builder/node_modules && rm -r /builder/tmp
+
+
+## Build stage for api dependencies
+FROM node-image AS api-deps
+WORKDIR /builder
+COPY --from=api-build /builder/dist/apps/api/package.json /builder/dist/apps/api/package-lock.json /builder/
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
+
+
 ## Build stage for update-db build
 FROM node-base AS update-db-build
 WORKDIR /builder
 COPY ./apps/update-db-task ./apps/update-db-task
-RUN npx nx run-many --target=build --projects=update-db-task --prod --parallel
+RUN --mount=type=cache,target=/builder/.nx npx nx run update-db-task:build --prod --parallel
 RUN rm -r /builder/node_modules && rm -r /builder/tmp
 
 
+## Build stage for update-db dependencies
 FROM node-image AS update-db-deps
 WORKDIR /builder
 COPY --from=update-db-build /builder/dist/apps/update-db-task/package.json /builder/dist/apps/update-db-task/package-lock.json /builder/
@@ -63,6 +80,7 @@ COPY python/mongo-parquet/ ./
 RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --locked
 
+
 ## Build stage for final (python-only) image base
 FROM debian:trixie-slim AS python-final-base
 
@@ -96,24 +114,35 @@ ENV TZ=America/Toronto
 
 ## Build stage for final (node+python) image base
 FROM node-final-base AS node-python-final-base
-
 ARG USER=node
-
-WORKDIR /app
 
 RUN mkdir -p /app/mongo-parquet && chown -R $USER:$USER /app
 
 # Need to use user and group ids instead of names when using --link for some reason
 COPY --chown=1000:1000 --from=python-builder --link /python/ /python/
-COPY --chown=1000:1000 --from=python-builder --link /builder/ ./mongo-parquet/
+COPY --chown=1000:1000 --from=python-builder --link /builder/ /app/mongo-parquet/
 
 # Place mongo-parquet executables in the environment at the front of the path
 ENV PATH="/app/mongo-parquet/.venv/bin:$PATH"
 
 
+## Build stage for final api image
+FROM node-final-base AS api
+ARG USER=node
+WORKDIR /app
+COPY --chown=1000:1000 --from=api-deps --link /builder/node_modules/ ./node_modules/
+COPY --chown=1000:1000 --from=api-build --link /builder/dist/apps/api/ ./
+
+EXPOSE 9000
+USER $USER
+CMD ["node", "main.js"]
+
+
 ## Build stage for final update-db image
 FROM node-python-final-base AS update-db-task
-
+ARG USER=node
+WORKDIR /app
+RUN chown $USER:$USER ./
 COPY --chown=1000:1000 --from=update-db-deps --link /builder/node_modules/ ./update-db/node_modules/
 COPY --chown=1000:1000 --from=update-db-build --link /builder/dist/apps/update-db-task/ ./update-db/
 COPY --chown=1000:1000 --chmod=755 --link ecs-tasks/update-db/run-task.sh ./
@@ -124,10 +153,11 @@ CMD ["./run-task.sh"]
 
 ## Build stage for final data-import image
 FROM python-final-base AS data-import-task
-
+ARG USER=node
 WORKDIR /app
-USER $USER
+RUN chown $USER:$USER ./
 
 COPY --chown=1000:1000 --chmod=755 --link ecs-tasks/data-import/run-task.sh ./
 
+USER $USER
 CMD ["./run-task.sh"]
