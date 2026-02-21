@@ -122,10 +122,10 @@ role_status=$?
 if [[ $role_status -ne 0 ]]; then
   echo "[aws-sso-init] Failed to determine a valid role"
   exit 1
-elif [[ $role_type -eq "admin" ]]; then
+elif [[ $role_type == "admin" ]]; then
   echo "[aws-sso-init] Already authenticated, skipping login"
   already_logged_in=true
-elif [[ $role_type -eq "user" ]]; then
+elif [[ $role_type == "user" ]]; then
   echo "[aws-sso-init] Starting SSO login..."
   aws sso login --no-browser || { echo "[aws-sso-init] SSO login failed. Retry with: aws sso login --no-browser" && exit 1; }
   already_logged_in=false
