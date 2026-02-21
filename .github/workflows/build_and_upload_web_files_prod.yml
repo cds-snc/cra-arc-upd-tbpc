@@ -99,14 +99,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.11.0
+          node-version: 24.13.1
 
       - name: Use the node_modules cache if available [npm]
         id: use-npm-cache
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-24.11.0-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-24.13.1-modules-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
         if: steps.use-npm-cache.outputs.cache-hit != 'true'
@@ -154,7 +154,7 @@ jobs:
     secrets:
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
     with:
-      node-version: 24.11.0
+      node-version: 24.13.1
       number-of-agents: ${{ needs.check-cloud-available.outputs.cloud-available == 'true' && 3 || 0 }}
       skip-start-ci-run: true
       skip-cloud: ${{ needs.check-cloud-available.outputs.cloud-available == 'false' }}
@@ -181,7 +181,7 @@ jobs:
     secrets:
       NX_CLOUD_AUTH_TOKEN: ${{ secrets.NX_CLOUD_AUTH_TOKEN }}
     with:
-      node-version: 24.11.0
+      node-version: 24.13.1
       number-of-agents: 3
 
   upload:

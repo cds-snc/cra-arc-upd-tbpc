@@ -1,10 +1,14 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:4-24-bookworm
+FROM mcr.microsoft.com/devcontainers/javascript-node:4.0.8-24-trixie@sha256:9b6ea344f7873aeea807726b1e8a59001389f83c3d47cf17f1d7218dca5eca35
 
 # Install MongoDB command line tools - though mongo-database-tools not available on arm64
-ARG MONGO_TOOLS_VERSION=6.0
+ARG MONGO_TOOLS_VERSION=8.0
+# MongoDB currently doesn't have a trixie (debian 13) release of their tools, so we use the bookworm (debian 12) release which is compatible with trixie
+ENV MONGO_TOOLS_VERSION_CODENAME=bookworm
+
 RUN . /etc/os-release \
   && curl -sSL "https://www.mongodb.org/static/pgp/server-${MONGO_TOOLS_VERSION}.asc" | gpg --dearmor > /usr/share/keyrings/mongodb-archive-keyring.gpg \
-  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] http://repo.mongodb.org/apt/debian ${VERSION_CODENAME}/mongodb-org/${MONGO_TOOLS_VERSION} main" | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_TOOLS_VERSION}.list \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] http://repo.mongodb.org/apt/debian ${MONGO_TOOLS_VERSION_CODENAME}/mongodb-org/${MONGO_TOOLS_VERSION} main" \
+    | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_TOOLS_VERSION}.list \
   && apt-get update && export DEBIAN_FRONTEND=noninteractive \
   && apt-get install -y mongodb-mongosh \
   && if [ "$(dpkg --print-architecture)" = "amd64" ]; then apt-get install -y mongodb-database-tools; fi \
@@ -31,4 +35,7 @@ RUN echo 'export BUN_INSTALL="/home/node/.bun"' >> /home/node/.bashrc \
   && echo 'eval "$(uv generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uvx --generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/node/.zshrc \
-  && echo 'eval "$(uvx --generate-shell-completion zsh)"' >> /home/node/.zshrc
+  && echo 'eval "$(uvx --generate-shell-completion zsh)"' >> /home/node/.zshrc \
+  # Add aliases for custom scripts:
+  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.bashrc \
+  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.zshrc

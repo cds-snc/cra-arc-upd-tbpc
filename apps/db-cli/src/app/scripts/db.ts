@@ -29,6 +29,7 @@ import {
   parseDateRangeString,
   prettyJson,
   round,
+  wait,
 } from '@dua-upd/utils-common';
 import type {
   AttachmentData,
@@ -46,6 +47,9 @@ import { preprocessCommentWords } from '@dua-upd/feedback';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { createHash } from 'crypto';
+import { DuckDbModule, DuckDbService } from '@dua-upd/duckdb';
+import { sql } from 'drizzle-orm';
+
 dayjs.extend(isoWeek);
 
 type Interval = 'full' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
@@ -94,8 +98,65 @@ export async function syncRefs(db: DbService) {
 export async function syncRemoteHtmlParquet() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
 
-  await urlsService.syncRemoteParquet();
+  await urlsService.syncRemoteParquet(false);
+
   process.exit(0);
+}
+
+// Run on remote
+export async function manualParquetSyncStep1() {
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+  
+  await urlsService.getAndUploadDbHashes();
+}
+
+// Run on local
+export async function manualParquetSyncStep2() {
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+
+  await urlsService.getMissingHashes();
+}
+
+// Run on remote
+export async function manualParquetSyncStep3() {
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+
+  await urlsService.getMissingHashesDataAndUploadParquet();
+}
+
+// Run on local
+export async function manualParquetSyncStep4() {
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
+
+  await urlsService.getMissingHashesHtmlAndAppendToRemote();
+}
+
+export async function printRemoteHtmlParquetRows() {
+  const duckDbService = await (<RunScriptCommand>(
+    this
+  )).loadModuleService<DuckDbService>({
+    module: DuckDbModule,
+    service: DuckDbService.name,
+  });
+
+  const [{ count: rows }] = (await duckDbService.remote.html
+    .selectRemote({
+      count: sql<number>`COUNT(*)`,
+    })
+    .execute()) as { count: number }[];
+
+  console.log(`Remote HTML Parquet has ${rows} rows`);
+}
+
+export async function downloadRemoteHtmlParquet() {
+  const duckDbService = await (<RunScriptCommand>(
+    this
+  )).loadModuleService<DuckDbService>({
+    module: DuckDbModule,
+    service: DuckDbService.name,
+  });
+
+  await duckDbService.remote.html.downloadRemote('hashes-html_new.parquet');
 }
 
 export async function uploadFeedback(_, __, ___, blob: BlobStorageService) {
@@ -924,6 +985,26 @@ export async function removeRedundantUrlHashes(db: DbService) {
     progress.logIteration(`${redundantHashes.size} redundant hashes found |`);
   }
 
+  const dateTimeString = new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace(/T/g, '_')
+    .replace(/:/g, '');
+
+  const redundantHashesJsonFilename = `redundant_hashes_${dateTimeString}.json`;
+
+  // Write redundant hashes to file to use for if something fails, and/or for pruning parquet file
+  console.log(`Writing redundant hashes to ${redundantHashesJsonFilename}`);
+
+  try {
+    await writeFile(
+      redundantHashesJsonFilename,
+      JSON.stringify(Array.from(redundantHashes)),
+    );
+  } catch (e) {
+    console.error('Error occurred writing redundant hashes to file:', e.stack);
+  }
+
   console.log(`Found ${redundantHashes.size} redundant hashes`);
 
   pendingOps.addPending(redundantHashes);
@@ -935,8 +1016,14 @@ export async function removeRedundantUrlHashes(db: DbService) {
   );
 
   try {
+    const promises: Promise<void>[] = [];
+
+    const concurrency = 200;
+
     for (const hash of redundantHashes) {
-      await Promise.all([
+      await wait(10); // slight delay to avoid overwhelming db/storage
+
+      const promise = Promise.all([
         // urls
         db.collections.urls
           .updateMany({ 'hashes.hash': hash }, { $pull: { hashes: { hash } } })
@@ -954,10 +1041,18 @@ export async function removeRedundantUrlHashes(db: DbService) {
           .blob(hash)
           .delete()
           .then(() => pendingOps.setBlobProcessed(hash)),
-      ]);
+      ]).then(() => {
+        removalProgress.logIteration(`Processed: ${hash} |`);
+      });
 
-      removalProgress.logIteration(`Processed: ${hash} |`);
+      promises.push(promise);
+
+      if (promises.length % concurrency === 0) {
+        await Promise.all(promises);
+      }
     }
+
+    await Promise.all(promises);
   } catch (e) {
     console.error(
       chalk.redBright('Error occurred processing redundant hashes:'),

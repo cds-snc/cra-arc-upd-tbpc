@@ -10,6 +10,7 @@ import { type IStorageModel, S3Bucket } from '@dua-upd/blob-storage';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import type { ContainerClient } from '@azure/storage-blob';
+import { writeParquetOptionsToSql } from './duckdb.utils';
 
 type BlobModel = IStorageModel<S3Bucket | ContainerClient>;
 
@@ -32,6 +33,24 @@ export type OrderBy<Table extends PgTableWithColumns<any>> = {
     | 'ASC'
     | 'DESC';
 };
+
+export type DistinctOn<Table extends PgTableWithColumns<any>> = (
+  | Table['_']['columns'][keyof Table['_']['columns']]
+  | string
+)[];
+
+export type QueryOptions<Table extends PgTableWithColumns<any>> = {
+  orderBy?: OrderBy<Table>;
+  distinctOn?: DistinctOn<Table> | false;
+};
+
+// todo: remove QueryOptions from this type once selection is separated
+export type ParquetWriteOptions<Table extends PgTableWithColumns<any>> =
+  QueryOptions<Table> & {
+    compressionLevel?: number;
+    rowGroupSize?: number;
+    useTmpFile?: boolean;
+  };
 
 const getStorageUriPrefix = () => process.env['STORAGE_URI_PREFIX'];
 
@@ -75,6 +94,14 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     console.log(`Backup complete for ${backupFilePath}`);
   }
 
+  async downloadRemote(localFilepath: string) {
+    console.log(
+      `Downloading remote file ${this.remotePath} to ${localFilepath}...`,
+    );
+    await this.blobClient.blob(this.filename).downloadToFile(localFilepath);
+    console.log(`Downloaded remote file to ${localFilepath}`);
+  }
+
   async createLocalTable() {
     await this.db.execute(this.config.tableCreationSql);
   }
@@ -83,16 +110,27 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     await this.db.execute(sql`DROP TABLE IF EXISTS ${this.table}`);
   }
 
-  async insertLocal(data: PgInsertValue<Table>[]) {
-    await this.db.insert(this.table).values(data).execute();
+  async insertLocal(
+    data: PgInsertValue<Table>[],
+    options?: { batchSize?: number },
+  ) {
+    const batchSize = options?.batchSize ?? 1000;
+    const insertArray = [...data];
+
+    while (insertArray.length) {
+      const chunk = insertArray.splice(0, batchSize);
+      await this.db.insert(this.table).values(chunk);
+    }
   }
 
-  async appendLocalToRemote(options?: {
-    orderBy?: OrderBy<Table>;
-    compressionLevel?: number;
-    rowGroupSize?: number;
-    useTmpFile?: boolean;
-  }) {
+  async insertLocalFromParquet(filepath: string) {
+    await this.db.execute(
+      sql`INSERT INTO ${this.table} SELECT * FROM read_parquet('${sql.raw(filepath)}')`,
+    );
+  }
+
+  // todo: include selection as param, for more flexible writes and not coupling write options to query options
+  async writeParquet(filepath: string, options?: ParquetWriteOptions<Table>) {
     // to get around bug in drizzle-duckdb causing column names to be "tableName.columnName"
     // and the "fake" table causing the select to be empty
     const selectAll = Object.fromEntries(
@@ -101,10 +139,31 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
         .map((key) => [key, this.table[key]]),
     );
 
-    const selectLocalSql = this.db
+    const selectSql = this.db
       .select(selectAll)
       .from(this.table as DrizzleTable<Table>);
 
+    const orderByClause = options?.orderBy
+      ? `ORDER BY ${Object.entries(options.orderBy)
+          .map(([column, direction]) => `${column} ${direction}`)
+          .join(', ')}`
+      : '';
+
+    const distinctOnClause = options?.distinctOn
+      ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
+      : sql.raw('');
+
+    const parquetOptionsSql = writeParquetOptionsToSql(options);
+
+    await this.db.execute(
+      sql`COPY (${selectSql} ${sql.raw(orderByClause)} ${distinctOnClause})
+      TO '${sql.raw(filepath)}' (${parquetOptionsSql})`,
+    );
+  }
+
+  async appendLocalToRemote(
+    options?: ParquetWriteOptions<Table> & { cleanupLocalFiles?: boolean },
+  ) {
     const currentRemoteFilename = this.filename.replace(
       /\.parquet$/,
       '.current.parquet',
@@ -113,42 +172,27 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     const newDataFilename = this.filename.replace(/\.parquet$/, '.new.parquet');
 
     const orderByClause = options?.orderBy
-      ? `ORDER BY ${Object.entries(options.orderBy)
-          .map(([column, direction]) => `${column} ${direction}`)
-          .join(', ')}`
-      : '';
+      ? sql.raw(
+          `ORDER BY ${Object.entries(options.orderBy)
+            .map(([column, direction]) => `${column} ${direction}`)
+            .join(', ')}`,
+        )
+      : sql.raw('');
 
-    // todo maybe: add dedicated parquet options parsing/formatting?
-    const compressionLevel = options?.compressionLevel
-      ? `COMPRESSION_LEVEL ${options.compressionLevel}`
-      : 'COMPRESSION_LEVEL 7';
+    const distinctOnClause = options?.distinctOn
+      ? sql.raw(`DISTINCT ON (${options.distinctOn.join(', ')})`)
+      : sql.raw('');
 
-    const rowGroupSize = options?.rowGroupSize
-      ? `ROW_GROUP_SIZE ${options.rowGroupSize}`
-      : null;
-
-    const useTmpFile =
-      typeof options?.useTmpFile === 'boolean'
-        ? `USE_TMP_FILE ${options.useTmpFile}`
-        : null;
-
-    const optionsSql = [compressionLevel, rowGroupSize, useTmpFile]
-      .filter(Boolean)
-      .join(', ');
+    const parquetOptionsSql = writeParquetOptionsToSql(options);
 
     console.log(`Creating new ${newDataFilename}...`);
     console.time('Creating new data file');
-    await this.db.execute(
-      sql`COPY (${selectLocalSql})
-      TO '${sql.raw(newDataFilename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})`,
-    );
+    await this.writeParquet(newDataFilename, options);
     console.timeEnd('Creating new data file');
 
     console.log(`Downloading ${this.filename} to ${currentRemoteFilename}`);
     console.time('Downloading remote file to local disk');
-    await this.blobClient
-      .blob(this.filename)
-      .downloadToFile(currentRemoteFilename);
+    await this.downloadRemote(currentRemoteFilename);
     console.timeEnd('Downloading remote file to local disk');
 
     console.log('Creating combined parquet...');
@@ -156,12 +200,12 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
     await this.db.execute(
       sql`
         COPY (
-          SELECT * FROM read_parquet([
+          SELECT ${distinctOnClause} * FROM read_parquet([
             '${sql.raw(currentRemoteFilename)}',
             '${sql.raw(newDataFilename)}'
           ])
-          ${sql.raw(orderByClause)}
-        ) TO '${sql.raw(this.filename)}' (FORMAT parquet, COMPRESSION zstd, ${sql.raw(optionsSql)})
+          ${orderByClause}
+        ) TO '${sql.raw(this.filename)}' (${parquetOptionsSql})
       `,
     );
     console.timeEnd('Creating combined parquet');
@@ -190,15 +234,17 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
       );
     }
 
-    console.log(
-      `Uploaded ${this.filename} to remote storage, deleting local copy...`,
-    );
+    console.log(`Uploaded ${this.filename} to remote storage`);
 
-    await rm(this.filename);
-    await rm(currentRemoteFilename);
-    await rm(newDataFilename);
+    if (options?.cleanupLocalFiles) {
+      console.log('Cleaning up local files...');
 
-    console.log(`Deleted local copies of ${this.filename}`);
+      await rm(this.filename);
+      await rm(currentRemoteFilename);
+      await rm(newDataFilename);
+
+      console.log(`Deleted local copies of ${this.filename}`);
+    }
 
     console.log(`Remote table update complete`);
   }
@@ -208,19 +254,18 @@ export class DuckDbTable<Table extends PgTableWithColumns<any>> {
 
     const storagePath = this.storagePath.replace(/\/$/, ''); // Remove trailing slash if present
 
-    const filePath = `${storagePath}/${this.filename}`
-    
+    const filePath = `${storagePath}/${this.filename}`;
+
     return `${getStorageUriPrefix()}${container}${filePath}`;
   }
 
   selectRemote<TSelection extends SelectedFields>(selection?: TSelection) {
-
     const parquetSql = sql.raw(
       `read_parquet('${this.remotePath}') as "${this.name}"`,
     ) as unknown as DrizzleTable<Table>;
 
     return selection
-      ? this.db.select(selection).from(parquetSql)
+      ? this.db.select<TSelection>(selection).from(parquetSql)
       : // bug in drizzle-duckdb where empty select doesn't default to "*"?
         this.db.select().from(parquetSql);
   }
