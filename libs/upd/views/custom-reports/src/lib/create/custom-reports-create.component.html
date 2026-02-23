@@ -15,62 +15,77 @@
 
     <p-tabpanels>
       <p-tabpanel value="0">
-        <ng-container *ngIf="showCopyAlert">
+        @if (showCopyAlert) {
           <upd-alert #alert position="top" [selfClosing]="true">{{
             'Copied successfully!' | translate
           }}</upd-alert>
-        </ng-container>
+        }
 
-        <div
-          *ngIf="
-            validationTriggered &&
-            (!isDateRangeValid() ||
-              !areUrlsValid() ||
-              !areMetricsValid() ||
-              this.error())
-          "
-        >
-          <ngb-alert
-            *ngIf="overviewError"
-            [type]="'danger'"
-            [dismissible]="false"
-            (closed)="overviewError = false"
-            tabindex="0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
-            <p class="align-top pe-1">
-              <span class="material-icons align-top pe-1" aria-hidden="true"
-                >error</span
+        @if (
+          validationTriggered &&
+          (!isDateRangeValid() ||
+            !areUrlsValid() ||
+            !areMetricsValid() ||
+            this.error())
+        ) {
+          <div>
+            @if (overviewError) {
+              <ngb-alert
+                [type]="'danger'"
+                [dismissible]="false"
+                (closed)="overviewError = false"
+                tabindex="0"
+                role="alert"
+                aria-live="assertive"
+                aria-atomic="true"
               >
-              {{ 'Oops' | translate }}
-            </p>
-            <p class="align-top pe-1">
-              {{ 'please-fix-following' | translate }}
-            </p>
-            <ul>
-              <li *ngIf="!isDateRangeValid()">
-                <a class="alert-link" (click)="scrollToAnchor('select-date')"
-                  ><span [translate]="'alert-date'"></span
-                ></a>
-              </li>
-              <li *ngIf="!areUrlsValid()">
-                <a class="alert-link" (click)="scrollToAnchor('select-url')"
-                  ><span [translate]="'alert-url'"></span>
-                </a>
-              </li>
-              <li *ngIf="!areMetricsValid()">
-                <a class="alert-link" (click)="scrollToAnchor('select-metric')"
-                  ><span [translate]="'alert-metric'"></span>
-                </a>
-              </li>
-              <li *ngIf="this.error()">
-                <span [translate]="this.error() || 'error'"></span>
-              </li>
-            </ul>
-          </ngb-alert>
-        </div>
+                <p class="align-top pe-1">
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >error</span
+                  >
+                  {{ 'Oops' | translate }}
+                </p>
+                <p class="align-top pe-1">
+                  {{ 'please-fix-following' | translate }}
+                </p>
+                <ul>
+                  @if (!isDateRangeValid()) {
+                    <li>
+                      <a
+                        class="alert-link"
+                        (click)="scrollToAnchor('select-date')"
+                        ><span [translate]="'alert-date'"></span
+                      ></a>
+                    </li>
+                  }
+                  @if (!areUrlsValid()) {
+                    <li>
+                      <a
+                        class="alert-link"
+                        (click)="scrollToAnchor('select-url')"
+                        ><span [translate]="'alert-url'"></span>
+                      </a>
+                    </li>
+                  }
+                  @if (!areMetricsValid()) {
+                    <li>
+                      <a
+                        class="alert-link"
+                        (click)="scrollToAnchor('select-metric')"
+                        ><span [translate]="'alert-metric'"></span>
+                      </a>
+                    </li>
+                  }
+                  @if (this.error()) {
+                    <li>
+                      <span [translate]="this.error() || 'error'"></span>
+                    </li>
+                  }
+                </ul>
+              </ngb-alert>
+            }
+          </div>
+        }
 
         <div class="container-fluid my-2 gx-0">
           <div class="row">
@@ -132,86 +147,102 @@
         <div class="container-fluid my-4 gx-0">
           <div class="row">
             <div class="col">
-              <div
-                id="validation-messages"
-                [title]="'Validation Results' | translate"
-                *ngIf="
-                  invalidUrls().length > 0 ||
-                  reportUrls().length > 0 ||
-                  duplicateUrls().length > 0
-                "
-              >
-                <div *ngIf="reportUrls().length > 0 && newUrls().length > 0">
-                  <ngb-alert
-                    *ngIf="successUrls"
-                    [type]="'success'"
-                    [dismissible]="true"
-                    (closed)="successUrls = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >check</span
-                    >
-                    <span>{{ 'success-urls' | translate }}</span>
-                    <ol>
-                      <li *ngFor="let url of newUrls()">{{ url }}</li>
-                    </ol>
-                  </ngb-alert>
+              @if (
+                invalidUrls().length > 0 ||
+                reportUrls().length > 0 ||
+                duplicateUrls().length > 0
+              ) {
+                <div
+                  id="validation-messages"
+                  [title]="'Validation Results' | translate"
+                >
+                  @if (reportUrls().length > 0 && newUrls().length > 0) {
+                    <div>
+                      @if (successUrls) {
+                        <ngb-alert
+                          [type]="'success'"
+                          [dismissible]="true"
+                          (closed)="successUrls = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >check</span
+                          >
+                          <span>{{ 'success-urls' | translate }}</span>
+                          <ol>
+                            @for (url of newUrls(); track url) {
+                              <li>{{ url }}</li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
+                  @if (invalidUrls().length > 0) {
+                    <div>
+                      @if (dangerUrls) {
+                        <ngb-alert
+                          [type]="'danger'"
+                          [dismissible]="false"
+                          (closed)="dangerUrls = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >error</span
+                          >
+                          <span>{{ 'invalid-urls' | translate }}</span
+                          ><br />
+                          <span>{{ 'invalid-urls-note' | translate }}</span>
+                          <ol>
+                            @for (url of invalidUrls(); track url) {
+                              <li>{{ url }}</li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
+                  @if (duplicateUrls().length > 0) {
+                    <div>
+                      @if (warningUrls) {
+                        <ngb-alert
+                          [type]="'warning'"
+                          [dismissible]="true"
+                          (closed)="warningUrls = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >warning</span
+                          >
+                          <span>{{ 'duplicate-urls' | translate }}</span
+                          ><br />
+                          <span>{{ 'duplicate-urls-note' | translate }}</span>
+                          <ol>
+                            @for (url of duplicateUrls(); track url) {
+                              <li>{{ url }}</li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
                 </div>
-                <div *ngIf="invalidUrls().length > 0">
-                  <ngb-alert
-                    *ngIf="dangerUrls"
-                    [type]="'danger'"
-                    [dismissible]="false"
-                    (closed)="dangerUrls = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >error</span
-                    >
-                    <span>{{ 'invalid-urls' | translate }}</span
-                    ><br />
-                    <span>{{ 'invalid-urls-note' | translate }}</span>
-                    <ol>
-                      <li *ngFor="let url of invalidUrls()">{{ url }}</li>
-                    </ol>
-                  </ngb-alert>
-                </div>
-                <div *ngIf="duplicateUrls().length > 0">
-                  <ngb-alert
-                    *ngIf="warningUrls"
-                    [type]="'warning'"
-                    [dismissible]="true"
-                    (closed)="warningUrls = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >warning</span
-                    >
-                    <span>{{ 'duplicate-urls' | translate }}</span
-                    ><br />
-                    <span>{{ 'duplicate-urls-note' | translate }}</span>
-                    <ol>
-                      <li *ngFor="let url of duplicateUrls()">{{ url }}</li>
-                    </ol>
-                  </ngb-alert>
-                </div>
-              </div>
+              }
               <div class="row">
                 <div class="col guidance-modal">
                   <h3 class="mb-2 h5 pt-2 pb-2" id="select-url">
@@ -253,7 +284,9 @@
                         id="float-input"
                         class="w-100"
                       ></textarea>
-                      <label for="float-input">{{ 'Enter URLs' | translate }}</label>
+                      <label for="float-input">{{
+                        'Enter URLs' | translate
+                      }}</label>
                     </p-floatlabel>
                   </p-tabpanel>
                   <p-tabpanel value="1">
@@ -311,7 +344,7 @@
                     </upd-data-table>
                   </p-tabpanel>
                 </p-tabs>
-                
+
                 <button
                   class="btn btn-outline-primary"
                   [translate]="'Add pages'"
@@ -330,96 +363,102 @@
           </div>
         </div>
 
-        <div class="container-fluid my-4 gx-0" *ngIf="reportUrls().length > 0">
-          <div class="row">
-            <div class="col">
-              <!--   ACCORDION IS DEPRECATED   -->
-              <upd-accordion
-                #urlsAdded
-                [styleClass]="'mb-2'"
-                [expanded]="isAccordionExpanded"
-                title="{{
-                  'URLs added to report'
-                    | translate: { count: reportUrls().length }
-                }} "
-              >
-                <div class="d-flex justify-content-between mb-2">
-                  <upd-input-switch
-                    id="group"
-                    [text]="'Group pages as a segment' | translate"
-                    [checked]="isGrouped()"
-                    (checkedChange)="setIsGrouped($event); resetValidation()"
-                  >
-                  </upd-input-switch>
-                  <div>
-                    <button
-                      id="copy_url"
-                      cdkCopyToClipboard="{{ reportUrls().join('\n') }}"
-                      [cdkCopyToClipboardAttempts]="5"
-                      class="btn btn-outline-primary btn-sm me-2"
-                      (click)="copyToClipboard()"
-                    >
-                      <span class="material-icons" aria-hidden="true"
-                        >content_copy</span
-                      >
-                      <span [translate]="'copy-all'"></span>
-                    </button>
-                    <button
-                      id="remove_all"
-                      class="btn btn-outline-primary btn-sm"
-                      (click)="
-                        resetUrls();
-                        successUrls = false;
-                        dangerUrls = false;
-                        warningUrls = false
-                      "
-                    >
-                      <span class="material-icons" aria-hidden="true"
-                        >close</span
-                      >
-                      <span [translate]="'remove-all'"></span>
-                    </button>
-                  </div>
-                </div>
-                <p-table
-                  [value]="reportUrls()"
-                  styleClass="p-datatable-striped"
-                  class="urls-added-table w-100"
-                  [styleClass]="'p-datatable-sm'"
+        @if (reportUrls().length > 0) {
+          <div class="container-fluid my-4 gx-0">
+            <div class="row">
+              <div class="col">
+                <!--   ACCORDION IS DEPRECATED   -->
+                <upd-accordion
+                  #urlsAdded
+                  [styleClass]="'mb-2'"
+                  [expanded]="isAccordionExpanded"
+                  title="{{
+                    'URLs added to report'
+                      | translate: { count: reportUrls().length }
+                  }} "
                 >
-                  <ng-template pTemplate="body" let-url let-rowIndex="rowIndex">
-                    <tr>
-                      <td>
-                        <a
-                          href="{{ 'https://' + url }}"
-                          (click)="openLink($event, 'https://' + url)"
-                          class="p-1 align-text-top"
-                          placement="right"
-                          ngbTooltip="{{ 'open-link' | translate }}"
-                          >{{ url }}</a
+                  <div class="d-flex justify-content-between mb-2">
+                    <upd-input-switch
+                      id="group"
+                      [text]="'Group pages as a segment' | translate"
+                      [checked]="isGrouped()"
+                      (checkedChange)="setIsGrouped($event); resetValidation()"
+                    >
+                    </upd-input-switch>
+                    <div>
+                      <button
+                        id="copy_url"
+                        cdkCopyToClipboard="{{ reportUrls().join('\n') }}"
+                        [cdkCopyToClipboardAttempts]="5"
+                        class="btn btn-outline-primary btn-sm me-2"
+                        (click)="copyToClipboard()"
+                      >
+                        <span class="material-icons" aria-hidden="true"
+                          >content_copy</span
                         >
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          class="mt-1 me-1 rounded p-0 btn btn-light"
-                          aria-label="Remove"
-                          (click)="removePage(rowIndex); resetValidation()"
+                        <span [translate]="'copy-all'"></span>
+                      </button>
+                      <button
+                        id="remove_all"
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="
+                          resetUrls();
+                          successUrls = false;
+                          dangerUrls = false;
+                          warningUrls = false
+                        "
+                      >
+                        <span class="material-icons" aria-hidden="true"
+                          >close</span
                         >
-                          <span
-                            aria-hidden="true"
-                            class="material-icons text-danger"
-                            >close</span
+                        <span [translate]="'remove-all'"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <p-table
+                    [value]="reportUrls()"
+                    styleClass="p-datatable-striped"
+                    class="urls-added-table w-100"
+                    [styleClass]="'p-datatable-sm'"
+                  >
+                    <ng-template
+                      pTemplate="body"
+                      let-url
+                      let-rowIndex="rowIndex"
+                    >
+                      <tr>
+                        <td>
+                          <a
+                            href="{{ 'https://' + url }}"
+                            (click)="openLink($event, 'https://' + url)"
+                            class="p-1 align-text-top"
+                            placement="right"
+                            ngbTooltip="{{ 'open-link' | translate }}"
+                            >{{ url }}</a
                           >
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-              </upd-accordion>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            class="mt-1 me-1 rounded p-0 btn btn-light"
+                            aria-label="Remove"
+                            (click)="removePage(rowIndex); resetValidation()"
+                          >
+                            <span
+                              aria-hidden="true"
+                              class="material-icons text-danger"
+                              >close</span
+                            >
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                </upd-accordion>
+              </div>
             </div>
           </div>
-        </div>
+        }
 
         <div class="container-fluid my-4 gx-0">
           <div class="row">
@@ -478,58 +517,71 @@
         </div>
 
         <!-- <upd-card styleClass="mt-3 d-inline-block">
-<code>
-  <pre>{{ config() | json }}</pre>
-</code>
-</upd-card> -->
+                                  <code>
+                                    <pre>{{ config() | json }}</pre>
+                                  </code>
+                                </upd-card> -->
 
         <hr />
       </p-tabpanel>
       <p-tabpanel value="1">
-        <div
-          *ngIf="
-            validationFeedbackTriggered &&
-            (!isFeedbackDateRangeValid() ||
-              !arePagesTasksProjectsValid() ||
-              this.errorFeedback())
-          "
-        >
-          <ngb-alert
-            *ngIf="overviewFeedbackError"
-            [type]="'danger'"
-            [dismissible]="false"
-            (closed)="overviewFeedbackError = false"
-            tabindex="0"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-          >
-            <p class="align-top pe-1">
-              <span class="material-icons align-top pe-1" aria-hidden="true"
-                >error</span
+        @if (
+          validationFeedbackTriggered &&
+          (!isFeedbackDateRangeValid() ||
+            !arePagesTasksProjectsValid() ||
+            this.errorFeedback())
+        ) {
+          <div>
+            @if (overviewFeedbackError) {
+              <ngb-alert
+                [type]="'danger'"
+                [dismissible]="false"
+                (closed)="overviewFeedbackError = false"
+                tabindex="0"
+                role="alert"
+                aria-live="assertive"
+                aria-atomic="true"
               >
-              {{ 'Oops' | translate }}
-            </p>
-            <p class="align-top pe-1">
-              {{ 'please-fix-following' | translate }}
-            </p>
-            <ul>
-              <li *ngIf="!isFeedbackDateRangeValid()">
-                <a class="alert-link" (click)="scrollToAnchor('select-date2')"
-                  ><span [translate]="'alert-date'"></span
-                ></a>
-              </li>
-              <li *ngIf="!arePagesTasksProjectsValid()">
-                <a class="alert-link" (click)="scrollToAnchor('select-items')"
-                  ><span [translate]="'alert-url'"></span>
-                </a>
-              </li>
-              <li *ngIf="this.errorFeedback()">
-                <span [translate]="this.errorFeedback() || 'error'"></span>
-              </li>
-            </ul>
-          </ngb-alert>
-        </div>
+                <p class="align-top pe-1">
+                  <span class="material-icons align-top pe-1" aria-hidden="true"
+                    >error</span
+                  >
+                  {{ 'Oops' | translate }}
+                </p>
+                <p class="align-top pe-1">
+                  {{ 'please-fix-following' | translate }}
+                </p>
+                <ul>
+                  @if (!isFeedbackDateRangeValid()) {
+                    <li>
+                      <a
+                        class="alert-link"
+                        (click)="scrollToAnchor('select-date2')"
+                        ><span [translate]="'alert-date'"></span
+                      ></a>
+                    </li>
+                  }
+                  @if (!arePagesTasksProjectsValid()) {
+                    <li>
+                      <a
+                        class="alert-link"
+                        (click)="scrollToAnchor('select-items')"
+                        ><span [translate]="'alert-url'"></span>
+                      </a>
+                    </li>
+                  }
+                  @if (this.errorFeedback()) {
+                    <li>
+                      <span
+                        [translate]="this.errorFeedback() || 'error'"
+                      ></span>
+                    </li>
+                  }
+                </ul>
+              </ngb-alert>
+            }
+          </div>
+        }
 
         <div class="container-fluid my-2 gx-0">
           <div class="row">
@@ -568,157 +620,194 @@
         <div class="container-fluid my-4 gx-0">
           <div class="row">
             <div class="col">
-              <div
-                id="validation-messages2"
-                [title]="'Validation Results' | translate"
-                *ngIf="
-                  invalidFeedbackData().length > 0 ||
-                  pagesFeedbackData().length > 0 ||
-                  duplicateFeedbackPages().length > 0 ||
-                  tasksFeedbackData().length > 0 ||
-                  duplicateFeedbackTasks().length > 0 ||
-                  projectsFeedbackData().length > 0 ||
-                  duplicateFeedbackProjects().length > 0
-                "
-              >
+              @if (
+                invalidFeedbackData().length > 0 ||
+                pagesFeedbackData().length > 0 ||
+                duplicateFeedbackPages().length > 0 ||
+                tasksFeedbackData().length > 0 ||
+                duplicateFeedbackTasks().length > 0 ||
+                projectsFeedbackData().length > 0 ||
+                duplicateFeedbackProjects().length > 0
+              ) {
                 <div
-                  *ngIf="
+                  id="validation-messages2"
+                  [title]="'Validation Results' | translate"
+                >
+                  @if (
                     (pagesFeedbackData().length > 0 &&
                       newFeedbackPages().length > 0) ||
                     (tasksFeedbackData().length > 0 &&
                       newFeedbackTasks().length > 0) ||
                     (projectsFeedbackData().length > 0 &&
                       newFeedbackProjects().length > 0)
-                  "
-                >
-                  <ngb-alert
-                    *ngIf="successFeedbackData"
-                    [type]="'success'"
-                    [dismissible]="true"
-                    (closed)="successFeedbackData = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >check</span
-                    >
-                    <span>{{ 'success-items' | translate }}</span>
-                    @if (newFeedbackPages().length > 0) {
-                      <p class="fw-bold">{{ 'pages' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let page of newFeedbackPages()">
-                        {{ page.title }}
-                      </li>
-                    </ol>
-                    @if (newFeedbackTasks().length > 0) {
-                      <p class="fw-bold">{{ 'tasks' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let task of newFeedbackTasks()">
-                        {{ task.title | translate }}
-                        {{
-                          'page-count'
-                            | translate: { count: task.pages?.length }
-                        }}
-                      </li>
-                    </ol>
-                    @if (newFeedbackProjects().length > 0) {
-                      <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let project of newFeedbackProjects()">
-                        {{ project.title | translate }}
-                        {{
-                          'page-count'
-                            | translate: { count: project.pages?.length }
-                        }}
-                      </li>
-                    </ol>
-                  </ngb-alert>
-                </div>
-                <div *ngIf="invalidFeedbackData().length > 0">
-                  <ngb-alert
-                    *ngIf="dangerFeedbackData"
-                    [type]="'danger'"
-                    [dismissible]="false"
-                    (closed)="dangerFeedbackData = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >error</span
-                    >
-                    <span>{{ 'invalid-urls' | translate }}</span
-                    ><br />
-                    <span>{{ 'invalid-urls-note' | translate }}</span>
-                    <ol>
-                      <li *ngFor="let data of invalidFeedbackData()">
-                        {{ data }}
-                      </li>
-                    </ol>
-                  </ngb-alert>
-                </div>
-                <div
-                  *ngIf="
+                  ) {
+                    <div>
+                      @if (successFeedbackData) {
+                        <ngb-alert
+                          [type]="'success'"
+                          [dismissible]="true"
+                          (closed)="successFeedbackData = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >check</span
+                          >
+                          <span>{{ 'success-items' | translate }}</span>
+                          @if (newFeedbackPages().length > 0) {
+                            <p class="fw-bold">{{ 'pages' | translate }}</p>
+                          }
+                          <ol>
+                            @for (page of newFeedbackPages(); track page) {
+                              <li>
+                                {{ page.title }}
+                              </li>
+                            }
+                          </ol>
+                          @if (newFeedbackTasks().length > 0) {
+                            <p class="fw-bold">{{ 'tasks' | translate }}</p>
+                          }
+                          <ol>
+                            @for (task of newFeedbackTasks(); track task) {
+                              <li>
+                                {{ task.title | translate }}
+                                {{
+                                  'page-count'
+                                    | translate: { count: task.pages?.length }
+                                }}
+                              </li>
+                            }
+                          </ol>
+                          @if (newFeedbackProjects().length > 0) {
+                            <p class="fw-bold">
+                              {{ 'ux-projects' | translate }}
+                            </p>
+                          }
+                          <ol>
+                            @for (
+                              project of newFeedbackProjects();
+                              track project
+                            ) {
+                              <li>
+                                {{ project.title | translate }}
+                                {{
+                                  'page-count'
+                                    | translate
+                                      : { count: project.pages?.length }
+                                }}
+                              </li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
+                  @if (invalidFeedbackData().length > 0) {
+                    <div>
+                      @if (dangerFeedbackData) {
+                        <ngb-alert
+                          [type]="'danger'"
+                          [dismissible]="false"
+                          (closed)="dangerFeedbackData = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >error</span
+                          >
+                          <span>{{ 'invalid-urls' | translate }}</span
+                          ><br />
+                          <span>{{ 'invalid-urls-note' | translate }}</span>
+                          <ol>
+                            @for (data of invalidFeedbackData(); track data) {
+                              <li>
+                                {{ data }}
+                              </li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
+                  @if (
                     duplicateFeedbackPages().length > 0 ||
                     duplicateFeedbackTasks().length > 0 ||
                     duplicateFeedbackProjects().length > 0
-                  "
-                >
-                  <ngb-alert
-                    *ngIf="warningFeedbackData"
-                    [type]="'warning'"
-                    [dismissible]="true"
-                    (closed)="warningFeedbackData = false"
-                    tabindex="0"
-                    role="alert"
-                    aria-live="assertive"
-                    aria-atomic="true"
-                  >
-                    <span
-                      class="material-icons align-top pe-1"
-                      aria-hidden="true"
-                      >warning</span
-                    >
-                    <span>{{ 'duplicate-items' | translate }}</span
-                    ><br />
-                    <span>{{ 'duplicate-items-note' | translate }}</span>
-                    @if (duplicateFeedbackPages().length > 0) {
-                      <p class="fw-bold">{{ 'pages' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let page of duplicateFeedbackPages()">
-                        {{ page.title }}
-                      </li>
-                    </ol>
-                    @if (duplicateFeedbackTasks().length > 0) {
-                      <p class="fw-bold">{{ 'tasks' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let task of duplicateFeedbackTasks()">
-                        {{ task.title }}
-                      </li>
-                    </ol>
-                    @if (duplicateFeedbackProjects().length > 0) {
-                      <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
-                    }
-                    <ol>
-                      <li *ngFor="let project of duplicateFeedbackProjects()">
-                        {{ project.title }}
-                      </li>
-                    </ol>
-                  </ngb-alert>
+                  ) {
+                    <div>
+                      @if (warningFeedbackData) {
+                        <ngb-alert
+                          [type]="'warning'"
+                          [dismissible]="true"
+                          (closed)="warningFeedbackData = false"
+                          tabindex="0"
+                          role="alert"
+                          aria-live="assertive"
+                          aria-atomic="true"
+                        >
+                          <span
+                            class="material-icons align-top pe-1"
+                            aria-hidden="true"
+                            >warning</span
+                          >
+                          <span>{{ 'duplicate-items' | translate }}</span
+                          ><br />
+                          <span>{{ 'duplicate-items-note' | translate }}</span>
+                          @if (duplicateFeedbackPages().length > 0) {
+                            <p class="fw-bold">{{ 'pages' | translate }}</p>
+                          }
+                          <ol>
+                            @for (
+                              page of duplicateFeedbackPages();
+                              track page
+                            ) {
+                              <li>
+                                {{ page.title }}
+                              </li>
+                            }
+                          </ol>
+                          @if (duplicateFeedbackTasks().length > 0) {
+                            <p class="fw-bold">{{ 'tasks' | translate }}</p>
+                          }
+                          <ol>
+                            @for (
+                              task of duplicateFeedbackTasks();
+                              track task
+                            ) {
+                              <li>
+                                {{ task.title }}
+                              </li>
+                            }
+                          </ol>
+                          @if (duplicateFeedbackProjects().length > 0) {
+                            <p class="fw-bold">
+                              {{ 'ux-projects' | translate }}
+                            </p>
+                          }
+                          <ol>
+                            @for (
+                              project of duplicateFeedbackProjects();
+                              track project
+                            ) {
+                              <li>
+                                {{ project.title }}
+                              </li>
+                            }
+                          </ol>
+                        </ngb-alert>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
+              }
               <div class="row">
                 <div class="col guidance-modal">
                   <h3 class="mb-2 h5 pt-2 pb-2" id="select-items">
@@ -761,7 +850,9 @@
                         id="float-input"
                         class="w-100"
                       ></textarea>
-                      <label for="float-input">{{ 'Enter URLs' | translate }}</label>
+                      <label for="float-input">{{
+                        'Enter URLs' | translate
+                      }}</label>
                     </p-floatlabel>
                   </p-tabpanel>
                   <p-tabpanel value="1">
@@ -840,181 +931,179 @@
           </div>
         </div>
 
-        <div
-          class="container-fluid my-4 gx-0"
-          *ngIf="
-            pagesFeedbackData().length > 0 ||
-            tasksFeedbackData().length > 0 ||
-            projectsFeedbackData().length > 0
-          "
-        >
-          <div class="row">
-            <div class="col">
-              <!--   ACCORDION IS DEPRECATED   -->
-              <upd-accordion
-                #urlsAdded2
-                [styleClass]="'mb-2'"
-                [expanded]="isAccordionExpanded"
-                title="{{
-                  'Items added to report'
-                    | translate
-                      : {
-                          count:
-                            pagesFeedbackData().length +
-                            tasksFeedbackData().length +
-                            projectsFeedbackData().length,
-                        }
-                }} "
-              >
-                <div class="d-flex justify-content-between mb-2">
-                  <div></div>
-                  <div>
-                    <button
-                      id="remove_all"
-                      class="btn btn-outline-primary btn-sm"
-                      (click)="
-                        resetPagesTasksProjects();
-                        successFeedbackData = false;
-                        dangerFeedbackData = false;
-                        warningFeedbackData = false
-                      "
-                    >
-                      <span class="material-icons" aria-hidden="true"
-                        >close</span
+        @if (
+          pagesFeedbackData().length > 0 ||
+          tasksFeedbackData().length > 0 ||
+          projectsFeedbackData().length > 0
+        ) {
+          <div class="container-fluid my-4 gx-0">
+            <div class="row">
+              <div class="col">
+                <!--   ACCORDION IS DEPRECATED   -->
+                <upd-accordion
+                  #urlsAdded2
+                  [styleClass]="'mb-2'"
+                  [expanded]="isAccordionExpanded"
+                  title="{{
+                    'Items added to report'
+                      | translate
+                        : {
+                            count:
+                              pagesFeedbackData().length +
+                              tasksFeedbackData().length +
+                              projectsFeedbackData().length,
+                          }
+                  }} "
+                >
+                  <div class="d-flex justify-content-between mb-2">
+                    <div></div>
+                    <div>
+                      <button
+                        id="remove_all"
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="
+                          resetPagesTasksProjects();
+                          successFeedbackData = false;
+                          dangerFeedbackData = false;
+                          warningFeedbackData = false
+                        "
                       >
-                      <span [translate]="'remove-all'"></span>
-                    </button>
+                        <span class="material-icons" aria-hidden="true"
+                          >close</span
+                        >
+                        <span [translate]="'remove-all'"></span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                @if (pagesFeedbackData().length > 0) {
-                  <p class="fw-bold ms-2">{{ 'pages' | translate }}</p>
-                }
-                <p-table
-                  [value]="pagesFeedbackData()"
-                  styleClass="p-datatable-striped"
-                  class="urls-added-table w-100"
-                  [styleClass]="'p-datatable-sm'"
-                >
-                  <ng-template
-                    pTemplate="body"
-                    let-page
-                    let-rowIndex="rowIndex"
+                  @if (pagesFeedbackData().length > 0) {
+                    <p class="fw-bold ms-2">{{ 'pages' | translate }}</p>
+                  }
+                  <p-table
+                    [value]="pagesFeedbackData()"
+                    styleClass="p-datatable-striped"
+                    class="urls-added-table w-100"
+                    [styleClass]="'p-datatable-sm'"
                   >
-                    <tr>
-                      <td>
-                        {{ page.title }}
-                      </td>
-                      <td class="text-end">
-                        <button
-                          type="button"
-                          class="mt-1 me-1 rounded p-0 btn btn-light"
-                          aria-label="Remove"
-                          (click)="
-                            removeFeedbackPage(rowIndex);
-                            resetFeedbackValidation()
-                          "
-                        >
-                          <span
-                            aria-hidden="true"
-                            class="material-icons text-danger"
-                            >close</span
+                    <ng-template
+                      pTemplate="body"
+                      let-page
+                      let-rowIndex="rowIndex"
+                    >
+                      <tr>
+                        <td>
+                          {{ page.title }}
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="mt-1 me-1 rounded p-0 btn btn-light"
+                            aria-label="Remove"
+                            (click)="
+                              removeFeedbackPage(rowIndex);
+                              resetFeedbackValidation()
+                            "
                           >
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-
-                @if (tasksFeedbackData().length > 0) {
-                  <p class="fw-bold mt-4 ms-2">{{ 'tasks' | translate }}</p>
-                }
-                <p-table
-                  [value]="tasksFeedbackData()"
-                  styleClass="p-datatable-striped"
-                  class="urls-added-table w-100"
-                  [styleClass]="'p-datatable-sm'"
-                >
-                  <ng-template
-                    pTemplate="body"
-                    let-task
-                    let-rowIndex="rowIndex"
+                            <span
+                              aria-hidden="true"
+                              class="material-icons text-danger"
+                              >close</span
+                            >
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                  @if (tasksFeedbackData().length > 0) {
+                    <p class="fw-bold mt-4 ms-2">{{ 'tasks' | translate }}</p>
+                  }
+                  <p-table
+                    [value]="tasksFeedbackData()"
+                    styleClass="p-datatable-striped"
+                    class="urls-added-table w-100"
+                    [styleClass]="'p-datatable-sm'"
                   >
-                    <tr>
-                      <td>
-                        {{ task.title }}
-                        {{
-                          'page-count' | translate: { count: task.pages.length }
-                        }}
-                      </td>
-                      <td class="text-end">
-                        <button
-                          type="button"
-                          class="mt-1 me-1 rounded p-0 btn btn-light"
-                          aria-label="Remove"
-                          (click)="
-                            removeFeedbackTask(rowIndex);
-                            resetFeedbackValidation()
-                          "
-                        >
-                          <span
-                            aria-hidden="true"
-                            class="material-icons text-danger"
-                            >close</span
+                    <ng-template
+                      pTemplate="body"
+                      let-task
+                      let-rowIndex="rowIndex"
+                    >
+                      <tr>
+                        <td>
+                          {{ task.title }}
+                          {{
+                            'page-count'
+                              | translate: { count: task.pages.length }
+                          }}
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="mt-1 me-1 rounded p-0 btn btn-light"
+                            aria-label="Remove"
+                            (click)="
+                              removeFeedbackTask(rowIndex);
+                              resetFeedbackValidation()
+                            "
                           >
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-
-                @if (projectsFeedbackData().length > 0) {
-                  <p class="fw-bold mt-4 ms-2">
-                    {{ 'ux-projects' | translate }}
-                  </p>
-                }
-                <p-table
-                  [value]="projectsFeedbackData()"
-                  styleClass="p-datatable-striped"
-                  class="urls-added-table w-100"
-                  [styleClass]="'p-datatable-sm'"
-                >
-                  <ng-template
-                    pTemplate="body"
-                    let-project
-                    let-rowIndex="rowIndex"
+                            <span
+                              aria-hidden="true"
+                              class="material-icons text-danger"
+                              >close</span
+                            >
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                  @if (projectsFeedbackData().length > 0) {
+                    <p class="fw-bold mt-4 ms-2">
+                      {{ 'ux-projects' | translate }}
+                    </p>
+                  }
+                  <p-table
+                    [value]="projectsFeedbackData()"
+                    styleClass="p-datatable-striped"
+                    class="urls-added-table w-100"
+                    [styleClass]="'p-datatable-sm'"
                   >
-                    <tr>
-                      <td>
-                        {{ project.title }}
-                        {{
-                          'page-count'
-                            | translate: { count: project.pages.length }
-                        }}
-                      </td>
-                      <td class="text-end">
-                        <button
-                          type="button"
-                          class="mt-1 me-1 rounded p-0 btn btn-light"
-                          aria-label="Remove"
-                          (click)="
-                            removeFeedbackProject(rowIndex);
-                            resetFeedbackValidation()
-                          "
-                        >
-                          <span
-                            aria-hidden="true"
-                            class="material-icons text-danger"
-                            >close</span
+                    <ng-template
+                      pTemplate="body"
+                      let-project
+                      let-rowIndex="rowIndex"
+                    >
+                      <tr>
+                        <td>
+                          {{ project.title }}
+                          {{
+                            'page-count'
+                              | translate: { count: project.pages.length }
+                          }}
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="mt-1 me-1 rounded p-0 btn btn-light"
+                            aria-label="Remove"
+                            (click)="
+                              removeFeedbackProject(rowIndex);
+                              resetFeedbackValidation()
+                            "
                           >
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-              </upd-accordion>
+                            <span
+                              aria-hidden="true"
+                              class="material-icons text-danger"
+                              >close</span
+                            >
+                          </button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                </upd-accordion>
+              </div>
             </div>
           </div>
-        </div>
+        }
 
         <div class="d-flex">
           <button

@@ -1,28 +1,25 @@
 <upd-card [title]="title" [titleTooltip]="tooltip" [h]="100">
-  <ng-container
-    *ngIf="numUxTests === 0 || (comparison$ | async) === 0; else elseBlock"
-  >
+  @if (numUxTests === 0 || (comparison$ | async) === 0) {
     <div class="container-fluid p-0">
       <div class="row row-no-gutters">
         <div class="col">
-          <p class="w-100" *ngIf="project; else elseBlock2">
-            <ng-container *ngIf="type==='volume'; else elseBlock3">
-              {{ 'nodata-available' | translate }}
-          </ng-container>
-          <ng-template #elseBlock3>
-            <ng-container>
-              {{ 'task-not-tested' | translate }}
-            </ng-container>
-          </ng-template>
-          </p>
-          <ng-template #elseBlock2>
+          @if (project) {
+            <p class="w-100">
+              @if (type === 'volume') {
+                {{ 'nodata-available' | translate }}
+              } @else {
+                <ng-container>
+                  {{ 'task-not-tested' | translate }}
+                </ng-container>
+              }
+            </p>
+          } @else {
             <p class="w-100">{{ 'task-not-tested' | translate }}</p>
-          </ng-template>
+          }
         </div>
       </div>
     </div>
-  </ng-container>
-  <ng-template #elseBlock>
+  } @else {
     <div class="container-fluid p-0">
       <div class="row row-no-gutters">
         <div class="col">
@@ -30,20 +27,22 @@
             {{ comparisonFormatted$ | async }}
           </p>
           <p>
-            <ng-container *ngIf="(dateFormatted$ | async) && type !== 'volume'"
-              >({{ 'Last UX test date:' | translate }}
-              {{ dateFormatted$ | async }})</ng-container
-            >
+            @if ((dateFormatted$ | async) && type !== 'volume') {
+              ({{ 'Last UX test date:' | translate }}
+              {{ dateFormatted$ | async }})
+            }
           </p>
         </div>
-        <div *ngIf="type === 'volume'" class="col ml-auto">
-          <span [ngClass]="differenceClass" class="h3 float-end">
-            <span *ngIf="differenceArrow" class="material-icons">{{
-              differenceArrow
-            }}</span>
-            {{ differenceFormatted$ | async }}
-          </span>
-        </div>
+        @if (type === 'volume') {
+          <div class="col ml-auto">
+            <span [ngClass]="differenceClass" class="h3 float-end">
+              @if (differenceArrow) {
+                <span class="material-icons">{{ differenceArrow }}</span>
+              }
+              {{ differenceFormatted$ | async }}
+            </span>
+          </div>
+        }
       </div>
       <div class="row row-no-gutters">
         <div class="col">
@@ -56,5 +55,5 @@
         </div>
       </div>
     </div>
-  </ng-template>
+  }
 </upd-card>

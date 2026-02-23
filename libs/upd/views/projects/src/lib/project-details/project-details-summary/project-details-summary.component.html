@@ -108,7 +108,7 @@
         [yAxis]="'Date range' | translate"
         [xAxis]="[
           (fullDateRangeLabel$ | async) || [],
-          (fullComparisonDateRangeLabel$ | async) || []
+          (fullComparisonDateRangeLabel$ | async) || [],
         ]"
         [tableCols]="dyfTableCols"
         [table]="dyfChart$ | async"
@@ -119,36 +119,34 @@
   </div>
 </div>
 
-
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-12">
       <upd-card [title]="'Timeline'">
-        <ng-container
-          *ngIf="(startDate$ | async) || (launchDate$ | async); else noTimeline"
-        >
+        @if ((startDate$ | async) || (launchDate$ | async)) {
           <p>Start Date: {{ startDate$ | async | localeDate }}</p>
           <p>Launch Date: {{ launchDate$ | async | localeDate }}</p>
-        </ng-container>
-        <ng-template #noTimeline>
+        } @else {
           <p>{{ 'Timeline not available' | translate }}.</p>
-        </ng-template>
+        }
       </upd-card>
     </div>
   </div>
 </div>
 
-<div *ngIf="documents$ | async as documents" class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-data-table-card
-        [data]="documents || []"
-        [cols]="documentsCols"
-        [sort]="false"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'Documents'"
-      ></upd-data-table-card>
+@if (documents$ | async; as documents) {
+  <div class="container-fluid my-4 gx-0">
+    <div class="row">
+      <div class="col">
+        <upd-data-table-card
+          [data]="documents || []"
+          [cols]="documentsCols"
+          [sort]="false"
+          [pagination]="false"
+          [filter]="false"
+          [title]="'Documents'"
+        ></upd-data-table-card>
+      </div>
     </div>
   </div>
-</div>
+}

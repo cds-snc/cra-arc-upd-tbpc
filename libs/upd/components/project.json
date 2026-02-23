@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "libs/upd/components/src",
   "prefix": "upd",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
@@ -26,12 +27,12 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/upd/components"],
       "options": {
-        "jestConfig": "libs/upd/components/jest.config.ts"
+        "jestConfig": "libs/upd/components/jest.config.ts",
+        "tsConfig": "libs/upd/components/tsconfig.spec.json"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint"
     }
-  },
-  "tags": []
+  }
 }

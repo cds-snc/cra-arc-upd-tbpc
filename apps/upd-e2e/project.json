@@ -3,11 +3,12 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/upd-e2e/src",
   "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["upd"],
   "targets": {
     "e2e": {
       "executor": "@nx/cypress:cypress",
       "options": {
-        "tsConfig": "apps/upd-e2e/tsconfig.json",
         "cypressConfig": "apps/upd-e2e/cypress.json",
         "devServerTarget": "upd:serve:development"
       },
@@ -21,7 +22,5 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     }
-  },
-  "tags": [],
-  "implicitDependencies": ["upd"]
+  }
 }

@@ -5,55 +5,58 @@
   [config]="secondaryTitleCols"
   [data]="secondaryTitleData"
 >
-  <ng-container *ngIf="(hasData$ | async) === false; else elseBlock">
+  @if ((hasData$ | async) === false) {
     <p>
       <span [translate]="'nodata-available'"></span>
     </p>
-  </ng-container>
-  <ng-template #elseBlock>
-    <div *ngIf="vm$ | async as vm" class="my-3">
-      <apx-chart
-        *ngIf="vm.chart && (hasData$ | async)"
-        #chart
-        [series]="vm.series || []"
-        [labels]="vm.labels || []"
-        [legend]="vm.legend || {}"
-        [chart]="vm.chart"
-        [yaxis]="vm.yaxis || []"
-        [xaxis]="vm.xaxis || {}"
-        [stroke]="vm.stroke || {}"
-        [plotOptions]="vm.plotOptions || {}"
-        [markers]="vm.markers || {}"
-        [fill]="vm.fill || {}"
-        [colors]="vm.colors || []"
-        [dataLabels]="vm.dataLabels || {}"
-        [tooltip]="vm.tooltip || {}"
-        [annotations]="vm.annotations || {}"
-      ></apx-chart>
-
-      <!--   Events legend item   -->
-      <div class="m-0 p-0 position-absolute">
-        <div class="p-0 m-0 position-relative" style="top: -10px; left: 8px">
-          <div class="apexcharts-legend-series event-annotation-legend">
-            <span class="apexcharts-legend-marker"></span>
-            <span class="apexcharts-legend-text">{{ 'Events' | translate }}</span>
+  } @else {
+    @if (vm$ | async; as vm) {
+      <div class="my-3">
+        @if (vm.chart && (hasData$ | async)) {
+          <apx-chart
+            #chart
+            [series]="vm.series || []"
+            [labels]="vm.labels || []"
+            [legend]="vm.legend || {}"
+            [chart]="vm.chart"
+            [yaxis]="vm.yaxis || []"
+            [xaxis]="vm.xaxis || {}"
+            [stroke]="vm.stroke || {}"
+            [plotOptions]="vm.plotOptions || {}"
+            [markers]="vm.markers || {}"
+            [fill]="vm.fill || {}"
+            [colors]="vm.colors || []"
+            [dataLabels]="vm.dataLabels || {}"
+            [tooltip]="vm.tooltip || {}"
+            [annotations]="vm.annotations || {}"
+          ></apx-chart>
+        }
+        <!--   Events legend item   -->
+        <div class="m-0 p-0 position-absolute">
+          <div class="p-0 m-0 position-relative" style="top: -10px; left: 8px">
+            <div class="apexcharts-legend-series event-annotation-legend">
+              <span class="apexcharts-legend-marker"></span>
+              <span class="apexcharts-legend-text">{{
+                'Events' | translate
+              }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-    </div>
-
-    <div class="pt-3" *ngIf="table">
-      <upd-accordion>
-        <upd-data-table
-          [filter]="false"
-          [sort]="false"
-          [pagination]="false"
-          [data]="table"
-          [cols]="tableCols"
-          [allowHeaderWrap]="allowHeaderWrap"
-        ></upd-data-table>
-      </upd-accordion>
-    </div>
-  </ng-template>
+    }
+    @if (table) {
+      <div class="pt-3">
+        <upd-accordion>
+          <upd-data-table
+            [filter]="false"
+            [sort]="false"
+            [pagination]="false"
+            [data]="table"
+            [cols]="tableCols"
+            [allowHeaderWrap]="allowHeaderWrap"
+          ></upd-data-table>
+        </upd-accordion>
+      </div>
+    }
+  }
 </upd-card>

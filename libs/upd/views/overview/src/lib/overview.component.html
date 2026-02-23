@@ -2,11 +2,9 @@
   {{ 'overview-title' | translate }}
 </h2>
 
-<upd-loading-spinner
-  *ngIf="loading$ | async; else elseBlock"
-></upd-loading-spinner>
-
-<ng-template #elseBlock>
+@if (loading$ | async) {
+  <upd-loading-spinner></upd-loading-spinner>
+} @else {
   @if (error()) {
     <div class="w-100">
       <upd-card
@@ -20,9 +18,9 @@
     </div>
   } @else {
     <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
-    <upd-date-selector
-      *ngIf="!((currentRoute$ | async) || '').endsWith('uxtests')"
-    ></upd-date-selector>
+    @if (!((currentRoute$ | async) || '').endsWith('uxtests')) {
+      <upd-date-selector></upd-date-selector>
+    }
     <router-outlet></router-outlet>
   }
-</ng-template>
+}

@@ -67,27 +67,35 @@
               <p class="fw-bold">{{ 'pages' | translate }}</p>
             }
             <ul>
-              <li *ngFor="let page of selectedPages()">
-                {{ page.title }}
-              </li>
+              @for (page of selectedPages(); track page) {
+                <li>
+                  {{ page.title }}
+                </li>
+              }
             </ul>
             @if (selectedTasksCount()) {
               <p class="fw-bold">{{ 'tasks' | translate }}</p>
             }
             <ul>
-              <li *ngFor="let task of selectedTasks()">
-                {{ task.title | translate }}
-                {{ 'page-count' | translate: { count: task.pages.length } }}
-              </li>
+              @for (task of selectedTasks(); track task) {
+                <li>
+                  {{ task.title | translate }}
+                  {{ 'page-count' | translate: { count: task.pages.length } }}
+                </li>
+              }
             </ul>
             @if (selectedProjectsCount()) {
               <p class="fw-bold">{{ 'ux-projects' | translate }}</p>
             }
             <ul>
-              <li *ngFor="let project of selectedProjects()">
-                {{ project.title | translate }}
-                {{ 'page-count' | translate: { count: project.pages.length } }}
-              </li>
+              @for (project of selectedProjects(); track project) {
+                <li>
+                  {{ project.title | translate }}
+                  {{
+                    'page-count' | translate: { count: project.pages.length }
+                  }}
+                </li>
+              }
             </ul>
           </upd-accordion>
         </div>

@@ -33,7 +33,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { AlertComponent } from './alert/alert.component';
@@ -86,7 +86,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     CheckboxModule,
     RadioButtonModule,
     TabsModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     InputIconModule,
     IconFieldModule,
     SelectModule,
@@ -152,7 +152,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     CheckboxModule,
     RadioButtonModule,
     TabsModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     InputIconModule,
     IconFieldModule,
     SelectModule,

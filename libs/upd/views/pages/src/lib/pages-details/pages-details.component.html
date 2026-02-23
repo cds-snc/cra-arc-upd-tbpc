@@ -3,32 +3,20 @@
   <a [routerLink]="['/', langLink(), 'pages']">Pages</a>
 </div>
 
-<upd-loading-spinner
-  *ngIf="loading$ | async; else elseBlock2"
-></upd-loading-spinner>
-
-<!--<ng-template #elseBlock>-->
-<!--  <upd-page-404-->
-<!--    *ngIf="-->
-<!--      (loading$ | async) === true && (url$ | async) === '';-->
-<!--      else elseBlock2-->
-<!--    "-->
-<!--  ></upd-page-404>-->
-<!--</ng-template>-->
-<ng-template #elseBlock2>
+@if (loading$ | async) {
+  <upd-loading-spinner></upd-loading-spinner>
+} @else {
   <h2 class="h3 pt-2 pb-2">
-    <ng-container *ngIf="title$ | async as title">
+    @if (title$ | async; as title) {
       {{ title }}
-    </ng-container>
-
+    }
     <span class="h5 d-inline-block mb-0 align-top ms-1">
-      <ng-container *ngIf="(pageStatus$ | async) !== null">
+      @if ((pageStatus$ | async) !== null) {
         <upd-project-status-label [pageStatus]="pageStatus$ | async">
         </upd-project-status-label>
-      </ng-container>
+      }
     </span>
   </h2>
-
   <p class="page_url">
     <span class="material-icons material-icon-wysiwyg">wysiwyg</span>
     <a [href]="'https://' + url()" target="_blank">{{ url() }}</a>
@@ -47,30 +35,35 @@
         >
         Copy URL</span
       >
-      <ng-container *ngIf="showAlert">
+      @if (showAlert) {
         <upd-alert position="top">Copied successfully!</upd-alert>
-      </ng-container>
+      }
     </span>
     <span id="language" (click)="navigateToAltPage()" tabindex="0">
       <span class="material-icons align-top" aria-hidden="true">language</span>
       {{ 'View page' | translate: { lang: pageLangText() } }}
     </span>
   </div>
-
   <upd-project-header
     [data]="projects() || []"
     [config]="projectsCol()"
   ></upd-project-header>
-
   <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
-
-  <upd-date-selector
-    *ngIf="
-      !((currentRoute$ | async) || '').endsWith('readability') &&
-      !((currentRoute$ | async) || '').endsWith('version-history') &&
-      !((currentRoute$ | async) || '').endsWith('accessibility')
-    "
-  ></upd-date-selector>
-
+  @if (
+    !((currentRoute$ | async) || '').endsWith('readability') &&
+    !((currentRoute$ | async) || '').endsWith('version-history') &&
+    !((currentRoute$ | async) || '').endsWith('accessibility')
+  ) {
+    <upd-date-selector></upd-date-selector>
+  }
   <router-outlet></router-outlet>
-</ng-template>
+}
+
+<!--<ng-template #elseBlock>-->
+<!--  <upd-page-404-->
+<!--    *ngIf="-->
+<!--      (loading$ | async) === true && (url$ | async) === '';-->
+<!--      else elseBlock2-->
+<!--    "-->
+<!--  ></upd-page-404>-->
+<!--</ng-template>-->

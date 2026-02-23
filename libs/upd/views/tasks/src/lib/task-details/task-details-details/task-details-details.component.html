@@ -2,13 +2,13 @@
   <div class="row">
     <div class="col">
       <upd-card [title]="'Classification'">
-        <ng-container *ngIf="detailsTable$ | async as details">
-          <ng-container *ngIf="details.length !== 0; else noData">
+        @if (detailsTable$ | async; as details) {
+          @if (details.length !== 0) {
             <p-table
               [value]="details"
               [rowHover]="true"
               styleClass="p-datatable-striped p-datatable-sm"
-            >
+              >
               <ng-template pTemplate="body" let-row>
                 <tr>
                   <th style="font-family: var(--body-font)" scope="row">
@@ -18,13 +18,12 @@
                 </tr>
               </ng-template>
             </p-table>
-          </ng-container>
-        </ng-container>
-        <ng-template #noData>
-          <p>
-            <span [translate]="'nodata-available'"></span>
-          </p>
-        </ng-template>
+          } @else {
+            <p>
+              <span [translate]="'nodata-available'"></span>
+            </p>
+          }
+        }
       </upd-card>
     </div>
   </div>

@@ -1,8 +1,7 @@
-<upd-page-404 *ngIf="error$ | async; else elseBlock"></upd-page-404>
-
-<ng-template #elseBlock>
+@if (error$ | async) {
+  <upd-page-404></upd-page-404>
+} @else {
   <h2 [translate]="'menu-documents'"></h2>
-
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
@@ -18,7 +17,6 @@
       </div>
     </div>
   </div>
-
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
@@ -36,4 +34,4 @@
       </div>
     </div>
   </div>
-</ng-template>
+}

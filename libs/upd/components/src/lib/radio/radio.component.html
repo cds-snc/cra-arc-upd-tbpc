@@ -1,20 +1,27 @@
 <form class="flex flex-wrap gap-4">
-<div *ngFor="let item of items; index as i;" class="field-checkbox flex items-center">
-  <p-radioButton
-    [value]="item"
-    [inputId]="id + i"
-    (onClick)="onSelectionChange(item)"
-    [name]="item.value"
-    [(ngModel)]="selectedItem"
-  ></p-radioButton>
-  @if (displayTooltip) {
-    <label [for]="id + i" class="p-checkbox-label card-tooltip ms-2" placement="right" [ngbTooltip]="item.description | translate">
-      {{ item.label | translate}}
-    </label>
-  } @else {
-    <label [for]="id + i" class="p-checkbox-label ms-2">
-      {{ item.label | translate}}
-    </label>
+  @for (item of items; track item; let i = $index) {
+    <div class="field-checkbox flex items-center">
+      <p-radioButton
+        [value]="item"
+        [inputId]="id + i"
+        (onClick)="onSelectionChange(item)"
+        [name]="item.value"
+        [(ngModel)]="selectedItem"
+      ></p-radioButton>
+      @if (displayTooltip) {
+        <label
+          [for]="id + i"
+          class="p-checkbox-label card-tooltip ms-2"
+          placement="right"
+          [ngbTooltip]="item.description | translate"
+        >
+          {{ item.label | translate }}
+        </label>
+      } @else {
+        <label [for]="id + i" class="p-checkbox-label ms-2">
+          {{ item.label | translate }}
+        </label>
+      }
+    </div>
   }
-</div>
 </form>

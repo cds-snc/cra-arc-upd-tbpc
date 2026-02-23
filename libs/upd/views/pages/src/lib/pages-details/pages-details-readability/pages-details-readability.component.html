@@ -42,17 +42,16 @@
         [pipe]="'template'"
         [pipeParams]="readabilityScoreTemplateParams"
       >
-        <div
-          *ngIf="fleshKincaidFormatted() as fleshKincaid"
-          class="row row-no-gutters d-block"
-        >
-          <div class="col">
-            <p class="mb-0 mt-2 row flex-nowrap">
-              <span class="me-0 col-auto pe-2">{{ fleshKincaid }}</span>
-            </p>
+        @if (fleshKincaidFormatted(); as fleshKincaid) {
+          <div class="row row-no-gutters d-block">
+            <div class="col">
+              <p class="mb-0 mt-2 row flex-nowrap">
+                <span class="me-0 col-auto pe-2">{{ fleshKincaid }}</span>
+              </p>
+            </div>
           </div>
-        </div></upd-data-card
-      >
+        }
+      </upd-data-card>
     </div>
 
     <div class="col">
@@ -65,16 +64,15 @@
         [pipe]="'template'"
         [pipeParams]="otherScoresTemplateParams"
       >
-        <div
-          *ngIf="wordsPerHeadingFormatted() as wordsPerHeading"
-          class="row row-no-gutters d-block"
-        >
-          <div class="col">
-            <p class="mb-0 mt-2 row flex-nowrap">
-              <span class="me-0 col-auto pe-2">{{ wordsPerHeading }}</span>
-            </p>
+        @if (wordsPerHeadingFormatted(); as wordsPerHeading) {
+          <div class="row row-no-gutters d-block">
+            <div class="col">
+              <p class="mb-0 mt-2 row flex-nowrap">
+                <span class="me-0 col-auto pe-2">{{ wordsPerHeading }}</span>
+              </p>
+            </div>
           </div>
-        </div>
+        }
       </upd-data-card>
     </div>
 
@@ -88,16 +86,15 @@
         [pipe]="'template'"
         [pipeParams]="otherScoresTemplateParams"
       >
-        <div
-          *ngIf="wordsPerParagraphFormatted() as wordsPerParagraph"
-          class="row row-no-gutters d-block"
-        >
-          <div class="col">
-            <p class="mb-0 mt-2 row flex-nowrap">
-              <span class="me-0 col-auto pe-2">{{ wordsPerParagraph }}</span>
-            </p>
+        @if (wordsPerParagraphFormatted(); as wordsPerParagraph) {
+          <div class="row row-no-gutters d-block">
+            <div class="col">
+              <p class="mb-0 mt-2 row flex-nowrap">
+                <span class="me-0 col-auto pe-2">{{ wordsPerParagraph }}</span>
+              </p>
+            </div>
           </div>
-        </div>
+        }
       </upd-data-card>
     </div>
   </div>
@@ -152,7 +149,7 @@
         [title]="'improving-web-readability'"
         [titleTooltip]="'tooltip-improving-web-readability'"
       >
-        <ng-container *ngIf="currentLang() === 'en-CA'">
+        @if (currentLang() === 'en-CA') {
           <p>
             To improve web readability, follow web writing best practices, like:
           </p>
@@ -167,8 +164,8 @@
               >Follow the Canada.ca Content Style Guide</a
             >
           </p>
-        </ng-container>
-        <ng-container *ngIf="currentLang() === 'fr-CA'">
+        }
+        @if (currentLang() === 'fr-CA') {
           <p>
             Pour améliorer la lisibilité Web, suivez les meilleures pratiques en
             matière d'écriture pour le web, telles que:
@@ -187,7 +184,7 @@
               >Suivez le Guide de rédaction du contenu du site Canada.ca</a
             >
           </p>
-        </ng-container>
+        }
       </upd-card>
     </div>
   </div>

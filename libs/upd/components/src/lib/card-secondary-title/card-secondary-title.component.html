@@ -1,21 +1,26 @@
-<div *ngIf="data.length > 0 && type === 'list'">
-  <ng-container *ngFor="let d of data; let i = index">
-    <a
-      *ngIf="config.typeParams"
-      [routerLink]="[config.typeParams.preLink, d[config.typeParams.link]]"
-      [queryParamsHandling]="'merge'"
-      >{{ d[config.field] }}</a
-    >
-    <ng-container *ngIf="!(i === data.length - 1)"
-      >&NonBreakingSpace;/&NonBreakingSpace;</ng-container
-    >
-  </ng-container>
-</div>
+@if (data.length > 0 && type === 'list') {
+  <div>
+    @for (d of data; track d; let i = $index) {
+      @if (config.typeParams) {
+        <a
+          [routerLink]="[config.typeParams.preLink, d[config.typeParams.link]]"
+          [queryParamsHandling]="'merge'"
+          >{{ d[config.field] }}</a
+        >
+      }
+      @if (!(i === data.length - 1)) {
+        &NonBreakingSpace;/&NonBreakingSpace;
+      }
+    }
+  </div>
+}
 
-<div *ngIf="type === 'modal'">
-  <ng-container ngProjectAs="[modal]">
-    <upd-modal>
-      {{ modal }}
-    </upd-modal>
-  </ng-container>
-</div>
+@if (type === 'modal') {
+  <div>
+    <ng-container ngProjectAs="[modal]">
+      <upd-modal>
+        {{ modal }}
+      </upd-modal>
+    </ng-container>
+  </div>
+}

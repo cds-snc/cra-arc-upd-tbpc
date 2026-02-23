@@ -1,10 +1,16 @@
-<upd-card [title]="title" [titleTooltip]="tooltip" [modal]="modal" [modalSize]="modalSize">
-  <ng-container *ngIf="data.length === 0; else elseBlock">
+<upd-card
+  [title]="title"
+  [titleTooltip]="tooltip"
+  [modal]="modal"
+  [modalSize]="modalSize"
+>
+  @if (data.length === 0) {
     <p>
-      <span [translate]="emptyStateMessage ? emptyStateMessage : 'nodata-available'"></span>
+      <span
+        [translate]="emptyStateMessage ? emptyStateMessage : 'nodata-available'"
+      ></span>
     </p>
-  </ng-container>
-  <ng-template #elseBlock>
+  } @else {
     <upd-data-table
       [id]="id"
       [filter]="filter"
@@ -24,5 +30,5 @@
       [displayRows]="displayRows"
       [allowHeaderWrap]="allowHeaderWrap"
     ></upd-data-table>
-  </ng-template>
+  }
 </upd-card>

@@ -19,51 +19,49 @@
   <ng-template pTemplate="date" let-date>
     <span
       class="calendar-item"
-
       [ngClass]="{
         'in-range': isInRangeDate(date),
         'start-point': isStartDate(date),
-        'end-point': isEndDate(date)
+        'end-point': isEndDate(date),
       }"
       >{{ date.day }}</span
     >
   </ng-template>
 
-  <ng-template *ngIf="showPreset && showAction" pTemplate="footer">
-    <hr />
-    <ng-container
-      *ngIf="showPreset && (granularity === 'day' || granularity === 'none')"
-    >
-      <strong>Preset: </strong>
-      <upd-dropdown
-        id="range-button"
-        icon="calendar_today"
-        [options]="presetOptions"
-        (selectOption)="onPresetSelect($event.value)"
-        [autoDisplayFirst]="true"
-      >
-      </upd-dropdown>
-    </ng-container>
-
-    <ng-container *ngIf="showAction">
-      <div class="d-flex justify-content-end mt-3">
-        <button
-          type="button"
-          pButton
-          icon="pi pi-times"
-          [label]="'primeng.cancel' | translate"
-          class="cancel-button me-2 rounded"
-          (click)="resetCalendar(); closeCalendar()"
-        ></button>
-        <button
-          type="button"
-          pButton
-          icon="pi pi-check"
-          [label]="'primeng.apply' | translate"
-          class="rounded"
-          (click)="closeCalendar()"
-        ></button>
-      </div>
-    </ng-container>
-  </ng-template>
+  @if (showPreset && showAction) {
+    <ng-template pTemplate="footer">
+      <hr />
+      @if (showPreset && (granularity === 'day' || granularity === 'none')) {
+        <strong>Preset: </strong>
+        <upd-dropdown
+          id="range-button"
+          icon="calendar_today"
+          [options]="presetOptions"
+          (selectOption)="onPresetSelect($event.value)"
+          [autoDisplayFirst]="true"
+        >
+        </upd-dropdown>
+      }
+      @if (showAction) {
+        <div class="d-flex justify-content-end mt-3">
+          <button
+            type="button"
+            pButton
+            icon="pi pi-times"
+            [label]="'primeng.cancel' | translate"
+            class="cancel-button me-2 rounded"
+            (click)="resetCalendar(); closeCalendar()"
+          ></button>
+          <button
+            type="button"
+            pButton
+            icon="pi pi-check"
+            [label]="'primeng.apply' | translate"
+            class="rounded"
+            (click)="closeCalendar()"
+          ></button>
+        </div>
+      }
+    </ng-template>
+  }
 </p-datepicker>

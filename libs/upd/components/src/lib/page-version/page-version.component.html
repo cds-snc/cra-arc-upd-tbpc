@@ -10,9 +10,9 @@
       <div class="col-md-8 d-flex justify-content-start">
         <!-- Previous Version Dropdown -->
         <div class="me-3">
-          <label for="previous-version" class="form-label me-2"
-            >{{ 'previous-version' | translate }}</label
-          >
+          <label for="previous-version" class="form-label me-2">{{
+            'previous-version' | translate
+          }}</label>
           <upd-dropdown
             id="previous-version"
             class="w-100"
@@ -25,9 +25,9 @@
 
         <!-- Current Version Dropdown -->
         <div>
-          <label for="current-version" class="form-label me-2"
-            >{{ 'compared-to' | translate }}</label
-          >
+          <label for="current-version" class="form-label me-2">{{
+            'compared-to' | translate
+          }}</label>
           <upd-dropdown
             id="current-version"
             class="w-100"
@@ -44,8 +44,13 @@
           @if (elements().length > 0) {
             <div class="slide-content text-end">
               <p class="change-text">
-                {{ (elements().length === 1 ? 'total-changesOne' : 'total-changesOther') | translate:{ num: elements().length } }}  |
-                {{ currentIndex() === 0 ? '-' : currentIndex() }}/{{
+                {{
+                  (elements().length === 1
+                    ? 'total-changesOne'
+                    : 'total-changesOther'
+                  ) | translate: { num: elements().length }
+                }}
+                | {{ currentIndex() === 0 ? '-' : currentIndex() }}/{{
                   elements().length
                 }}
               </p>
@@ -60,7 +65,9 @@
           } @else if (elements().length === 0) {
             <div class="slide-content text-end">
               <p class="change-text">
-                {{ 'total-changesOther' | translate:{ num: elements().length } }}
+                {{
+                  'total-changesOther' | translate: { num: elements().length }
+                }}
               </p>
             </div>
             <!-- <p class="text-end">{{ 'no-pageversion-changes' | translate }}</p> -->
@@ -72,7 +79,9 @@
     <!-- Output Section -->
     <div class="row g-3 mt-1">
       <div class="col-12">
-        <label for="output-selection" class="form-label">{{ 'View' | translate }}</label>
+        <label for="output-selection" class="form-label">{{
+          'View' | translate
+        }}</label>
         <upd-radio
           id="output-selection"
           class="w-100"
@@ -88,20 +97,22 @@
     <div class="row mt-3">
       <div [class.hidden]="viewMode().value !== 'live'">
         <div class="group-legend mb-2">
-          <div *ngFor="let item of legendItems()" class="legend-item">
-            <div
-              class="legend-box"
-              [ngStyle]="{
-                'background-color':
-                  item.style === 'highlight' ? item.colour : 'transparent',
-                border:
-                  item.style === 'line'
-                    ? '2px ' + (item.lineStyle || 'solid') + ' ' + item.colour
-                    : 'none',
-              }"
-            ></div>
-            <span class="legend-text">{{ item.text | translate }}</span>
-          </div>
+          @for (item of legendItems(); track item) {
+            <div class="legend-item">
+              <div
+                class="legend-box"
+                [ngStyle]="{
+                  'background-color':
+                    item.style === 'highlight' ? item.colour : 'transparent',
+                  border:
+                    item.style === 'line'
+                      ? '2px ' + (item.lineStyle || 'solid') + ' ' + item.colour
+                      : 'none',
+                }"
+              ></div>
+              <span class="legend-text">{{ item.text | translate }}</span>
+            </div>
+          }
         </div>
         <div class="col-12">
           <div #liveContainer class="live-container mt-3"></div>

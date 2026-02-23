@@ -5,41 +5,43 @@
   [config]="secondaryTitleCols"
   [data]="secondaryTitleData"
 >
-  <ng-container *ngIf="(vm$ | async)?.series?.length === 0; else elseBlock">
+  @if ((vm$ | async)?.series?.length === 0) {
     <p>
       <span [translate]="'nodata-available'"></span>
     </p>
-  </ng-container>
-  <ng-template #elseBlock>
-    <div *ngIf="vm$ | async as vm">
-      <apx-chart
-        #chart
-        [series]="vm.series || []"
-        [labels]="vm.labels || []"
-        [legend]="vm.legend || {}"
-        [chart]="vm.chart"
-        [yaxis]="vm.yaxis || []"
-        [xaxis]="vm.xaxis || {}"
-        [stroke]="vm.stroke || {}"
-        [plotOptions]="vm.plotOptions || {}"
-        [markers]="vm.markers || {}"
-        [fill]="vm.fill || {}"
-        [colors]="vm.colors || []"
-        [dataLabels]="vm.dataLabels || {}"
-        [tooltip]="vm.tooltip || {}"
-      ></apx-chart>
-    </div>
-
-    <div class="pt-3" *ngIf="table">
-      <upd-accordion>
-        <upd-data-table
-          [filter]="false"
-          [sort]="false"
-          [pagination]="false"
-          [data]="table"
-          [cols]="tableCols"
-        ></upd-data-table>
-      </upd-accordion>
-    </div>
-  </ng-template>
+  } @else {
+    @if (vm$ | async; as vm) {
+      <div>
+        <apx-chart
+          #chart
+          [series]="vm.series || []"
+          [labels]="vm.labels || []"
+          [legend]="vm.legend || {}"
+          [chart]="vm.chart"
+          [yaxis]="vm.yaxis || []"
+          [xaxis]="vm.xaxis || {}"
+          [stroke]="vm.stroke || {}"
+          [plotOptions]="vm.plotOptions || {}"
+          [markers]="vm.markers || {}"
+          [fill]="vm.fill || {}"
+          [colors]="vm.colors || []"
+          [dataLabels]="vm.dataLabels || {}"
+          [tooltip]="vm.tooltip || {}"
+        ></apx-chart>
+      </div>
+    }
+    @if (table) {
+      <div class="pt-3">
+        <upd-accordion>
+          <upd-data-table
+            [filter]="false"
+            [sort]="false"
+            [pagination]="false"
+            [data]="table"
+            [cols]="tableCols"
+          ></upd-data-table>
+        </upd-accordion>
+      </div>
+    }
+  }
 </upd-card>

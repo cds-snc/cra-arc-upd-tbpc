@@ -6,7 +6,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '@dua-upd/upd/services';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -21,11 +21,11 @@ import { I18nModule } from '@dua-upd/upd/i18n';
 import { catchError, of } from 'rxjs';
 
 @Component({
-    selector: 'dua-upd-custom-reports-feedback-report',
-    imports: [CommonModule, I18nModule, UpdComponentsModule],
-    templateUrl: './custom-reports-feedback-report.component.html',
-    styleUrl: './custom-reports-feedback-report.component.scss',
-    providers: [ApiService, I18nFacade]
+  selector: 'dua-upd-custom-reports-feedback-report',
+  imports: [I18nModule, UpdComponentsModule],
+  templateUrl: './custom-reports-feedback-report.component.html',
+  styleUrl: './custom-reports-feedback-report.component.scss',
+  providers: [ApiService, I18nFacade],
 })
 export class CustomReportsFeedbackReportComponent implements OnInit {
   private route = inject(ActivatedRoute);

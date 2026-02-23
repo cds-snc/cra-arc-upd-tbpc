@@ -3,6 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/upd/state/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -22,9 +23,9 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/libs/upd/state"],
       "options": {
-        "jestConfig": "libs/upd/state/jest.config.ts"
+        "jestConfig": "libs/upd/state/jest.config.ts",
+        "tsConfig": "libs/upd/state/tsconfig.spec.json"
       }
     }
-  },
-  "tags": []
+  }
 }

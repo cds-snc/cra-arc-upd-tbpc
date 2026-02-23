@@ -3,25 +3,36 @@ import { NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
-    selector: 'upd-card',
-    template: `
+  selector: 'upd-card',
+  template: `
     <div class="card pt-2" [ngClass]="[cardHeight, styleClass]" tabindex="0">
       <div class="card-body card-pad pt-2 h-100">
         <div class="d-flex justify-content-between">
-          <h3
-            *ngIf="title !== ''"
-            [class]="'modal-icon-alignment card-title pb-2 ' + titleSize"
-            [class.card-tooltip]="titleTooltip"
-          >
-            <span placement="top" ngbTooltip="{{ titleTooltip | translate }}">{{
-              title | translate
-            }}
-            <span *ngIf="titleSuffix" class="title-suffix"> - {{ titleSuffix | translate }}</span>
-            </span>
-            <span *ngIf="modal" class="modal-icon-by-title">
-              <upd-modal [modalTitle]="title" [modalContent]="modal" [modalSize]="modalSize"> </upd-modal>
-            </span>
-          </h3>
+          @if (title !== '') {
+            <h3
+              [class]="'modal-icon-alignment card-title pb-2 ' + titleSize"
+              [class.card-tooltip]="titleTooltip"
+            >
+              <span placement="top" ngbTooltip="{{ titleTooltip | translate }}"
+                >{{ title | translate }}
+                @if (titleSuffix) {
+                  <span class="title-suffix">
+                    - {{ titleSuffix | translate }}</span
+                  >
+                }
+              </span>
+              @if (modal) {
+                <span class="modal-icon-by-title">
+                  <upd-modal
+                    [modalTitle]="title"
+                    [modalContent]="modal"
+                    [modalSize]="modalSize"
+                  >
+                  </upd-modal>
+                </span>
+              }
+            </h3>
+          }
 
           <upd-card-secondary-title
             [config]="config"
@@ -34,8 +45,8 @@ import type { ColumnConfig } from '@dua-upd/types-common';
       </div>
     </div>
   `,
-    providers: [NgbPopoverConfig],
-    standalone: false
+  providers: [NgbPopoverConfig],
+  standalone: false,
 })
 export class CardComponent {
   private popoverConfig: NgbPopoverConfig;

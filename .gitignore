@@ -60,3 +60,5 @@ CLAUDE.md
 
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

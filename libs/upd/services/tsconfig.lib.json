@@ -8,7 +8,8 @@
     "types": [],
     "lib": ["ESNext", "dom", "dom.iterable"],
     "target": "ES2022",
-    "useDefineForClassFields": false
+    "useDefineForClassFields": false,
+    "moduleResolution": "bundler"
   },
   "exclude": [
     "src/test-setup.ts",

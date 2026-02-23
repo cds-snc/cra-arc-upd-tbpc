@@ -40,13 +40,15 @@
       "executor": "@nx/js:node",
       "options": {
         "buildTarget": "api:build"
-      }
+      },
+      "continuous": true
     },
     "preview": {
       "executor": "@nx/js:node",
       "options": {
         "buildTarget": "api:build"
-      }
+      },
+      "continuous": true
     },
     "lint": {
       "executor": "@nx/eslint:lint",

@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/db-updater/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -19,7 +20,6 @@
         "generateIndexHtml": false,
         "runtimeChunk": false,
         "optimization": false,
-        "externalDependencies": "none",
         "inspect": false,
         "webpackConfig": "apps/db-updater/webpack.config.js"
       },
@@ -68,6 +68,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }
