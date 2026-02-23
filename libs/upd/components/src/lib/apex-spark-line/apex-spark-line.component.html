@@ -5,12 +5,11 @@
   [config]="secondaryTitleCols"
   [data]="secondaryTitleData"
 >
-  <ng-container *ngIf="!hasData; else elseBlock">
+  @if (!hasData) {
     <p>
       <span [translate]="emptyMessage"></span>
     </p>
-  </ng-container>
-  <ng-template #elseBlock>
+  } @else {
     <div class="radialBar">
       <apx-chart
         #chart
@@ -29,24 +28,24 @@
         [tooltip]="chartOptions.tooltip || {}"
       ></apx-chart>
     </div>
-
     <div class="d-flex align-items-center box">
       <span class="fw-bold large-text">
         {{ curr }}
       </span>
       <div class="d-flex justify-content-end kpi-text">
-        <span *ngIf="keyword === 'calls'">{{
-          'kpi-calls-per-100-text' | translate
-        }}</span>
-        <span *ngIf="keyword === 'feedback'">{{
-          ('kpi-feedback-per-1000-text' | translate).replace(
-            '1 000',
-            '1&nbsp;000'
-          ) // easiest way to add a non-breaking space...
-        }}</span>
+        @if (keyword === 'calls') {
+          <span>{{ 'kpi-calls-per-100-text' | translate }}</span>
+        }
+        @if (keyword === 'feedback') {
+          <span>{{
+            ('kpi-feedback-per-1000-text' | translate).replace(
+              '1 000',
+              '1&nbsp;000'
+            ) // easiest way to add a non-breaking space...
+          }}</span>
+        }
       </div>
     </div>
-
     <div class="d-flex second-box">
       <div class="d-flex"></div>
       <span
@@ -57,30 +56,36 @@
         }}</span>
         {{ comparison | localePercent }}</span
       >
-      <span *ngIf="keyword === 'calls'" class="kpi-text"
-        >({{ diff }} {{ 'kpi-calls-per-100-label' | translate }})
-      </span>
-      <span *ngIf="keyword === 'feedback'" class="kpi-text"
-        >({{ diff }} {{ 'kpi-feedback-per-1000-label' | translate }})</span
-      >
+      @if (keyword === 'calls') {
+        <span class="kpi-text"
+          >({{ diff }} {{ 'kpi-calls-per-100-label' | translate }})
+        </span>
+      }
+      @if (keyword === 'feedback') {
+        <span class="kpi-text"
+          >({{ diff }} {{ 'kpi-feedback-per-1000-label' | translate }})</span
+        >
+      }
       <ng-content></ng-content>
-      <div class="d-flex push" *ngIf="modal">
-        <upd-modal [modalTitle]="title" [modalContent]="modal"> </upd-modal>
-      </div>
+      @if (modal) {
+        <div class="d-flex push">
+          <upd-modal [modalTitle]="title" [modalContent]="modal"> </upd-modal>
+        </div>
+      }
     </div>
-  </ng-template>
+  }
 
   <!--
 
-  <div class="pt-3">
-    <upd-accordion
-      [title]="'view-description'"
-    >
-      <upd-data-table
-        [filter]="false"
-        [sort]="false"
-        [pagination]="false"
-      ></upd-data-table>
-    </upd-accordion>
-  </div> -->
+    <div class="pt-3">
+      <upd-accordion
+        [title]="'view-description'"
+        >
+        <upd-data-table
+          [filter]="false"
+          [sort]="false"
+          [pagination]="false"
+        ></upd-data-table>
+      </upd-accordion>
+    </div> -->
 </upd-card>

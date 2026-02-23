@@ -62,3 +62,5 @@ CLAUDE.md
 *:Zone.Identifier
 .omx/
 .codex/
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "declaration": true,
     "types": [],
-    "lib": ["ESNext"]
+    "lib": ["ESNext"],
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts"],
   "exclude": ["**/*.spec.ts", "jest.config.ts"]
