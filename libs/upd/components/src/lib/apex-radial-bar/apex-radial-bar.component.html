@@ -28,9 +28,11 @@
 
   <div class="d-flex justify-content-between position-relative mt-2">
     <ng-content></ng-content>
-    <div class="d-flex justify-content-end" *ngIf="modal">
-      <upd-modal [modalTitle]="title" [modalContent]="modal"> </upd-modal>
-    </div>
+    @if (modal) {
+      <div class="d-flex justify-content-end">
+        <upd-modal [modalTitle]="title" [modalContent]="modal"> </upd-modal>
+      </div>
+    }
   </div>
 
   <!--
@@ -38,7 +40,7 @@
   <div class="pt-3">
     <upd-accordion
       [title]="'view-description'"
-    >
+      >
       <upd-data-table
         [filter]="false"
         [sort]="false"

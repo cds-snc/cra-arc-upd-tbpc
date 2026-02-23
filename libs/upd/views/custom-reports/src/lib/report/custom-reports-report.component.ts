@@ -7,7 +7,7 @@ import {
   OnInit,
   Signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import type {
@@ -46,7 +46,7 @@ interface ConfigData {
 
 @Component({
   selector: 'dua-upd-custom-reports-report',
-  imports: [I18nModule, CommonModule, UpdComponentsModule, ProgressBarModule],
+  imports: [I18nModule, UpdComponentsModule, ProgressBarModule],
   templateUrl: './custom-reports-report.component.html',
   styleUrls: ['./custom-reports-report.component.scss'],
   styles: [

@@ -5,62 +5,67 @@
 >
   <div class="container-fluid p-0">
     <div class="row row-no-gutters">
-      <ng-container
-        *ngIf="current; else emptyContent"
-      >
+      @if (current) {
         <div class="col">
           <p class="h3 w-100">
             {{ localeTransform(current, pipeParams) }}
           </p>
           <ng-content></ng-content>
         </div>
-        <div
-          *ngIf="displayComparison && current !== 0"
-          class="col-auto ml-auto"
-        >
-          <span class="h3 text-nowrap d-flex align-items-center">
-            <span *ngIf="comparison !== 0 " [ngClass]="comparisonStyles.colourClass">
-              <span *ngIf="comparisonStyles.iconName" class="material-icons">{{
-                comparisonStyles.iconName
-              }}</span>
-              {{ comparison | localePercent }}
+        @if (displayComparison && current !== 0) {
+          <div class="col-auto ml-auto">
+            <span class="h3 text-nowrap d-flex align-items-center">
+              @if (comparison !== 0) {
+                <span [ngClass]="comparisonStyles.colourClass">
+                  @if (comparisonStyles.iconName) {
+                    <span class="material-icons">{{
+                      comparisonStyles.iconName
+                    }}</span>
+                  }
+                  {{ comparison | localePercent }}
+                </span>
+              }
+              @if (comparisonValue !== null && comparisonValue !== undefined) {
+                <span>
+                  &nbsp;({{ comparisonValue * 100 | number: '1.0' }})</span
+                >
+              }
             </span>
-            <span
-              *ngIf="comparisonValue !== null && comparisonValue !== undefined"
-            >
-              &nbsp;({{ comparisonValue * 100 | number: '1.0' }})</span
-            >
-          </span>
+          </div>
+        }
+      } @else {
+        <div class="col">
+          <p class="w-100">{{ emptyMessage | translate }}</p>
         </div>
-      </ng-container>
+      }
     </div>
-    <div *ngIf="displayKpis" class="row row-no-gutters d-block">
-      <div class="col">
-        <p class="mb-0 mt-2 row flex-nowrap">
-          <span
-            [ngClass]="kpiConfig[kpiObjectiveStatus].colourClass || ''"
-            class="text-nowrap me-0 col-auto pe-2"
-            ><span class="material-icons" style="font-size: 1.7em">{{
-              kpiConfig[kpiObjectiveStatus].iconName
-            }}</span></span
-          >
-          <span
-            class="d-inline-flex px-0 pe-1 flex-sm-shrink-1 align-items-center"
-            >{{ kpiConfig[kpiObjectiveStatus].message || '' | translate }}</span
-          >
-        </p>
+    @if (displayKpis) {
+      <div class="row row-no-gutters d-block">
+        <div class="col">
+          <p class="mb-0 mt-2 row flex-nowrap">
+            <span
+              [ngClass]="kpiConfig[kpiObjectiveStatus].colourClass || ''"
+              class="text-nowrap me-0 col-auto pe-2"
+              ><span class="material-icons" style="font-size: 1.7em">{{
+                kpiConfig[kpiObjectiveStatus].iconName
+              }}</span></span
+            >
+            <span
+              class="d-inline-flex px-0 pe-1 flex-sm-shrink-1 align-items-center"
+              >{{
+                kpiConfig[kpiObjectiveStatus].message || '' | translate
+              }}</span
+            >
+          </p>
+        </div>
       </div>
-    </div>
+    }
     <br />
-    <div class="position-absolute bottom-0 end-0 p-3" *ngIf="modal">
-      <upd-modal [modalTitle]="modalTitle" [modalContent]="modal | translate">
-      </upd-modal>
-    </div>
+    @if (modal) {
+      <div class="position-absolute bottom-0 end-0 p-3">
+        <upd-modal [modalTitle]="modalTitle" [modalContent]="modal | translate">
+        </upd-modal>
+      </div>
+    }
   </div>
 </upd-card>
-
-<ng-template #emptyContent>
-  <div class="col">
-    <p class="w-100">{{ emptyMessage | translate }}</p>
-  </div>
-</ng-template>

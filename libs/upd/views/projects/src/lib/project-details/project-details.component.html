@@ -6,50 +6,45 @@
   ></a>
 </div>
 
-<upd-loading-spinner
-  *ngIf="loading$ | async; else elseBlock"
-></upd-loading-spinner>
-
-<ng-template #elseBlock>
-  <upd-page-404
-    *ngIf="(error$ | async) === '' || (title$ | async) === ''; else elseBlock2"
-  ></upd-page-404>
-</ng-template>
-
-<ng-template #elseBlock2>
-  <h2 class="h3 pt-2 pb-2">
-    <span [translate]="'project'"></span>:
-    <ng-container *ngIf="title$ | async as title">
-      {{ title }}
-    </ng-container>
-  
-    <span class="h5 d-inline-block mb-0 align-top ms-1">
-      <ng-container *ngIf="status$ | async as status">
-        <upd-project-status-label
-          class="d-inline-block"
-          [projectStatus]="status || 'Unknown'">
-        </upd-project-status-label>
-      </ng-container>
-  
-      <ng-container *ngIf="cops$ | async as cops">
-        <upd-project-status-label
-          class="d-inline-block ms-2"
-          [projectType]="'COPS'">
-        </upd-project-status-label>
-      </ng-container>
-
-      <ng-container *ngIf="wos_cops$ | async as wos_cops">
-        <upd-project-status-label
-          class="d-inline-block ms-2"
-          [projectType]="'WOS_COPS'">
-        </upd-project-status-label>
-      </ng-container>
-    </span>
-  </h2>
-
-  <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
-  <upd-date-selector
-    *ngIf="!((currentRoute$ | async) || '').endsWith('uxtests')"
-  ></upd-date-selector>
-  <router-outlet></router-outlet>
-</ng-template>
+@if (loading$ | async) {
+  <upd-loading-spinner></upd-loading-spinner>
+} @else {
+  @if ((error$ | async) === '' || (title$ | async) === '') {
+    <upd-page-404></upd-page-404>
+  } @else {
+    <h2 class="h3 pt-2 pb-2">
+      <span [translate]="'project'"></span>:
+      @if (title$ | async; as title) {
+        {{ title }}
+      }
+      <span class="h5 d-inline-block mb-0 align-top ms-1">
+        @if (status$ | async; as status) {
+          <upd-project-status-label
+            class="d-inline-block"
+            [projectStatus]="status || 'Unknown'"
+          >
+          </upd-project-status-label>
+        }
+        @if (cops$ | async; as cops) {
+          <upd-project-status-label
+            class="d-inline-block ms-2"
+            [projectType]="'COPS'"
+          >
+          </upd-project-status-label>
+        }
+        @if (wos_cops$ | async; as wos_cops) {
+          <upd-project-status-label
+            class="d-inline-block ms-2"
+            [projectType]="'WOS_COPS'"
+          >
+          </upd-project-status-label>
+        }
+      </span>
+    </h2>
+    <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
+    @if (!((currentRoute$ | async) || '').endsWith('uxtests')) {
+      <upd-date-selector></upd-date-selector>
+    }
+    <router-outlet></router-outlet>
+  }
+}

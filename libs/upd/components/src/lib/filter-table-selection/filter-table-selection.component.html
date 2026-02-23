@@ -1,22 +1,21 @@
 <div class="container">
-    <div class="row">
-      <div class="col p-0">
-        <ng-container *ngIf="nodeSelectionCount > 0">
-          <ng-container *ngFor="let node of selectedNodes">
-            <span class="badge-blue"
-              ><span class="p-1 align-text-top"
-                >{{ node.value }}: {{ node.label }}</span
-              >
-              <button
-                type="button"
-                class="btn-close btn-close-white me-1"
-                aria-label="Close"
-                (click)="deleteFilter(node)"
-              ></button
-            ></span>
-          </ng-container>
-        </ng-container>
-      </div>
+  <div class="row">
+    <div class="col p-0">
+      @if (nodeSelectionCount > 0) {
+        @for (node of selectedNodes; track node) {
+          <span class="badge-blue"
+            ><span class="p-1 align-text-top"
+              >{{ node.value }}: {{ node.label }}</span
+            >
+            <button
+              type="button"
+              class="btn-close btn-close-white me-1"
+              aria-label="Close"
+              (click)="deleteFilter(node)"
+            ></button
+          ></span>
+        }
+      }
     </div>
   </div>
-  
+</div>

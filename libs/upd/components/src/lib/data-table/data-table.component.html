@@ -26,103 +26,107 @@
   [(selection)]="selectedRows"
   [resizableColumns]="resizableColumns"
 >
-  <ng-template *ngIf="filter || captionTitle || exports" pTemplate="caption">
-    <div>
-      <div class="d-flex justify-content-between align-items-bottom w-100">
-        <ng-container *ngIf="captionTitle">
-          {{ captionTitle | translate }}
-        </ng-container>
-        <div class="searh-url-field">
-          <span *ngIf="filter" class="p-input-icon-left p-ml-auto">
-            <p-iconfield iconPosition="left" class="ml-auto">
-              <p-inputicon>
-                <i class="pi pi-search"></i>
-              </p-inputicon>
-              <input
-                pInputText
-                type="text"
-                (input)="multiKeywordGlobalFilter(dt, $event)"
-                placeholder="{{ placeholderText | translate }}"
-              />
-            </p-iconfield>
-          </span>
-        </div>
-        <div class="d-flex">
-          <p-multiSelect
-            *ngIf="columnSelection()"
-            [group]="groupedColumnSelection()"
-            [options]="selectableCols()"
-            [ngModel]="selectedColumnsSynced()"
-            (ngModelChange)="selectedColumnsChanged($event)"
-            optionLabel="header"
-            [style]="{ 'min-width': '150px', 'max-width': '275px' }"
-            scrollHeight="40dvh"
-            [placeholder]="'change-columns' | translate"
-          >
-            <ng-template let-columns pTemplate="selectedItems">
-              <div
-                class="d-flex justify-content-between align-items-bottom content-end"
-                #rightPanel
-                style="
-                  display: flex;
-                  justify-content: flex-end;
-                  align-items: center;
-                  color: rgb(33, 37, 41);
-                "
+  @if (filter || captionTitle || exports) {
+    <ng-template pTemplate="caption">
+      <div>
+        <div class="d-flex justify-content-between align-items-bottom w-100">
+          @if (captionTitle) {
+            {{ captionTitle | translate }}
+          }
+          <div class="searh-url-field">
+            @if (filter) {
+              <span class="p-input-icon-left p-ml-auto">
+                <p-iconfield iconPosition="left" class="ml-auto">
+                  <p-inputicon>
+                    <i class="pi pi-search"></i>
+                  </p-inputicon>
+                  <input
+                    pInputText
+                    type="text"
+                    (input)="multiKeywordGlobalFilter(dt, $event)"
+                    placeholder="{{ placeholderText | translate }}"
+                  />
+                </p-iconfield>
+              </span>
+            }
+          </div>
+          <div class="d-flex">
+            @if (columnSelection()) {
+              <p-multiSelect
+                [group]="groupedColumnSelection()"
+                [options]="selectableCols()"
+                [ngModel]="selectedColumnsSynced()"
+                (ngModelChange)="selectedColumnsChanged($event)"
+                optionLabel="header"
+                [style]="{ 'min-width': '150px', 'max-width': '275px' }"
+                scrollHeight="40dvh"
+                [placeholder]="'change-columns' | translate"
               >
-                <span
-                  ><span class="pi pi-cog"></span>
-                  @if (selectedColumns().length) {
-                    {{ 'change-columns' | translate }}
-                  }</span
-                >&NonBreakingSpace;
-                @if (selectedColumns().length) {
-                  <span
-                    class="badge bg-primary d-flex align-items-center justify-content-center"
-                    style="padding: 0.25em 0.5em; height: 1.8rem"
+                <ng-template let-columns pTemplate="selectedItems">
+                  <div
+                    class="d-flex justify-content-between align-items-bottom content-end"
+                    #rightPanel
+                    style="
+                      display: flex;
+                      justify-content: flex-end;
+                      align-items: center;
+                      color: rgb(33, 37, 41);
+                    "
                   >
-                    {{ selectedColumns().length }}</span
-                  >
-                }
-              </div>
-            </ng-template>
-
-            <ng-template let-group #group>
-              <strong>{{ group.label | translate }}</strong>
-            </ng-template>
-          </p-multiSelect>
-
-          <upd-filter-table
-            *ngIf="filterTree"
-            [cols]="cols()"
-            [data]="translatedData() || []"
-            [table]="table"
-            (changedSelectedNodes)="updateSelectedNodes($event)"
-            [removedNode]="node"
-          ></upd-filter-table>
-
-          <upd-data-table-exports
-            id="data-table-{{ id }}"
-            *ngIf="exports"
-            [cols]="displayColumns()"
-            [data]="dt.filteredValue || translatedData() || []"
-          ></upd-data-table-exports>
+                    <span
+                      ><span class="pi pi-cog"></span>
+                      @if (selectedColumns().length) {
+                        {{ 'change-columns' | translate }}
+                      }</span
+                    >&NonBreakingSpace;
+                    @if (selectedColumns().length) {
+                      <span
+                        class="badge bg-primary d-flex align-items-center justify-content-center"
+                        style="padding: 0.25em 0.5em; height: 1.8rem"
+                      >
+                        {{ selectedColumns().length }}</span
+                      >
+                    }
+                  </div>
+                </ng-template>
+                <ng-template let-group #group>
+                  <strong>{{ group.label | translate }}</strong>
+                </ng-template>
+              </p-multiSelect>
+            }
+            @if (filterTree) {
+              <upd-filter-table
+                [cols]="cols()"
+                [data]="translatedData() || []"
+                [table]="table"
+                (changedSelectedNodes)="updateSelectedNodes($event)"
+                [removedNode]="node"
+              ></upd-filter-table>
+            }
+            @if (exports) {
+              <upd-data-table-exports
+                id="data-table-{{ id }}"
+                [cols]="displayColumns()"
+                [data]="dt.filteredValue || translatedData() || []"
+              ></upd-data-table-exports>
+            }
+          </div>
         </div>
+        @if (filterTree) {
+          <upd-filter-table-selection
+            [selectedNodes]="selectedNodes"
+            (nodeRemoved)="removeNode($event)"
+          ></upd-filter-table-selection>
+        }
       </div>
-
-      <upd-filter-table-selection
-        *ngIf="filterTree"
-        [selectedNodes]="selectedNodes"
-        (nodeRemoved)="removeNode($event)"
-      ></upd-filter-table-selection>
-    </div>
-  </ng-template>
+    </ng-template>
+  }
 
   <ng-template pTemplate="header" let-columns>
     <tr>
-      <th *ngIf="checkboxes || expandable" style="min-width: 2rem; width: 2rem">
-        &nbsp;
-      </th>
+      @if (checkboxes || expandable) {
+        <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
+      }
 
       @for (col of columns; track col.field) {
         <th
@@ -149,10 +153,9 @@
 
             @if (sort) {
               <p-sortIcon [field]="col.field"></p-sortIcon>
-              <ng-template [ngIf]="col.filterConfig">
+              @if (col.filterConfig) {
                 <!-- Boolean Filtering -->
-
-                <ng-template [ngIf]="col.filterConfig.type === 'boolean'">
+                @if (col.filterConfig.type === 'boolean') {
                   <p-columnFilter
                     type="boolean"
                     [field]="col.field"
@@ -163,7 +166,9 @@
                     <ng-template pTemplate="header">
                       <div class="px-3 pt-3 pb-0">
                         <span class="fw-bold">
-                          @if (col.field === 'cops' || col.field === 'wos_cops') {
+                          @if (
+                            col.field === 'cops' || col.field === 'wos_cops'
+                          ) {
                             {{ col.field | uppercase | translate }}
                           } @else {
                             {{ col.field | translate }}
@@ -172,15 +177,12 @@
                       </div>
                     </ng-template>
                   </p-columnFilter>
-                </ng-template>
-
+                }
                 <!-- Category/Multiselect Filtering -->
-                <ng-template
-                  [ngIf]="
-                    col.filterConfig.type === 'category' ||
-                    col.filterConfig.type === 'pageStatus'
-                  "
-                >
+                @if (
+                  col.filterConfig.type === 'category' ||
+                  col.filterConfig.type === 'pageStatus'
+                ) {
                   <p-columnFilter
                     [field]="col.field"
                     [matchMode]="col.filterConfig?.matchMode || 'in'"
@@ -216,8 +218,8 @@
                       </p-multiSelect>
                     </ng-template>
                   </p-columnFilter>
-                </ng-template>
-              </ng-template>
+                }
+              }
             }
           </div>
         </th>
@@ -282,16 +284,18 @@
     </tr>
   </ng-template>
 
-  <ng-template *ngIf="kpi" pTemplate="footer">
-    <div class="legend">
-      <p class="legend_field">
-        <span class="legend_color" style="background: #90ee90"></span
-        >{{ 'kpi-met' | translate }}
-      </p>
-      <p class="legend_field">
-        <span class="legend_color" style="background: #f8e6d2"></span
-        >{{ 'kpi-half-met' | translate }}
-      </p>
-    </div>
-  </ng-template>
+  @if (kpi) {
+    <ng-template pTemplate="footer">
+      <div class="legend">
+        <p class="legend_field">
+          <span class="legend_color" style="background: #90ee90"></span
+          >{{ 'kpi-met' | translate }}
+        </p>
+        <p class="legend_field">
+          <span class="legend_color" style="background: #f8e6d2"></span
+          >{{ 'kpi-half-met' | translate }}
+        </p>
+      </div>
+    </ng-template>
+  }
 </p-table>
