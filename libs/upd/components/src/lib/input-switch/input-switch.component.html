@@ -1,11 +1,11 @@
 <div class="d-flex flex-row justify-content-start">
   <label for="switch-{{ id }}" class="mt-1">{{ text }}</label>
   <div class="ms-2">
-    <p-inputSwitch
+    <p-toggleSwitch
       inputId="switch-{{ id }}"
       [(ngModel)]="checked"
       [disabled]="disabled"
       (onChange)="onCheckedChange()"
-    ></p-inputSwitch>
+    ></p-toggleSwitch>
   </div>
 </div>

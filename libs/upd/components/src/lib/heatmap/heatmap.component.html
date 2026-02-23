@@ -6,7 +6,7 @@
   } @else {
     <div class="container-fluid my-4 gx-0">
       <div class="row">
-        <ng-container *ngFor="let month of calendarMonths; let m = index">
+        @for (month of calendarMonths; track month; let m = $index) {
           <section
             [ngClass]="data().length <= 7 ? 'col' : 'col-lg-4 col-md-12'"
             [attr.aria-labelledby]="'header-' + m"
@@ -23,23 +23,19 @@
                 }}
               </h2>
               <div class="week-day-labels" role="presentation">
-                <div
-                  *ngFor="let cell of month[0]; let j = index"
-                  class="day-label"
-                  aria-hidden="true"
-                >
-                  {{ cell.date | date: (data().length <= 7 ? 'd' : '') }}
-                  {{ data().length <= 7 ? '&ndash;' : '' }}
-                  {{ weekDays[j] | translate }}
-                </div>
+                @for (cell of month[0]; track cell; let j = $index) {
+                  <div class="day-label" aria-hidden="true">
+                    {{ cell.date | date: (data().length <= 7 ? 'd' : '') }}
+                    {{ data().length <= 7 ? '&ndash;' : '' }}
+                    {{ weekDays[j] | translate }}
+                  </div>
+                }
               </div>
-              <ng-container *ngFor="let row of month; let i = index">
+              @for (row of month; track row; let i = $index) {
                 <div class="week-row" role="row">
-                  <ng-container *ngFor="let cell of row; let j = index">
+                  @for (cell of row; track cell; let j = $index) {
                     <ng-template #defaultTooltip>
-                      {{
-                        cell.date | date: 'longDate' : 'utc' : currentLang()
-                      }}
+                      {{ cell.date | date: 'longDate' : 'utc' : currentLang() }}
                       <hr class="my-1" />
                       {{ cell.sum | number: '1.0-0' : currentLang() }}
                       {{
@@ -49,11 +45,10 @@
                           (cell.sum | i18nPlural: { '=1': '', other: 's' })
                       }}
                     </ng-template>
-
                     <div
                       class="day-cell"
                       [ngClass]="{
-                        'bordered-cell': !cell.isEmpty
+                        'bordered-cell': !cell.isEmpty,
                       }"
                       [attr.colored]="
                         !cell.isEmpty && cell.fillColour ? 'true' : null
@@ -61,7 +56,7 @@
                       [ngStyle]="{
                         'background-color': cell.fillColour,
                         color: cell.textColour,
-                        'border-color': cell.borderColour
+                        'border-color': cell.borderColour,
                       }"
                       [attr.aria-label]="
                         cell.isEmpty
@@ -75,25 +70,25 @@
                       [tabindex]="!cell.isEmpty ? 0 : -1"
                       [ngbTooltip]="!cell.isEmpty ? defaultTooltip : ''"
                     >
-                      <ng-container *ngIf="!cell.isEmpty">
+                      @if (!cell.isEmpty) {
                         <span class="day-sum">{{
                           cell.sum | number: '1.0-0' : currentLang()
                         }}</span>
-                      </ng-container>
+                      }
                     </div>
-                  </ng-container>
+                  }
                 </div>
-              </ng-container>
+              }
             </div>
           </section>
-        </ng-container>
+        }
       </div>
     </div>
 
     <aside class="legend" role="contentinfo">
       <h3 class="legend-title">{{ 'Legend' | translate }}</h3>
       <div class="legend-items" role="list">
-        <ng-container *ngFor="let key of filterThresholdKeys()">
+        @for (key of filterThresholdKeys(); track key) {
           <div
             class="legend-item"
             role="listitem"
@@ -106,25 +101,27 @@
               class="color-box"
               [ngStyle]="{
                 'background-color': colorThresholds[key].fill,
-                'border-color': colorThresholds[key].border
+                'border-color': colorThresholds[key].border,
               }"
             ></div>
             <div class="color-description">{{ key | translate }}</div>
           </div>
-        </ng-container>
+        }
       </div>
     </aside>
 
-    <div class="pt-3" *ngIf="table">
-      <upd-accordion>
-        <upd-data-table
-          [filter]="false"
-          [sort]="false"
-          [pagination]="false"
-          [data]="table"
-          [cols]="tableCols"
-        ></upd-data-table>
-      </upd-accordion>
-    </div>
+    @if (table) {
+      <div class="pt-3">
+        <upd-accordion>
+          <upd-data-table
+            [filter]="false"
+            [sort]="false"
+            [pagination]="false"
+            [data]="table"
+            [cols]="tableCols"
+          ></upd-data-table>
+        </upd-accordion>
+      </div>
+    }
   }
 </upd-card>

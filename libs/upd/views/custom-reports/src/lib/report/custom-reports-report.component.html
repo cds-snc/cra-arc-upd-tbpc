@@ -8,130 +8,139 @@
   </div>
 </div>
 
-<upd-did-you-know
-  *ngIf="!error() && data()?.length !== 0 && status() !== 'complete'"
-></upd-did-you-know>
+@if (!error() && data()?.length !== 0 && status() !== 'complete') {
+  <upd-did-you-know></upd-did-you-know>
+}
 
-<ng-container
-  *ngIf="!error() && data()?.length !== 0 && status() === 'complete'"
->
+@if (!error() && data()?.length !== 0 && status() === 'complete') {
   <upd-alert position="top" [selfClosing]="true">{{
     'success-generating-report' | translate
   }}</upd-alert>
-</ng-container>
+}
 
-<div
-  class="w-100 d-inline-block mx-auto mb-2"
-  *ngIf="!error() && data()?.length !== 0 && status() !== 'complete'"
->
-  <div class="d-flex flex-fill align-content-center h-100 w-100">
-    <div class="card align-middle w-100">
-      <div class="card-body">
-        <ng-container *ngIf="status() === 'pending' || status() === undefined">
-          <p class="text-muted">{{ 'fetching data' | translate }}</p>
-          <div class="w-100">
-            <p-progressBar [value]="progress() || 0"></p-progressBar>
-          </div>
-        </ng-container>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card-container mt-3" *ngIf="!error() && data()?.length !== 0">
-  <div class="card">
-    <h5 class="card-header">{{ 'Report details' | translate }}</h5>
-    <div class="card-body">
-      <div class="report-detail">
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'data-granularity' | translate }}:</h6>
-          {{ granularity() | translate }}
-        </div>
-
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'Date range' | translate }}:</h6>
-          {{ startDate() | translate }} {{ 'to' | translate }}
-          {{ endDate() | translate }}
-        </div>
-
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'URLs' | translate }}:</h6>
-        </div>
-        <upd-accordion
-          [styleClass]="'mb-2'"
-          [expanded]="urls().length < 10"
-          title="{{
-            'URLs added to report' | translate: { count: urls().length }
-          }} "
-        >
-          <ul>
-            <li *ngFor="let url of urls()">{{ url }}</li>
-          </ul>
-        </upd-accordion>
-
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'Group pages as a segment' | translate }}:</h6>
-          {{ grouped() | translate }}
-        </div>
-
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'metrics' | translate }}:</h6>
-        </div>
-        <ul>
-          <li *ngFor="let metric of metrics()">{{ metric | translate }}</li>
-        </ul>
-
-        <div class="d-flex align-items-center justify-content-start gap-2 mb-2">
-          <h6 class="mb-1">{{ 'breakdown-dimension' | translate }}:</h6>
-          {{ breakdownDimension() | translate }}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div
-    class="w-100 d-inline-block mx-mx-auto mt-4"
-    *ngIf="status() === 'complete'"
-  >
+@if (!error() && data()?.length !== 0 && status() !== 'complete') {
+  <div class="w-100 d-inline-block mx-auto mb-2">
     <div class="d-flex flex-fill align-content-center h-100 w-100">
       <div class="card align-middle w-100">
         <div class="card-body">
-          <div *ngIf="status() === 'complete' && data()?.length">
-            <upd-data-table
-              [data]="data()"
-              [cols]="columns()"
-              [displayRows]="50"
-            ></upd-data-table>
-          </div>
+          @if (status() === 'pending' || status() === undefined) {
+            <p class="text-muted">{{ 'fetching data' | translate }}</p>
+            <div class="w-100">
+              <p-progressBar [value]="progress() || 0"></p-progressBar>
+            </div>
+          }
         </div>
       </div>
     </div>
   </div>
-</div>
+}
 
-<div
-  *ngIf="error()"
-  class="alert alert-danger d-inline-block mx-auto mt-5"
-  style="width: 33%"
->
-  <h5 class="alert-heading">Error</h5>
-  <p class="mb-0">{{ error() }}</p>
-</div>
+@if (!error() && data()?.length !== 0) {
+  <div class="card-container mt-3">
+    <div class="card">
+      <h5 class="card-header">{{ 'Report details' | translate }}</h5>
+      <div class="card-body">
+        <div class="report-detail">
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'data-granularity' | translate }}:</h6>
+            {{ granularity() | translate }}
+          </div>
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'Date range' | translate }}:</h6>
+            {{ startDate() | translate }} {{ 'to' | translate }}
+            {{ endDate() | translate }}
+          </div>
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'URLs' | translate }}:</h6>
+          </div>
+          <upd-accordion
+            [styleClass]="'mb-2'"
+            [expanded]="urls().length < 10"
+            title="{{
+              'URLs added to report' | translate: { count: urls().length }
+            }} "
+          >
+            <ul>
+              @for (url of urls(); track url) {
+                <li>{{ url }}</li>
+              }
+            </ul>
+          </upd-accordion>
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'Group pages as a segment' | translate }}:</h6>
+            {{ grouped() | translate }}
+          </div>
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'metrics' | translate }}:</h6>
+          </div>
+          <ul>
+            @for (metric of metrics(); track metric) {
+              <li>{{ metric | translate }}</li>
+            }
+          </ul>
+          <div
+            class="d-flex align-items-center justify-content-start gap-2 mb-2"
+          >
+            <h6 class="mb-1">{{ 'breakdown-dimension' | translate }}:</h6>
+            {{ breakdownDimension() | translate }}
+          </div>
+        </div>
+      </div>
+    </div>
+    @if (status() === 'complete') {
+      <div class="w-100 d-inline-block mx-mx-auto mt-4">
+        <div class="d-flex flex-fill align-content-center h-100 w-100">
+          <div class="card align-middle w-100">
+            <div class="card-body">
+              @if (status() === 'complete' && data()?.length) {
+                <div>
+                  <upd-data-table
+                    [data]="data()"
+                    [cols]="columns()"
+                    [displayRows]="50"
+                  ></upd-data-table>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
 
-<div
-  *ngIf="data()?.length === 0"
-  class="alert alert-warning d-inline-block mx-auto mt-5 w-50"
->
-  <p>{{ 'No data was found' | translate }}</p>
-  <p class="mb-0">
-    {{ 'The URL may have changed' | translate }}
-  </p>
-</div>
+@if (error()) {
+  <div
+    class="alert alert-danger d-inline-block mx-auto mt-5"
+    style="width: 33%"
+  >
+    <h5 class="alert-heading">Error</h5>
+    <p class="mb-0">{{ error() }}</p>
+  </div>
+}
 
-<div
-  *ngIf="!config() && configData()"
-  class="alert alert-warning d-inline-block mx-auto mt-5 w-50"
->
-  <h3>{{ 'Oops! No data was found' | translate }}</h3>
-  <p [innerHTML]="'It looks like the report ID not found' | translate"></p>
-</div>
+@if (data()?.length === 0) {
+  <div class="alert alert-warning d-inline-block mx-auto mt-5 w-50">
+    <p>{{ 'No data was found' | translate }}</p>
+    <p class="mb-0">
+      {{ 'The URL may have changed' | translate }}
+    </p>
+  </div>
+}
+
+@if (!config() && configData()) {
+  <div class="alert alert-warning d-inline-block mx-auto mt-5 w-50">
+    <h3>{{ 'Oops! No data was found' | translate }}</h3>
+    <p [innerHTML]="'It looks like the report ID not found' | translate"></p>
+  </div>
+}

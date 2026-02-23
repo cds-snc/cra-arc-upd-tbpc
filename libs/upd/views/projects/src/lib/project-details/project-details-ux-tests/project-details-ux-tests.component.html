@@ -42,7 +42,7 @@
           isPercent: true,
           showTitleTooltip: true,
           showMarker: true,
-          shared: true
+          shared: true,
         }"
         [table]="(taskSuccessByUxTest$ | async) || []"
         [tableCols]="taskSuccessRateCols"
@@ -69,38 +69,42 @@
   </div>
 </div>
 
-<ng-container *ngIf="taskSuccessByUxTestKpi$ | async as taskSuccessKpi">
-  <div class="container-fluid my-4 gx-0" *ngIf="successRateCols.length">
+@if (taskSuccessByUxTestKpi$ | async; as taskSuccessKpi) {
+  @if (successRateCols.length) {
+    <div class="container-fluid my-4 gx-0">
+      <div class="row">
+        <div class="col">
+          <upd-data-table-card
+            [data]="taskSuccessKpi"
+            [cols]="successRateCols"
+            [sort]="true"
+            [pagination]="false"
+            [filter]="false"
+            [kpi]="true"
+            [title]="'Task success by UX test'"
+            sortField="task"
+          >
+          </upd-data-table-card>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+@if (documents$ | async; as documents) {
+  <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
         <upd-data-table-card
-          [data]="taskSuccessKpi"
-          [cols]="successRateCols"
-          [sort]="true"
+          [data]="documents || []"
+          [cols]="documentsCols"
+          [sort]="false"
           [pagination]="false"
           [filter]="false"
-          [kpi]="true"
-          [title]="'Task success by UX test'"
-          sortField="task"
-        >
-        </upd-data-table-card>
+          [title]="'Documents'"
+          [emptyStateMessage]="'project-tasks-not-tested'"
+        ></upd-data-table-card>
       </div>
     </div>
   </div>
-</ng-container>
-
-<div *ngIf="documents$ | async as documents" class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-data-table-card
-        [data]="documents || []"
-        [cols]="documentsCols"
-        [sort]="false"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'Documents'"
-        [emptyStateMessage]="'project-tasks-not-tested'"
-      ></upd-data-table-card>
-    </div>
-  </div>
-</div>
+}
