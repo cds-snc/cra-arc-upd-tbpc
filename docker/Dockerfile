@@ -108,7 +108,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && apt-get install -y --no-install-recommends tzdata curl ca-certificates
 
-ADD --link https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/
+ADD --link --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/
 ENV TZ=America/Toronto
 
 
