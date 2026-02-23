@@ -134,6 +134,7 @@ COPY --chown=1000:1000 --from=api-deps --link /builder/node_modules/ ./node_modu
 COPY --chown=1000:1000 --from=api-build --link /builder/dist/apps/api/ ./
 
 EXPOSE 9000
+
 USER $USER
 CMD ["node", "main.js"]
 
