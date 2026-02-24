@@ -21,14 +21,6 @@ module.exports = composePlugins(withNx(), (config) => {
           "Module not found: Error: Can't resolve '(.\\/zstd|@mongodb-js)",
       ),
     ],
-    module: {
-      rules: [
-        {
-          test: /\.node$/,
-          loader: 'node-loader',
-        },
-      ],
-    },
     experiments: {
       lazyCompilation: true,
     },
