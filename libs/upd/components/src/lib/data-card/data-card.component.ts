@@ -3,6 +3,7 @@ import {
   LocaleNumberPipe,
   LocalePercentPipe,
   LocaleTemplatePipe,
+  SecondsToMinutesPipe,
 } from '@dua-upd/upd/pipes';
 
 export type ComparisonStatus = 'good' | 'bad' | 'neutral' | 'none';
@@ -115,6 +116,7 @@ export class DataCardComponent {
   private numberPipe: LocaleNumberPipe = inject(LocaleNumberPipe);
   private percentPipe: LocalePercentPipe = inject(LocalePercentPipe);
   private templatePipe: LocaleTemplatePipe = inject(LocaleTemplatePipe);
+  private secondsToMinutesPipe: SecondsToMinutesPipe = inject(SecondsToMinutesPipe);
 
   @Input() current: number | null = null;
   @Input() comparison?: number | null;
@@ -123,7 +125,7 @@ export class DataCardComponent {
   @Input() tooltip = '';
   @Input() modalTitle = '';
   @Input() modal = '';
-  @Input() pipe: 'percent' | 'number' | 'template' = 'number';
+  @Input() pipe: 'percent' | 'number' | 'template' | 'secondToMinutes' = 'number';
   @Input() pipeParams?: string | string[];
   @Input() emptyMessage = 'nodata-available';
 
@@ -207,6 +209,8 @@ export class DataCardComponent {
         return this.percentPipe;
       case 'template':
         return this.templatePipe;
+      case 'secondToMinutes':
+        return this.secondsToMinutesPipe;
       default:
         return this.numberPipe;
     }
