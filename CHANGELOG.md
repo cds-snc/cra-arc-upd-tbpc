@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.4.0](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.2...v4.4.0) (2026-02-24)
+## [4.3.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.2...v4.3.3) (2026-02-24)
 
 
 ### Features
