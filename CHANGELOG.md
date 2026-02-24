@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.3.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.2...v4.3.3) (2026-02-24)
+
+
+### Features
+
+* Add lazy compilation to webpack config to prevent build errors ([5df7f6e](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5df7f6e28559143eb3acaeccd9efa83acd78ce4b))
+* Add scripts for migrating parquet schemas ([73cc0c2](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/73cc0c2f19f47803cc6514bcd7e0c215bc08458e))
+* Add utility function for reading a compressed json file and parsing it into memory as a stream ([83173b3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/83173b3e8ddd42ccd35739f6c81d80aa7f773135))
+* **streams:** add Zstd compression and decompression for file streams ([f1fc757](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f1fc757c4b77307033c0a64a0be846172d56ee6e))
+
+
+### Bug Fixes
+
+* Added missing `console.time` call in overall.service ([998b7c3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/998b7c382a37ca3edd29a426b4beb74daebf37ff))
+* Ensure proper filesystem permissions in docker images ([17eb76b](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/17eb76b20ba829637b39a2c40c8b7bba678b500a))
+* **mongo-parquet:** Add remote_container parameter to StorageClient and main function to properly set the remote container name ([5a38e16](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5a38e162542e90875a70640a74028339a69878b8))
+* **node-utils:** Update jest configuration for using swc ([20efed8](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/20efed8d42e3c5d3bedb9bd5a6eb4c6e604bf3ff))
+* Prevent throwing error if searchterms are empty ([32b09a0](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/32b09a08d2a8fe839ae7054783c6f5b157cbdff8))
+* Remove duplicated property in db-cli webpack config ([97156c8](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/97156c810ba29d3d3dda8802e616bbed656dd360))
+* Restart ECS if workflow if Dockerfile changes ([9bf4ce0](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/9bf4ce0bf8650fc34f0ee73a3ad3427d37f929d4))
+* Set proper permissions for aws global-bundle cert ([c7bbd57](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c7bbd57096576d90782301d8399d17253a0bd8a8))
+* **storage client:** Allow decompressing even if model is set to `compress: true` ([eeeb013](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/eeeb013a4a13000e76eefc73c3307203ff70e1e1))
+* Use user/group ids instead of names in dockerfile ([b1418f4](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b1418f44283bd70171890ffe275d925c7d2102bc))
+
 ## [4.3.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.1...v4.3.2) (2026-01-28)
 
 
