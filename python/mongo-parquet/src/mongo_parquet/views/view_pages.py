@@ -49,6 +49,7 @@ class PagesView(ParquetModel):
             **metrics_common_schema,
             "pageStatus": string(),
             "numComments": int32(),
+            "average_time_spent": float64(),
             "aa_searchterms": list_(
                 struct(
                     {
@@ -292,12 +293,14 @@ class PagesViewService:
 
         top_level_metrics = self.get_top_level_page_metrics(date_range)
         num_comments = self.get_num_comments(date_range)
+        avg_time_spent = self.get_avg_time_spent(date_range)
         aa_searchterms = self.get_aa_searchterms(date_range)
         gsc_searchterms = self.get_gsc_searchterms(date_range)
         activity_map = self.get_activity_map(date_range)
         return (
             pages.join(top_level_metrics, on="url", how="left")
             .join(num_comments, on="url", how="left")
+            .join(avg_time_spent, on="url", how="left")
             .join(aa_searchterms, on="url", how="left")
             .join(gsc_searchterms, on="url", how="left")
             .join(activity_map, on="url", how="left")
@@ -381,4 +384,22 @@ class PagesViewService:
             .agg(pl.col("clicks").sum())
             .group_by(["url"])
             .agg(pl.struct(pl.all().top_k_by("clicks", 100)).alias("activity_map"))
+        )
+
+    def get_avg_time_spent(self, date_range: DateRange) -> pl.LazyFrame:
+        return (
+            self.dependencies["page_metrics"]
+            .lf()
+            .filter(
+                pl.col("date").is_between(date_range["start"], date_range["end"])
+            )
+            .with_columns(pl.col("url").cast(self.context.page_urls_enum))
+            .group_by("url")
+            .agg(
+                (
+                    (pl.col("visits") * pl.col("average_time_spent")).sum()
+                    / pl.col("visits").sum()
+                ).alias("average_time_spent")
+            )
+            .with_columns(pl.col("average_time_spent").cast(pl.Float64))
         )
