@@ -26,6 +26,7 @@ import {
   arrayToDictionary,
   getArraySelectedPercentChange,
   isNullish,
+  percentChange,
   prettyJson,
 } from '@dua-upd/utils-common';
 
@@ -461,6 +462,7 @@ export class PagesViewService extends DbViewNew<
           | 'aa_searchterms'
           | 'gsc_searchterms'
           | 'activity_map'
+          | 'average_time_spent'
         >
       >(
         {
@@ -473,6 +475,7 @@ export class PagesViewService extends DbViewNew<
           aa_searchterms: 1,
           gsc_searchterms: 1,
           activity_map: 1,
+          average_time_spent: 1,
         },
       );
 
@@ -539,12 +542,18 @@ export class PagesViewService extends DbViewNew<
         ).sort((a, b) => b.clicks - a.clicks)
       : [];
 
+    const averageTimeSpent = {
+      current: currentData?.average_time_spent || 0,
+      comparison: comparisonData?.average_time_spent || 0,
+    };
+
     return {
       aaSearchTerms,
       top25GSCSearchTerms,
       topIncreasedSearchTerms,
       topDecreasedSearchTerms,
       activityMap,
+      averageTimeSpent,
     };
   }
 }
