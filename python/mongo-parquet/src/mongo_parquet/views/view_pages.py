@@ -49,7 +49,7 @@ class PagesView(ParquetModel):
             **metrics_common_schema,
             "pageStatus": string(),
             "numComments": int32(),
-            "avg_time_spent": float64(),
+            "average_time_spent": float64(),
             "aa_searchterms": list_(
                 struct(
                     {
@@ -399,7 +399,7 @@ class PagesViewService:
                 (
                     (pl.col("visits") * pl.col("average_time_spent")).sum()
                     / pl.col("visits").sum()
-                ).alias("avg_time_spent")
+                ).alias("average_time_spent")
             )
-            .with_columns(pl.col("avg_time_spent").cast(pl.Float64))
+            .with_columns(pl.col("average_time_spent").cast(pl.Float64))
         )

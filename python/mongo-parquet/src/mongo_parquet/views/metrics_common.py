@@ -2,7 +2,6 @@ import polars as pl
 from pyarrow import string, struct, list_, float64, int32
 
 metrics_common_schema = {
-    "average_time_spent": float64(),
     "bouncerate": float64(),
     "dyf_no": int32(),
     "dyf_submit": int32(),
@@ -53,7 +52,6 @@ metrics_common_schema = {
 }
 
 metrics_common_top_level_aggregations_expr = [
-    pl.col("average_time_spent").mean().round_sig_figs(5),
     pl.col("bouncerate").mean().round_sig_figs(5),
     pl.col("dyf_no").sum(),
     pl.col("dyf_yes").sum(),
