@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       affected_apps: ${{ steps.affected-apps.outputs.affected_apps }}
+      dockerfile_affected: ${{ steps.check-dockerfile.outputs.dockerfile_affected }}
     steps:
       - name: Checkout [main]
         uses: actions/checkout@v4
@@ -72,6 +73,18 @@ jobs:
             echo "python_affected=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check if Dockerfile has changed
+        id: check-dockerfile
+        run: |
+          AFFECTED_DOCKERFILE=$(git diff --name-only ${{ env.NX_BASE }} ${{ env.NX_HEAD }} | grep "^docker/Dockerfile" || true)
+          if [ -z "$AFFECTED_DOCKERFILE" ]; then
+            echo "Dockerfile not affected."
+            echo "dockerfile_affected=false" >> $GITHUB_OUTPUT
+          else
+            echo "Dockerfile affected: $AFFECTED_DOCKERFILE"
+            echo "dockerfile_affected=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine affected apps
         id: affected-apps
         run: |
@@ -95,6 +108,11 @@ jobs:
       id-token: write
       contents: write
       packages: write
+    env:
+      API_AFFECTED: ${{ contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') }}
+      PYTHON_AFFECTED: ${{ contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python') }}
+      UPDATE_DB_AFFECTED: ${{ contains(fromJson(needs.cache-deps.outputs.affected_apps), 'update-db-task') }}
+      DOCKERFILE_AFFECTED: ${{ needs.cache-deps.outputs.dockerfile_affected }}
 
     steps:
       - name: Audit DNS requests
@@ -133,7 +151,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image (web)
-        if: contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
+        if: env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -145,7 +163,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (data-import)
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python')
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.PYTHON_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -157,7 +175,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push Docker image (update-db)
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (contains(fromJson(needs.cache-deps.outputs.affected_apps), 'update-db-task') || contains(fromJson(needs.cache-deps.outputs.affected_apps), 'python'))
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.UPDATE_DB_AFFECTED == 'true' || env.PYTHON_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true')
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -169,13 +187,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Restart ECS
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true')
         run: |
           aws ecs update-service --cluster cra-upd-dashboard-cluster --service cra-upd-dashboard-app-service --force-new-deployment > /dev/null 2>&1
 
       # Allow this step to fail so we can handle success/failure and report it to slack. By default it waits for 10 minutes
       - name: Wait for ECS Stability
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true')
         id: ecs_wait
         continue-on-error: true
         run: |
@@ -188,14 +206,14 @@ jobs:
       # todo: add this back in once we have a stable deployment
       # # Slack notification on failed ECS wait
       # - name: Slack Notify Failure
-      #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'failure'
+      #   if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true') && steps.ecs_wait.outcome == 'failure'
       #   run: |
       #     curl -X POST -H 'Content-type: application/json' \
       #     --data '{"text": "❌ ECS deployment for cra-upd-dashboard (production) failed to stabilize."}' \
       #     ${{ secrets.SLACK_NOTIFY_WEBHOOK }}
 
       - name: Report deployment to Sentinel
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api') && steps.ecs_wait.outcome == 'success'
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true') && steps.ecs_wait.outcome == 'success'
         uses: cds-snc/sentinel-forward-data-action@main
         with:
           input_data: '{"product": "cra-upd-dashboard", "version": "${{ github.sha }}", "repository": "${{ github.repository }}", "environment": "production"}'
@@ -204,7 +222,7 @@ jobs:
           log_analytics_workspace_key: ${{ secrets.LOG_ANALYTICS_WORKSPACE_KEY }}
 
       - name: Docker generate SBOM
-        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && contains(fromJson(needs.cache-deps.outputs.affected_apps), 'api')
+        if: github.repository == 'cds-snc/cra-arc-upd-tbpc' && (env.API_AFFECTED == 'true' || env.DOCKERFILE_AFFECTED == 'true')
         uses: cds-snc/security-tools/.github/actions/generate-sbom@34794baf2af592913bb5b51d8df4f8d0acc49b6f # v3.2.0
         env:
           TRIVY_DB_REPOSITORY: ${{ vars.TRIVY_DB_REPOSITORY }}
