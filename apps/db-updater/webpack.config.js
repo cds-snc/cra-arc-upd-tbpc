@@ -44,5 +44,16 @@ module.exports = composePlugins(withNx(), (config) => {
       'tslib',
       'zone.js',
     ],
+    module: {
+      rules: [
+        {
+          test: /\.node$/,
+          loader: 'node-loader',
+        },
+      ],
+    },
+    experiments: {
+      lazyCompilation: true,
+    },
   });
 });
