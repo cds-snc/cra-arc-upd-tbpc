@@ -4,34 +4,30 @@
       <upd-card [title]="'Average Task Success'">
         <div class="row">
           <div class="col-6">
-            <upd-card
+            <upd-apex-donut-task-success
               [title]="'Baseline'"
               [titleTooltip]="'tooltip-baseline-task-success'"
-            >
-              <upd-apex-donut-task-success
-                [successRate]="(baselineTestData$ | async)?.successRate"
-                [launchDate]="(baselineTestData$ | async)?.launchDate"
-              ></upd-apex-donut-task-success>
-            </upd-card>
+              [successRate]="(baselineTestData$ | async)?.successRate"
+              [launchDate]="(baselineTestData$ | async)?.launchDate"
+            ></upd-apex-donut-task-success>
           </div>
           <div class="col-6">
-            <upd-card
+            <upd-apex-donut-task-success
               [title]="'Validation'"
               [titleTooltip]="'tooltip-validation-task-success'"
-            >
-              <upd-apex-donut-task-success
-                [successRate]="(validationTestData$ | async)?.successRate"
-                [launchDate]="(validationTestData$ | async)?.launchDate"
-                [change]="taskSuccessChange$ | async"
-                [showChange]="true"
-              ></upd-apex-donut-task-success>
-            </upd-card>
+              [successRate]="(validationTestData$ | async)?.successRate"
+              [launchDate]="(validationTestData$ | async)?.launchDate"
+              [change]="taskSuccessChange$ | async"
+              [showChange]="true"
+            ></upd-apex-donut-task-success>
           </div>
         </div>
-        <div class="mt-3 d-flex align-items-center justify-content-start">
-          <span class="badge rounded-circle me-2" style="background-color: #FBC02D; width: 12px; height: 12px;">&nbsp;</span>
-          <small>{{ 'task-success-objective-legend' | translate }}</small>
-        </div>
+        <ng-container *ngIf="taskSuccessObjectiveStatus$ | async as status">
+          <div class="mt-3 d-flex align-items-center justify-content-start">
+            <span class="material-icons me-1" [ngClass]="objectiveStatusConfig[status].colourClass" style="font-size: 1.7em;">{{ objectiveStatusConfig[status].icon }}</span>
+            <small>{{ objectiveStatusConfig[status].messageKey | translate }}</small>
+          </div>
+        </ng-container>
       </upd-card>
     </div>
   </div>
@@ -84,7 +80,11 @@
   </div>
 </div>
 
-<upd-tasks-tested></upd-tasks-tested>
+<upd-tasks-tested
+  [tasksTestedData]="tasksTestedData$ | async"
+  [tasksTestedSummary]="tasksTestedSummary$ | async"
+  [langLink]="langLink"
+></upd-tasks-tested>
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">

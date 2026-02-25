@@ -69,6 +69,7 @@ import { PageFlowComponent } from './page-flow/page-flow.component';
 import { ArrowConnectComponent } from './arrow-connect/arrow-connect.component';
 import { PageVersionComponent } from './page-version/page-version.component';
 import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-donut-task-success.component';
+import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
 
 @NgModule({
   imports: [
@@ -143,10 +144,12 @@ import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-do
     ArrowConnectComponent,
     PageVersionComponent,
     ApexDonutTaskSuccessComponent,
+    TasksTestedComponent,
   ],
   exports: [
     NgbPopoverModule,
     NgbAlertModule,
+    NgbTooltipModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -198,6 +201,7 @@ import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-do
     ArrowConnectComponent,
     PageVersionComponent,
     ApexDonutTaskSuccessComponent,
+    TasksTestedComponent,
   ],
 })
 export class UpdComponentsModule {}

@@ -31,7 +31,6 @@ import { ProjectsDetailsEffects } from './project-details/+state/projects-detail
 import { ProjectsDetailsFacade } from './project-details/+state/projects-details.facade';
 import { ProjectDetailsDetailsComponent } from './project-details/project-details-details/project-details-details.component';
 import { ProjectDetailsUxTestsComponent } from './project-details/project-details-ux-tests/project-details-ux-tests.component';
-import { TasksTestedComponent } from './project-details/project-details-ux-tests/tasks-tested/tasks-tested.component';
 import { I18nModule } from '@dua-upd/upd/i18n';
 import { LocaleDatePipe, PipesModule } from '@dua-upd/upd/pipes';
 
@@ -62,7 +61,6 @@ import { LocaleDatePipe, PipesModule } from '@dua-upd/upd/pipes';
     ProjectDetailsUxTestsComponent,
     ProjectDetailsCalldriversComponent,
     ProjectDetailsDetailsComponent,
-    TasksTestedComponent,
   ],
   providers: [ProjectsHomeFacade, ProjectsDetailsFacade, ApiService, LocaleDatePipe],
 })

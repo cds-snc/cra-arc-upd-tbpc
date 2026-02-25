@@ -28,6 +28,8 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
 
   @ViewChild('chart', { static: true }) chart!: ChartComponent;
 
+  @Input() title = '';
+  @Input() titleTooltip = '';
   @Input() successRate: number | null | undefined = null;
   @Input() launchDate: Date | string | null | undefined = null;
   @Input() change: number | null | undefined = null;
@@ -41,7 +43,8 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
 
   get series(): ApexNonAxisChartSeries {
     const rate = this.successRate ?? 0;
-    return [rate * 100, 100 - rate * 100];
+    const success = Math.round(rate * 10000) / 100;
+    return [success, Math.round((100 - success) * 100) / 100];
   }
 
   get centerLabel(): string {
@@ -55,6 +58,10 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((lang) => {
         this.apexStore.setLocale(lang);
+        this.apexStore.setLabels([
+          this.i18n.service.translate('Success', lang),
+          this.i18n.service.translate('Remaining', lang),
+        ]);
       });
   }
 }

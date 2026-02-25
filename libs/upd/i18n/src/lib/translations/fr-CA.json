@@ -351,6 +351,8 @@
   "Task success rate (%)": "Taux de réussite des tâches (%)",
   "Task success": "Réussite de la tâche",
   "Task success change": "Changement dans la réussite de la tâche",
+  "Success": "Réussite",
+  "Remaining": "Restant",
   "nodata-pagefeedback": "Aucun commentaire/balise de commentaires de Page pour la plage de dates sélectionnée",
   "kpi-not-met": "N'a pas atteint l'objectif de 80 % de réussite de la tâche ou d'augmentation de 20 points",
   "kpi-half-met": "A atteint l'objectif d'augmentation de 20 points, mais n'a pas atteint 80 % de réussite à la tâche",

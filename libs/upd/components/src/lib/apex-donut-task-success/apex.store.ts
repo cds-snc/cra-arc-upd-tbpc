@@ -1,7 +1,14 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { I18nFacade } from '@dua-upd/upd/state';
-import type { ApexChart, ApexNonAxisChartSeries } from 'ng-apexcharts';
+import type {
+  ApexChart,
+  ApexDataLabels,
+  ApexLegend,
+  ApexNonAxisChartSeries,
+  ApexPlotOptions,
+  ApexStroke,
+  ApexTooltip,
+} from 'ng-apexcharts';
 import fr from 'apexcharts/dist/locales/fr.json';
 import en from 'apexcharts/dist/locales/en.json';
 import { EN_CA } from '@dua-upd/upd/i18n';
@@ -12,16 +19,15 @@ export interface ChartOptions {
   colors: string[];
   series: ApexNonAxisChartSeries;
   labels: string[];
-  plotOptions: any;
-  dataLabels: any;
-  legend: any;
-  stroke: any;
+  plotOptions: ApexPlotOptions;
+  dataLabels: ApexDataLabels;
+  legend: ApexLegend;
+  stroke: ApexStroke;
+  tooltip: ApexTooltip;
 }
 
 @Injectable()
 export class ApexStore extends ComponentStore<ChartOptions> {
-  private i18n = inject(I18nFacade);
-
   constructor() {
     super({
       chart: {
@@ -46,8 +52,16 @@ export class ApexStore extends ComponentStore<ChartOptions> {
       dataLabels: { enabled: false },
       legend: { show: false },
       stroke: { width: 0 },
+      tooltip: { enabledOnSeries: [0] },
     });
   }
+
+  readonly setLabels = this.updater(
+    (state, value: string[]): ChartOptions => ({
+      ...state,
+      labels: value ? value : [],
+    }),
+  );
 
   readonly setColours = this.updater(
     (state, value: string[]): ChartOptions => ({

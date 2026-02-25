@@ -455,6 +455,20 @@ margin: 0px 20px 0px 20px;
   text-align: left;
 }
 
+.chart-tooltip .tooltip-inner {
+  background-color: #fff;
+  color: #373d3f;
+  border: 1px solid #e3e3e3;
+  text-align: left;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 0.75rem;
+  max-width: 280px;
+}
+
+.chart-tooltip .tooltip-arrow::before {
+  border-top-color: #e3e3e3;
+}
+
 .datatable-headers {
   color: #000 !important;
   /* font-weight: 600; */

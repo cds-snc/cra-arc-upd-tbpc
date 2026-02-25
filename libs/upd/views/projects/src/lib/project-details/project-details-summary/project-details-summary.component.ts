@@ -85,6 +85,14 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   };
 
 
+  taskSuccessObjectiveStatus$ = this.projectsDetailsService.taskSuccessObjectiveStatus$;
+
+  objectiveStatusConfig: Record<string, { icon: string; colourClass: string; messageKey: string }> = {
+    pass: { icon: 'check_circle', colourClass: 'text-success', messageKey: 'kpi-met' },
+    partial: { icon: 'check_circle', colourClass: 'text-semisuccess', messageKey: 'kpi-half-met' },
+    fail: { icon: 'warning', colourClass: 'text-danger', messageKey: 'kpi-not-met' },
+  };
+
   description$ = this.projectsDetailsService.description$;
 
   startDate$ = this.projectsDetailsService.startDate$;

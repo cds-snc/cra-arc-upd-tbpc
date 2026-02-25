@@ -1119,6 +1119,27 @@ export class ProjectsDetailsFacade {
     }),
   );
 
+  taskSuccessObjectiveStatus$ = combineLatest([
+    this.baselineTestData$,
+    this.validationTestData$,
+  ]).pipe(
+    map(([baseline, validation]) => {
+      if (!validation) return null;
+
+      const validationRate = validation.successRate;
+      const baselineRate = baseline?.successRate ?? 0;
+      const pointIncrease = validationRate - baselineRate;
+
+      if (validationRate >= 0.8) {
+        return 'pass' as const;
+      } else if (pointIncrease >= 0.2) {
+        return 'partial' as const;
+      } else {
+        return 'fail' as const;
+      }
+    }),
+  );
+
   documents$ = this.projectsDetailsData$.pipe(
     map((data) =>
       data?.attachments.map((attachment) => ({

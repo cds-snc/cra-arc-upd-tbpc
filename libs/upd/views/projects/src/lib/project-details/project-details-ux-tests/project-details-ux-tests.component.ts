@@ -45,6 +45,14 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
   validationTestData$ = this.projectsDetailsService.validationTestData$;
   taskSuccessChange$ = this.projectsDetailsService.taskSuccessChange$;
 
+  taskSuccessObjectiveStatus$ = this.projectsDetailsService.taskSuccessObjectiveStatus$;
+
+  objectiveStatusConfig: Record<string, { icon: string; colourClass: string; messageKey: string }> = {
+    pass: { icon: 'check_circle', colourClass: 'text-success', messageKey: 'kpi-met' },
+    partial: { icon: 'check_circle', colourClass: 'text-semisuccess', messageKey: 'kpi-half-met' },
+    fail: { icon: 'warning', colourClass: 'text-danger', messageKey: 'kpi-not-met' },
+  };
+
   documents$ = this.projectsDetailsService.documents$;
 
   apexTaskSuccessByUxTest$ =
@@ -71,6 +79,9 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
   taskSuccessByUxTestKpi$ = this.projectsDetailsService.taskSuccessByUxTestKpi$;
 
   totalParticipants$ = this.projectsDetailsService.totalParticipants$;
+
+  tasksTestedData$ = this.projectsDetailsService.tasksTestedData$;
+  tasksTestedSummary$ = this.projectsDetailsService.tasksTestedSummary$;
 
   documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
 

@@ -351,6 +351,8 @@
   "Task success rate (%)": "Task success rate (%)",
   "Task success": "Task success",
   "Task success change": "Change in task success",
+  "Success": "Success",
+  "Remaining": "Remaining",
   "nodata-pagefeedback": "No Page feedback comments/tags for selected date range",
   "kpi-not-met": "Did not meet objective of 80% task success or 20 point increase",
   "kpi-half-met": "Met objective of 20 point increase but did not meet 80% task success",
