@@ -132,18 +132,12 @@ export class ProjectsDetailsFacade {
     }),
   );
 
-  taskSuccessChange$ = combineLatest([
-    this.baselineTestData$,
-    this.validationTestData$,
-  ]).pipe(
-    map(([baseline, validation]) => {
-      if (baseline?.successRate == null || validation?.successRate == null)
-        return null;
-      const change = Math.round(
-        (validation.successRate - baseline.successRate) * 100,
-      );
-      // Don't return 0 change - only show when there's actual improvement/decline
-      return change !== 0 ? change : null;
+  taskSuccessChange$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const pctChange = data?.avgSuccessPercentChange;
+      if (pctChange == null) return null;
+      const rounded = Math.round(pctChange * 100);
+      return rounded !== 0 ? rounded : null;
     }),
   );
 
@@ -1120,19 +1114,15 @@ export class ProjectsDetailsFacade {
   );
 
   taskSuccessObjectiveStatus$ = combineLatest([
-    this.baselineTestData$,
-    this.validationTestData$,
+    this.avgTaskSuccessFromLastTest$,
+    this.avgSuccessPercentChange$,
   ]).pipe(
-    map(([baseline, validation]) => {
-      if (!validation) return null;
+    map(([current, comparison]) => {
+      if (current == null) return null;
 
-      const validationRate = validation.successRate;
-      const baselineRate = baseline?.successRate ?? 0;
-      const pointIncrease = validationRate - baselineRate;
-
-      if (validationRate >= 0.8) {
+      if (current >= 0.8) {
         return 'pass' as const;
-      } else if (pointIncrease >= 0.2) {
+      } else if ((comparison || 0) >= 0.2) {
         return 'partial' as const;
       } else {
         return 'fail' as const;
