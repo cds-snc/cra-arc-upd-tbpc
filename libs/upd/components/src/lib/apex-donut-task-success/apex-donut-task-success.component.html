@@ -1,7 +1,7 @@
 <upd-card [title]="title" [titleTooltip]="titleTooltip" [h]="100">
   <div class="task-success-donut">
     <div class="donut-container">
-      <ng-container *ngIf="successRate; else noData">
+      <ng-container *ngIf="successRate != null; else noData">
         <div *ngIf="vm$ | async as vm">
           <apx-chart
             #chart
@@ -19,7 +19,7 @@
         <div class="center-label">
           <span class="percentage">{{ centerLabel }}</span>
           <span
-            *ngIf="showChange && change != null"
+            *ngIf="showChange && change != null && change !== 0"
             class="change"
             [class.text-success]="change > 0"
             [class.text-danger]="change < 0"

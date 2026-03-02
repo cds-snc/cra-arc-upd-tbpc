@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 import { globalColours } from '@dua-upd/utils-common';
 
 export interface TaskTestedData {
@@ -30,6 +30,7 @@ export interface TasksTestedSummary {
   templateUrl: './tasks-tested.component.html',
   styleUrls: ['./tasks-tested.component.css'],
   standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TasksTestedComponent {
   @Input() set tasksTestedData(value: TaskTestedData[] | null | undefined) {
