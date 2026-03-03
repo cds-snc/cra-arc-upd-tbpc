@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.3...v4.3.4) (2026-03-03)
+
+
+### Bug Fixes
+
+* update SBOM version ([c6b0272](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c6b0272768a28a8d5b5d6b97c6f8120369a106c3))
+* update SBOM version ([cbf2aca](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/cbf2acacd3777cb217af9c0925792809710c7684))
+
 ## [4.3.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.2...v4.3.3) (2026-02-24)
 
 
