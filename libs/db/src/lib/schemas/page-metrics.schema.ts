@@ -1,5 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { type Document, Types, type FilterQuery } from 'mongoose';
+import {
+  type Document,
+  Types,
+  type QueryFilter,
+  type PipelineStage,
+} from 'mongoose';
 import type {
   AASearchTermMetrics,
   AccumulatorOperator,
@@ -19,7 +24,6 @@ import {
   percentChange,
 } from '@dua-upd/utils-common';
 import type { Page } from './page.schema';
-import type { PageMetricsTS } from './page-metrics-ts.schema';
 import { MetricsCommon } from './metrics-common.schema';
 
 export type PageMetricsDocument = PageMetrics & Document;
@@ -100,7 +104,7 @@ export async function getAggregatedPageMetrics<T>(
   this: PageMetricsModel,
   dateRange: string,
   selectedMetrics: (keyof T | MetricsConfig<T>)[],
-  pagesFilter?: FilterQuery<PageMetrics>,
+  pagesFilter?: QueryFilter<PageMetrics>,
   sortConfig?: { [key in keyof Partial<T>]: 1 | -1 },
 ): Promise<T[]> {
   const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
@@ -127,7 +131,7 @@ export async function getAggregatedPageMetrics<T>(
       metricsSort[metricName] = -1;
     }
   }
-  const pagesFilterQuery = pagesFilter || {};
+  const pagesQueryFilter: QueryFilter<PageMetrics> = pagesFilter || {};
 
   return await this.aggregate<T>()
     .match({
@@ -136,8 +140,8 @@ export async function getAggregatedPageMetrics<T>(
         $lte: endDate,
       },
       page: { $exists: true },
-      ...pagesFilterQuery,
-    })
+      ...pagesQueryFilter,
+    } as PipelineStage.Match['$match'])
     .project({
       page: 1,
       date: 1,
@@ -338,7 +342,7 @@ export async function getAggregatedMetrics(
 ): Promise<AggregatedMetricsType | null> {
   const [startDate, endDate] = dateRangeSplit(dateRange);
 
-  const matchFilter: FilterQuery<PageMetrics> = {
+  const matchFilter: QueryFilter<PageMetrics> = {
     date: {
       $gte: startDate,
       $lte: endDate,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 // need mongo import or TS will complain about missing types
-import { Types, type FilterQuery, type ProjectionType } from 'mongoose';
+import { Types, type QueryFilter, type ProjectionType, type PipelineStage } from 'mongoose';
 import { omit } from 'rambdax';
 import { DbService, Feedback } from '@dua-upd/db';
 import {
@@ -8,14 +8,12 @@ import {
   arrayToDictionary,
   arrayToDictionaryMultiref,
 } from '@dua-upd/utils-common';
+import { FeedbackCache } from './feedback.cache';
 import type {
   CommentsAndWordsByLang,
   DateRange,
   FeedbackBase,
   FeedbackWithScores,
-} from '@dua-upd/types-common';
-import { FeedbackCache } from './feedback.cache';
-import type {
   IFeedback,
   MostRelevantCommentsAndWords,
   MostRelevantCommentsAndWordsByLang,
@@ -85,13 +83,13 @@ export class FeedbackService {
   ): Promise<MostRelevantCommentsAndWords> {
     const filterQuery = paramsToQuery(params);
 
-    const wordsFilterQuery = {
+    const wordsQueryFilter = {
       ...filterQuery,
       words: { $exists: true },
     };
 
     const projection = Object.fromEntries([
-      ...Object.keys(wordsFilterQuery).map((key) => [key, 1]),
+      ...Object.keys(wordsQueryFilter).map((key) => [key, 1]),
     ]);
 
     if (params.ipd) {
@@ -101,7 +99,7 @@ export class FeedbackService {
     const wordResultsAggregation = this.db.collections.feedback
       .aggregate<{ avgWords: number; totalWords: number }>()
       .project(projection)
-      .match(wordsFilterQuery);
+      .match(wordsQueryFilter as PipelineStage.Match['$match']);
 
     const wordResultsIntermediate = params.ipd
       ? wordResultsAggregation
@@ -248,7 +246,7 @@ export class FeedbackService {
   }
 
   async calculateWordScores(
-    filterQuery: FilterQuery<Feedback>,
+    filterQuery: QueryFilter<Feedback>,
     totalWords: number,
     ipd?: boolean,
   ) {
@@ -281,7 +279,7 @@ export class FeedbackService {
     //   : (await this.db.collections.feedback.distinct('url', filterQuery))
     //       .length;
 
-    const wordsFilterQuery = {
+    const wordsQueryFilter = {
       ...filterQuery,
       words: { $exists: true },
     };
@@ -297,7 +295,7 @@ export class FeedbackService {
     const aggregationBase = this.db.collections.feedback
       .aggregate<WordRelevance>()
       .project(projection)
-      .match(wordsFilterQuery);
+      .match(wordsQueryFilter);
 
     const aggregationIntermediate = ipd
       ? aggregationBase
@@ -661,13 +659,13 @@ export class FeedbackService {
   async getWordCounts(params: FeedbackParams) {
     const filterQuery = paramsToQuery(params);
 
-    const wordsFilterQuery = {
+    const wordsQueryFilter = {
       ...filterQuery,
       words: { $exists: true },
     };
 
     const projection = Object.fromEntries([
-      ...Object.keys(wordsFilterQuery).map((key) => [key, 1]),
+      ...Object.keys(wordsQueryFilter).map((key) => [key, 1]),
     ]);
 
     const wordsResults = await this.db.collections.feedback
@@ -677,7 +675,7 @@ export class FeedbackService {
         comment_occurrences: number;
       }>()
       .project(projection)
-      .match(wordsFilterQuery)
+      .match(wordsQueryFilter as PipelineStage.Match['$match'])
       .unwind('words')
       .group({
         _id: '$words',
@@ -706,7 +704,7 @@ export class FeedbackService {
 }
 
 function paramsToQuery(params: FeedbackParams | RelevanceScoreParams) {
-  const query: FilterQuery<Feedback> = {
+  const query: QueryFilter<Feedback> = {
     date: {
       $gte: params.dateRange.start,
       $lte: params.dateRange.end,

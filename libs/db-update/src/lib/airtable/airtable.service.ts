@@ -4,8 +4,9 @@ import { Types } from 'mongoose';
 import type {
   AnyBulkWriteOperation,
   Document,
-  FilterQuery,
+  QueryFilter,
   Model,
+  mongo,
 } from 'mongoose';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import {
@@ -148,7 +149,7 @@ export class AirtableService {
 
     const airtableFilter = { airtable_id: { $in: airtableIds } };
 
-    const urlFilter: FilterQuery<Page> = {};
+    const urlFilter: QueryFilter<Page> = {};
 
     if (model.modelName === 'Page') {
       assertHasUrl(data);
@@ -473,7 +474,7 @@ export class AirtableService {
             airtable_id: page.airtable_id,
             lang: page.url
               .match(/(?<=www\.canada\.ca\/)(?:en|fr)/i)?.[0]
-              ?.toLowerCase(),
+              ?.toLowerCase() as 'en' | 'fr' | undefined,
             tasks: page.tasks || [],
             projects: page.projects || [],
             ux_tests: page.ux_tests || [],
@@ -493,7 +494,7 @@ export class AirtableService {
       this.logger.log(`${removedPages.length} Pages removed from airtable:`);
 
       const removedPagesData = await this.pageModel
-        .find({ _id: { $in: removedPages } }, { url: 1 })
+        .find({ _id: { $in: removedPages.map(({ _id }) => _id) } }, { url: 1 })
         .lean()
         .exec();
 
@@ -738,7 +739,7 @@ export class AirtableService {
     this.logger.log('Successfully updated Airtable data');
   }
 
-  async updatePagesList() {
+  async updatePagesList(): Promise<mongo.BulkWriteResult | undefined> {
     this.logger.log('Updating Published Pages list from Airtable');
     const currentPagesList =
       (await this.pageListModel.find().sort({ updatedAt: -1 }).lean().exec()) ||

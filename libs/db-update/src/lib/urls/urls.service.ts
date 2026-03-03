@@ -2,7 +2,7 @@ import os from 'node:os';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import * as cheerio from 'cheerio/slim';
 import { minify } from 'html-minifier-terser';
-import { type FilterQuery, Types, type AnyBulkWriteOperation } from 'mongoose';
+import { type QueryFilter, Types, type AnyBulkWriteOperation } from 'mongoose';
 import { omit, pick, pipe } from 'rambdax';
 import {
   BlobStorageService,
@@ -43,7 +43,7 @@ export type UpdateUrlsOptions = {
   urls?: {
     check404s?: boolean;
     checkAll?: boolean;
-    filter?: FilterQuery<Page>;
+    filter?: QueryFilter<Page>;
   };
 };
 

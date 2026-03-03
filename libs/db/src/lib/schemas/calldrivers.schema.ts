@@ -5,7 +5,7 @@ import {
   Types,
   type Model,
   type mongo,
-  type FilterQuery,
+  type QueryFilter,
   type AnyBulkWriteOperation,
 } from 'mongoose';
 import type {
@@ -131,7 +131,7 @@ export class CallDriver implements ICallDriver {
         ? dateRangeSplit(dateRange)
         : [dateRange.start, dateRange.end];
 
-    const matchFilter: FilterQuery<CallDriver> = {
+    const matchFilter: QueryFilter<CallDriver> = {
       date: { $gte: startDate, $lte: endDate },
       ...(idFilter || {}),
     };
@@ -201,7 +201,7 @@ export class CallDriver implements ICallDriver {
       ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
       : {};
 
-    const matchFilter: FilterQuery<CallDriver> = {
+    const matchFilter: QueryFilter<CallDriver> = {
       date: { $gte: startDate, $lte: endDate },
       ...(idFilter || {}),
     };

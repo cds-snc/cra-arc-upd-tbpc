@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import type { DateRange } from './date.types';
 import type { PageStatus } from './data.types';
 

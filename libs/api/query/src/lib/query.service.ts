@@ -1,6 +1,6 @@
 import { DbService } from '@dua-upd/db';
 import { Injectable } from '@nestjs/common';
-import { Model, Types, isValidObjectId, type FilterQuery } from 'mongoose';
+import { Model, Types, isValidObjectId, type QueryFilter } from 'mongoose';
 import type {
   CustomReportsFeedback,
   DbQuery,
@@ -57,7 +57,7 @@ export class QueryService {
 
       if (collection === 'feedback') {
         type FeedbackFilter = Omit<
-          FilterQuery<IFeedback>,
+          QueryFilter<IFeedback>,
           'page' | 'tasks' | 'projects'
         > & {
           page?: string[] | string;
@@ -111,7 +111,7 @@ export class QueryService {
         const restFilter = omit(['page', 'tasks', 'projects'], feedbackFilter);
 
         const queryFilter: Omit<
-          FilterQuery<IFeedback>,
+          QueryFilter<IFeedback>,
           'page' | 'tasks' | 'projects'
         > & {
           page?: PropertyFilter;

@@ -1,5 +1,5 @@
-import { AADimensionId } from './adobe-analytics.dimensions';
-import { AAMetricId, CalculatedMetricId } from './adobe-analytics.metrics';
+import type { AADimensionId } from './adobe-analytics.dimensions';
+import type { AAMetricId, CalculatedMetricId } from './adobe-analytics.metrics';
 import type { AAQueryDateEnd, AAQueryDateStart } from './date.types';
 
 export * from './adobe-analytics.dimensions';

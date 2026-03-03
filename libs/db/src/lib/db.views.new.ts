@@ -4,7 +4,7 @@ import { batchAwait, createUpdateQueue, days } from '@dua-upd/utils-common';
 import type {
   AggregateOptions,
   AnyBulkWriteOperation,
-  FilterQuery,
+  QueryFilter,
   Model,
   mongo,
   MongooseBulkWriteOptions,
@@ -12,6 +12,7 @@ import type {
   QueryOptions,
   Schema,
   UpdateOneModel,
+  PipelineStage,
 } from 'mongoose';
 import { DateRange } from '@dua-upd/types-common';
 import { ViewDataService } from './views/view.data.service';
@@ -94,7 +95,7 @@ export abstract class DbViewNew<
    * @param filter The Filter to use for refreshing only a subset of the data.
    */
   abstract prepareRefreshContext(
-    filter: FilterQuery<DocT<SchemaT>> & {
+    filter: QueryFilter<DocT<SchemaT>> & {
       dateRange?: { start: Date; end: Date };
     },
   ): Promise<{ baseDocs: BaseDoc[]; ctx?: RefreshContext }>;
@@ -135,10 +136,10 @@ export abstract class DbViewNew<
             }
 
             if (Array.isArray(writeOps)) {
-              return Promise.all(writeOps.map((op) => bulkWriteQueue.add(op)));
+              return Promise.all(writeOps.map((op) => bulkWriteQueue.add(op as AnyBulkWriteOperation)));
             }
 
-            return bulkWriteQueue.add(writeOps);
+            return bulkWriteQueue.add(writeOps as AnyBulkWriteOperation);
           } catch (e) {
             console.error(
               `An error occurred while refreshing the following document in ${this.name}:`,
@@ -191,7 +192,7 @@ export abstract class DbViewNew<
    *
    * ** **Passing a filter without a valid dateRange will not refresh any data** **
    */
-  async refreshIfStale(filter: FilterQuery<DocT<SchemaT>>) {
+  async refreshIfStale(filter: QueryFilter<DocT<SchemaT>>) {
     if (filter.dateRange) {
       await this.dataService.ensureData(filter.dateRange);
     }
@@ -202,14 +203,14 @@ export abstract class DbViewNew<
    * and refreshes it if necessary.
    *
    * **Note** — Top-level MongoDB operators like `$or` and `$and` are not passed on to the `refresh` method.
-   * @param filter Model.find FilterQuery
+   * @param filter Model.find QueryFilter
    * @param projection Model.find ProjectionType
    * @param options Model.find QueryOptions
    * @param silenceWarning Whether to silence the warning about top-level MongoDB operators
    * @returns
    */
   async find<ReturnT = DocT<SchemaT>>(
-    filter?: FilterQuery<DocT<SchemaT>>,
+    filter?: QueryFilter<DocT<SchemaT>>,
     projection: ProjectionType<DocT<SchemaT>> = {},
     options: QueryOptions<DocT<SchemaT>> = {},
     silenceWarning = false,
@@ -230,7 +231,7 @@ export abstract class DbViewNew<
     if (process.env.AUTO_REFRESH_VIEWS) {
       const refreshFilter = pick(this.refreshFilterProps, filter);
 
-      await this.refreshIfStale(refreshFilter as FilterQuery<DocT<SchemaT>>);
+      await this.refreshIfStale(refreshFilter as QueryFilter<DocT<SchemaT>>);
     }
 
     return this._model
@@ -244,14 +245,14 @@ export abstract class DbViewNew<
    * and refreshes it if necessary.
    *
    * **Note** — Top-level MongoDB operators like `$or` and `$and` are not passed on to the `refresh` method.
-   * @param filter Model.findOne FilterQuery
+   * @param filter Model.findOne QueryFilter
    * @param projection Model.findOne ProjectionType
    * @param options Model.findOne QueryOptions
    * @param silenceWarning Whether to silence the warning about top-level MongoDB operators
    * @returns
    */
   async findOne<ReturnT = DocT<SchemaT>>(
-    filter: FilterQuery<DocT<SchemaT>>,
+    filter: QueryFilter<DocT<SchemaT>>,
     projection: ProjectionType<DocT<SchemaT>> = {},
     options: QueryOptions<DocT<SchemaT>> = {},
     silenceWarning = false,
@@ -288,15 +289,15 @@ export abstract class DbViewNew<
    * Note that the signature is slightly different from the original method, where in this case,
    * the `filter` parameter is required and automatically passed to the `match` stage of the pipeline.
    */
-  aggregate<T>(filter: FilterQuery<DocT<SchemaT>>, options?: AggregateOptions) {
+  aggregate<T>(filter: QueryFilter<DocT<SchemaT>>, options?: AggregateOptions) {
     const refreshFilter = pick(this.refreshFilterProps, filter);
 
-    return new Proxy(this._model.aggregate<T>([], options).match(filter), {
+    return new Proxy(this._model.aggregate<T>([], options).match(filter as PipelineStage.Match['$match']), {
       get: (target, prop) => {
         if (process.env.AUTO_REFRESH_VIEWS && prop === 'exec') {
           return async () => {
             await this.refreshIfStale(
-              refreshFilter as FilterQuery<DocT<SchemaT>>,
+              refreshFilter as QueryFilter<DocT<SchemaT>>,
             );
             return target.exec();
           };

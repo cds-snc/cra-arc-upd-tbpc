@@ -2,7 +2,12 @@
 import chalk from 'chalk';
 import { existsSync, mkdir } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
-import { Types, type AnyBulkWriteOperation, type mongo } from 'mongoose';
+import {
+  Types,
+  type AnyBulkWriteOperation,
+  type mongo,
+  type ProjectionType,
+} from 'mongoose';
 import { difference, filterObject, omit, uniq } from 'rambdax';
 import { utils, writeFile as writeXlsx } from 'xlsx';
 import {
@@ -12,6 +17,7 @@ import {
   PageMetrics,
   PagesList,
   Readability,
+  type Feedback,
 } from '@dua-upd/db';
 import { DbUpdateService, processHtml, UrlsService } from '@dua-upd/db-update';
 import {
@@ -106,7 +112,7 @@ export async function syncRemoteHtmlParquet() {
 // Run on remote
 export async function manualParquetSyncStep1() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(UrlsService);
-  
+
   await urlsService.getAndUploadDbHashes();
 }
 
@@ -1130,20 +1136,17 @@ export async function importGcTss() {
 export async function populateFeedbackWords(db: DbService) {
   console.time('Fetching feedback from db');
   const feedback = await db.collections.feedback
-    .find(
-      {},
-      {
-        lang: 1,
-        comment: 1,
-        words: {
-          $cond: [
-            { $ne: [{ $type: '$words' }, 'missing'] },
-            { $size: '$words' },
-            undefined,
-          ],
-        },
+    .find({}, {
+      lang: 1,
+      comment: 1,
+      words: {
+        $cond: [
+          { $ne: [{ $type: '$words' }, 'missing'] },
+          { $size: '$words' },
+          undefined,
+        ],
       },
-    )
+    } as unknown as ProjectionType<Feedback>) // mongoose typings get confused
     .lean()
     .exec();
   console.timeEnd('Fetching feedback from db');

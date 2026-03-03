@@ -3,10 +3,10 @@ import {
   type IFeedback,
   type WordRelevance,
 } from '@dua-upd/types-common';
-import { FilterQuery } from 'mongoose';
+import { QueryFilter } from 'mongoose';
 import { DbService } from '@dua-upd/db';
 
-type FeedbackQuery = FilterQuery<IFeedback>;
+type FeedbackQuery = QueryFilter<IFeedback>;
 type PageOrProjectOrTaskFilter =
   | { page: FeedbackQuery['page'] }
   | { projects: FeedbackQuery['projects'] }

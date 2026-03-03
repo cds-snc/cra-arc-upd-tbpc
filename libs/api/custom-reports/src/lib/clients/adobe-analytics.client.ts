@@ -1,4 +1,3 @@
-import type { AnalyticsCoreAPI } from '@adobe/aio-lib-analytics';
 import {
   days,
   wait,
@@ -7,6 +6,7 @@ import {
   withRetry,
 } from '@dua-upd/utils-common';
 import type {
+  AnalyticsCoreAPI,
   AuthParams,
   AAMaybeResponse,
   AAResponseBody,

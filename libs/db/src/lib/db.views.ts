@@ -1,4 +1,4 @@
-import { Model, mongo, PipelineStage, Schema, Types } from 'mongoose';
+import { Model, mongo, PipelineStage, Schema, Types, type ProjectionType } from 'mongoose';
 import dayjs, { ManipulateType } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {
@@ -201,7 +201,7 @@ export class PageVisitsView
 
     const visitsDictionary = arrayToDictionary(visits, '_id');
 
-    const pagesProjection = {
+    const pagesProjection: ProjectionType<Page> = {
       url: 1,
       title: 1,
       tasks: 1,
@@ -209,7 +209,7 @@ export class PageVisitsView
       ux_tests: 1,
       is_404: {
         $toBool: '$is_404',
-      },
+      } as unknown as boolean, // force cast to boolean for mongoose projection typing
       redirect: 1,
       is_redirect: {
         $toBool: '$redirect',

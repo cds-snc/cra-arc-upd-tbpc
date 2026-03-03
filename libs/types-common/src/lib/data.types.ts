@@ -1,6 +1,6 @@
-import {
-  type FilterQuery,
-  type ProjectionType,
+import type {
+  QueryFilter,
+  ProjectionType,
   Types,
   SortOrder,
 } from 'mongoose';
@@ -668,7 +668,7 @@ export type SortOption<T> = {
 export type DbQuery = {
   [key: string]: {
     collection: CollectionKeys;
-    filter: FilterQuery<unknown>;
+    filter: QueryFilter<unknown>;
     project?: ProjectionType<unknown>;
     sort?: SortOption<unknown>;
   };

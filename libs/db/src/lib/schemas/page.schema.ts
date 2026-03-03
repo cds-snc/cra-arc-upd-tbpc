@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 // need mongo import or TS will complain about missing types
-import type { Document, FilterQuery, mongo } from 'mongoose';
+import type { Document, QueryFilter, mongo } from 'mongoose';
 import { Schema as MSchema, Types } from 'mongoose';
 import type { IProject, ITask, IUxTest } from '@dua-upd/types-common';
 import {
@@ -152,7 +152,7 @@ export type MergePagesOptions<T, PageProjection extends object = Page> = {
   dataJoinProp: KeysOfType<PageProjection, string>;
   pagesJoinProp: KeysOfType<PageProjection, string>;
   projection?: { [key in keyof Page]?: 0 | 1 };
-  filter?: FilterQuery<Page>;
+  filter?: QueryFilter<Page>;
   defaultValues?: Omit<T, keyof PageProjection>;
   returnAsPairs?: true;
   // Don't include pages with no results

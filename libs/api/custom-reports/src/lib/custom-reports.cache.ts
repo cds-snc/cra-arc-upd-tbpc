@@ -19,20 +19,24 @@ export class CustomReportsCache {
   }
 
   async setReport(reportId: string, report: Report) {
-    return this.cache.store.set(
+    return this.cache.set(
       `report:${reportId}`,
       await compressString(JSON.stringify(report)),
     );
   }
 
   async getDataPoints(dataPointHashes: string[]) {
-    return (await this.cache.store.mget(...dataPointHashes)) as Record<
+    return (await this.cache.mget(dataPointHashes)) as Record<
       string,
       ReportDataPoint
     >[];
   }
 
   async setDataPoints(dataPoints: Record<string, ReportDataPoint>) {
-    return await this.cache.store.mset(Object.entries(dataPoints), 60 * 60 * 3); // 3 hours
+    return await this.cache.mset(Object.entries(dataPoints).map(([key, value]) => ({
+      key,
+      value,
+      ttl: 60 * 60 * 3, // 3 hours
+    })));
   }
 }

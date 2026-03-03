@@ -1,6 +1,6 @@
 import {
   type AggregateOptions,
-  type FilterQuery,
+  type QueryFilter,
   type mongo,
   type ProjectionType,
   type QueryOptions,
@@ -90,7 +90,7 @@ export class PagesViewService extends DbViewNew<
 
   // probably just need to adjust this to use the tasks/projects filters if they exist
   async prepareRefreshContext(
-    filter: FilterQuery<PagesView> & {
+    filter: QueryFilter<PagesView> & {
       dateRange: { start: Date; end: Date };
       page?: Types.ObjectId;
       tasks?: Types.ObjectId[];
@@ -393,7 +393,7 @@ export class PagesViewService extends DbViewNew<
 
   // overriding inherited methods for cleaner types
   override async find<ReturnT = PagesView>(
-    filter: FilterQuery<PagesView>,
+    filter: QueryFilter<PagesView>,
     projection?: ProjectionType<PagesView>,
     options?: QueryOptions<PagesView>,
   ): Promise<ReturnT[] | null> {
@@ -401,7 +401,7 @@ export class PagesViewService extends DbViewNew<
   }
 
   override async findOne<ReturnT = PagesView>(
-    filter: FilterQuery<PagesView>,
+    filter: QueryFilter<PagesView>,
     projection?: ProjectionType<PagesView>,
     options?: QueryOptions<PagesView>,
   ): Promise<ReturnT | null> {
@@ -409,7 +409,7 @@ export class PagesViewService extends DbViewNew<
   }
 
   override aggregate<T>(
-    filter: FilterQuery<PagesView>,
+    filter: QueryFilter<PagesView>,
     options?: AggregateOptions,
   ) {
     return super.aggregate<T>(filter, options);
