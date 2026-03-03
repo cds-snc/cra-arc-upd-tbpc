@@ -87,7 +87,7 @@ export class PagesService {
   async getPagesHomeData(dateRange: string): Promise<PagesHomeData> {
     const cacheKey = `getPagesHomeData-${dateRange}`;
 
-    const cachedData = await this.cacheManager.store.get<string>(cacheKey).then(
+    const cachedData = await this.cacheManager.get<string>(cacheKey).then(
       async (cachedData) =>
         cachedData &&
         // it's actually still a string here, but we want to avoid deserializing it
@@ -162,7 +162,7 @@ export class PagesService {
     }
     const cacheKey = `getPageDetails-${params.id}-${params.dateRange}-${params.comparisonDateRange}`;
     const cachedData =
-      await this.cacheManager.store.get<PageDetailsData>(cacheKey);
+      await this.cacheManager.get<PageDetailsData>(cacheKey);
 
     if (cachedData) {
       return cachedData;

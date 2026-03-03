@@ -6,7 +6,12 @@ import type {
 } from '@dua-upd/types-common';
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
+import {
+  type Model,
+  Types,
+  type AnyBulkWriteOperation,
+  type mongo,
+} from 'mongoose';
 import { DbService, Overall, Page, PageMetrics, PagesList } from '@dua-upd/db';
 import type {
   OverallDocument,
@@ -320,7 +325,7 @@ export class DbUpdateService {
     this.logger.log(`Successfully synced ${syncResult} feedback references. `);
   }
 
-  async upsertPageMetrics(pageMetrics: PageMetrics[]) {
+  async upsertPageMetrics(pageMetrics: PageMetrics[]): Promise<mongo.BulkWriteResult> {
     const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     for (const pageMetric of pageMetrics) {
@@ -399,7 +404,7 @@ export class DbUpdateService {
     await this.overallMetricsModel.bulkWrite(bulkWriteOps);
   }
 
-  async upsertGscPageMetrics(dates: Date[]) {
+  async upsertGscPageMetrics(dates: Date[]): Promise<mongo.BulkWriteResult> {
     const bulkWriteOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     const results = (
@@ -429,7 +434,7 @@ export class DbUpdateService {
     return await this.feedbackService.repopulateFeedback();
   }
 
-  async addSectionsFromPagesList() {
+  async addSectionsFromPagesList(): Promise<mongo.BulkWriteResult | undefined> {
     this.logger.log('Adding sections from Published Pages list...');
 
     try {

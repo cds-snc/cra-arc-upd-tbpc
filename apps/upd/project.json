@@ -50,7 +50,9 @@
             "core-js",
             "html2canvas",
             "canvg",
-            "dompurify"
+            "dompurify",
+            "@mongodb-js/zstd",
+            "mongoose"
           ]
         },
         "development": {
@@ -66,7 +68,15 @@
           "vendorChunk": true,
           "verbose": false,
           "buildLibsFromSource": true,
-          "serviceWorker": false
+          "serviceWorker": false,
+          "externalDependencies": [
+            "core-js",
+            "html2canvas",
+            "canvg",
+            "dompurify",
+            "@mongodb-js/zstd",
+            "mongoose"
+          ]
         }
       },
       "defaultConfiguration": "production"

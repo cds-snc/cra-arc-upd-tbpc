@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import type {
   AnyBulkWriteOperation,
   Document,
-  FilterQuery,
+  QueryFilter,
   Model,
 } from 'mongoose';
 import { Types } from 'mongoose';
@@ -161,7 +161,7 @@ export class Feedback implements IFeedback {
       ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
       : {};
 
-    const matchFilter: FilterQuery<Feedback> = {
+    const matchFilter: QueryFilter<Feedback> = {
       date: {
         $gte: startDate,
         $lte: endDate,
@@ -244,7 +244,7 @@ export class Feedback implements IFeedback {
       ? Object.fromEntries(Object.keys(idFilter).map((key) => [key, 1]))
       : {};
 
-    const matchFilter: FilterQuery<Feedback> = {
+    const matchFilter: QueryFilter<Feedback> = {
       date: {
         $gte: startDate,
         $lte: endDate,
@@ -282,12 +282,12 @@ export class Feedback implements IFeedback {
 
   static async calculateWordScores(
     this: FeedbackModel,
-    filterQuery: FilterQuery<Feedback>,
+    filterQuery: QueryFilter<Feedback>,
     totalWords: number,
   ) {
     const totalComments = await this.countDocuments(filterQuery);
 
-    const wordsFilterQuery = {
+    const wordsQueryFilter = {
       ...filterQuery,
       words: { $exists: true },
     };
@@ -300,7 +300,7 @@ export class Feedback implements IFeedback {
 
     return this.aggregate<WordRelevance>()
       .project(projection)
-      .match(wordsFilterQuery)
+      .match(wordsQueryFilter)
       .unwind('words')
       .group({
         _id: '$words',
@@ -415,7 +415,7 @@ export class Feedback implements IFeedback {
           }
         : {};
 
-    const query: FilterQuery<Feedback> = {
+    const query: QueryFilter<Feedback> = {
       date: {
         $gte: params.dateRange.start,
         $lte: params.dateRange.end,
