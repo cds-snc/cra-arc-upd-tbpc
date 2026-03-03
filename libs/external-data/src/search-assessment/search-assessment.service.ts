@@ -1,4 +1,4 @@
-import { FilterQuery, Types } from 'mongoose';
+import { QueryFilter, Types } from 'mongoose';
 import { DbService, Overall } from '@dua-upd/db';
 import { ConsoleLogger, Inject, Injectable } from '@nestjs/common';
 import { AirtableClient } from '../lib/airtable';
@@ -551,7 +551,7 @@ export class SearchAssessmentService {
 
   async getTopSearchFromOverall(
     lang: 'en' | 'fr',
-    dateRange: FilterQuery<Overall>
+    dateRange: QueryFilter<Overall>
   ) {
     const searchTermSelector =
       lang === 'en' ? 'aa_searchterms_en' : 'aa_searchterms_fr';
@@ -604,7 +604,7 @@ export class SearchAssessmentService {
 
   async getTopSearchTermPages(
     lang: 'en' | 'fr',
-    dateRange: FilterQuery<Overall>,
+    dateRange: QueryFilter<Overall>,
     data: { _id: string; clicks: number; num_searches: number }[]
   ) {
     const topSearchTerms = data.map((result) => result._id);

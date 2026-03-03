@@ -3,7 +3,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import type {
   AnyBulkWriteOperation,
   Connection,
-  FilterQuery,
+  QueryFilter,
   Model,
   mongo,
 } from 'mongoose';
@@ -103,7 +103,6 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
       schema: PagesViewSchema,
       maxAge: hours(Number(process.env.DB_VIEWS_MAXAGE) || 120),
       refreshBatchSize: 50,
-      bulkWriteOptions: { noResponse: true },
     }),
     tasks: new TasksViewService(this, {
       name: 'TasksView',
@@ -111,7 +110,6 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
       schema: TasksViewSchema,
       maxAge: hours(Number(process.env.DB_VIEWS_MAXAGE) || 120),
       refreshBatchSize: 10,
-      bulkWriteOptions: { noResponse: true },
     }),
   } as const;
 
@@ -242,7 +240,7 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
   }
 
   @AsyncLogTiming
-  async validatePageMetricsRefs(filter: FilterQuery<PageMetrics> = {}) {
+  async validatePageMetricsRefs(filter: QueryFilter<PageMetrics> = {}) {
     return await this.simplifiedValidatePageRefs(filter);
   }
 
@@ -255,7 +253,7 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
     const session = await this.connection.startSession();
 
     try {
-      await session.withTransaction(fn, { retryWrites: true });
+      await session.withTransaction(fn);
     } catch (err) {
       console.error('Transaction aborted. Caught error during transaction.');
 
@@ -312,7 +310,7 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
     }
   }
 
-  private async simplifiedValidatePageRefs(filter: FilterQuery<PageMetrics>) {
+  private async simplifiedValidatePageRefs(filter: QueryFilter<PageMetrics>) {
     console.log('Validating page metrics references...');
     const pages: Page[] = await this.pages
       .find({}, { url: 1, tasks: 1, projects: 1, ux_tests: 1 })
@@ -348,7 +346,7 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
   }
 
   private async validateFilteredPageMetricsRefs(
-    filter: FilterQuery<PageMetrics>,
+    filter: QueryFilter<PageMetrics>,
   ) {
     const pageMetrics: PageMetrics[] = await this.pageMetrics
       .find(filter, { page: 1, url: 1 })

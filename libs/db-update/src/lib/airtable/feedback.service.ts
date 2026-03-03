@@ -43,13 +43,16 @@ export class FeedbackService {
         .startOf('day');
 
       const lateAdditionsEnd = (start as Dayjs).subtract(1, 'day');
+      
+      const lateAdditionsStartDate = lateAdditionsStart.toDate();
+      const lateAdditionsEndDate = lateAdditionsEnd.toDate();
 
       const existingFeedback =
         (await this.feedbackModel
           .find({
             date: {
-              $gte: lateAdditionsStart,
-              $lte: lateAdditionsEnd,
+              $gte: lateAdditionsStartDate,
+              $lte: lateAdditionsEndDate,
             },
             unique_id: { $exists: true },
           })
@@ -63,13 +66,13 @@ export class FeedbackService {
       );
 
       const lateAdditionsCra = await this.airtableClient.getFeedback({
-        start: lateAdditionsStart,
-        end: lateAdditionsEnd,
+        start: lateAdditionsStartDate,
+        end: lateAdditionsEndDate,
       });
 
       const lateAdditionsLive = await this.airtableClient.getLiveFeedback({
-        start: lateAdditionsStart,
-        end: lateAdditionsEnd,
+        start: lateAdditionsStartDate,
+        end: lateAdditionsEndDate,
       });
 
       const lateAdditions = [...lateAdditionsCra, ...lateAdditionsLive]

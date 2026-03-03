@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import { type Model, Types, type AnyBulkWriteOperation } from 'mongoose';
+import { type Model, Types, type AnyBulkWriteOperation, mongo } from 'mongoose';
 import { today } from '@dua-upd/utils-common';
 import { DateRange, IPageMetrics } from '@dua-upd/types-common';
 import {
@@ -47,7 +47,9 @@ export class PageMetricsService {
     private pagesListService: PagesListService,
   ) {}
 
-  async upsertPageMetrics(pageMetrics: PageMetrics[]) {
+  async upsertPageMetrics(
+    pageMetrics: PageMetrics[],
+  ): Promise<mongo.BulkWriteResult> {
     const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     for (const pageMetric of pageMetrics) {

@@ -1,8 +1,4 @@
 import { Buffer } from 'buffer';
-import {
-  compress as compressZstd,
-  decompress as decompressZstd,
-} from '@mongodb-js/zstd';
 import * as brotli from 'brotli-wasm';
 import { createHash } from 'node:crypto';
 import {
@@ -33,35 +29,42 @@ export const compressStringBrotli = async (string: string) => {
 export const compressStringZstd = async (string: string, level = 9) => {
   const stringBuffer = Buffer.from(string);
 
-  return await compressZstd(stringBuffer, level);
+  const { compress } = await import('@mongodb-js/zstd');
+
+  return await compress(stringBuffer, level);
 };
 
 export const compressString = async (
   string: string | Buffer,
   algorithm: CompressionAlgorithm = 'zstd',
 ) => {
+  const { compress } = await import('@mongodb-js/zstd');
   const stringBuffer = string instanceof Buffer ? string : Buffer.from(string);
 
   switch (algorithm) {
     case 'brotli':
       return Buffer.from(compressBrotli(new Uint8Array(stringBuffer)));
     case 'zstd':
-      return Buffer.from((await compressZstd(stringBuffer)).buffer);
+      return Buffer.from((await compress(stringBuffer)).buffer);
     default:
-      return Buffer.from((await compressZstd(stringBuffer)).buffer);
+      return Buffer.from((await compress(stringBuffer)).buffer);
   }
 };
 
 export const decompressStringBrotli = async (compressed: Buffer) =>
   Buffer.from(decompressBrotli(new Uint8Array(compressed))).toString('utf-8');
 
-export const decompressStringZstd = async (compressed: Buffer) =>
-  (await decompressZstd(compressed)).toString('utf-8');
+export const decompressStringZstd = async (compressed: Buffer) => {
+  const { decompress } = await import('@mongodb-js/zstd');
+  
+  return (await decompress(compressed)).toString('utf-8');
+}
 
 export const decompressString = async (
   string: string | Buffer,
   algorithm: CompressionAlgorithm = 'zstd',
 ) => {
+      const { decompress } = await import('@mongodb-js/zstd');
   const stringBuffer = string instanceof Buffer ? string : Buffer.from(string);
 
   switch (algorithm) {
@@ -70,9 +73,9 @@ export const decompressString = async (
         decompressBrotli(new Uint8Array(stringBuffer)),
       ).toString('utf-8');
     case 'zstd':
-      return (await decompressZstd(stringBuffer)).toString('utf-8');
+      return (await decompress(stringBuffer)).toString('utf-8');
     default:
-      return (await decompressZstd(stringBuffer)).toString('utf-8');
+      return (await decompress(stringBuffer)).toString('utf-8');
   }
 };
 
