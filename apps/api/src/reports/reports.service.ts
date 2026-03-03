@@ -95,7 +95,7 @@ export class ReportsService {
 
   async getReportsData(): Promise<ReportsData> {
     const cacheKey = `getReportsData`;
-    const cachedData = await this.cacheManager.store.get<ReportsData>(cacheKey);
+    const cachedData = await this.cacheManager.get<ReportsData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
