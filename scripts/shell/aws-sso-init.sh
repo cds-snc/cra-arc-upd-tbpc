@@ -2,6 +2,29 @@
 # AWS SSO initialization script for Codespaces
 set -e
 
+while getopts p:e flag; do
+  case "${flag}" in
+  p) use_prod=true ;;
+  e) use_read_env=true ;;
+  esac
+done
+
+if [[ "$use_read_env" == true ]]; then
+  source scripts/shell/read_env.sh
+  read_env
+fi
+
+# Use flags to determine staging vs production, default to staging
+if [[ "$use_prod" == true ]]; then
+  AWS_SSO_ACCOUNT_ID="${AWS_ACCOUNT_ID_PRODUCTION}"
+  echo "Using production AWS account: $AWS_SSO_ACCOUNT_ID"
+  export DATA_BUCKET_NAME="cra-upd-dashboard-data-production"
+else
+  AWS_SSO_ACCOUNT_ID="${AWS_ACCOUNT_ID_STAGING}"
+  echo "Using staging AWS account: $AWS_SSO_ACCOUNT_ID"
+  export DATA_BUCKET_NAME="cra-upd-dashboard-data-staging"
+fi
+
 determine_role() {
   echo "[aws-sso-init] Checking available roles..."
 
@@ -57,6 +80,13 @@ if [[ -f "$CREDENTIALS_FILE" ]]; then
 
   aws_credential_expiration=$(jq -r '.aws_credential_expiration // empty' "$CREDENTIALS_FILE")
   stored_role_type=$(jq -r '.role_type // empty' "$CREDENTIALS_FILE")
+  stored_account_id=$(jq -r '.aws_account_id // empty' "$CREDENTIALS_FILE")
+
+  # Validate stored account ID matches expected SSO account ID
+  if [[ -n "$stored_account_id" && "$stored_account_id" != "$AWS_SSO_ACCOUNT_ID" ]]; then
+    echo "[aws-sso-init] Stored account ID ($stored_account_id) does not match expected SSO account ID ($AWS_SSO_ACCOUNT_ID). Ignoring stored credentials."
+    aws_credential_expiration=""
+  fi
 
   if [[ -n "$aws_credential_expiration" ]]; then
     expiration_epoch=$(date -d "$aws_credential_expiration" +%s 2>/dev/null)
@@ -66,6 +96,7 @@ if [[ -f "$CREDENTIALS_FILE" ]]; then
       time_remaining=$(((expiration_epoch - current_epoch) / 60))
       echo "[aws-sso-init] Credentials valid until $aws_credential_expiration ($time_remaining minutes remaining)"
       [[ -n "$stored_role_type" ]] && echo "[aws-sso-init] Using stored role: $stored_role_type"
+      [[ -n "$stored_account_id" ]] && echo "[aws-sso-init] Using stored account ID: $stored_account_id"
       exit 0
     fi
   fi
@@ -123,12 +154,14 @@ jq -n \
   --arg session_token "$AWS_SESSION_TOKEN" \
   --arg expiration "$AWS_CREDENTIAL_EXPIRATION" \
   --arg role_type "$role_type" \
+  --arg account_id "$AWS_SSO_ACCOUNT_ID" \
   '{
     aws_access_key_id: $access_key,
     aws_secret_access_key: $secret_key,
     aws_session_token: $session_token,
     aws_credential_expiration: $expiration,
-    role_type: $role_type
+    role_type: $role_type,
+    aws_account_id: $account_id
   }' >~/.aws/credentials.json
 
 echo "[aws-sso-init] AWS SSO initialization complete."

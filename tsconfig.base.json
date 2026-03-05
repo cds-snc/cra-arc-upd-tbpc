@@ -24,6 +24,7 @@
       "@dua-upd/data-integrity": ["libs/data-integrity/src/index.ts"],
       "@dua-upd/db": ["libs/db/src/index.ts"],
       "@dua-upd/db-update": ["libs/db-update/src/index.ts"],
+      "@dua-upd/duckdb": ["libs/duckdb-lib/src/index.ts"],
       "@dua-upd/external-data": ["libs/external-data/src/index.ts"],
       "@dua-upd/feedback": ["libs/feedback/src/index.ts"],
       "@dua-upd/logger": ["libs/logger/src/index.ts"],
@@ -51,7 +52,6 @@
       "@dua-upd/utils-common/types": [
         "libs/utils-common/src/lib/types/index.ts"
       ],
-      "@dua-upd/duckdb": ["libs/duckdb-lib/src/index.ts"],
       "@dua-upd/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
     },
     "allowSyntheticDefaultImports": true,

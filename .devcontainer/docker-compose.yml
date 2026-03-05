@@ -2,7 +2,7 @@ services:
   app:
     image: 'ghcr.io/cds-snc/cra-arc-upd-tbpc/codespaces-devcontainer-base:latest'
     volumes:
-      - ..:/workspace:cached
+      - ../..:/workspaces:cached
 
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
@@ -14,7 +14,7 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:
-    image: mongo:5 # Version 5 for DocumentDB compatibility
+    image: mongo:8.2.5 # Version 8 for DocumentDB compatibility
     restart: unless-stopped
     volumes:
       - mongodb-data:/data/db

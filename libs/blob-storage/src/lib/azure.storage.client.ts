@@ -132,18 +132,17 @@ export class AzureStorageContainer
     return this.container;
   }
 
-  async listBlobs(prefix?: RegisteredBlobModel) {
+  async listBlobs(prefix?: string) {
+    const keys: string[] = [];
     for await (const blobInfo of this.container.listBlobsFlat(
       prefix && { prefix },
     )) {
-      logJson(blobInfo);
+      keys.push(blobInfo.name);
     }
+    return keys;
   }
 
-  async mapBlobs<T>(
-    mapFunc: (item: BlobItem) => T,
-    prefix?: RegisteredBlobModel,
-  ) {
+  async mapBlobs<T>(mapFunc: (item: BlobItem) => T, prefix?: string) {
     const returnVals: T[] = [];
 
     for await (const blobInfo of this.container.listBlobsFlat(

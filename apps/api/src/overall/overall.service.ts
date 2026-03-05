@@ -221,6 +221,7 @@ export class OverallService {
 
     const totalTasks = await this.taskModel.countDocuments().exec();
 
+    console.time('tasks');
     const topTasksTable = await this.db.views.tasks
       .getAllWithComparisons(
         parseDateRangeString(params.dateRange),

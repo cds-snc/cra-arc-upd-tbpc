@@ -147,24 +147,29 @@ export class S3Bucket implements IStorageContainer<S3StorageClient> {
   }
 
   async listBlobs(prefix?: RegisteredBlobModel) {
-    const command = new ListObjectsV2Command({
-      Bucket: this.bucketName,
-      Prefix: prefix || undefined,
-    });
+    let nextToken = undefined;
+    const allKeys = [];
 
     try {
-      const response = await this.client.send(command);
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix || undefined,
+          ContinuationToken: nextToken,
+        });
+        const response = await this.client.send(command);
 
-      if (response.Contents) {
-        for (const obj of response.Contents) {
-          logJson({
-            name: obj.Key,
-            lastModified: obj.LastModified,
-            size: obj.Size,
-            etag: obj.ETag,
-          });
+        if (response.Contents) {
+          for (const item of response.Contents) {
+            if (item.Key) {
+              allKeys.push(item.Key);
+            }
+          }
         }
-      }
+        nextToken = response.NextContinuationToken; // Get the token for the next iteration
+      } while (nextToken); // Continue looping if a next token exists
+
+      return allKeys;
     } catch (error) {
       console.error('Error listing objects:', error);
     }
@@ -711,9 +716,14 @@ export class S3ObjectClient implements IStorageBlob {
 
         const destinationBuffer = Buffer.concat(chunks);
 
-        return this.compression && options?.decompressData !== false
-          ? await decompressString(destinationBuffer, this.compression)
-          : destinationBuffer.toString('utf-8');
+        if (
+          options?.decompressData ||
+          (this.compression && options?.decompressData !== false)
+        ) {
+          return await decompressString(destinationBuffer, 'zstd'); // Assuming zstd for decompression, adjust if needed
+        }
+
+        return destinationBuffer.toString('utf-8');
       }
     } catch (err) {
       console.error(chalk.red('Error downloading file to string:'));

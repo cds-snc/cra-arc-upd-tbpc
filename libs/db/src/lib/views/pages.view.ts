@@ -485,8 +485,8 @@ export class PagesViewService extends DbViewNew<
       ? getArraySelectedPercentChange(
           ['clicks'],
           'term',
-          currentData?.aa_searchterms.filter(({ term }) => term),
-          comparisonData?.aa_searchterms.filter(({ term }) => term),
+          (currentData?.aa_searchterms || []).filter(({ term }) => term),
+          (comparisonData?.aa_searchterms || []).filter(({ term }) => term),
           { suffix: 'Change', round: 3 },
         )
           .sort((a, b) => b.clicks - a.clicks)
@@ -497,8 +497,8 @@ export class PagesViewService extends DbViewNew<
       ? getArraySelectedPercentChange(
           ['clicks'],
           'term',
-          currentData?.gsc_searchterms,
-          comparisonData?.gsc_searchterms,
+          (currentData?.gsc_searchterms || []),
+          (comparisonData?.gsc_searchterms || []),
           { suffix: 'Change', round: 3 },
         )
           .map(

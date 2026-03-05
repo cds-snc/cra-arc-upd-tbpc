@@ -1,19 +1,31 @@
+import { availableParallelism, freemem } from 'os';
 import { Inject, Injectable, BeforeApplicationShutdown } from '@nestjs/common';
 import { drizzle, DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
-import { Database, OPEN_READONLY, OPEN_READWRITE } from 'duckdb-async';
+import { type DuckDBConnection, DuckDBInstance } from '@duckdb/node-api';
 import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { duckDbTable } from './duckdb.table';
 import { DuckDbExtensionsManager } from './duckdb.utils';
 
-export type DuckDBClientOptions = { readOnly?: boolean; logger?: boolean };
+export type DuckDBClientOptions = {
+  readOnly?: boolean;
+  logger?: boolean;
+  numThreads?: number;
+  /**
+   * Maximum memory limit in MB for DuckDB
+   *
+   * @example
+   * { memoryLimit: 1024 } // 1 GB
+   * */
+  memoryLimit?: number | 'auto';
+};
 
 export const htmlSnapshotTable = pgTable('html', {
-  url: text('url'),
+  url: text('url').notNull(),
   page: text('page'), // objectId hex string
-  hash: text('hash'),
+  hash: text('hash').notNull(),
   html: text('html'),
-  date: timestamp('date'),
+  date: timestamp('date').notNull(),
 });
 
 export type HtmlSnapshot = typeof htmlSnapshotTable.$inferSelect;
@@ -41,11 +53,16 @@ export class DuckDbService implements BeforeApplicationShutdown {
   } as const;
 
   private constructor(
-    private client: Database,
+    readonly connectionString: string,
+    private _client: DuckDBConnection,
     private _db: DuckDBDatabase,
     @Inject(BlobStorageService.name) private blob: BlobStorageService,
     private options?: DuckDBClientOptions,
   ) {}
+
+  get client() {
+    return this._client;
+  }
 
   get db() {
     return this._db;
@@ -56,14 +73,26 @@ export class DuckDbService implements BeforeApplicationShutdown {
     blob: BlobStorageService,
     options?: DuckDBClientOptions,
   ) {
-    const client = await Database.create(
-      connectionString,
-      options?.readOnly ? OPEN_READONLY : OPEN_READWRITE,
-    );
+    const instance =
+      connectionString != ':memory:'
+        ? await DuckDBInstance.fromCache(connectionString)
+        : await DuckDBInstance.create(connectionString);
+
+    const client = await instance.connect();
 
     const duckDb = drizzle(client, { logger: options?.logger ?? false });
 
-    return new DuckDbService(client, duckDb, blob, options);
+    const service = new DuckDbService(
+      connectionString,
+      client,
+      duckDb,
+      blob,
+      options,
+    );
+
+    await service.configure(options);
+
+    return service;
   }
 
   async setupRemoteExtensions() {
@@ -111,7 +140,7 @@ export class DuckDbService implements BeforeApplicationShutdown {
             CONNECTION_STRING '${process.env['AZURE_STORAGE_CONNECTION_STRING']}'
           );  
         `);
-        
+
         await this.db.execute(`
           SET azure_transport_option_type = 'curl';
         `);
@@ -121,11 +150,27 @@ export class DuckDbService implements BeforeApplicationShutdown {
     }
   }
 
+  async configure(options?: DuckDBClientOptions) {
+    options?.readOnly &&
+      (await this.db.execute(`SET access_mode = 'READ_ONLY';`));
+
+    const systemMemoryMB = freemem() / (1024 * 1024);
+    const memoryLimit =
+      options?.memoryLimit || Math.floor(systemMemoryMB * 0.7); // default to 70% of available system memory
+
+    console.log(`Setting DuckDB memory limit to ${memoryLimit} MB`);
+    await this.db.execute(`SET memory_limit = '${memoryLimit}MB';`);
+
+    const numThreads = options?.numThreads || availableParallelism() - 1 || 1;
+    console.log(`Setting DuckDB threads to ${numThreads}`);
+    await this.db.execute(`SET threads = ${numThreads};`);
+  }
+
   async disconnect() {
-    await this.client.close();
+    await this.db.close();
   }
 
   async beforeApplicationShutdown() {
-    return await this.client.close();
+    return await this.db.close();
   }
 }

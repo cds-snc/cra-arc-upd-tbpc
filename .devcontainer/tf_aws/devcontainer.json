@@ -3,7 +3,7 @@
   "name": "Base config + Terraform & AWS CLI",
   "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "containerEnv": {
     "SHELL": "/bin/zsh"
   },
@@ -16,7 +16,6 @@
       "extensions": [
         "hashicorp.terraform",
         "hashicorp.hcl",
-        "github.copilot",
         "GitHub.copilot-chat",
         "github.vscode-github-actions",
         "Angular.ng-template",

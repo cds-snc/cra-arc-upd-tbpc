@@ -2,17 +2,20 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node-mongo
 {
   "name": "Base image builder",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "build": {
     "context": "../../",
     "dockerfile": "Dockerfile",
-    "cacheFrom": "ghcr.io/lega0208/upd-new/codespaces-devcontainer-base"
+    "cacheFrom": "ghcr.io/cds-snc/cra-arc-upd-tbpc/codespaces-devcontainer-base"
   },
   "containerEnv": {
     "SHELL": "/bin/zsh"
   },
   "features": {
-    "ghcr.io/devcontainers-extra/features/gh-cli:1": {}
+    "ghcr.io/devcontainers-extra/features/gh-cli:1": {},
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    }
   },
   "remoteUser": "node"
 

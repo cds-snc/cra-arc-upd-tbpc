@@ -1,4 +1,9 @@
-import { Inject } from '@nestjs/common';
+import {
+  Inject,
+  type DynamicModule,
+  type InjectionToken,
+  type Type,
+} from '@nestjs/common';
 import chalk from 'chalk';
 import {
   Command,
@@ -9,10 +14,14 @@ import {
 import { BlobStorageService } from '@dua-upd/blob-storage';
 import { DataIntegrityService } from '@dua-upd/data-integrity';
 import { DbService } from '@dua-upd/db';
-import { DbUpdateService, ReadabilityService, UrlsService } from '@dua-upd/db-update';
+import {
+  DbUpdateService,
+  ReadabilityService,
+  UrlsService,
+} from '@dua-upd/db-update';
 import { LoggerService } from '@dua-upd/logger';
 import * as scripts from './scripts';
-import { ModuleRef } from '@nestjs/core';
+import { LazyModuleLoader, ModuleRef } from '@nestjs/core';
 import { TypeOrToken } from './scripts/utils/misc';
 import { FeedbackService } from '@dua-upd/api/feedback';
 
@@ -37,15 +46,32 @@ export class RunScriptCommand extends CommandRunner {
     @Inject(BlobStorageService.name) private readonly blob: BlobStorageService,
     private readonly urlService: UrlsService,
     private readonly readability: ReadabilityService,
-    private readonly feedbackService: FeedbackService
+    private readonly feedbackService: FeedbackService,
+    @Inject(LazyModuleLoader)
+    private lazyModuleLoader: LazyModuleLoader,
   ) {
     super();
   }
 
-  inject<ReturnType>(
-    typeOrToken: TypeOrToken
-  ): ReturnType {
+  inject<ReturnType>(typeOrToken: TypeOrToken): ReturnType {
     return this.moduleRef.get(typeOrToken, { strict: false });
+  }
+
+  async loadModule<
+    Module extends Type<unknown> | DynamicModule | Promise<Type<unknown>>,
+  >(module: Module): Promise<ModuleRef> {
+    return await this.lazyModuleLoader.load(() => module);
+  }
+
+  async loadModuleService<ReturnType>(config: {
+    module: Type<unknown> | DynamicModule | Promise<Type<unknown>>;
+    service: TypeOrToken;
+  }): Promise<ReturnType> {
+    const moduleRef = await this.loadModule(config.module);
+
+    return moduleRef.get<typeof config.service, ReturnType>(config.service, {
+      strict: false,
+    });
   }
 
   // Note the script you want to run should be the default export of the file
@@ -57,7 +83,7 @@ export class RunScriptCommand extends CommandRunner {
       this.blob,
       this.urlService,
       this.readability,
-      this.feedbackService
+      this.feedbackService,
     ];
 
     try {
@@ -66,10 +92,10 @@ export class RunScriptCommand extends CommandRunner {
       console.log(`\r\n${chalk.green('Done!')} 👾`);
     } catch (err) {
       console.error(
-        chalk.red(`\r\nError running script '${scriptName}' 😿\r\n`)
+        chalk.red(`\r\nError running script '${scriptName}' 😿\r\n`),
       );
       console.error(
-        chalk.red('You might have forgotten to export it from index.ts\r\n')
+        chalk.red('You might have forgotten to export it from index.ts\r\n'),
       );
       console.error(chalk.red(err.stack));
     }
@@ -93,7 +119,7 @@ export class RunScriptCommand extends CommandRunner {
 
     if (!scriptName) {
       throw Error(
-        `Script "${scriptName}" not found. Export it from 'scripts/index.ts'`
+        `Script "${scriptName}" not found. Export it from 'scripts/index.ts'`,
       );
     }
 

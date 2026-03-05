@@ -6,8 +6,9 @@
     "types": ["node"],
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2021",
-    "lib": ["ESNext"]
+    "target": "esnext",
+    "lib": ["ESNext"],
+    "useDefineForClassFields": false
   },
   "exclude": ["**/*.spec.ts", "**/*.test.ts", "jest.config.ts"],
   "include": ["**/*.ts"]
