@@ -26,6 +26,7 @@ import type {
   ActivityMapMetrics,
   IProject,
   PageStatus,
+  ArchivedStatus,
   Direction,
 } from '@dua-upd/types-common';
 import {
@@ -116,6 +117,7 @@ export class PagesService {
         url: string;
         pageStatus: PageStatus;
         visits: number;
+        archivedStatus: ArchivedStatus;
       }>(
         { dateRange: queryDateRange },
         {
@@ -124,6 +126,7 @@ export class PagesService {
           url: '$page.url',
           pageStatus: 1,
           visits: 1,
+          archivedStatus: 1,
         },
       )
       .then((results) =>
@@ -134,6 +137,7 @@ export class PagesService {
             url: page.url,
             pageStatus: page.pageStatus,
             visits: page.visits,
+            archivedStatus: page.archivedStatus,
           }))
           .sort((a, b) => (b.visits || 0) - (a.visits || 0)),
       );

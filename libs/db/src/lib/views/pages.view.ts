@@ -16,6 +16,7 @@ import type {
   IPage,
   IPageView,
   PageStatus,
+  ArchivedStatus,
 } from '@dua-upd/types-common';
 import { DbViewNew, ViewConfig } from '../db.views.new';
 import { PagesView, PagesViewSchema } from './pages-view.schema';
@@ -28,6 +29,7 @@ import {
   isNullish,
   prettyJson,
 } from '@dua-upd/utils-common';
+import { ArchiveStatus } from '@aws-sdk/client-s3';
 
 export type PagesViewConfig = ViewConfig<typeof PagesViewSchema>;
 
@@ -41,6 +43,7 @@ type BaseDoc = {
   url: string;
   lang: 'en' | 'fr';
   pageStatus: PageStatus;
+  archivedStatus: ArchivedStatus;
   redirect: string;
   owners?: string;
   sections?: string;
@@ -156,6 +159,10 @@ export class PagesViewService extends DbViewNew<
               : page.redirect
                 ? 'Redirected'
                 : 'Live') as PageStatus,
+            archivedStatus : (page.is_archive
+              ? 'Archived'
+              : 'Not Archived'
+            ) as ArchivedStatus,
             redirect: page.redirect,
             owners: page.owners,
             sections: page.sections,
@@ -197,6 +204,7 @@ export class PagesViewService extends DbViewNew<
       url,
       lang,
       pageStatus,
+      archivedStatus,
       redirect,
       owners,
       sections,
@@ -232,6 +240,7 @@ export class PagesViewService extends DbViewNew<
         sections,
       } satisfies IPage,
       pageStatus,
+      archivedStatus,
       numComments: numCommentsByPage[_id.toString()]?.numComments || 0,
       ...topLevelMetrics,
       aa_searchterms,

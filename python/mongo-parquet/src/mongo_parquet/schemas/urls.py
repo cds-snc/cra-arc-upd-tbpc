@@ -23,6 +23,7 @@ class Urls(ParquetModel):
         "links": 1,
         "langHrefs": 1,
         "is_404": 1,
+        "is_archived": 1,
         "metadata": {
             "$map": {
                 "input": {"$objectToArray": "$metadata"},
@@ -45,6 +46,7 @@ class Urls(ParquetModel):
             "url": string(),
             "title": string(),
             "is_404": bool_(),
+            "is_archived": bool_(),
             "metadata": list_(
                 struct(
                     {

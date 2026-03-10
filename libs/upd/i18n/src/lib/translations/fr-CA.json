@@ -1980,5 +1980,7 @@
   "accessibility-error-connection-reset": "La connexion au service de test a été perdue. Veuillez réessayer.",
   "positive": "Positif",
   "neutral": "Neutre",
-  "negative": "Négatif"
+  "negative": "Négatif",
+  "Archived": "Archivé",
+  "Not Archived": "Non archivé"
 }

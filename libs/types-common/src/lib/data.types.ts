@@ -58,7 +58,7 @@ export interface EntityDetailsData<T> extends ViewData<T> {
 export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
-  archived?: boolean;
+  archivedStatus?: ArchivedStatus;
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -497,6 +497,8 @@ export type ProjectStatus =
   | 'Unknown';
 
 export type PageStatus = 'Live' | '404' | 'Redirected' | 'Archived';
+
+export type ArchivedStatus = 'Archived' | 'Not Archived';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 

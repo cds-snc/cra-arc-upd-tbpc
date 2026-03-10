@@ -57,9 +57,18 @@ export class PagesHomeComponent implements OnInit {
             pipe: 'number',
           },
           {
-            field: 'archived',
-            header: 'Archived',
-            pipe: 'boolean',
+            field: 'archivedStatus',
+            header: 'Archived Status',
+            type: 'label',
+            typeParam: 'archivedStatus',
+            filterConfig: {
+              type: 'archivedStatus',
+              categories: createCategoryConfig({
+                i18n: this.i18n.service,
+                data,
+                field: 'archivedStatus',
+              }),
+            },
           },
         ] as ColumnConfig<PagesHomeAggregatedData>[],
     ),

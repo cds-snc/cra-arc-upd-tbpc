@@ -178,7 +178,8 @@
                 <ng-template
                   [ngIf]="
                     col.filterConfig.type === 'category' ||
-                    col.filterConfig.type === 'pageStatus'
+                    col.filterConfig.type === 'pageStatus' ||
+                    col.filterConfig.type === 'archivedStatus'
                   "
                 >
                   <p-columnFilter

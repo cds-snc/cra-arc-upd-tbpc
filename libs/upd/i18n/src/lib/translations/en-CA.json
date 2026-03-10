@@ -1595,5 +1595,7 @@
   "accessibility-error-connection-reset": "Connection to the testing service was lost. Please try again.",
   "positive": "Positive",
   "neutral": "Neutral",
-  "negative": "Negative"
+  "negative": "Negative",
+  "Archived": "Archived",
+  "Not Archived": "Not Archived"
 }
