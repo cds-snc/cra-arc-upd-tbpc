@@ -188,6 +188,7 @@ export class TasksView implements ITaskView {
           sections: String,
         },
         pageStatus: String,
+        archivedStatus: String,
         visits: Number,
         dyf_yes: Number,
         dyf_no: Number,
@@ -205,6 +206,7 @@ export class TasksView implements ITaskView {
     | '_id'
     | 'page'
     | 'pageStatus'
+    | 'archivedStatus'
     | 'visits'
     | 'dyf_yes'
     | 'dyf_no'
