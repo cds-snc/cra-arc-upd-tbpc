@@ -156,6 +156,7 @@ class TasksView(ParquetModel):
                             }.items()
                         ),
                         "pageStatus": string(),
+                        "archivedStatus": string(),
                         "visits": int32(),
                         "dyf_yes": int32(),
                         "dyf_no": int32(),
@@ -969,6 +970,7 @@ class TasksViewService:
                     pl.col("page").struct.with_fields(pl.field("url").cast(pl.String)),
                     "tasks",
                     "pageStatus",
+                    "archivedStatus",
                     pl.col("visits").fill_null(0),
                     pl.col("dyf_yes").fill_null(0),
                     pl.col("dyf_no").fill_null(0),

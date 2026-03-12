@@ -127,7 +127,7 @@ class PagesViewContext:
                         .otherwise(pl.lit("Live"))
                     )
                     .alias("pageStatus"),
-                    pl.when(pl.col.is_archived)
+                    pl.when(pl.col.is_archive)
                         .then(pl.lit("Archived"))
                         .otherwise(pl.lit("Not archived"))
                         .alias("archivedStatus"), 
