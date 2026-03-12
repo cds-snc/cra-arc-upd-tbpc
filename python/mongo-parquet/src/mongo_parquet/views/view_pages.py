@@ -127,11 +127,9 @@ class PagesViewContext:
                         .otherwise(pl.lit("Live"))
                     )
                     .alias("pageStatus"),
-                    pl.when(pl.col.is_archived)
-                    .then(pl.lit("Archived"))
-                    .otherwise(pl.lit("Not Archived"))
-                    )
-                    .alias("archivedStatus"),
+                    pl.when(pl.col.archived).then(pl.lit("Archived"))
+                        .otherwise(pl.lit("Not archived"))
+                        .alias("archivedStatus"), 
                     pl.col("redirect"),
                     pl.col("owners"),
                     pl.col("sections"),
