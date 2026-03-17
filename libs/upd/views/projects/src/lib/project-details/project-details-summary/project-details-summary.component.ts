@@ -4,7 +4,7 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import { combineLatest } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 import {
   callVolumeObjectiveCriteria,
   feedbackKpiObjectiveCriteria,
@@ -92,6 +92,28 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     partial: { icon: 'check_circle', colourClass: 'text-semisuccess', messageKey: 'kpi-half-met' },
     fail: { icon: 'warning', colourClass: 'text-danger', messageKey: 'kpi-not-met' },
   };
+
+  tasksTestedTableData$ = this.projectsDetailsService.tasksTestedData$.pipe(
+    map((tasks) =>
+      tasks.map((task) => {
+        const baseline = task.tests.find((t) => t.testType === 'Baseline');
+        const validation = task.tests.find((t) => t.testType === 'Validation');
+        return {
+          _id: task.taskId || task.taskNumber.toString(),
+          taskNumber: task.taskNumber,
+          taskTitle: task.taskTitle,
+          baseline: baseline?.successRate ?? null,
+          validation: validation?.successRate ?? null,
+          change: task.avgTaskSuccessChange != null
+            ? task.avgTaskSuccessChange / 100
+            : null,
+          scenariosByTestType: task.scenariosByTestType,
+        };
+      })
+    ),
+  );
+
+  tasksTestedCols: ColumnConfig[] = [];
 
   description$ = this.projectsDetailsService.description$;
 
@@ -185,16 +207,45 @@ export class ProjectDetailsSummaryComponent implements OnInit {
       ];
     
 
-      // this.memberListCols = [
-      //   {
-      //     field: 'name',
-      //     header: this.i18n.service.translate('Name', lang),
-      //   },
-      //   {
-      //     field: 'role',
-      //     header: this.i18n.service.translate('Role', lang),
-      //   },
-      // ];
+      this.tasksTestedCols = [
+        {
+          field: 'taskNumber',
+          header: this.i18n.service.translate('task-num', lang),
+          width: '80px',
+        },
+        {
+          field: 'taskTitle',
+          header: this.i18n.service.translate('task', lang),
+        },
+        {
+          field: 'baseline',
+          header: this.i18n.service.translate('Baseline', lang),
+          pipe: 'percent',
+        },
+        {
+          field: 'validation',
+          header: this.i18n.service.translate('Validation', lang),
+          pipe: 'percent',
+        },
+        {
+          field: 'change',
+          header: this.i18n.service.translate('change', lang),
+          pipe: 'percent',
+          pipeParam: '1.0-0',
+          indicator: true,
+          upGoodDownBad: true,
+          useArrows: true,
+          showTextColours: true,
+        },
+      ];
     });
+  }
+
+  getScenarioTestTypes(rowData: Record<string, unknown>): string[] {
+    const scenarios = rowData['scenariosByTestType'] as Record<string, string[]> | undefined;
+    const keys = Object.keys(scenarios || {});
+    return keys.sort((a, b) =>
+      a === 'Baseline' ? -1 : b === 'Baseline' ? 1 : 0
+    );
   }
 }

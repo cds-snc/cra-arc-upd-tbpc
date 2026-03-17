@@ -10,6 +10,7 @@ import {
   effect,
   signal,
   WritableSignal,
+  TemplateRef,
 } from '@angular/core';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { Table } from 'primeng/table';
@@ -41,6 +42,8 @@ export class DataTableComponent<T extends object> {
   @Input() exports = true;
   @Input() checkboxes = false;
   @Input() expandable = false;
+  @Input() expandableRowTemplate: TemplateRef<unknown> | null = null;
+  @Input() expandAfterField = '';
   @Input() id?: string;
   @Input() placeholderText = 'dt_search_keyword';
   @Input() selectedNodes: SelectedNode[] = [];

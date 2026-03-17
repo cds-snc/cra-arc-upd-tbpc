@@ -39,43 +39,44 @@
                     }
                   </h6>
 
+                  <div class="row mb-2">
+                    <div class="col-lg-3 col-sm-12">
+                      <small class="fw-bold text-muted">{{ 'test' | translate }}</small>
+                    </div>
+                    <div class="col-lg-9 col-sm-12">
+                      <small class="fw-bold text-muted">{{ 'task-success' | translate }}</small>
+                    </div>
+                  </div>
+
                   @for (test of task.tests; track test.testType) {
-                    <div class="row align-items-center mb-2">
+                    <div class="row align-items-center mt-2 mb-2">
                       <div class="col-lg-3 col-sm-12">
-                        <small class="fw-bold">{{ test.testTypeLabel }}</small>
+                        <small>{{ test.testTypeLabel }}</small>
                       </div>
-                      <div class="col-lg-1 col-sm-12 text-end">
-                        <small>
+                      <div class="col-lg-9 col-sm-12">
+                        <div class="d-flex align-items-center gap-2 w-100">
                           @if (test.successRatePercent != null) {
-                            {{ test.successRatePercent }}%
-                          } @else {
-                            -
-                          }
-                        </small>
-                      </div>
-                      <div class="col-lg-8 col-sm-12">
-                        @if (test.successRatePercent != null) {
-                          <ng-template #barTooltip>
-                            <strong>{{ task.taskTitle }}</strong>
-                            <hr class="my-1" />
-                            <span class="legend_color rounded-circle" [style.background]="getBarColor(test.testType)"></span>
-                            {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
-                          </ng-template>
-                          <div
-                            class="progress rounded-1"
-                            style="height: 16px;"
-                            [ngbTooltip]="barTooltip"
-                            [tooltipClass]="'chart-tooltip'"
-                            container="body"
-                          >
+                            <ng-template #barTooltip>
+                              <strong>{{ task.taskTitle }}</strong>
+                              <hr class="my-1" />
+                              <span class="legend_color rounded-circle" [style.background]="getBarColor(test.testType)"></span>
+                              {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
+                            </ng-template>
                             <div
-                              class="progress-bar rounded-1"
+                              class="rounded-1"
                               role="progressbar"
+                              style="height: 16px;"
                               [style.width.%]="test.successRatePercent"
                               [style.background-color]="getBarColor(test.testType)"
+                              [ngbTooltip]="barTooltip"
+                              [tooltipClass]="'chart-tooltip'"
+                              container="body"
                             ></div>
-                          </div>
-                        }
+                            <small class="text-nowrap">{{ test.successRatePercent }}%</small>
+                          } @else {
+                            <small>-</small>
+                          }
+                        </div>
                       </div>
                     </div>
                     @if (task.scenariosByTestType[test.testType]; as scenarios) {

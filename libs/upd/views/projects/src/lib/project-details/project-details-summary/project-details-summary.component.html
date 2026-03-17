@@ -44,6 +44,43 @@
   </div>
 </div>
 
+<ng-container *ngIf="tasksTestedTableData$ | async as tasksTestedData">
+  <div class="container-fluid my-4 gx-0" *ngIf="tasksTestedData.length">
+    <div class="row">
+      <div class="col">
+        <upd-data-table-card
+          [data]="tasksTestedData"
+          [cols]="tasksTestedCols"
+          [sort]="true"
+          [pagination]="false"
+          [filter]="false"
+          [expandable]="true"
+          [expandableRowTemplate]="scenarioTemplate"
+          expandAfterField="taskTitle"
+          [title]="'tasks-tested'"
+          sortField="taskNumber"
+        >
+        </upd-data-table-card>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #scenarioTemplate let-rowData>
+  <div class="p-3">
+    @for (testType of getScenarioTestTypes(rowData); track testType) {
+      <div [class.mb-2]="!$last">
+        <strong class="small">{{ testType }} {{ 'scenario' | translate }}:</strong>
+        @for (scenario of rowData.scenariosByTestType[testType]; track scenario) {
+          <p class="small text-muted mb-1">{{ scenario }}</p>
+        }
+      </div>
+    } @empty {
+      <p class="small text-muted mb-0">{{ 'no-scenarios-available' | translate }}</p>
+    }
+  </div>
+</ng-template>
+
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-6 col-md-12 col-sm-12">

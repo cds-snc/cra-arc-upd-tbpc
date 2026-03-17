@@ -82,6 +82,9 @@
   "position": "Classement",
   "top10-tasks-GC": "Top 10 des tâches Enquête sur la réussite des tâches du GC",
   "task": "Tâche",
+  "task-num": "Tâche n°",
+  "scenario": "Scénario",
+  "no-scenarios-available": "Aucun scénario disponible",
   "Task": "Tâche",
   "tasks": "Tâches",
   "total-tasks": "Nombre total de tâches",
@@ -1993,6 +1996,7 @@
   "participants-per-test": "Participants par test",
   "view-task-scenario": "Voir le scénario de la tâche",
   "avg-task-success": "Réussite moy. des tâches",
+  "task-success": "Réussite de la tâche",
   "avg-time-on-task": "Temps moy. sur la tâche",
   "coming-soon": "Bientôt disponible",
   "pp": "pp"

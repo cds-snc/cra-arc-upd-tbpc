@@ -25,6 +25,7 @@
   (sortFunction)="customSort($event)"
   [(selection)]="selectedRows"
   [resizableColumns]="resizableColumns"
+  [expandedRowKeys]="expandedRows"
 >
   <ng-template *ngIf="filter || captionTitle || exports" pTemplate="caption">
     <div>
@@ -120,7 +121,7 @@
 
   <ng-template pTemplate="header" let-columns>
     <tr>
-      <th *ngIf="checkboxes || expandable" style="min-width: 2rem; width: 2rem">
+      <th *ngIf="checkboxes" style="min-width: 2rem; width: 2rem">
         &nbsp;
       </th>
 
@@ -221,6 +222,12 @@
             }
           </div>
         </th>
+        @if (expandable && expandAfterField === col.field) {
+          <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
+        }
+      }
+      @if (expandable && !expandAfterField) {
+        <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
       }
     </tr>
   </ng-template>
@@ -235,19 +242,6 @@
       @if (checkboxes) {
         <td>
           <p-tableCheckbox [value]="rowData" class="ps-2" />
-        </td>
-      }
-
-      @if (expandable) {
-        <td>
-          <button
-            type="button"
-            pButton
-            pRipple
-            [pRowToggler]="rowData"
-            class="p-button-text p-button-rounded p-button-plain"
-            [icon]="expanded ? 'pi pi-minus' : 'pi pi-plus'"
-          ></button>
         </td>
       }
       @for (col of columns; track col.field) {
@@ -271,6 +265,56 @@
             >{{ col.header | translate }}</span
           >
           <upd-data-table-styles [config]="col" [data]="rowData" />
+        </td>
+        @if (expandable && expandAfterField === col.field) {
+          <td>
+            <button
+              type="button"
+              pButton
+              pRipple
+              [pRowToggler]="rowData"
+              class="p-button-text p-button-rounded p-button-plain"
+              [icon]="expanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+            ></button>
+          </td>
+        }
+      }
+      @if (expandable && !expandAfterField) {
+        <td>
+          <button
+            type="button"
+            pButton
+            pRipple
+            [pRowToggler]="rowData"
+            class="p-button-text p-button-rounded p-button-plain"
+            [icon]="expanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+          ></button>
+        </td>
+      }
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="expandedrow" let-rowData let-columns="columns">
+    <tr *ngIf="expandableRowTemplate">
+      @if (expandAfterField) {
+        @for (col of columns; track col.field) {
+          @if (col.field === expandAfterField) {
+            <td colspan="2" style="max-width: 0; overflow: hidden;">
+              <div class="text-wrap text-break">
+                <ng-container
+                  *ngTemplateOutlet="expandableRowTemplate; context: { $implicit: rowData }"
+                ></ng-container>
+              </div>
+            </td>
+          } @else {
+            <td></td>
+          }
+        }
+      } @else {
+        <td [attr.colspan]="displayColumns().length + 1">
+          <ng-container
+            *ngTemplateOutlet="expandableRowTemplate; context: { $implicit: rowData }"
+          ></ng-container>
         </td>
       }
     </tr>

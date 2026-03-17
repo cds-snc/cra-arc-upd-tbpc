@@ -82,6 +82,9 @@
   "position": "Position",
   "top10-tasks-GC": "Top 10 tasks GC Task Success Survey",
   "task": "Task",
+  "task-num": "Task #",
+  "scenario": "Scenario",
+  "no-scenarios-available": "No scenarios available",
   "Task": "Task",
   "tasks": "Tasks",
   "total-tasks": "Total tasks",
@@ -1608,6 +1611,7 @@
   "participants-per-test": "Participants per test",
   "view-task-scenario": "View task scenario",
   "avg-task-success": "Avg. Task Success",
+  "task-success": "Task Success",
   "avg-time-on-task": "Avg. Time on Task",
   "coming-soon": "Coming soon",
   "pp": "pp"
