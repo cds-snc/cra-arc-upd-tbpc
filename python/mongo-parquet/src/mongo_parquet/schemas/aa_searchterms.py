@@ -92,7 +92,7 @@ class AASearchTerms(ParquetModel):
                         [
                             pl.col("term"),
                             pl.col("clicks"),
-                            pl.col("position"),
+                            pl.col("position").round(4).cast(pl.Float64),
                             pl.col("_term_id").str.decode("hex").alias("_id"),
                         ]
                     ).alias("aa_searchterms"),

@@ -372,6 +372,7 @@ class TasksViewContext:
     def get_tasks_by_tpc_id(self) -> pl.DataFrame:
         return (
             self.tasks.select(pl.col("_id"), pl.col("tpc_ids"))
+            .filter(pl.col("tpc_ids").is_not_null(), pl.col("tpc_ids").list.len() > 0)
             .explode("tpc_ids")
             .group_by("tpc_ids")
             .agg(pl.col("_id").implode().alias("tasks"))
@@ -384,8 +385,10 @@ class TasksViewContext:
                 pl.col("_id"),
                 pl.col("gc_tasks")
                 .list.eval(pl.element().struct.field("title"))
+                .list.unique()
                 .alias("gc_task"),
             )
+            .filter(pl.col("gc_task").is_not_null(), pl.col("gc_task").list.len() > 0)
             .explode("gc_task")
             .group_by("gc_task")
             .agg(pl.col("_id").implode().alias("tasks"))
