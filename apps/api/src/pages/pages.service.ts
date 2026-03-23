@@ -339,7 +339,7 @@ export class PagesService {
           visits: data.visits,
         })),
         dyfByDay: await this.getDyfByDay(params.comparisonDateRange, params.id),
-        average_time_spent: averageTimeSpent.comparison
+        average_time_spent: averageTimeSpent.comparison,
       },
       topSearchTermsIncrease: topIncreasedSearchTerms,
       topSearchTermsDecrease: topDecreasedSearchTerms,
@@ -584,6 +584,14 @@ export class PagesService {
         clicksChange,
       };
     });
+  }
+
+  async getPageId(url: string) {
+    const pageId = await this.db.collections.pages
+      .findOne({ url }, { _id: 1 })
+      .lean()
+      .exec();
+      return { id: pageId?._id.toString() || null };
   }
 
   async runAccessibilityTest(url: string) {
