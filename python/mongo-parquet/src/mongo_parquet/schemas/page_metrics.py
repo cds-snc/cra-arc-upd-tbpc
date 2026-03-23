@@ -1,14 +1,24 @@
+import os
+import re
 from typing import Any, Literal, final, override
+from datetime import datetime
+import shutil
 import polars as pl
 from pymongoarrow.api import Schema
 from bson import ObjectId
 from pyarrow import int64, string, timestamp, list_, float64, int32
 from pymongoarrow.types import ObjectIdType
-from .lib import AnyFrame, MongoCollection, ParquetModel
+from .lib import (
+    AnyFrame,
+    MongoCollection,
+    ParquetModel,
+    RefSyncContext,
+    PartitionValues,
+)
 from .aa_searchterms import AASearchTerms
 from .activity_map import ActivityMap
 from .gsc_searchterms import GSCSearchTerms
-from .utils import get_sample_ids, get_sample_date_range_filter
+from .utils import get_sample_ids, get_sample_date_range_filter, update_ref_column
 from ..sampling import SamplingContext
 from copy import deepcopy
 
@@ -114,3 +124,223 @@ class PagesMetricsModel(MongoCollection):
         ActivityMap(),
         GSCSearchTerms(),
     ]
+
+    @override
+    def sync_refs(self, ref_sync_context: RefSyncContext) -> None:
+        ref_changes = self.get_ref_changes(ref_sync_context)
+
+        if ref_changes.height == 0:
+            print("No page changes to sync.")
+            return
+
+        print(f"Syncing {ref_changes.height} page ref changes for {self.collection}...")
+
+        # first do primary model and accumulate/concat all _ids, to be used for updating secondary models
+
+        # do both "in parallel" while iterating over partitions
+        # (will need to use primary model partition values because secondary models
+        #   don't have a url field which is needed to find the changed refs)
+
+        # The callback function for syncing each model, using the partition values of the primary model
+        def sync_partition(partition: PartitionValues | None = None) -> None:
+            sync_partition_start = datetime.now()
+            primary_file_path = (
+                self.primary_model.get_partition_file_path(partition)
+                if partition is not None
+                else self.primary_model.get_file_path()
+            )
+
+            primary_lf = pl.scan_parquet(primary_file_path).with_columns(
+                pl.col("url").cast(ref_sync_context.page_urls_enum)
+            )
+
+            # get ids with changed refs
+            changed_ids = (
+                primary_lf.select(["_id", "url"])
+                .join(
+                    ref_changes.select(
+                        pl.col("url"),
+                        "page",
+                        "tasks",
+                        "projects",
+                        "remove_refs",
+                        pl.lit(True).alias("has_change"),
+                    ).lazy(),
+                    on="url",
+                    how="left",
+                )
+                .filter(pl.col("has_change").or_(pl.col("remove_refs")))
+                .drop("url", "has_change")
+                .unique()
+                .collect()
+            )
+
+            if changed_ids.height == 0:
+                print(
+                    f"No changed refs found in partition {partition} for {self.collection}."
+                )
+                return
+
+            # now we have the changed_ids for this partition, we can update all the parquet files
+            primary_temp_file_path = re.sub(
+                r"\.parquet$", ".temp.parquet", primary_file_path
+            )
+
+            (
+                primary_lf.join(changed_ids.lazy(), on="_id", how="left", coalesce=True)
+                .with_columns(
+                    # re-cast url to string for output, to avoid potential issues with different enum types between files
+                    pl.col("url").cast(pl.String),
+                    update_ref_column("page"),
+                    update_ref_column("tasks"),
+                    update_ref_column("projects"),
+                )
+                .drop(["page_right", "tasks_right", "projects_right", "remove_refs"])
+                .sort("_id")
+                .sink_parquet(
+                    primary_temp_file_path, compression_level=7, engine="streaming"
+                )
+            )
+
+            print(
+                f"Wrote updated page metrics with {changed_ids.height} changed refs to {primary_temp_file_path}."
+            )
+
+            shutil.move(primary_temp_file_path, primary_file_path)
+
+            for secondary_model in self.secondary_models:
+                secondary_file_path = (
+                    secondary_model.get_partition_file_path(partition)
+                    if partition is not None
+                    else secondary_model.get_file_path()
+                )
+
+                # make sure the secondary file exists before trying to update it, since some secondary models may not have all
+                # the same partitions as the primary model
+                if not os.path.exists(secondary_file_path):
+                    continue
+
+                secondary_temp_file_path = re.sub(
+                    r"\.parquet$", r".temp.parquet", secondary_file_path
+                )
+
+                (
+                    pl.scan_parquet(secondary_file_path)
+                    .join(changed_ids.lazy(), on="_id", how="left", coalesce=True)
+                    .with_columns(
+                        update_ref_column("page"),
+                        update_ref_column("tasks"),
+                        update_ref_column("projects"),
+                    )
+                    .drop(
+                        ["page_right", "tasks_right", "projects_right", "remove_refs"]
+                    )
+                    .sort("_id")
+                    .sink_parquet(
+                        secondary_temp_file_path,
+                        compression_level=7,
+                        engine="streaming",
+                    )
+                )
+
+                print(
+                    f"Wrote updated page metrics with {changed_ids.height} changed refs to {secondary_temp_file_path}."
+                )
+                shutil.move(secondary_temp_file_path, secondary_file_path)
+
+            print(
+                f"Finished syncing page ref changes for partition {partition} in {datetime.now() - sync_partition_start} seconds."
+            )
+
+        all_partitions_sync_start = datetime.now()
+
+        if self.primary_model.partition_by is None:
+            sync_partition()
+        else:
+            for partition in self.primary_model.get_partition_values() or []:
+                partition = PartitionValues(**partition)
+                sync_partition(partition)
+
+        print(
+            f"Finished syncing page ref changes for all partitions in {datetime.now() - all_partitions_sync_start} seconds."
+        )
+
+    @override
+    def get_ref_changes(self, ref_sync_context: RefSyncContext):
+        lf = self.primary_model.lf()
+
+        unique_page_refs = lf.select(
+            pl.col("url").cast(ref_sync_context.page_urls_enum),
+            "page",
+            "tasks",
+            "projects",
+        ).unique()
+
+        # get urls which have a page ref, but are not in the pages collection at all
+        refs_to_remove_start = datetime.now()
+        refs_to_remove = (
+            lf.select(pl.col("url").cast(ref_sync_context.page_urls_enum), "page")
+            .unique()
+            .filter(pl.col("page").is_not_null())
+            .join(ref_sync_context.pages.select(["url"]), on="url", how="anti")
+            .collect()
+        )
+
+        refs_remove_end = datetime.now()
+        formatted_remove_time = format(
+            (refs_remove_end - refs_to_remove_start).total_seconds(), ".2f"
+        )
+        print(
+            f"Checked for refs to remove in {formatted_remove_time} seconds. Found {refs_to_remove.height} refs to remove."
+        )
+
+        # then compare against the pages collection to find any urls that have differences in refs
+        page_diffs_start = datetime.now()
+
+        page_diffs = (
+            unique_page_refs.join(
+                ref_sync_context.pages.select(
+                    [pl.col("_id").alias("page"), "url", "tasks", "projects"]
+                ),
+                on="url",
+                how="right",
+                nulls_equal=True,
+            )
+            .filter(
+                (pl.col("page") != pl.col("page_right"))
+                | (pl.col("tasks") != pl.col("tasks_right"))
+                | (pl.col("projects") != pl.col("projects_right"))
+            )
+            .select(
+                "url",
+                pl.col("page_right").alias("page"),
+                pl.col("tasks_right").alias("tasks"),
+                pl.col("projects_right").alias("projects"),
+            )
+            .unique()
+            .collect()
+        )
+
+        page_diffs_end = datetime.now()
+        formatted_page_diff_time = format(
+            (page_diffs_end - page_diffs_start).total_seconds(), ".2f"
+        )
+        print(
+            f"Checked for page ref differences in {formatted_page_diff_time} seconds. Found {page_diffs.height} pages with ref differences."
+        )
+
+        combined_changes = pl.concat(
+            [
+                page_diffs.with_columns(pl.lit(False).alias("remove_refs")),
+                refs_to_remove.select(
+                    pl.col("url"),
+                    pl.lit(None).alias("page"),
+                    pl.lit(None).alias("tasks"),
+                    pl.lit(None).alias("projects"),
+                    pl.lit(True).alias("remove_refs"),
+                ).unique(),
+            ],
+            rechunk=True,
+        )
+
+        return combined_changes

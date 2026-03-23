@@ -12,6 +12,7 @@ from .mongo import MongoConfig, MongoArrowClient
 from .sampling import SamplingContext
 from .storage import StorageClient
 from .schemas import MongoCollection, ParquetModel
+from .sample_filters import apply_sampling_filter
 from .utils import (
     format_timedelta,
     get_partition_values,
@@ -68,7 +69,7 @@ class MongoParquetIO:
 
         :param collection_model: The model representing the MongoDB collection.
         :param sample: Whether to use a sample of the data.
-        :param sync_filter: Date filter to apply for incremental sync.
+        :param ref_sync_context: The context for reference synchronization.
         """
         sync_start_time = datetime.now()
         formatted_datetime = sync_start_time.strftime("%H:%M:%S")
@@ -99,7 +100,19 @@ class MongoParquetIO:
             print(f"Processing {parquet_model.parquet_filename}...")
 
             # get latest date
-            latest_parquet_date: datetime = parquet_model.latest_date() or datetime.min
+
+            # Because GSC data comes in late, we want to make sure we include any rows where gsc_total_clicks is not null
+            where_col_not_null = (
+                "gsc_total_clicks"
+                if (
+                    parquet_model.parquet_filename
+                    in ["pages_metrics.parquet", "overall_metrics.parquet"]
+                )
+                else None
+            )
+            latest_parquet_date: datetime = (
+                parquet_model.latest_date(where_col_not_null) or datetime.min
+            )
 
             if latest_mongo_date is None or latest_mongo_date <= latest_parquet_date:
                 print(
@@ -111,25 +124,17 @@ class MongoParquetIO:
                 f"Latest parquet date: {latest_parquet_date}, latest mongo date: {latest_mongo_date}"
             )
 
+            existing_data_cutoff_date = pl.datetime(
+                latest_parquet_date.year,
+                latest_parquet_date.month,
+                latest_parquet_date.day,
+            )
+
             incremental_filter = {
                 "date": {"$gt": latest_parquet_date},
             }
 
             sync_utils.ensure_temp_dirs()
-
-            # Do initial processing/hashing for current/previous data
-            local_path = self.storage.target_filepath(
-                parquet_model.parquet_filename, remote=False
-            )
-
-            if os.path.exists(local_path):
-                hash_start_time = datetime.now()
-
-                print(f"Hashing {local_path}...")
-
-                sync_utils.add_hash(local_path)
-
-                print(f"Hashed {local_path} in {datetime.now() - hash_start_time}")
 
             base_filter = (
                 parquet_model.get_sampling_filter(self.sampling_context)
@@ -237,7 +242,10 @@ class MongoParquetIO:
 
                             pl.concat(
                                 [
-                                    pl.scan_parquet(storage_filepath),
+                                    # Make sure not to include data for dates that will be replaced
+                                    pl.scan_parquet(storage_filepath).filter(
+                                        pl.col("date") <= existing_data_cutoff_date
+                                    ),
                                     new_data.lazy(),
                                 ]
                             ).sink_parquet(
@@ -272,8 +280,6 @@ class MongoParquetIO:
                     print(
                         f"Updated {filepath} in {format_timedelta(datetime.now() - partition_start_time)}"
                     )
-
-                    sync_utils.queue_upload_if_changed(filepath)
 
                     del new_data
                     print("")
@@ -317,7 +323,14 @@ class MongoParquetIO:
                 print(f"Writing to temporary file {temp_target_filepath}...")
 
                 pl.concat(
-                    [parquet_model.lf(), new_data.lazy()], rechunk=True
+                    [
+                        # Make sure not to include data for dates that will be replaced
+                        parquet_model.lf().filter(
+                            pl.col("date") <= existing_data_cutoff_date
+                        ),
+                        new_data.lazy(),
+                    ],
+                    rechunk=True,
                 ).sink_parquet(
                     temp_target_filepath,
                     compression_level=7,
@@ -331,8 +344,6 @@ class MongoParquetIO:
             except Exception as e:
                 error(e.add_note(f"Error writing to {target_filepath}"))
                 sync_utils.restore_backup(parquet_model.parquet_filename)
-
-            sync_utils.queue_upload_if_changed(target_filepath)
 
             print(
                 f"Finished processing {parquet_model.parquet_filename} in {format_timedelta(datetime.now() - parquet_start_time)}"
@@ -393,6 +404,48 @@ class MongoParquetIO:
                 df,
                 parquet_model.parquet_filename,
                 sample=sample or False,
+            )
+
+    def create_sample_from_local(
+        self,
+        collection_model: MongoCollection,
+    ) -> None:
+        """
+        Create sample Parquet files from local data Parquet files.
+
+        :param collection_model: The model representing the MongoDB collection.
+        """
+        print(
+            f"📥 Creating sample parquet files from local data for {collection_model.collection}..."
+        )
+
+        for parquet_model in [
+            collection_model.primary_model,
+            *collection_model.secondary_models,
+        ]:
+            source_path = self.storage.target_filepath(
+                parquet_model.parquet_filename, sample=False, remote=False
+            )
+
+            if not os.path.exists(source_path):
+                print(f"⚠️  Local file {source_path} not found, skipping...")
+                continue
+
+            lf = apply_sampling_filter(
+                parquet_model.lf(),
+                parquet_model.get_sampling_filter(self.sampling_context),
+            ).drop(["year", "month"], strict=False)
+
+            target_path = self.storage.target_filepath(
+                parquet_model.parquet_filename, sample=True, remote=False
+            )
+
+            print(f"📤 Writing {target_path}...")
+            lf.sink_parquet(
+                target_path,
+                compression_level=7,
+                mkdir=True,
+                engine="streaming",
             )
 
     def export_partitioned(
