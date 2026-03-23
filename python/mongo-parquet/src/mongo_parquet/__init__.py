@@ -5,6 +5,8 @@ This package provides utilities for working with MongoDB and converting data to 
 """
 
 import datetime
+import os
+from pprint import pprint
 from typing import Any, final
 from pymongo.collection import Collection
 from pymongo.database import Database
@@ -13,8 +15,8 @@ from .mongo import MongoConfig
 from .sampling import SamplingContext
 from .schemas import collection_models, MongoCollection
 from .storage import StorageClient
-from . import schemas
 from .utils import SyncUtils
+from .schemas.lib import RefSyncContext, ref_model_names
 from .views import ViewService
 
 
@@ -114,6 +116,33 @@ class MongoParquet:
                 model,
                 sample=sample or self.sample,
             )
+
+    def create_sample_from_local(
+        self,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None:
+        """
+        Create sample Parquet files from local data Parquet files.
+
+        :param include: List of collections to include in the sample generation.
+        :param exclude: List of collections to exclude from the sample generation.
+        """
+        if include and exclude:
+            raise ValueError(
+                "Cannot specify both include and exclude lists. Use one or the other."
+            )
+
+        for model in self.collection_models:
+            if include and model.collection not in include:
+                print(f"Skipping {model.collection} (not in include list)")
+                continue
+
+            if exclude and model.collection in exclude:
+                print(f"Skipping {model.collection} (in exclude list)")
+                continue
+
+            self.io.create_sample_from_local(model)
 
     def upload_to_remote(
         self,
@@ -225,6 +254,7 @@ class MongoParquet:
         :param include: List of collections to include in the sync.
         :param exclude: List of collections to exclude from the sync.
         """
+        print("Starting sync process...")
 
         self.bail_if_empty()
 
@@ -234,18 +264,41 @@ class MongoParquet:
 
         sync_utils = SyncUtils(root_dir_path)
 
-        for model in self.collection_models:
+        file_hash_time_start = datetime.datetime.now()
+        print("Getting initial file hashes...")
+        sync_utils.hash_all_files()
+        file_hash_time_end = datetime.datetime.now()
+
+        formatted_time = format(
+            (file_hash_time_end - file_hash_time_start).total_seconds(), ".2f"
+        )
+        print(f"Initial file hashing completed in {formatted_time} seconds.")
+
+        # partition collection models into reference models, and the rest
+        ref_models = [
+            model
+            for model in self.collection_models
+            if model.collection in ref_model_names
+        ]
+
+        non_ref_models = [
+            model
+            for model in self.collection_models
+            if model.collection not in ref_model_names
+        ]
+
+        def sync_model(model: MongoCollection):
             if include and model.collection not in include:
                 print(f"Skipping {model.collection} (not in include list)")
-                continue
+                return
 
             if exclude and model.collection in exclude:
                 print(f"Skipping {model.collection} (in exclude list)")
-                continue
+                return
 
             if not self.should_export(model):
                 print(f"Collection {model.collection} has no data, skipping export.")
-                continue
+                return
 
             if model.sync_type == "simple":
                 print(f"Performing simple sync for {model.collection}")
@@ -253,14 +306,6 @@ class MongoParquet:
                     model,
                     sample=sample or self.sample,
                 )
-                if upload_on_success:
-                    for parquet_model in [model.primary_model, *model.secondary_models]:
-                        target_filepath = self.storage_client.target_filepath(
-                            parquet_model.parquet_filename,
-                            sample=sample or False,
-                            remote=False,
-                        )
-                        sync_utils.queue_upload_if_changed(target_filepath)
 
             elif model.sync_type == "incremental":
                 try:
@@ -273,15 +318,68 @@ class MongoParquet:
                 except Exception as e:
                     print(f"Error occurred while syncing {model.collection}: {e}")
 
-        if upload_on_success and len(sync_utils.upload_queue) > 0:
-            print(f"Uploading {len(sync_utils.upload_queue)} updated files...")
-            self.storage_client.upload_to_remote(
-                sample=sample or False,
-                cleanup_local=False,
-                filepaths=sync_utils.upload_queue,
-            )
+        for model in ref_models:
+            sync_model(model)
+
+        for model in non_ref_models:
+            sync_model(model)
+
+        self.sync_refs(root_dir_path)
+
+        if upload_on_success:
+            self.queue_upload_for_changed_files(sync_utils)
+            if len(sync_utils.upload_queue) > 0:
+                print(f"Uploading {len(sync_utils.upload_queue)} updated files...")
+                self.storage_client.upload_to_remote(
+                    sample=sample or False,
+                    cleanup_local=False,
+                    filepaths=sync_utils.upload_queue,
+                )
+        else:  # add "if upload_dry_run" or something similar?
+            self.queue_upload_for_changed_files(sync_utils)
+            if len(sync_utils.upload_queue) > 0:
+                print(
+                    f"{len(sync_utils.upload_queue)} files have changed and are queued for upload. Run `upload_to_remote` to upload them."
+                )
+                pprint(sorted(sync_utils.upload_queue))
 
         sync_utils.upload_queue.clear()
+
+    def queue_upload_for_changed_files(self, sync_utils: SyncUtils):
+        """
+        Check all collection models for changed Parquet files and queue them for upload if they have changed.
+
+        :param sync_utils: SyncUtils instance to handle file change detection and queuing.
+        """
+        for model in self.collection_models:
+            for parquet_model in [model.primary_model, *model.secondary_models]:
+                target_filepath = self.storage_client.target_filepath(
+                    parquet_model.parquet_filename,
+                    sample=False,
+                    remote=False,
+                )
+                sync_utils.queue_upload_if_changed(target_filepath)
+
+    def sync_refs(self, root_dir_path: str):
+        """
+        Sync referential integrity for all collection models that have refs.
+
+        :param root_dir_path: Path to the root directory containing the parquet files.
+        """
+        root_abspath = os.path.abspath(root_dir_path)
+        print(f"Syncing refs for all collections in path {root_abspath}...")
+        ref_sync_context = RefSyncContext(root_abspath)
+
+        non_ref_models = [
+            model
+            for model in self.collection_models
+            if model.collection not in ref_model_names
+        ]
+
+        for model in non_ref_models:
+            if model.sync_type == "incremental":
+                print(f"Syncing refs for {model.collection}...")
+                model.sync_refs(ref_sync_context)
 
     def recalculate_views(self, cleanup_temp_dir: bool = False):
         """

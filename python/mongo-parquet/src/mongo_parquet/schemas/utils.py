@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Literal
 from bson import ObjectId
+import polars as pl
 from ..sampling import SamplingContext
 
 
@@ -80,3 +81,12 @@ def get_sample_date_range_filter(
     )
 
     return {"date": {**start_filter, **end_filter}}
+
+
+def update_ref_column(col_name: str) -> pl.Expr:
+    return (
+        pl.when(pl.col("remove_refs"))
+        .then(None)
+        .otherwise(pl.coalesce(f"{col_name}_right", col_name))
+        .alias(col_name)
+    )

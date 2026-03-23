@@ -2,7 +2,7 @@
 # AWS SSO initialization script for Codespaces
 set -e
 
-while getopts p:e flag; do
+while getopts pe flag; do
   case "${flag}" in
   p) use_prod=true ;;
   e) use_read_env=true ;;

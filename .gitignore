@@ -60,3 +60,4 @@ CLAUDE.md
 
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
+.omx/

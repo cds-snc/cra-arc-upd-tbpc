@@ -83,6 +83,12 @@ def main():
     )
 
     parser.add_argument(
+        "--create-sample-from-local",
+        action="store_true",
+        help="Create sample parquet files from local data parquet files.",
+    )
+
+    parser.add_argument(
         "--sample-dir",
         type=str,
         help="Override the sample directory for remote storage.",
@@ -158,10 +164,12 @@ def main():
         actions_selected += 1
     if args.recalculate_views:
         actions_selected += 1
+    if args.create_sample_from_local:
+        actions_selected += 1
 
     if actions_selected == 0:
         print(
-            "No action specified. Use --export-from-mongo, --import-to-mongo, --sync-parquet, --upload-to-remote, or --download-from-remote."
+            "No action specified. Use --export-from-mongo, --import-to-mongo, --sync-parquet, --create-sample-from-local, --upload-to-remote, or --download-from-remote."
         )
         print("Use --help for more information.")
         return
@@ -228,9 +236,12 @@ def main():
             upload_on_success=args.upload_to_remote,
             cleanup_temp_dir=args.cleanup_temp_dir,
         )
-        if args.upload_to_remote:
-            mp.upload_to_remote()
 
+        timer_end()
+        return
+
+    if args.create_sample_from_local:
+        mp.create_sample_from_local(include=args.include, exclude=args.exclude)
         timer_end()
         return
 
@@ -269,6 +280,7 @@ def main():
         or args.download_from_remote
         or args.sync_parquet
         or args.recalculate_views
+        or args.create_sample_from_local
     ):
         print("No action specified. Use one of the following:\r\n")
         print("\t--export_from_mongo (export)")
@@ -277,6 +289,7 @@ def main():
         print("\t--download_from_remote (download)")
         print("\t--sync_parquet (sync)")
         print("\t--recalculate-views (recalculate)")
+        print("\t--create-sample-from-local (sample)")
 
         print("Use --help for more information.")
 

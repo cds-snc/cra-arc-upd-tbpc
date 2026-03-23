@@ -34,7 +34,7 @@ class ViewsUtils:
     def sink_temp(self, lf: pl.LazyFrame, file_name: str):
         self.ensure_temp_dir()
         temp_file_path = os.path.join(self.temp_dir_path, file_name)
-        lf.sink_parquet(temp_file_path, compression_level=5)
+        lf.sink_parquet(temp_file_path, compression_level=5, engine="streaming")
 
 
 def format_timedelta(td: timedelta) -> str:
