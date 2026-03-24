@@ -59,8 +59,6 @@ export class PagesHomeComponent implements OnInit {
           {
             field: 'archivedStatus',
             header: 'Archived Status',
-            type: 'label',
-            typeParam: 'archivedStatus',
             filterConfig: {
               type: 'archivedStatus',
               categories: createCategoryConfig({

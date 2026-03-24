@@ -231,6 +231,14 @@ export class PageVisitsView
           default: 'Live',
         },
       },
+      archivedStatus: {
+        $switch: {
+          branches: [
+            { case: { $eq: ['$is_archive', true] }, then: 'Archived' },
+          ],
+          default: 'Not Archived',
+        },
+      },
     };
 
     const pages =
