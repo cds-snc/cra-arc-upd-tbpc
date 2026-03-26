@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.3...v4.4.0) (2026-03-26)
+
+
+### Features
+
+* avg time spent calculation in pages_view (python only) ([b43513f](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b43513fcecd21acef9d7a286969914c4682ac509))
+* Page Url to Page Id ([21f36dc](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/21f36dc16660200aed1965f665c7256d64c6b906))
+
+
+### Bug Fixes
+
+* average_time_spent in common ([33b2aef](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/33b2aeff063f0f7ca95d484d0185dbadb7881e3b))
+* corrected role_type comparison to avoid skipping SSO login ([96628f3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/96628f3fe218bc76e31df8adc358ad72d030a5b3))
+* update SBOM version ([c6b0272](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c6b0272768a28a8d5b5d6b97c6f8120369a106c3))
+* update SBOM version ([cbf2aca](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/cbf2acacd3777cb217af9c0925792809710c7684))
+
 ## [4.3.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.2...v4.3.3) (2026-02-24)
 
 
