@@ -28,7 +28,6 @@ export class LocaleNumberPipe implements PipeTransform {
 })
 export class LocaleDatePipe implements PipeTransform {
   private i18n = inject(I18nService);
-  private _ref = inject(ChangeDetectorRef, { host: true });
 
   transform(
     value?: string | Date | null,
@@ -137,11 +136,16 @@ export class TruncatePipe implements PipeTransform {
     standalone: false
 })
 export class SecondsToMinutesPipe implements PipeTransform {
-  transform(value: number): string {
-    value = Math.round(value);
-    const minutes = Math.floor(value / 60);
-    const seconds = value - minutes * 60;
-    return `${minutes}m ${seconds}s`;
+  transform(value?: number | null): string | number | null | undefined {
+    return typeof value === 'number'
+      ? (() => {
+          const total = Math.round(value);
+          const minutes = Math.floor(total / 60);
+          const seconds = total % 60;
+
+          return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+        })()
+      : value;
   }
 }
 

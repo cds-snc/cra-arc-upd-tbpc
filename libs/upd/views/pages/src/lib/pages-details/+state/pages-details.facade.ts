@@ -165,6 +165,13 @@ export class PagesDetailsFacade {
   pageViewsPercentChange$ = this.pagesDetailsData$.pipe(
     mapToPercentChange('views'),
   );
+  
+  averageTimeSpent$ = this.pagesDetailsData$.pipe(
+    map((data) => data?.dateRangeData?.average_time_spent || 0),
+  );
+  averageTimeSpentPercentChange$ = this.pagesDetailsData$.pipe(
+    mapToPercentChange('average_time_spent'),
+  );
 
   impressions$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.gsc_total_impressions || 0),

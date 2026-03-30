@@ -52,6 +52,9 @@ export class PagesDetailsSummaryComponent implements OnInit {
   visitsByDay$ = this.pageDetailsService.visitsByDay$;
 
   visitsByDeviceType$ = this.pageDetailsService.visitsByDeviceType$;
+  
+  averageTimeSpent$ = this.pageDetailsService.averageTimeSpent$;
+  averageTimeSpentPercentChange$ = this.pageDetailsService.averageTimeSpentPercentChange$;
 
   topSearchTermsIncrease$ = this.pageDetailsService.topSearchTermsIncrease$;
 

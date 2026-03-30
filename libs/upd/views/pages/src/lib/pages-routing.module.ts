@@ -12,31 +12,69 @@ import { PagesDetailsFlowComponent } from './pages-details/pages-details-flow/pa
 import { PagesDetailsReadabilityComponent } from './pages-details/pages-details-readability/pages-details-readability.component';
 import { PagesDetailsVersionsComponent } from './pages-details/pages-details-versions/pages-details-versions.component';
 import { PagesDetailsAccessibilityComponent } from './pages-details/pages-details-accessibility/pages-details-accessibility.component';
+import { pagesUrlRedirectGuard } from './pages-url-redirect.guard';
 
 const routes: Routes = [
   {
     path: '',
     component: PagesComponent,
     children: [
-      { path: '', component: PagesHomeComponent, pathMatch: 'full' },
+      {
+        path: '',
+        component: PagesHomeComponent,
+        pathMatch: 'full',
+        canActivate: [pagesUrlRedirectGuard],
+      },
       {
         path: ':id',
         component: PagesDetailsComponent,
         children: [
           { path: '', redirectTo: 'summary', pathMatch: 'full' },
-          { path: 'summary', component: PagesDetailsSummaryComponent, data: {title: 'Pages | Summary'} },
-          { path: 'webtraffic', component: PagesDetailsWebtrafficComponent, data: {title: 'Pages | Web traffic'} },
-          { path: 'searchanalytics', component: PagesDetailsSearchAnalyticsComponent, data: {title: 'Pages | Search analytics'} },
-          { path: 'pagefeedback', component: PagesDetailsFeedbackComponent, data: {title: 'Pages | Page feedback'} },
-          { path: 'flow', component: PagesDetailsFlowComponent, data: {title: 'Pages | Flow'} },
-          { path: 'readability', component: PagesDetailsReadabilityComponent, data: {title: 'Pages | Readability'} },
-          { path: 'version-history', component: PagesDetailsVersionsComponent, data: {title: 'Pages | Version history'} },
-          { path: 'accessibility', component: PagesDetailsAccessibilityComponent, data: {title: 'Pages | Accessibility'} },
+          {
+            path: 'summary',
+            component: PagesDetailsSummaryComponent,
+            data: { title: 'Pages | Summary' },
+          },
+          {
+            path: 'webtraffic',
+            component: PagesDetailsWebtrafficComponent,
+            data: { title: 'Pages | Web traffic' },
+          },
+          {
+            path: 'searchanalytics',
+            component: PagesDetailsSearchAnalyticsComponent,
+            data: { title: 'Pages | Search analytics' },
+          },
+          {
+            path: 'pagefeedback',
+            component: PagesDetailsFeedbackComponent,
+            data: { title: 'Pages | Page feedback' },
+          },
+          {
+            path: 'flow',
+            component: PagesDetailsFlowComponent,
+            data: { title: 'Pages | Flow' },
+          },
+          {
+            path: 'readability',
+            component: PagesDetailsReadabilityComponent,
+            data: { title: 'Pages | Readability' },
+          },
+          {
+            path: 'version-history',
+            component: PagesDetailsVersionsComponent,
+            data: { title: 'Pages | Version history' },
+          },
+          {
+            path: 'accessibility',
+            component: PagesDetailsAccessibilityComponent,
+            data: { title: 'Pages | Accessibility' },
+          },
         ],
       },
     ],
   },
-]
+];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

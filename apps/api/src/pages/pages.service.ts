@@ -197,7 +197,7 @@ export class PagesService {
       'visits_device_desktop',
       'visits_device_mobile',
       'visits_device_tablet',
-      { $avg: 'average_time_spent' },
+      'average_time_spent',
       'gsc_total_clicks',
       'gsc_total_impressions',
       { $avg: 'gsc_total_ctr' },
@@ -307,6 +307,7 @@ export class PagesService {
       topIncreasedSearchTerms,
       topDecreasedSearchTerms,
       activityMap,
+      averageTimeSpent,
     } = await this.db.views.pages.getPageDetailsData(
       page._id,
       dateRange,
@@ -328,6 +329,7 @@ export class PagesService {
           visits: data.visits,
         })),
         dyfByDay: await this.getDyfByDay(params.dateRange, params.id),
+        average_time_spent: averageTimeSpent.current,
       },
       comparisonDateRange: params.comparisonDateRange,
       comparisonDateRangeData: {
@@ -337,6 +339,7 @@ export class PagesService {
           visits: data.visits,
         })),
         dyfByDay: await this.getDyfByDay(params.comparisonDateRange, params.id),
+        average_time_spent: averageTimeSpent.comparison,
       },
       topSearchTermsIncrease: topIncreasedSearchTerms,
       topSearchTermsDecrease: topDecreasedSearchTerms,
@@ -581,6 +584,14 @@ export class PagesService {
         clicksChange,
       };
     });
+  }
+
+  async getPageId(url: string) {
+    const pageId = await this.db.collections.pages
+      .findOne({ url }, { _id: 1 })
+      .lean()
+      .exec();
+      return { id: pageId?._id.toString() || null };
   }
 
   async runAccessibilityTest(url: string) {

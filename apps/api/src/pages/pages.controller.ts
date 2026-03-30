@@ -48,4 +48,9 @@ export class PagesController {
   async runAccessibilityTest(@Query('url') url: string) {
     return this.pagesService.runAccessibilityTest(url);
   }
+
+  @Get('getPageId')
+  getPageId(@Query('url') url: string) {
+    return this.pagesService.getPageId(url);
+  }
 }
