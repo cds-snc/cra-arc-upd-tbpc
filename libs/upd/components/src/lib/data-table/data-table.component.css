@@ -13,3 +13,20 @@ td.validation-kpi-not-met + td.bg-green {
 .exportButtons {
   margin: 0 5px 5px 0;
 }
+
+:host ::ng-deep .p-multiselect-label {
+  white-space: nowrap;
+}
+
+:host ::ng-deep .p-multiselect-label-container {
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-multiselect-label-container > * {
+  min-width: 0;
+}
+
+:host ::ng-deep .p-multiselect .p-multiselect-label {
+  display: flex;
+  align-items: center;
+}
