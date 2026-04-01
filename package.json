@@ -94,7 +94,7 @@
     "@ngx-translate/core": "^16.0.4",
     "@ngx-translate/http-loader": "^16.0.1",
     "@popperjs/core": "^2.11.7",
-    "@primeng/themes": "^19.0.9",
+    "@primeng/themes": "20.4.0",
     "@swc/helpers": "0.5.19",
     "@types/diff": "^7.0.2",
     "airtable": "^0.12.2",
