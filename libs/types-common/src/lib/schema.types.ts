@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import type { DateRange } from './date.types';
-import type { ArchivedStatus, PageStatus } from './data.types';
+import type { PageStatus } from './data.types';
 
 /*
  * AA itemId types
@@ -172,7 +172,6 @@ export interface IPageView extends IMetrics {
   dateRange: DateRange<Date>;
   page: IPage;
   pageStatus: PageStatus;
-  archivedStatus: ArchivedStatus;
   numComments: number;
   aa_searchterms?: AASearchTermMetrics[];
   activity_map?: ActivityMapMetrics[];
@@ -302,7 +301,6 @@ export interface ITaskView {
     | '_id'
     | 'page'
     | 'pageStatus'
-    | 'archivedStatus'
     | 'visits'
     | 'dyf_yes'
     | 'dyf_no'

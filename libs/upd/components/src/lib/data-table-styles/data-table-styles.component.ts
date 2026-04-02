@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { formatPercent, formatNumber, formatDate } from '@angular/common';
-import { ArchivedStatus, PageStatus, ProjectStatus } from '@dua-upd/types-common';
+import { PageStatus, ProjectStatus } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
 
@@ -54,10 +54,6 @@ export class DataTableStylesComponent implements OnInit {
 
   get pageStatus(): PageStatus {
     return this.data[this.config.field] as PageStatus;
-  }
-
-  get archivedStatus(): ArchivedStatus {
-    return this.data[this.config.field] as ArchivedStatus;
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {

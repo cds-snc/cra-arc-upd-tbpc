@@ -501,7 +501,7 @@ export async function testUrlsArchived() {
     })
     .exec();
 
-  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+  // const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
 
   const urlsDb = await db.collections.urls.aggregate()
     .match({

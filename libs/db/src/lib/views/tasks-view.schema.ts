@@ -206,7 +206,6 @@ export class TasksView implements ITaskView {
     | '_id'
     | 'page'
     | 'pageStatus'
-    | 'archivedStatus'
     | 'visits'
     | 'dyf_yes'
     | 'dyf_no'
