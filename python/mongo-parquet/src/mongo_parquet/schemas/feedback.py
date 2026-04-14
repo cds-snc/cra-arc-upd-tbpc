@@ -90,7 +90,14 @@ class FeedbackModel(MongoCollection):
         file_path = self.primary_model.get_file_path()
 
         lf = self.primary_model.lf().with_columns(
-            pl.col("url").cast(ref_sync_context.page_urls_enum)
+            pl.col("url").cast(ref_sync_context.page_urls_enum),
+            pl.col("page").cast(ref_sync_context.page_ids_enum),
+            pl.col("tasks").list.eval(
+                pl.element().cast(ref_sync_context.task_ids_enum)
+            ),
+            pl.col("projects").list.eval(
+                pl.element().cast(ref_sync_context.project_ids_enum)
+            ),
         )
 
         temp_file_path = re.sub(r"\.parquet$", ".temp.parquet", file_path)
@@ -98,15 +105,19 @@ class FeedbackModel(MongoCollection):
         (
             lf.join(ref_changes.lazy(), on="url", how="left", coalesce=True)
             .with_columns(
-                # re-cast url to string for output, to avoid potential issues with different enum types between files
-                pl.col("url").cast(pl.String),
                 update_ref_column("page"),
                 update_ref_column("tasks"),
                 update_ref_column("projects"),
             )
             .drop(["page_right", "tasks_right", "projects_right", "remove_refs"])
             .sort("_id")
-            .sink_parquet(temp_file_path, compression_level=7, engine="streaming")
+            .with_columns(
+                pl.col("url").cast(pl.String),
+                pl.col("page").cast(pl.String),
+                pl.col("tasks").list.eval(pl.element().cast(pl.String)),
+                pl.col("projects").list.eval(pl.element().cast(pl.String)),
+            )
+            .sink_parquet(temp_file_path, compression_level=7)
         )
 
         print(

@@ -97,7 +97,8 @@ class ReadabilityModel(MongoCollection):
         file_path = self.primary_model.get_file_path()
 
         lf = self.primary_model.lf().with_columns(
-            pl.col("url").cast(ref_sync_context.page_urls_enum)
+            pl.col("url").cast(ref_sync_context.page_urls_enum),
+            pl.col("page").cast(ref_sync_context.page_ids_enum),
         )
 
         temp_file_path = re.sub(r"\.parquet$", ".temp.parquet", file_path)
@@ -111,7 +112,11 @@ class ReadabilityModel(MongoCollection):
             )
             .drop(["page_right", "remove_refs"])
             .sort("_id")
-            .sink_parquet(temp_file_path, compression_level=7, engine="streaming")
+            .with_columns(
+                pl.col("url").cast(pl.String),
+                pl.col("page").cast(pl.String),
+            )
+            .sink_parquet(temp_file_path, compression_level=5)
         )
 
         print(
