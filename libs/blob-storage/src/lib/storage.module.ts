@@ -7,7 +7,7 @@ import { BlobStorageService } from './storage.service';
       provide: BlobStorageService.name,
       useFactory: async () =>
         await BlobStorageService.init(
-          process.env['STORAGE_URI_PREFIX'] === 's3://' ? 's3' : 'azure',
+          process.env['STORAGE_URI_PREFIX'] === 'az://' ? 'azure' : 's3',
         ),
     },
   ],
