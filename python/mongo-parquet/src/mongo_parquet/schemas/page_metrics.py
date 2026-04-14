@@ -151,7 +151,14 @@ class PagesMetricsModel(MongoCollection):
             )
 
             primary_lf = pl.scan_parquet(primary_file_path).with_columns(
-                pl.col("url").cast(ref_sync_context.page_urls_enum)
+                pl.col("url").cast(ref_sync_context.page_urls_enum),
+                pl.col("page").cast(ref_sync_context.page_ids_enum),
+                pl.col("tasks").list.eval(
+                    pl.element().cast(ref_sync_context.task_ids_enum)
+                ),
+                pl.col("projects").list.eval(
+                    pl.element().cast(ref_sync_context.project_ids_enum)
+                ),
             )
 
             # get ids with changed refs
@@ -159,7 +166,7 @@ class PagesMetricsModel(MongoCollection):
                 primary_lf.select(["_id", "url"])
                 .join(
                     ref_changes.select(
-                        pl.col("url"),
+                        "url",
                         "page",
                         "tasks",
                         "projects",
@@ -172,10 +179,11 @@ class PagesMetricsModel(MongoCollection):
                 .filter(pl.col("has_change").or_(pl.col("remove_refs")))
                 .drop("url", "has_change")
                 .unique()
-                .collect()
             )
 
-            if changed_ids.height == 0:
+            num_changed_ids = changed_ids.select(pl.len()).collect().item()
+
+            if num_changed_ids == 0:
                 print(
                     f"No changed refs found in partition {partition} for {self.collection}."
                 )
@@ -186,29 +194,66 @@ class PagesMetricsModel(MongoCollection):
                 r"\.parquet$", ".temp.parquet", primary_file_path
             )
 
-            (
-                primary_lf.join(changed_ids.lazy(), on="_id", how="left", coalesce=True)
+            lazy_sinks: list[pl.LazyFrame] = []
+            file_moves: list[tuple[str, str]] = []
+
+            lazy_sinks.append(
+                primary_lf.join(changed_ids, on="_id", how="left", coalesce=True)
                 .with_columns(
-                    # re-cast url to string for output, to avoid potential issues with different enum types between files
-                    pl.col("url").cast(pl.String),
                     update_ref_column("page"),
                     update_ref_column("tasks"),
                     update_ref_column("projects"),
                 )
                 .drop(["page_right", "tasks_right", "projects_right", "remove_refs"])
-                .sort("_id")
-                .sink_parquet(
-                    primary_temp_file_path, compression_level=7, engine="streaming"
+                # re-cast enums to string for output, to avoid potential issues with different enum types between files
+                .with_columns(
+                    pl.col("url").cast(pl.String),
+                    pl.col("page").cast(pl.String),
+                    pl.col("tasks").list.eval(pl.element().cast(pl.String)),
+                    pl.col("projects").list.eval(pl.element().cast(pl.String)),
                 )
+                .sink_parquet(primary_temp_file_path, compression_level=7, lazy=True)
             )
 
-            print(
-                f"Wrote updated page metrics with {changed_ids.height} changed refs to {primary_temp_file_path}."
-            )
-
-            shutil.move(primary_temp_file_path, primary_file_path)
+            file_moves.append((primary_temp_file_path, primary_file_path))
 
             for secondary_model in self.secondary_models:
+                searchterm_enum: tuple[str, pl.Enum] | None = None
+
+                if (
+                    secondary_model.parquet_filename
+                    == "pages_metrics_aa_searchterms.parquet"
+                ):
+                    unique_searchterms = (
+                        secondary_model.lf()
+                        .select(pl.col("term").unique())
+                        .filter(pl.col("term").is_not_null())
+                        .collect()["term"]
+                    )
+                    searchterm_enum = ("term", pl.Enum(unique_searchterms))
+                elif (
+                    secondary_model.parquet_filename
+                    == "pages_metrics_gsc_searchterms.parquet"
+                ):
+                    unique_searchterms = (
+                        secondary_model.lf()
+                        .select(pl.col("term").unique())
+                        .filter(pl.col("term").is_not_null())
+                        .collect()["term"]
+                    )
+                    searchterm_enum = ("term", pl.Enum(unique_searchterms))
+                elif (
+                    secondary_model.parquet_filename
+                    == "pages_metrics_activity_map.parquet"
+                ):
+                    unique_searchterms = (
+                        secondary_model.lf()
+                        .select(pl.col("link").unique())
+                        .filter(pl.col("link").is_not_null())
+                        .collect()["link"]
+                    )
+                    searchterm_enum = ("link", pl.Enum(unique_searchterms))
+
                 secondary_file_path = (
                     secondary_model.get_partition_file_path(partition)
                     if partition is not None
@@ -224,29 +269,90 @@ class PagesMetricsModel(MongoCollection):
                     r"\.parquet$", r".temp.parquet", secondary_file_path
                 )
 
-                (
-                    pl.scan_parquet(secondary_file_path)
-                    .join(changed_ids.lazy(), on="_id", how="left", coalesce=True)
-                    .with_columns(
-                        update_ref_column("page"),
-                        update_ref_column("tasks"),
-                        update_ref_column("projects"),
-                    )
-                    .drop(
-                        ["page_right", "tasks_right", "projects_right", "remove_refs"]
-                    )
-                    .sort("_id")
-                    .sink_parquet(
-                        secondary_temp_file_path,
-                        compression_level=7,
-                        engine="streaming",
-                    )
-                )
+                def update_refs_expr(
+                    searchterm_enum: tuple[str, pl.Enum] | None = None,
+                ) -> pl.LazyFrame:
+                    if searchterm_enum is not None:
+                        return (
+                            pl.scan_parquet(secondary_file_path)
+                            .with_columns(
+                                pl.col("page").cast(ref_sync_context.page_ids_enum),
+                                pl.col("tasks").list.eval(
+                                    pl.element().cast(ref_sync_context.task_ids_enum)
+                                ),
+                                pl.col("projects").list.eval(
+                                    pl.element().cast(ref_sync_context.project_ids_enum)
+                                ),
+                                pl.col(searchterm_enum[0]).cast(searchterm_enum[1]),
+                            )
+                            .join(changed_ids, on="_id", how="left", coalesce=True)
+                            .with_columns(
+                                update_ref_column("page"),
+                                update_ref_column("tasks"),
+                                update_ref_column("projects"),
+                            )
+                            .drop(
+                                [
+                                    "page_right",
+                                    "tasks_right",
+                                    "projects_right",
+                                    "remove_refs",
+                                ]
+                            )
+                            # re-cast enums to string for output, to avoid potential issues with different enum types between files
+                            .with_columns(
+                                pl.col(searchterm_enum[0]).cast(pl.String),
+                                pl.col("page").cast(pl.String),
+                                pl.col("tasks").list.eval(pl.element().cast(pl.String)),
+                                pl.col("projects").list.eval(
+                                    pl.element().cast(pl.String)
+                                ),
+                            )
+                            .sink_parquet(
+                                secondary_temp_file_path,
+                                compression_level=5,
+                                lazy=True,
+                            )
+                        )
 
-                print(
-                    f"Wrote updated page metrics with {changed_ids.height} changed refs to {secondary_temp_file_path}."
-                )
-                shutil.move(secondary_temp_file_path, secondary_file_path)
+                    return (
+                        pl.scan_parquet(secondary_file_path)
+                        .join(changed_ids, on="_id", how="left", coalesce=True)
+                        .with_columns(
+                            update_ref_column("page"),
+                            update_ref_column("tasks"),
+                            update_ref_column("projects"),
+                        )
+                        .drop(
+                            [
+                                "page_right",
+                                "tasks_right",
+                                "projects_right",
+                                "remove_refs",
+                            ]
+                        )
+                        # re-cast enums to string for output, to avoid potential issues with different enum types between files
+                        .with_columns(
+                            pl.col("page").cast(pl.String),
+                            pl.col("tasks").list.eval(pl.element().cast(pl.String)),
+                            pl.col("projects").list.eval(pl.element().cast(pl.String)),
+                        )
+                        .sink_parquet(
+                            secondary_temp_file_path,
+                            compression_level=5,
+                            lazy=True,
+                        )
+                    )
+
+                lazy_sinks.append(update_refs_expr(searchterm_enum))
+
+                file_moves.append((secondary_temp_file_path, secondary_file_path))
+
+            pl.collect_all(lazy_sinks)
+
+            for src, dst in file_moves:
+                print(f"Overwriting {dst}...")
+                shutil.move(src, dst)
 
             print(
                 f"Finished syncing page ref changes for partition {partition} in {datetime.now() - sync_partition_start} seconds."
@@ -271,15 +377,22 @@ class PagesMetricsModel(MongoCollection):
 
         unique_page_refs = lf.select(
             pl.col("url").cast(ref_sync_context.page_urls_enum),
-            "page",
-            "tasks",
-            "projects",
+            pl.col("page").cast(ref_sync_context.page_ids_enum),
+            pl.col("tasks").list.eval(
+                pl.element().cast(ref_sync_context.task_ids_enum)
+            ),
+            pl.col("projects").list.eval(
+                pl.element().cast(ref_sync_context.project_ids_enum)
+            ),
         ).unique()
 
         # get urls which have a page ref, but are not in the pages collection at all
         refs_to_remove_start = datetime.now()
         refs_to_remove = (
-            lf.select(pl.col("url").cast(ref_sync_context.page_urls_enum), "page")
+            lf.select(
+                pl.col("url").cast(ref_sync_context.page_urls_enum),
+                pl.col("page").cast(ref_sync_context.page_ids_enum),
+            )
             .unique()
             .filter(pl.col("page").is_not_null())
             .join(ref_sync_context.pages.select(["url"]), on="url", how="anti")
