@@ -24,7 +24,7 @@ def main():
 
     if not os.path.exists(dotenv_path):
         print(
-            f"⚠️ WARNING: .env file not found at {dotenv_path}. Using default configuration."
+            f".env file not found at {dotenv_path}. Using default configuration."
         )
 
     parser = argparse.ArgumentParser(description="MongoDB ↔ Parquet utility tool")
@@ -109,7 +109,7 @@ def main():
     parser.add_argument(
         "--storage",
         type=str,
-        default="azure",
+        default="s3",
         help="Override the remote storage type (azure or s3).",
     )
 
