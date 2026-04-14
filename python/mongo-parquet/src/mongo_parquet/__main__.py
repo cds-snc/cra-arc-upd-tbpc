@@ -259,7 +259,7 @@ def main():
         return
 
     if args.upload_to_remote:
-        mp.upload_to_remote()
+        mp.upload_to_remote(sample=args.sample)
         timer_end()
         return
 
