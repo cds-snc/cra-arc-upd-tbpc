@@ -24,18 +24,19 @@ ENV TZ=America/Toronto
 # Update npm, install bun & uv
 RUN su node -c "npm install -g npm@latest && npm cache clean --force && (curl -fsSL https://bun.sh/install | bash) && (curl -LsSf https://astral.sh/uv/install.sh | sh)"
 
-# Add bun to PATH, add "buns" alias for bun-script, and add shell completion for uv and uvx
+# Add bun to PATH, add shell completion for uv and uvx, and add aliases
 # Note: The following lines are added to both .bashrc and .zshrc to ensure compatibility with both shells
 RUN echo 'export BUN_INSTALL="/home/node/.bun"' >> /home/node/.bashrc \
   && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/node/.bashrc \
   && echo 'export BUN_INSTALL="/home/node/.bun"' >> /home/node/.zshrc \
   && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> /home/node/.zshrc \
-  && echo 'alias buns="bun bun-script"' >> /home/node/.bashrc \
-  && echo 'alias buns="bun bun-script"' >> /home/node/.zshrc \
+  # Should set bun/uv cache dirs somewhere in /workspaces/
   && echo 'eval "$(uv generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uvx --generate-shell-completion bash)"' >> /home/node/.bashrc \
   && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/node/.zshrc \
   && echo 'eval "$(uvx --generate-shell-completion zsh)"' >> /home/node/.zshrc \
-  # Add aliases for custom scripts:
+  # Aliases:
   && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.bashrc \
-  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.zshrc
+  && echo 'alias awslogin="scripts/shell/aws-sso-init.sh"' >> /home/node/.zshrc \
+  && echo 'alias buns="bun bun-script"' >> /home/node/.bashrc \
+  && echo 'alias buns="bun bun-script"' >> /home/node/.zshrc \

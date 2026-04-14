@@ -89,7 +89,14 @@ class CalldriverModel(MongoCollection):
         sync_start = datetime.now()
         file_path = self.primary_model.get_file_path()
 
-        lf = self.primary_model.lf()
+        lf = self.primary_model.lf().with_columns(
+            pl.col("tasks")
+            .list.eval(pl.element().cast(ref_sync_context.task_ids_enum))
+            .list.sort(),
+            pl.col("projects")
+            .list.eval(pl.element().cast(ref_sync_context.project_ids_enum))
+            .list.sort(),
+        )
 
         temp_file_path = re.sub(r"\.parquet$", ".temp.parquet", file_path)
 
@@ -101,7 +108,11 @@ class CalldriverModel(MongoCollection):
             )
             .drop(["tasks_right", "projects_right", "remove_refs"])
             .sort("_id")
-            .sink_parquet(temp_file_path, compression_level=7, engine="streaming")
+            .with_columns(
+                pl.col("tasks").list.eval(pl.element().cast(pl.String)),
+                pl.col("projects").list.eval(pl.element().cast(pl.String)),
+            )
+            .sink_parquet(temp_file_path, compression_level=5)
         )
 
         print(
@@ -154,8 +165,12 @@ class CalldriverModel(MongoCollection):
                 ref_sync_context.tasks_by_tpc_id.select(
                     [
                         "tpc_id",
-                        pl.col("tasks").list.sort(),
-                        pl.col("projects").list.sort(),
+                        pl.col("tasks")
+                        .list.eval(pl.element().cast(ref_sync_context.task_ids_enum))
+                        .list.sort(),
+                        pl.col("projects")
+                        .list.eval(pl.element().cast(ref_sync_context.project_ids_enum))
+                        .list.sort(),
                     ]
                 ).lazy(),
                 on="tpc_id",

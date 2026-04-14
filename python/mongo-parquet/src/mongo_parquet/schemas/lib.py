@@ -275,6 +275,9 @@ class RefSyncContext:
     def __init__(self, data_dir: str) -> None:
         self.parquet_models = get_parquet_models(data_dir)
         self.page_urls_enum = self._get_page_urls_enum()
+        self.page_ids_enum = self._get_page_ids_enum()
+        self.task_ids_enum = self._get_task_ids_enum()
+        self.project_ids_enum = self._get_project_ids_enum()
         self.pages = self._get_pages()
         self.tasks_by_tpc_id = self._get_tasks_by_tpc_id()
         self.tasks_by_gc_task = self._get_tasks_by_gc_task()
@@ -285,10 +288,12 @@ class RefSyncContext:
             .lf()
             .select(
                 [
-                    pl.col("_id"),
+                    pl.col("_id").cast(self.page_ids_enum),
                     pl.col("url").cast(self.page_urls_enum),
-                    pl.col("tasks"),
-                    pl.col("projects"),
+                    pl.col("tasks").list.eval(pl.element().cast(self.task_ids_enum)),
+                    pl.col("projects").list.eval(
+                        pl.element().cast(self.project_ids_enum)
+                    ),
                 ]
             )
             .sort("url")
@@ -330,11 +335,138 @@ class RefSyncContext:
 
         return pl.Enum(unique_combined["url"])
 
+    def _get_page_ids_enum(self) -> pl.Enum:
+        unique_page_ids = (
+            self.parquet_models["pages"].lf().select(pl.col("_id").unique()).collect()
+        )
+        unique_page_metrics_ids = (
+            self.parquet_models["page_metrics"]
+            .lf()
+            .select(pl.col("page").unique())
+            .filter(pl.col("page").is_not_null())
+            .rename({"page": "_id"})
+            .collect()
+        )
+
+        unique_feedback_ids = (
+            self.parquet_models["feedback"]
+            .lf()
+            .select(pl.col("page").unique())
+            .filter(pl.col("page").is_not_null())
+            .rename({"page": "_id"})
+            .collect()
+        )
+
+        unique_readability_ids = (
+            self.parquet_models["readability"]
+            .lf()
+            .select(pl.col("page").unique())
+            .filter(pl.col("page").is_not_null())
+            .rename({"page": "_id"})
+            .collect()
+        )
+
+        combined_unique_page_ids = pl.concat(
+            [
+                unique_page_ids,
+                unique_page_metrics_ids,
+                unique_feedback_ids,
+                unique_readability_ids,
+            ]
+        ).select(pl.col("_id").unique().sort())
+
+        return pl.Enum(combined_unique_page_ids["_id"])
+
+    def _get_task_ids_enum(self) -> pl.Enum:
+        unique_task_ids = (
+            self.parquet_models["tasks"].lf().select(pl.col("_id").unique()).collect()
+        )
+        unique_page_metrics_task_ids = (
+            self.parquet_models["page_metrics"]
+            .lf()
+            .select(pl.col("tasks").explode().unique())
+            .filter(pl.col("tasks").is_not_null())
+            .collect()
+        )
+
+        unique_calldrivers_task_ids = (
+            self.parquet_models["calldrivers"]
+            .lf()
+            .select(pl.col("tasks").explode().unique())
+            .filter(pl.col("tasks").is_not_null())
+            .collect()
+        )
+
+        unique_feedback_task_ids = (
+            self.parquet_models["feedback"]
+            .lf()
+            .select(pl.col("tasks").explode().unique())
+            .filter(pl.col("tasks").is_not_null())
+            .collect()
+        )
+
+        combined_unique_task_ids = pl.concat(
+            [
+                unique_task_ids,
+                unique_page_metrics_task_ids.rename({"tasks": "_id"}),
+                unique_calldrivers_task_ids.rename({"tasks": "_id"}),
+                unique_feedback_task_ids.rename({"tasks": "_id"}),
+            ]
+        ).select(pl.col("_id").unique().sort())
+
+        return pl.Enum(combined_unique_task_ids["_id"])
+
+    def _get_project_ids_enum(self) -> pl.Enum:
+        unique_project_ids = (
+            self.parquet_models["projects"]
+            .lf()
+            .select(pl.col("_id").unique())
+            .collect()
+        )
+        unique_page_metrics_project_ids = (
+            self.parquet_models["page_metrics"]
+            .lf()
+            .select(pl.col("projects").explode().unique())
+            .filter(pl.col("projects").is_not_null())
+            .collect()
+        )
+
+        unique_calldrivers_project_ids = (
+            self.parquet_models["calldrivers"]
+            .lf()
+            .select(pl.col("projects").explode().unique())
+            .filter(pl.col("projects").is_not_null())
+            .collect()
+        )
+
+        unique_feedback_project_ids = (
+            self.parquet_models["feedback"]
+            .lf()
+            .select(pl.col("projects").explode().unique())
+            .filter(pl.col("projects").is_not_null())
+            .collect()
+        )
+
+        combined_unique_project_ids = pl.concat(
+            [
+                unique_project_ids,
+                unique_page_metrics_project_ids.rename({"projects": "_id"}),
+                unique_calldrivers_project_ids.rename({"projects": "_id"}),
+                unique_feedback_project_ids.rename({"projects": "_id"}),
+            ]
+        ).select(pl.col("_id").unique().sort())
+
+        return pl.Enum(combined_unique_project_ids["_id"])
+
     def _get_tasks_by_tpc_id(self) -> pl.DataFrame:
         return (
             self.parquet_models["tasks"]
             .lf()
-            .select(pl.col("_id"), pl.col("tpc_ids"), pl.col("projects"))
+            .select(
+                pl.col("_id").cast(self.task_ids_enum),
+                pl.col("tpc_ids"),
+                pl.col("projects").list.eval(pl.element().cast(self.project_ids_enum)),
+            )
             .filter(pl.col("tpc_ids").is_not_null(), pl.col("tpc_ids").list.len() > 0)
             .explode("tpc_ids")
             .group_by("tpc_ids")
@@ -354,7 +486,7 @@ class RefSyncContext:
             self.parquet_models["tasks"]
             .lf()
             .select(
-                pl.col("_id"),
+                pl.col("_id").cast(self.task_ids_enum),
                 pl.col("gc_tasks")
                 .list.eval(pl.element().struct.field("title"))
                 .list.unique()
@@ -363,7 +495,7 @@ class RefSyncContext:
             .filter(pl.col("gc_task").is_not_null(), pl.col("gc_task").list.len() > 0)
             .explode("gc_task")
             .group_by("gc_task")
-            .agg(pl.col("_id").sort().implode().alias("tasks"))
+            .agg(pl.col("_id").implode().sort().alias("tasks"))
             .collect()
         )
 
