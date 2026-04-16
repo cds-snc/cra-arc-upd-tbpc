@@ -563,6 +563,7 @@ export interface VisitsByPage {
   is404?: boolean;
   isRedirect?: boolean;
   redirect?: string;
+  isArchived?: boolean;
   pageStatus?: PageStatus;
   owners?: string;
   sections?: string;

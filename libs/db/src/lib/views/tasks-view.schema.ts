@@ -188,7 +188,6 @@ export class TasksView implements ITaskView {
           sections: String,
         },
         pageStatus: String,
-        archivedStatus: String,
         visits: Number,
         dyf_yes: Number,
         dyf_no: Number,

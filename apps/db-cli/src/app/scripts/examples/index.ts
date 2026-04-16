@@ -491,7 +491,6 @@ export async function testUrlsArchived() {
   const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
     UrlsService,
   );
-  // const blob = (<RunScriptCommand>this).inject<BlobStorageService>(BlobStorageService.name);
 
   const urlTest = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html";
 
@@ -501,7 +500,7 @@ export async function testUrlsArchived() {
     })
     .exec();
 
-  // const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
 
   const urlsDb = await db.collections.urls.aggregate()
     .match({

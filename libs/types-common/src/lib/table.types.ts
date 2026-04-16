@@ -50,7 +50,7 @@ export interface typeParams {
 }
 
 export interface FilterConfig<T = any> {
-  type: 'category' | 'boolean' | 'passFail' | 'pageStatus' | 'archivedStatus';
+  type: 'category' | 'boolean' | 'passFail' | 'pageStatus';
   categories?: { name: string; value: T[keyof T] | null }[];
   matchMode?: string;
 }
