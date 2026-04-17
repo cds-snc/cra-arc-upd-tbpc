@@ -30,6 +30,7 @@ class UxTests(ParquetModel):
             "test_type": string(),
             "session_type": string(),
             "scenario": string(),
+            "scenario_id": string(),
             "vendor": string(),
             "version_tested": string(),
             "github_repo": string(),

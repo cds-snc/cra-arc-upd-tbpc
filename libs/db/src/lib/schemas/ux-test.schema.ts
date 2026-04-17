@@ -46,6 +46,9 @@ export class UxTest implements IUxTest {
   scenario?: string;
 
   @Prop({ type: String })
+  scenario_id?: string;
+
+  @Prop({ type: String })
   vendor?: string;
 
   @Prop({ type: String })

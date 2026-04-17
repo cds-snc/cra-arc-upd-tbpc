@@ -329,6 +329,7 @@ export class AirtableClient {
             ? fields['Session Type'][0]
             : undefined,
           scenario: fields['Scenario/Questions'],
+          scenario_id: fields['Scenario ID'],
           tasks: fields['Task'],
           subtask: fields['Sub-Task'],
           pages: fields['Pages_RecordIds'],
