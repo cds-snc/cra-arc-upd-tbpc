@@ -1032,7 +1032,6 @@ export class ProjectsDetailsFacade {
               rates.length && avg(rates) != null
                 ? round(avg(rates)! * 100, 1)
                 : null,
-            avgTimeOnTask: null as number | null,
             totalUsers: totalUsers,
           }))
           .sort((a, b) => {
@@ -1089,7 +1088,6 @@ export class ProjectsDetailsFacade {
           tests,
           avgTaskSuccessChange,
           avgTaskSuccessPercentChange,
-          avgTimeOnTaskChange: null as number | null,
         };
       });
     }),

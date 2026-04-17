@@ -12,12 +12,10 @@ export interface TaskTestedData {
     testTypeLabel: string;
     successRate: number | null;
     successRatePercent: number | null;
-    avgTimeOnTask: number | null;
     totalUsers: number;
   }[];
   avgTaskSuccessChange: number | null;
   avgTaskSuccessPercentChange: number | null;
-  avgTimeOnTaskChange: number | null;
 }
 
 export interface TasksTestedSummary {

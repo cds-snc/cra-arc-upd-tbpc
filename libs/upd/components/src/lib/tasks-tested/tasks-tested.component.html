@@ -33,7 +33,7 @@
     <div class="row">
       <div class="col">
         <upd-card [title]="'tasks-tested'">
-          @for (task of tasksTestedDataValue(); track task.taskId) {
+          @for (task of tasksTestedDataValue(); track task.taskNumber) {
             <div class="mb-3 p-3 border rounded">
               <div class="row">
                 <div class="col-lg-10">
@@ -106,7 +106,7 @@
                 </div>
 
                 <div class="col-lg-2 d-flex flex-column">
-                  <div class="text-muted small mb-1">{{ 'avg-task-success' | translate }}</div>
+                  <div class="text-muted small mb-1">{{ 'change' | translate }}</div>
                   <span class="h1 mb-0" [class]="getChangeIndicator(task.avgTaskSuccessChange).cssClass">
                     {{ getChangeIndicator(task.avgTaskSuccessChange).text }}
                   </span>
