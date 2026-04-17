@@ -62,6 +62,7 @@ export interface UxTestData {
   scenario?: string;
   scenario_id?: string;
   scenario_html?: string;
+  scenario_id?: string;
   tasks?: string[];
   pages?: string[];
   subtask?: string;
