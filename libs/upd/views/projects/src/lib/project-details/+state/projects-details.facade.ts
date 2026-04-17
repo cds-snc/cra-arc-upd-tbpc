@@ -1036,10 +1036,8 @@ export class ProjectsDetailsFacade {
         let avgTaskSuccessPercentChange: number | null = null;
 
         if (baselineRate != null && validationRate != null) {
-          avgTaskSuccessChange = round(
-            (validationRate - baselineRate) * 100,
-            1,
-          );
+          avgTaskSuccessChange =
+            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
           avgTaskSuccessPercentChange = percentChange(
             round(validationRate, 2),
             round(baselineRate, 2),

@@ -39,13 +39,18 @@ export class TasksTestedComponent {
   @Input() set tasksTestedSummary(value: TasksTestedSummary | null | undefined) {
     this._tasksTestedSummary.set(value ?? null);
   }
+  @Input() set totalParticipants(value: number | null | undefined) {
+    this._totalParticipants.set(value ?? null);
+  }
   @Input() langLink = 'en';
 
   private _tasksTestedData = signal<TaskTestedData[] | null>(null);
   private _tasksTestedSummary = signal<TasksTestedSummary | null>(null);
+  private _totalParticipants = signal<number | null>(null);
 
   tasksTestedDataValue = computed(() => this._tasksTestedData());
   tasksTestedSummaryValue = computed(() => this._tasksTestedSummary());
+  totalParticipantsValue = computed(() => this._totalParticipants());
 
   hasData = computed(() => {
     const data = this._tasksTestedData();

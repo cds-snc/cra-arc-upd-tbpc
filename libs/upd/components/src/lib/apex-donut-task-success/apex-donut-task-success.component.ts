@@ -26,7 +26,7 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
   private readonly apexStore = inject(ApexStore);
   private destroyRef = inject(DestroyRef);
 
-  @ViewChild('chart', { static: true }) chart!: ChartComponent;
+  @ViewChild('chart', { static: false }) chart: ChartComponent | undefined;
 
   @Input() title = '';
   @Input() titleTooltip = '';
@@ -39,7 +39,7 @@ export class ApexDonutTaskSuccessComponent implements OnInit {
     this.apexStore.setColours(value);
   }
 
-  readonly vm$ = this.apexStore.vm$;
+  readonly vm$ = this.apexStore.vm$.pipe(takeUntilDestroyed(this.destroyRef));
 
   get series(): ApexNonAxisChartSeries {
     const rate = this.successRate ?? 0;

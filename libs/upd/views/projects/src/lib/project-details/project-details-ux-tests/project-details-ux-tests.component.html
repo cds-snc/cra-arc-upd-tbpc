@@ -33,23 +33,7 @@
   </div>
 </div>
 
-<ng-container *ngIf="documents$ | async as docs">
-  <div *ngIf="docs.length" class="container-fluid my-4 gx-0">
-    <div class="row">
-      <div class="col">
-        <upd-data-table-card
-          [data]="docs"
-          [cols]="documentsCols"
-          [sort]="false"
-          [pagination]="false"
-          [filter]="false"
-          [title]="'Documents'"
-        ></upd-data-table-card>
-      </div>
-    </div>
-  </div>
-</ng-container>
-
+<!-- Hidden for UX projects revamp
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-6 col-sm-12">
@@ -79,13 +63,16 @@
     </div>
   </div>
 </div>
+-->
 
 <upd-tasks-tested
   [tasksTestedData]="tasksTestedData$ | async"
   [tasksTestedSummary]="tasksTestedSummary$ | async"
+  [totalParticipants]="totalParticipants$ | async"
   [langLink]="langLink"
 ></upd-tasks-tested>
 
+<!-- Hidden for UX projects revamp
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-12">
@@ -109,7 +96,9 @@
     </div>
   </div>
 </div>
+-->
 
+<!-- Hidden for UX projects revamp
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col">
@@ -126,7 +115,9 @@
     </div>
   </div>
 </div>
+-->
 
+<!-- Hidden for UX projects revamp
 <ng-container *ngIf="taskSuccessByUxTestKpi$ | async as taskSuccessKpi">
   <div class="container-fluid my-4 gx-0" *ngIf="successRateCols.length">
     <div class="row">
@@ -146,4 +137,21 @@
     </div>
   </div>
 </ng-container>
+-->
 
+<ng-container *ngIf="documents$ | async as docs">
+  <div *ngIf="docs.length" class="container-fluid my-4 gx-0">
+    <div class="row">
+      <div class="col">
+        <upd-data-table-card
+          [data]="docs"
+          [cols]="documentsCols"
+          [sort]="false"
+          [pagination]="false"
+          [filter]="false"
+          [title]="'Documents'"
+        ></upd-data-table-card>
+      </div>
+    </div>
+  </div>
+</ng-container>

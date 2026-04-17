@@ -3,18 +3,27 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       @if (tasksTestedSummaryValue(); as summary) {
-        <div class="col-lg-6 col-sm-12">
+        <div [class]="totalParticipantsValue() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'tasks'"
             [current]="summary.tasksCount">
           </upd-data-card>
         </div>
-        <div class="col-lg-6 col-sm-12">
+        <div [class]="totalParticipantsValue() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'scenarios'"
             [current]="summary.scenariosCount">
           </upd-data-card>
         </div>
+        @if (totalParticipantsValue() != null) {
+          <div class="col-lg-4 col-sm-12">
+            <upd-data-card
+              [title]="'Total participants from all tests'"
+              [current]="totalParticipantsValue()"
+              [emptyMessage]="'project-tasks-not-tested'">
+            </upd-data-card>
+          </div>
+        }
       }
     </div>
   </div>
