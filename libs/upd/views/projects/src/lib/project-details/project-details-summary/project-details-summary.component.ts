@@ -99,7 +99,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         const baseline = task.tests.find((t) => t.testType === 'Baseline');
         const validation = task.tests.find((t) => t.testType === 'Validation');
         return {
-          _id: task.taskId || task.taskNumber.toString(),
+          _id: task.taskNumber.toString(),
           taskNumber: task.taskNumber,
           taskTitle: task.taskTitle,
           baseline: baseline?.successRate ?? null,
