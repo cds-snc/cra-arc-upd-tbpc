@@ -5,6 +5,7 @@ export interface TaskTestedData {
   taskNumber: number;
   taskTitle: string;
   taskId: string;
+  scenarioId: string;
   scenariosByTestType: Record<string, string[]>;
   tests: {
     testType: string;

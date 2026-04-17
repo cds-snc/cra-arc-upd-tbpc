@@ -975,15 +975,33 @@ export class ProjectsDetailsFacade {
         return [];
       }
 
-      const taskTitles = uxTests
-        .map((uxTest) => uxTest.tasks.split('; '))
-        .reduce((acc, val) => acc.concat(val), [])
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .sort((a, b) => a.localeCompare(b));
+      const pairs = new Map<
+        string,
+        { taskTitle: string; scenarioId: string }
+      >();
+      for (const uxTest of uxTests) {
+        const scenarioId = uxTest.scenario_id ?? '';
+        for (const title of uxTest.tasks.split('; ')) {
+          if (!title) continue;
+          const key = JSON.stringify([title, scenarioId]);
+          if (!pairs.has(key)) {
+            pairs.set(key, { taskTitle: title, scenarioId });
+          }
+        }
+      }
 
-      return taskTitles.map((taskTitle, index) => {
-        const relevantTests = uxTests.filter((uxTest) =>
-          uxTest.tasks.split('; ').includes(taskTitle),
+      const sortedPairs = [...pairs.values()].sort((a, b) => {
+        const titleCmp = a.taskTitle.localeCompare(b.taskTitle);
+        return titleCmp !== 0
+          ? titleCmp
+          : a.scenarioId.localeCompare(b.scenarioId);
+      });
+
+      return sortedPairs.map(({ taskTitle, scenarioId }, index) => {
+        const relevantTests = uxTests.filter(
+          (uxTest) =>
+            uxTest.tasks.split('; ').includes(taskTitle) &&
+            (uxTest.scenario_id ?? '') === scenarioId,
         );
 
         const testsByType: Record<
@@ -1066,6 +1084,7 @@ export class ProjectsDetailsFacade {
             ? this.i18n.service.translate(taskTitle, lang)
             : taskTitle,
           taskId,
+          scenarioId,
           scenariosByTestType,
           tests,
           avgTaskSuccessChange,
@@ -1077,10 +1096,11 @@ export class ProjectsDetailsFacade {
   );
 
   tasksTestedSummary$ = combineLatest([
+    this.projectsDetailsData$,
     this.tasksTestedData$,
     this.totalParticipants$,
   ]).pipe(
-    map(([tasks, totalParticipants]) => {
+    map(([data, tasks, totalParticipants]) => {
       if (!tasks?.length) {
         return null;
       }
@@ -1092,17 +1112,20 @@ export class ProjectsDetailsFacade {
         }
       }
 
+      const uniqueTaskTitles = new Set<string>();
+      const uniqueScenarioIds = new Set<string>();
+      for (const uxTest of data?.taskSuccessByUxTest ?? []) {
+        for (const title of uxTest.tasks.split('; ')) {
+          if (title) uniqueTaskTitles.add(title);
+        }
+        if (uxTest.scenario_id) {
+          uniqueScenarioIds.add(uxTest.scenario_id);
+        }
+      }
+
       return {
-        tasksCount: tasks.length,
-        scenariosCount: tasks.reduce(
-          (sum, t) =>
-            sum +
-            Object.values(t.scenariosByTestType).reduce(
-              (s, arr) => s + arr.length,
-              0,
-            ),
-          0,
-        ),
+        tasksCount: uniqueTaskTitles.size,
+        scenariosCount: uniqueScenarioIds.size,
         participantsPerTest:
           testTypes.size > 0
             ? Math.round(totalParticipants / testTypes.size)
