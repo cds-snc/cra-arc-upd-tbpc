@@ -363,6 +363,7 @@ export interface IUxTest {
   scenario?: string;
   scenario_id?: string;
   scenario_html?: string;
+  scenario_id?: string;
   vendor?: string;
   version_tested?: string;
   github_repo?: string;
