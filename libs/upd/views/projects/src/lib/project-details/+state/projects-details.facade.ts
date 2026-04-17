@@ -43,6 +43,13 @@ type CallsByTopicTableType = GetTableProps<
   'callsByTopic$'
 >;
 
+function normalizeTestType(type: string): string {
+  const trimmed = type.replace(/\s+\d+$/, '').trim();
+  if (trimmed === 'Validation') return 'Validation';
+  if (trimmed === 'Baseline') return 'Baseline';
+  return type;
+}
+
 @Injectable()
 export class ProjectsDetailsFacade {
   private i18n = inject(I18nFacade);
@@ -1010,7 +1017,7 @@ export class ProjectsDetailsFacade {
         > = {};
 
         for (const test of relevantTests) {
-          const type = test.test_type || 'Unknown';
+          const type = normalizeTestType(test.test_type || 'Unknown');
           if (!testsByType[type]) {
             testsByType[type] = { rates: [], totalUsers: 0 };
           }
@@ -1064,7 +1071,7 @@ export class ProjectsDetailsFacade {
         const scenariosByTestType: Record<string, string[]> = {};
         for (const test of relevantTests) {
           if (!test.scenario) continue;
-          const type = test.test_type || 'Unknown';
+          const type = normalizeTestType(test.test_type || 'Unknown');
           if (!scenariosByTestType[type]) {
             scenariosByTestType[type] = [];
           }
