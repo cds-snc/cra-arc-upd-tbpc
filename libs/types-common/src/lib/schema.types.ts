@@ -344,6 +344,7 @@ export interface IUxTest {
   session_type?: string;
   scenario?: string;
   scenario_html?: string;
+  scenario_id?: string;
   vendor?: string;
   version_tested?: string;
   github_repo?: string;
