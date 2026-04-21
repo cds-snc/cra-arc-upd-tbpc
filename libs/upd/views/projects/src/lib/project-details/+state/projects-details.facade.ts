@@ -99,7 +99,7 @@ export class ProjectsDetailsFacade {
     map((data) => {
       const baselineTests = data?.taskSuccessByUxTest?.filter(
         (t) =>
-          t.test_type === 'Baseline' &&
+          normalizeTestType(t.test_type || '') === 'Baseline' &&
           t.date &&
           (t.success_rate || t.success_rate === 0),
       );
@@ -121,7 +121,7 @@ export class ProjectsDetailsFacade {
     map((data) => {
       const validationTests = data?.taskSuccessByUxTest?.filter(
         (t) =>
-          t.test_type === 'Validation' &&
+          normalizeTestType(t.test_type || '') === 'Validation' &&
           t.date &&
           (t.success_rate || t.success_rate === 0),
       );
