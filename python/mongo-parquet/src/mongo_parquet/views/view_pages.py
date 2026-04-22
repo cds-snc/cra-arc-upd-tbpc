@@ -227,28 +227,43 @@ class PagesViewService:
         for dr in self.date_ranges_with_comparisons.values():  # pyright: ignore[reportAssignmentType]
             dr: DateRangeWithComparison = dr
             for date_range in [dr["date_range"], dr["comparison_date_range"]]:
+                if self.views_utils.is_view_calculated(date_range):
+                    print(
+                        f"Skipping calculation for {date_range['start'].date()} to {date_range['end'].date()} as it was already calculated."
+                    )
+                    continue
+
                 lf = self.get_view_date_range_data(date_range)
 
                 date_range_start_time = datetime.now()
                 print(
-                    f"Writing pages view for {date_range['start']} to {date_range['end']}..."
+                    f"Writing pages view for {date_range['start'].date()} to {date_range['end'].date()}..."
                 )
 
                 output_filename = f"view_pages_{date_range['start'].date()}_{date_range['end'].date()}.parquet"
 
                 self.views_utils.sink_temp(lf, output_filename)
+                self.views_utils.set_view_calculated(date_range)
 
                 print(
                     f"  Finished in {format_timedelta(datetime.now() - date_range_start_time)}"
                 )
 
+        self.views_utils.clear_already_calculated_views()
+
     def insert_pages_view_from_temp(self):
         for dr in self.date_ranges_with_comparisons.values():  # pyright: ignore[reportAssignmentType]
             dr: DateRangeWithComparison = dr
             for date_range in [dr["date_range"], dr["comparison_date_range"]]:
+                if self.views_utils.is_view_inserted(date_range):
+                    print(
+                        f"Skipping insertion for {date_range['start'].date()} to {date_range['end'].date()} as it was already inserted."
+                    )
+                    continue
+
                 date_range_start_time = datetime.now()
                 print(
-                    f"Inserting pages view for {date_range['start']} to {date_range['end']}..."
+                    f"Inserting pages view for {date_range['start'].date()} to {date_range['end'].date()}..."
                 )
 
                 filename = f"view_pages_{date_range['start'].date()}_{date_range['end'].date()}.parquet"
@@ -257,9 +272,13 @@ class PagesViewService:
                     self.insert_batch, chunk_size=20_000, lazy=False
                 )
 
+                self.views_utils.set_view_inserted(date_range)
+
                 print(
                     f"  Finished in {format_timedelta(datetime.now() - date_range_start_time)}"
                 )
+
+        self.views_utils.clear_already_inserted_views()
 
     def get_view_date_range_data(
         self,
