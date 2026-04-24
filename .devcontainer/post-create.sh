@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-bun install --ignore-scripts --omit=peer --omit=optional && \
+npm install && \
   ./scripts/shell/aws-sso-init.sh && \
   npm run mongo-parquet:sync && \
   npm run mongo-parquet:seed-mongo && \

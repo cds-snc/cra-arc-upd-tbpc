@@ -37,6 +37,7 @@ determine_role() {
       role_type="$stored_role_type"
 
       if [[ "$role_type" == "admin" ]]; then
+				echo "Verification URL: ${AWS_SSO_START_URL}/#/device"
         if aws sso login --no-browser 2>/dev/null && aws sts get-caller-identity >/dev/null 2>&1; then
           echo "[aws-sso-init] Successfully authenticated with stored admin role"
           return 0
