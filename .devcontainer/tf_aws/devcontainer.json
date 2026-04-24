@@ -1,6 +1,6 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 {
-  "name": "Base config + Terraform & AWS CLI",
+  "name": "Base config + Terraform",
   "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -31,16 +31,13 @@
       ],
       "settings": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "typescript.tsdk": "node_modules/typescript/lib",
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
         "npm.packageManager": "bun"
       }
     }
   },
 
   "features": {
-    "ghcr.io/devcontainers/features/aws-cli:1": {
-      "version": "latest"
-    },
     "ghcr.io/devcontainers/features/terraform:1": {
       "version": "latest",
       "tflint": "latest",
@@ -54,5 +51,5 @@
   "remoteUser": "node",
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "bun install --ignore-scripts && chmod +x .devcontainer/get-duckdb-node-binding.sh && .devcontainer/get-duckdb-node-binding.sh && npm run mongo-parquet:sync && npm run mongo-parquet:seed-mongo"
+  "postCreateCommand": ".devcontainer/post-create.sh"
 }
