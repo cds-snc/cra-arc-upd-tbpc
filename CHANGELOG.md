@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.6](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.5...v4.3.6) (2026-04-24)
+
+
+### Bug Fixes
+
+* Correct npm install command and add verification URL for AWS SSO login ([2892dc9](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2892dc935e556ac0b5b71c100d4603ffca2f84a6))
+
 ## [4.3.5](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.4...v4.3.5) (2026-04-24)
 
 
