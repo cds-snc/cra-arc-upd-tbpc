@@ -136,6 +136,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
           typeParams: { preLink: `/${this.langLink}/pages`, link: '_id' },
+          frozen: true,
         },
         {
           field: 'owners',
@@ -159,6 +160,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
             link: '_id',
             postLink: 'pagefeedback',
           },
+          frozen: true,
         },
         {
           field: 'dyfNo',
@@ -170,6 +172,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
             link: '_id',
             postLink: 'pagefeedback',
           },
+          frozen: true,
         },
         {
           field: 'dyfNoPercentChange',
@@ -189,6 +192,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           field: 'numComments',
           header: '# of comments',
           pipe: 'number',
+          frozen: true,
         },
         {
           field: 'numCommentsPercentChange',
