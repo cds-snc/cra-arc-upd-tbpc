@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  Input,
+} from '@angular/core';
 import {
   LocaleNumberPipe,
   LocalePercentPipe,
@@ -6,7 +11,23 @@ import {
   SecondsToMinutesPipe,
 } from '@dua-upd/upd/pipes';
 
-export type ComparisonStatus = 'good' | 'bad' | 'neutral' | 'none';
+export type RankingCriteria = (value: number) => RankingStatus;
+
+export type ComparisonStatus =
+  | 'good'
+  | 'bad'
+  | 'neutralGood'
+  | 'neutralBad'
+  | 'neutral'
+  | 'none';
+
+export type RankingStatus =
+  | 'best'
+  | 'worst'
+  | 'improving'
+  | 'stable'
+  | 'alert'
+  | 'at-risk';
 
 export interface ComparisonStyles {
   colourClass?: string;
@@ -29,6 +50,14 @@ export const comparisonStyling: Record<ComparisonStatus, ComparisonStyles> = {
     colourClass: 'text-danger',
     iconName: 'arrow_downward',
   },
+  neutralGood: {
+    colourClass: '',
+    iconName: 'arrow_downward',
+  },
+  neutralBad: {
+    colourClass: '',
+    iconName: 'arrow_upward',
+  },
   neutral: {
     colourClass: '',
     iconName: '',
@@ -36,6 +65,44 @@ export const comparisonStyling: Record<ComparisonStatus, ComparisonStyles> = {
   none: {
     colourClass: 'hidden',
     iconName: '',
+  },
+};
+
+export type RankingStatusConfig = Record<
+  RankingStatus,
+  ComparisonStyles & KpiMessage
+>;
+
+export const DefaultRankingStatusConfig: RankingStatusConfig = {
+  best: {
+    colourClass: 'text-info',
+    iconName: 'star',
+    message: 'ranking-best-ever',
+  },
+  worst: {
+    colourClass: 'text-secondary',
+    iconName: 'warning',
+    message: 'ranking-worst-ever',
+  },
+  improving: {
+    colourClass: 'text-success',
+    iconName: 'trending_up',
+    message: 'ranking-improving',
+  },
+  stable: {
+    colourClass: 'text-muted',
+    iconName: 'horizontal_rule',
+    message: 'ranking-stable',
+  },
+  alert: {
+    colourClass: 'text-danger',
+    iconName: 'trending_down',
+    message: 'ranking-alert',
+  },
+  'at-risk': {
+    colourClass: 'text-warning',
+    iconName: 'trending_down',
+    message: 'ranking-at-risk',
   },
 };
 
@@ -48,7 +115,7 @@ export type KpiObjectiveStatusConfig = Record<
 
 export type KpiObjectiveCriteria = (
   current: number,
-  comparison: number
+  comparison: number,
 ) => KpiObjectiveStatus;
 
 export type KpiMessage =
@@ -91,12 +158,12 @@ const defaultKpiObjectiveStatusConfig: KpiObjectiveStatusConfig = {
 
 const defaultKpiObjectiveCriteria: KpiObjectiveCriteria = (
   current,
-  comparison: number
+  comparisonValue: number,
 ) => {
   switch (true) {
-    case current < 0.8 && comparison < 0.2:
+    case current < 0.8 && comparisonValue < 0.2:
       return 'fail';
-    case current < 0.8 && comparison >= 0.2:
+    case current < 0.8 && comparisonValue >= 0.2:
       return 'partial';
     case current >= 0.8:
       return 'pass';
@@ -106,17 +173,18 @@ const defaultKpiObjectiveCriteria: KpiObjectiveCriteria = (
 };
 
 @Component({
-    selector: 'upd-data-card',
-    templateUrl: './data-card.component.html',
-    styleUrls: ['./data-card.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'upd-data-card',
+  templateUrl: './data-card.component.html',
+  styleUrls: ['./data-card.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class DataCardComponent {
   private numberPipe: LocaleNumberPipe = inject(LocaleNumberPipe);
   private percentPipe: LocalePercentPipe = inject(LocalePercentPipe);
   private templatePipe: LocaleTemplatePipe = inject(LocaleTemplatePipe);
-  private secondsToMinutesPipe: SecondsToMinutesPipe = inject(SecondsToMinutesPipe);
+  private secondsToMinutesPipe: SecondsToMinutesPipe =
+    inject(SecondsToMinutesPipe);
 
   @Input() current: number | null = null;
   @Input() comparison?: number | null;
@@ -125,23 +193,34 @@ export class DataCardComponent {
   @Input() tooltip = '';
   @Input() modalTitle = '';
   @Input() modal = '';
-  @Input() pipe: 'percent' | 'number' | 'template' | 'secondToMinutes' = 'number';
+  @Input() pipe: 'percent' | 'number' | 'template' | 'secondToMinutes' =
+    'number';
   @Input() pipeParams?: string | string[];
   @Input() emptyMessage = 'nodata-available';
 
-  @Input() comparisonMode: 'upGoodDownBad' | 'upBadDownGood' = 'upGoodDownBad';
+  @Input() comparisonMode: 'upGoodDownBad' | 'upBadDownGood' | 'neutral' =
+    'upGoodDownBad';
   @Input() displayComparison = true;
 
   @Input() kpiObjectiveCriteria = defaultKpiObjectiveCriteria;
   @Input() kpiStylesConfig: KpiOptionalConfig = {};
+
+  @Input() rankingCriteria: RankingCriteria = getRankingStatus;
+  @Input() rankingConfig: RankingStatusConfig = DefaultRankingStatusConfig;
+
   @Input() displayKpis = false;
+  @Input() displayRanking = false;
+
+  @Input() banner = false;
+
+  @Input() cardColourClass = '';
 
   get kpiConfig(): KpiObjectiveStatusConfig {
     const mergedConfig = { ...defaultKpiObjectiveStatusConfig };
 
     // merge any provided config options with defaults
     for (const key of Object.keys(
-      this.kpiStylesConfig
+      this.kpiStylesConfig,
     ) as KpiObjectiveStatus[]) {
       const config = this.kpiStylesConfig[
         key
@@ -175,6 +254,17 @@ export class DataCardComponent {
       return comparisonStyling.none;
     }
 
+    if (this.comparisonMode === 'neutral') {
+      switch (true) {
+        case this.comparison > 0:
+          return comparisonStyling.neutralGood;
+        case this.comparison < 0:
+          return comparisonStyling.neutralBad;
+        default:
+          return comparisonStyling.neutral;
+      }
+    }
+
     if (this.comparisonMode === 'upBadDownGood') {
       // JSON stringify/parse to deep clone object
       const styling = JSON.parse(JSON.stringify(comparisonStyling));
@@ -201,6 +291,18 @@ export class DataCardComponent {
     }
   }
 
+  get cardStatusClass(): string {
+    if (
+      !this.displayRanking ||
+      this.current === null ||
+      this.current === undefined
+    ) {
+      return this.cardColourClass;
+    }
+
+    return this.cardColourClass || `card-status-${this.rankingStatus}`;
+  }
+
   get localePipe() {
     switch (this.pipe) {
       case 'number':
@@ -216,6 +318,16 @@ export class DataCardComponent {
     }
   }
 
+  get rankingStatus(): RankingStatus {
+    return typeof this.current === 'number'
+      ? this.rankingCriteria(this.current)
+      : 'stable';
+  }
+
+  get rankingStyles(): ComparisonStyles & KpiMessage {
+    return this.rankingConfig[this.rankingStatus];
+  }
+
   localeTransform(value: number | null, params?: string | string[]) {
     if (Array.isArray(params)) {
       return this.localePipe.transform(value, ...params);
@@ -227,7 +339,7 @@ export class DataCardComponent {
 
 export const callVolumeObjectiveCriteria: KpiObjectiveCriteria = (
   current,
-  comparison: number
+  comparison: number,
 ) => {
   switch (true) {
     case current === 0:
@@ -238,5 +350,22 @@ export const callVolumeObjectiveCriteria: KpiObjectiveCriteria = (
       return 'pass';
     default:
       return 'none';
+  }
+};
+
+export const getRankingStatus = (value: number): RankingStatus => {
+  switch (true) {
+    case value >= 0.99:
+      return 'best';
+    case value <= 0.01:
+      return 'worst';
+    case value >= 0.6:
+      return 'improving';
+    case value <= 0.3:
+      return 'alert';
+    case value <= 0.4:
+      return 'at-risk';
+    default:
+      return 'stable';
   }
 };

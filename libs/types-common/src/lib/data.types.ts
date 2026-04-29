@@ -384,6 +384,17 @@ export interface TasksHomeAggregatedData {
   dyf_total_score: number;
   survey_score: number;
   overall_score: number;
+  historical_average?: number | null;
+  historical_average_percent_change?: number | null;
+  historical_average_difference?: number | null;
+
+  seasonal_average?: number | null;
+  seasonal_average_percent_change?: number | null;
+  seasonal_average_difference?: number | null;
+
+  performance_score?: number | null;
+  performance_score_percent_change?: number | null;
+  performance_score_difference?: number | null;
 }
 
 export type TasksHomeData = ViewData<TasksHomeAggregatedData[]> & {
@@ -400,6 +411,13 @@ export interface TaskDetailsMetrics {
   dyfNoPer1000VisitsByDay: { date: string; dyfNo: number }[];
   dyfYes: number;
   dyfNo: number;
+  individualHistory?: {
+    month: Date;
+    individual_score: number | null;
+    calls_per_100: number | null;
+    neg_feedback_per_1000: number | null;
+    survey_success_rate: number | null;
+  }[];
 }
 
 export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
@@ -483,6 +501,26 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   feedbackByDay: { date: string; numComments: number }[];
   numComments?: number;
   numCommentsPercentChange?: number | null;
+  survey?: number | null;
+  survey_completed?: number | null;
+  performance_score?: number | null;
+  performanceScorePercentChange?: number | null;
+  performanceScoreDifference?: number | null;
+  historical_average?: number | null;
+  seasonal_average?: number | null;
+  individualScorePercentChange?: number | null;
+  individualScoreDifference?: number | null;
+  individualHistory?: {
+    month: Date;
+    individual_score: number | null;
+    calls_per_100: number | null;
+    neg_feedback_per_1000: number | null;
+    survey_success_rate: number | null;
+  }[];
+  tmf_rank?: number | null;
+  tmf_total_tasks?: number | null;
+  perf_rank?: number | null;
+  perf_total_tasks?: number | null;
 }
 
 export type ProjectStatus =
@@ -500,6 +538,8 @@ export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
+export type TaskStatus = 'Healthy' | 'Watch' | "Improving" | 'Needs action';
+
 export interface searchAssessmentColTypes {
   query: string;
   url: string;
@@ -510,7 +550,7 @@ export interface ProjectsHomeProject {
   _id: string;
   title: string;
   cops: boolean;
-  wos_cops: boolean,
+  wos_cops: boolean;
   startDate?: Date;
   launchDate?: Date;
   avgSuccessRate?: number;
