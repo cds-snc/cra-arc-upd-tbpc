@@ -30,22 +30,56 @@
             [tooltip]="vm.tooltip || {}"
             [annotations]="vm.annotations || {}"
           ></apx-chart>
+
+          @if (vm.added?.showStatsAnnotations) {
+            <div class="m-0 p-0 position-absolute">
+              <div
+                class="d-flex p-0 m-0 position-relative"
+                style="top: -10px; left: 8px"
+              >
+                <div class="apexcharts-legend-series max-annotation-legend">
+                  <span class="apexcharts-legend-marker"></span>
+
+                  <span class="apexcharts-legend-text">
+                    {{ 'Maximum' | translate }}
+                  </span>
+                </div>
+
+                <div class="apexcharts-legend-series min-annotation-legend">
+                  <span class="apexcharts-legend-marker"></span>
+
+                  <span class="apexcharts-legend-text">
+                    {{ 'Minimum' | translate }}
+                  </span>
+                </div>
+
+                <div class="apexcharts-legend-series avg-annotation-legend">
+                  <span class="apexcharts-legend-marker"></span>
+
+                  <span class="apexcharts-legend-text">
+                    {{ 'Average' | translate }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
         }
-      </div>
-    }
-    @if (table) {
-      <div class="pt-3">
-        <upd-accordion>
-          <upd-data-table
-            [filter]="false"
-            [sort]="false"
-            [pagination]="false"
-            [data]="table"
-            [cols]="tableCols"
-            [exports]="tableExport"
-            [allowHeaderWrap]="allowHeaderWrap"
-          ></upd-data-table>
-        </upd-accordion>
+
+        @if (table) {
+          <div class="pt-3">
+            <upd-accordion>
+              <upd-data-table
+                [filter]="false"
+                [sort]="false"
+                [pagination]="false"
+                [data]="table"
+                [cols]="tableCols"
+                [exports]="tableExport"
+                [allowHeaderWrap]="allowHeaderWrap"
+              ></upd-data-table>
+            </upd-accordion>
+          </div>
+        }
       </div>
     }
   }

@@ -258,6 +258,15 @@ export interface ITask {
   channel?: string[];
   core?: string[];
   portfolio?: string;
+    performance_score?: number | null;
+  individual_score_pct?: number | null;
+  individual_history?: {
+    month: Date;
+    individual_score_pct: number | null;
+    calls_per_100: number | null;
+    neg_feedback_per_1000: number | null;
+    survey_success_rate: number | null;
+  }[];
 }
 
 export interface ITaskView {
@@ -312,6 +321,15 @@ export interface ITaskView {
   ux_tests?: IUxTest[];
   projects?: IProject[];
   lastUpdated: Date;
+    performance_score?: number | null;
+  individual_score_pct?: number | null;
+  individual_history?: {
+    month: Date;
+    individual_score_pct: number | null;
+    calls_per_100: number | null;
+    neg_feedback_per_1000: number | null;
+    survey_success_rate: number | null;
+  }[];
 }
 
 /*

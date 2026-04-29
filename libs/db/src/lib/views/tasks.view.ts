@@ -632,6 +632,8 @@ export class TasksViewService extends DbViewNew<
       _id: string;
       callsPer100Visits: number;
       dyfNoPer1000Visits: number;
+      performanceScore: number;
+      individualScore: number;
       title: string;
       group: string;
       subgroup: string;
@@ -676,6 +678,9 @@ export class TasksViewService extends DbViewNew<
             },
           },
         },
+        performanceScore: '$performance_score',
+        historicalAverage: '$historical_average',
+        seasonalAverage: '$seasonal_average',
         title: '$task.title',
         group: '$task.group',
         subgroup: '$task.subgroup',
@@ -730,6 +735,9 @@ export class TasksViewService extends DbViewNew<
       'callsPer100Visits',
       'dyfNoPer1000Visits',
       'numComments',
+      'performanceScore',
+      'historical_average',
+      'seasonal_average',
     ] satisfies (keyof MetricsType)[];
 
     const metricsWithPercentChange = getSelectedPercentChange(
@@ -741,6 +749,9 @@ export class TasksViewService extends DbViewNew<
     const differenceProps = [
       'callsPer100Visits',
       'dyfNoPer1000Visits',
+      'performanceScore',
+      'historical_average',
+      'seasonal_average',
     ] satisfies (keyof MetricsType)[];
 
     const metricsWithComparisons = getSelectedAbsoluteChange(
@@ -812,6 +823,10 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: metricsWithComparisons.dyfYes,
+      individualHistory: metricsWithComparisons.individualHistory ?? [],
+      performanceScore: metricsWithComparisons.performanceScore,
+      historicalAverage: metricsWithComparisons.historical_average,
+      seasonalAverage: metricsWithComparisons.seasonal_average,
     };
 
     const comparisonDateRangeData = {
@@ -830,6 +845,10 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: previousMetrics.dyfYes,
+      individualHistory: previousMetrics.individualHistory ?? [],
+      performanceScore: previousMetrics.performanceScore,
+      historicalAverage: metricsWithComparisons.historical_average,
+      seasonalAverage: metricsWithComparisons.seasonal_average,
     };
 
     const callsByTopicPercentChange = getArraySelectedPercentChange(
@@ -883,6 +902,11 @@ export class TasksViewService extends DbViewNew<
       _id: Types.ObjectId;
       title: string;
       tmf_ranking_index: number;
+      performance_score: number | null;
+      historical_average: number | null;
+      seasonal_average: number | null;
+      performance_score_status: string;
+      individual_status: string;
       cops: boolean;
       wos_cops: boolean;
       group: string;
@@ -914,6 +938,11 @@ export class TasksViewService extends DbViewNew<
       _id: '$task._id',
       title: '$task.title',
       tmf_ranking_index: 1,
+      performance_score: 1,
+      historical_average: 1,
+      seasonal_average: 1,
+      performance_score_status: 1,
+      individual_status: 1,
       cops: 1,
       wos_cops: 1,
       group: '$task.group',
@@ -1008,6 +1037,9 @@ export class TasksViewService extends DbViewNew<
       'dyf_no_per_1000_visits',
       'survey',
       'survey_completed',
+      'historical_average',
+      'seasonal_average',
+      'performance_score',
     ] satisfies (keyof ProjectedTask)[];
 
     const dataWithPercentChange = getArraySelectedPercentChange(
@@ -1027,6 +1059,9 @@ export class TasksViewService extends DbViewNew<
         'dyf_no',
         'survey',
         'survey_completed',
+        'historical_average',
+        'seasonal_average',
+        'performance_score',
       ],
       '_id',
       dataWithPercentChange,
