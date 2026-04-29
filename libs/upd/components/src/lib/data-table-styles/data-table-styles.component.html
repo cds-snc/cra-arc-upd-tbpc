@@ -1,220 +1,271 @@
 <!-- Utility Template for Displaying Data -->
 <ng-template #displayData let-item="item">
-  <span class="d-block text-center me-3" *ngIf="config.center">{{ item }}</span>
-  <ng-container *ngIf="config.center !== true">{{ item }}</ng-container>
+  @if (config.center) {
+    <span class="d-block text-center me-3">{{ item }}</span>
+  }
+
+  @if (config.center !== true) {
+    {{ item }}
+  }
 </ng-template>
 
-<ng-container *ngIf="config.typeParam">
+@if (config.typeParam) {
   <!-- Link Type -->
-  <ng-container *ngIf="config.type === 'link'">
-    <a [routerLink]="[data[config.typeParam]]" [queryParamsHandling]="'merge'">
+  @if (config.type === 'link') {
+    <a [routerLink]="[data[config.typeParam]]" queryParamsHandling="merge">
       <ng-container
         [ngTemplateOutlet]="displayData"
-        [ngTemplateOutletContext]="{ item: data[config.field] }"
+        [ngTemplateOutletContext]="{
+          item: data[config.field],
+        }"
       ></ng-container>
     </a>
-  </ng-container>
+  }
 
   <!-- Status Labels -->
-  <upd-project-status-label
-    *ngIf="labelType === 'project'"
-    [projectStatus]="projectStatus"
-  ></upd-project-status-label>
-  <upd-project-status-label
-    *ngIf="labelType === 'page'"
-    [pageStatus]="pageStatus"
-  ></upd-project-status-label>
+  @if (labelType === 'project') {
+    <upd-project-status-label
+      [projectStatus]="projectStatus"
+    ></upd-project-status-label>
+  }
+
+  @if (labelType === 'page') {
+    <upd-project-status-label
+      [pageStatus]="pageStatus"
+    ></upd-project-status-label>
+  }
 
   <!-- COPS Type -->
-  <upd-project-status-label
-    *ngIf="
-      config.type === 'label' &&
-      config.typeParam === 'cops' &&
-      data[config.field]
-    "
-    [projectType]="'COPS'"
-    class="d-inline-flex"
-  ></upd-project-status-label>
+  @if (
+    config.type === 'label' && config.typeParam === 'cops' && data[config.field]
+  ) {
+    <upd-project-status-label
+      projectType="COPS"
+      class="d-inline-flex"
+    ></upd-project-status-label>
+  }
 
   <!-- WOS COPS Type -->
-  <upd-project-status-label
-  *ngIf="
+  @if (
     config.type === 'label' &&
     config.typeParam === 'wos_cops' &&
     data[config.field]
-  "
-  [projectType]="'WOS_COPS'"
-  class="d-inline-flex"
-  ></upd-project-status-label>
-
-    <!-- COMBINED WOS COPS Type -->
-  <ng-container *ngIf="config.type === 'label' && config.typeParam === 'projectType'">
+  ) {
     <upd-project-status-label
-      *ngIf="data['cops']"
-      [projectType]="'COPS'"
-      class="d-inline-flex me-1"
-    ></upd-project-status-label>
-
-    <upd-project-status-label
-       *ngIf="data['wos_cops']"
-      [projectType]="'WOS_COPS'"
+      projectType="WOS_COPS"
       class="d-inline-flex"
     ></upd-project-status-label>
-  </ng-container>
+  }
+
+  <!-- Combined WOS/COPS Type -->
+  @if (config.type === 'label' && config.typeParam === 'projectType') {
+    @if (data['cops']) {
+      <upd-project-status-label
+        projectType="COPS"
+        class="d-inline-flex me-1"
+      ></upd-project-status-label>
+    }
+
+    @if (data['wos_cops']) {
+      <upd-project-status-label
+        projectType="WOS_COPS"
+        class="d-inline-flex"
+      ></upd-project-status-label>
+    }
+  }
+
+  <!-- Task Status -->
+  @if (config.type === 'label' && config.typeParam === 'taskStatus') {
+    <upd-project-status-label
+      [taskStatus]="taskStatus"
+    ></upd-project-status-label>
+  }
 
   <!-- Pass/Fail Label -->
-  <span
-    *ngIf="
-      config.type === 'text' &&
-      config.typeParam === 'passFail' &&
-      data[config.field]
-    "
-    class="badge"
-    [ngClass]="{
-      'bg-completed': data[config.field] === 'Pass',
-      'bg-delayed': data[config.field] === 'Fail'
-    }"
-    translate
-  >
-    <ng-container
-      [ngTemplateOutlet]="displayData"
-      [ngTemplateOutletContext]="{ item: data[config.field] }"
-    ></ng-container>
-  </span>
-</ng-container>
+  @if (
+    config.type === 'text' &&
+    config.typeParam === 'passFail' &&
+    data[config.field]
+  ) {
+    <span
+      class="badge"
+      [ngClass]="{
+        'bg-completed': data[config.field] === 'Pass',
+        'bg-delayed': data[config.field] === 'Fail',
+      }"
+      translate
+    >
+      <ng-container
+        [ngTemplateOutlet]="displayData"
+        [ngTemplateOutletContext]="{
+          item: data[config.field],
+        }"
+      ></ng-container>
+    </span>
+  }
+}
 
-<ng-container *ngIf="config.type === 'link' && config.typeParams">
+@if (config.type === 'link' && config.typeParams) {
   <!-- External Links -->
-  <ng-container [ngSwitch]="config.typeParams.external">
-    <!-- When external is true -->
-    <ng-container *ngSwitchCase="true">
-      <ng-container *ngIf="data[config.field]; else notAvailable">
-        <span class="material-icons material-icon-wysiwyg">wysiwyg</span>
-        <a [href]="ensureLinkFormat(data[config.typeParams.link])" target="_blank">
+  @switch (config.typeParams.external) {
+    @case (true) {
+      @if (data[config.field]) {
+        <span class="material-icons material-icon-wysiwyg"> wysiwyg </span>
+
+        <a
+          [href]="ensureLinkFormat(data[config.typeParams.link])"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <ng-container
             [ngTemplateOutlet]="displayData"
-            [ngTemplateOutletContext]="{ item: data[config.field] }"
+            [ngTemplateOutletContext]="{
+              item: data[config.field],
+            }"
           ></ng-container>
         </a>
-      </ng-container>
-      <ng-template #notAvailable
-        ><span>{{ 'n/a' | translate }}</span></ng-template
-      >
-    </ng-container>
+      } @else {
+        <span>{{ 'n/a' | translate }}</span>
+      }
+    }
 
-    <!-- When external is false -->
-    <ng-container *ngSwitchDefault>
-      <ng-container *ngIf="config.typeParams.multiLinks; else singleLink">
-          <ng-container
-              *ngFor="
-                let item of $any(data)[config.typeParams.linksField!];
-                let last = last;
-                trackBy: trackByLinkId
-              "
-              >
-            <a [routerLink]="item.preLink">{{ item.label }}</a>
-            <ng-container *ngIf="!last">; </ng-container>
-          </ng-container>
-      </ng-container>
-
-      <ng-template #singleLink>
-          <a
-            *ngIf="config.typeParams.postLink"
-            [routerLink]="[
-              config.typeParams.preLink,
-              data[config.typeParams.link],
-              config.typeParams.postLink
-            ]"
-            [queryParamsHandling]="'merge'"
-          >
-            <ng-container *ngIf="config.pipe === 'number'; else displayField">
-              {{
-                data[config.field] | number: config.pipeParam : i18n.currentLang()
-              }}
-            </ng-container>
-            <ng-template #displayField>
-              <ng-container
-                [ngTemplateOutlet]="displayData"
-                [ngTemplateOutletContext]="{ item: data[config.field] }"
-              ></ng-container>
-            </ng-template>
-          </a>
-          <a
-            *ngIf="!config.typeParams.postLink"
-            [routerLink]="[config.typeParams.preLink, data[config.typeParams.link]]"
-          >
+    @default {
+      @if (config.typeParams.postLink) {
+        <a
+          [routerLink]="[
+            config.typeParams.preLink,
+            data[config.typeParams.link],
+            config.typeParams.postLink,
+          ]"
+          queryParamsHandling="merge"
+        >
+          @if (config.pipe === 'number') {
+            {{
+              data[config.field] | number: config.pipeParam : i18n.currentLang()
+            }}
+          } @else {
             <ng-container
               [ngTemplateOutlet]="displayData"
-              [ngTemplateOutletContext]="{ item: data[config.field] }"
+              [ngTemplateOutletContext]="{
+                item: data[config.field],
+              }"
             ></ng-container>
-          </a>
-      </ng-template>  
-    </ng-container>
-  </ng-container>
-</ng-container>
+          }
+        </a>
+      } @else {
+        <a
+          [routerLink]="[
+            config.typeParams.preLink,
+            data[config.typeParams.link],
+          ]"
+        >
+          <ng-container
+            [ngTemplateOutlet]="displayData"
+            [ngTemplateOutletContext]="{
+              item: data[config.field],
+            }"
+          ></ng-container>
+        </a>
+      }
+    }
+  }
+}
 
 <!-- Comparison with Pipe -->
-<span
-  *ngIf="config.pipe && config.type === 'comparison'"
-  [ngClass]="comparisonClassMap(config.field)"
-  >{{ numberVal }}</span
->
+@if (config.pipe && config.type === 'comparison') {
+  <span [ngClass]="comparisonClassMap(config.field)">
+    {{ numberVal }}
+  </span>
+}
 
 <!-- Only Pipe -->
-<ng-container *ngIf="!config.type && !config.indicator">
-  <ng-container *ngIf="config.pipe === 'date'">
+@if (!config.type && !config.indicator) {
+  @if (config.pipe === 'date') {
     {{
       data[config.field] | date: config.pipeParam : 'UTC' : i18n.currentLang()
     }}
-  </ng-container>
-  <ng-container *ngIf="config.pipe === 'percent'">
+  }
+
+  @if (config.pipe === 'percent') {
     {{ data[config.field] | percent: config.pipeParam : i18n.currentLang() }}
-  </ng-container>
-  <ng-container *ngIf="config.pipe === 'number'">
+  }
+
+  @if (config.pipe === 'number') {
     {{ data[config.field] | number: config.pipeParam : i18n.currentLang() }}
-  </ng-container>
-  <ng-container
-    *ngIf="
-      config.pipe !== 'number' &&
-      config.pipe !== 'date' &&
-      config.pipe !== 'percent' &&
-      config.pipe
-    "
-  >
+  }
+
+  @if (
+    config.pipe &&
+    config.pipe !== 'number' &&
+    config.pipe !== 'date' &&
+    config.pipe !== 'percent'
+  ) {
     {{ numberVal }}
-  </ng-container>
-</ng-container>
+  }
+}
 
 <!-- Array Data -->
-<ng-container *ngIf="isArray(data[config.field]) && config.typeParam !== 'projectType'">
+@if (isArray(data[config.field]) && config.typeParam !== 'projectType') {
   {{ array | translateArray | arrayToText }}
-</ng-container>
+}
 
 <!-- Default Data Display -->
-<ng-container
-  *ngIf="!config.type && !config.pipe && !isArray(data[config.field])"
->
+@if (!config.type && !config.pipe && !isArray(data[config.field])) {
   <ng-container
     [ngTemplateOutlet]="displayData"
-    [ngTemplateOutletContext]="{ item: data[config.field] }"
+    [ngTemplateOutletContext]="{
+      item: data[config.field],
+    }"
   ></ng-container>
-</ng-container>
+}
 
 <!-- Indicator -->
-<ng-container *ngIf="config.indicator && data[config.field]">
-  <span [ngClass]="comparisonClassMap(config.field, config.upGoodDownBad, config.showTextColours)">
-    <span [ngClass]="{
-      'material-icons': config.useArrows
-    }">{{ getIndicator(config.field, config.useArrows) }}</span>
-    <span>{{ getValueIndicator(config.field, config.pipe, config.pipeParam, false) }}
-    </span>
-  </span>
-  <ng-container *ngIf="config.secondaryField && data[config.secondaryField.field]">
-  ({{ getValueIndicator(config.secondaryField.field, config.secondaryField.pipe, config.secondaryField.pipeParam) }})
-  </ng-container>
-</ng-container>
+@if (config.indicator && data[config.field]) {
+  @if (config.secondaryField; as secondaryField) {
+    @if (data[secondaryField.field]) {
+      <span
+        [ngClass]="
+          comparisonClassMap(
+            config.field,
+            config.upGoodDownBad,
+            config.showTextColours
+          )
+        "
+      >
+        <span
+          [ngClass]="{
+            'material-icons': config.useArrows,
+          }"
+        >
+          {{ getIndicator(config.field, config.useArrows) }}
+        </span>
+
+        <span>
+          {{
+            getValueIndicator(
+              config.field,
+              config.pipe,
+              config.pipeParam,
+              false
+            )
+          }}
+        </span>
+      </span>
+
+      ({{
+        getValueIndicator(
+          secondaryField.field,
+          secondaryField.pipe,
+          secondaryField.pipeParam
+        )
+      }})
+    }
+  }
+}
 
 <!-- Markdown Type -->
-<ng-container *ngIf="config.type === 'markdown'">
-  <upd-markdown-renderer [html]="$any(data[config.field])"></upd-markdown-renderer>
-</ng-container>
+@if (config.type === 'markdown') {
+  <upd-markdown-renderer
+    [html]="$any(data[config.field])"
+  ></upd-markdown-renderer>
+}

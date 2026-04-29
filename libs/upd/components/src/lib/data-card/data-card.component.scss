@@ -1,0 +1,49 @@
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+
+  /* neutral default */
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.status-pill__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-success.status-pill { background: rgba(25, 135, 84, 0.12); }
+.text-warning.status-pill { background: rgba(255, 193, 7, 0.14); }
+.text-danger.status-pill  { background: rgba(220, 53, 69, 0.12); }
+.text-info.status-pill    { background: rgba(13, 202, 240, 0.14); }
+.text-secondary.status-pill,
+.text-muted.status-pill   { background: rgba(0, 0, 0, 0.05); }
+
+upd-card.card-status-best .card {
+  background-color: rgba(13, 202, 240, 0.12);
+}
+
+upd-card.card-status-improving .card {
+  background-color: rgba(25, 135, 84, 0.12);
+}
+
+upd-card.card-status-stable .card {
+  background-color: rgba(108, 117, 125, 0.08);
+}
+
+upd-card.card-status-at-risk .card {
+  background-color: rgba(255, 193, 7, 0.14);
+}
+
+upd-card.card-status-alert .card {
+  background-color: rgba(220, 53, 69, 0.12);
+}
+
+upd-card.card-status-worst .card {
+  background-color: rgba(108, 117, 125, 0.12);
+}
