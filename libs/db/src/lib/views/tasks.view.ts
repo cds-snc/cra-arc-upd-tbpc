@@ -171,6 +171,20 @@ export class TasksViewService extends DbViewNew<
     };
     const taskFilter = { ...dateFilter, tasks: task._id };
 
+    const existingTaskView = await this.findOne<Pick<TasksView,
+      'performance_score' | 'individual_score_pct' | 'individual_history'
+    >>(
+      {
+        dateRange,
+        'task._id': task._id,
+      },
+      {
+        performance_score: 1,
+        individual_score_pct: 1,
+        individual_history: 1,
+      },
+    );
+
     const [
       topLevelMetrics,
       aaSearchterms,
@@ -267,6 +281,9 @@ export class TasksViewService extends DbViewNew<
         ],
         task,
       ),
+      performance_score: existingTaskView?.performance_score,
+      individual_score_pct: existingTaskView?.individual_score_pct,
+      individual_history: existingTaskView?.individual_history ?? [],
       ...topLevelMetrics,
       aa_searchterms: aaSearchterms,
       gsc_searchterms: gscSearchterms,
@@ -812,6 +829,7 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: metricsWithComparisons.dyfYes,
+      individual_history: metricsWithComparisons.individual_history ?? [],
     };
 
     const comparisonDateRangeData = {
@@ -830,6 +848,7 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: previousMetrics.dyfYes,
+      individual_history: previousMetrics.individual_history ?? [],
     };
 
     const callsByTopicPercentChange = getArraySelectedPercentChange(
@@ -883,6 +902,15 @@ export class TasksViewService extends DbViewNew<
       _id: Types.ObjectId;
       title: string;
       tmf_ranking_index: number;
+      performance_score: number | null;
+      individual_score_pct: number | null;
+      individual_history: {
+        month: Date;
+        individual_score_pct: number | null;
+        calls_per_100: number | null;
+        neg_feedback_per_1000: number | null;
+        survey_success_rate: number | null;
+      }[];
       cops: boolean;
       wos_cops: boolean;
       group: string;
@@ -914,6 +942,9 @@ export class TasksViewService extends DbViewNew<
       _id: '$task._id',
       title: '$task.title',
       tmf_ranking_index: 1,
+      performance_score: 1,
+      individual_score_pct: 1,
+      individual_history: 1,
       cops: 1,
       wos_cops: 1,
       group: '$task.group',
