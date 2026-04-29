@@ -33,21 +33,28 @@
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col">
-      <upd-data-table-card
-        [data]="(gcTasksTable$ | async) || []"
-        [cols]="(gcTasksTableConfig$ | async) || []"
-        [filter]="false"
-        [pagination]="true"
-        [sort]="true"
+      <upd-card
         [title]="'gc-tasks-report'"
+        [titleSize]="'h6'"
         modal="{{ 'gc-tasks-modal-text' | translate }}"
         modalSize="lg"
       >
-      </upd-data-table-card>
+        <upd-data-table
+          [data]="(gcTasksTable$ | async) || []"
+          [cols]="(gcTasksTableConfig$ | async) || []"
+          [filter]="false"
+          [pagination]="true"
+          [sort]="true"
+          [title]="'gc-tasks-report'"
+          [allowHeaderWrap]="true"
+          [columnSelection]="true"
+        >
+        </upd-data-table>
+       </upd-card> 
     </div>
   </div>
 </div>
-
+ 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col">

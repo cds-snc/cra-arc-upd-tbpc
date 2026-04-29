@@ -944,12 +944,14 @@ export class OverviewFacade {
   );
 
   gcTasksTableConfig$ = createColConfigWithI18n(this.i18n.service, [
-    { field: 'gc_task', header: 'gc_task', translate: true },
-    { field: 'theme', header: 'theme', translate: true },
-    { field: 'total_entries', header: 'total-entries', pipe: 'number' },
+    { field: 'gc_task', header: 'gc_task', translate: true, frozen: true },
+    { field: 'theme', header: 'theme', translate: true, frozen: true },
+    { field: 'total_entries', header: 'total-entries', pipe: 'number', frozen: true },
+    { field: 'able_to_complete', 'header': 'able-to-complete', translate: true, pipe: 'percent', pipeParam: '1.0-1', frozen: true },
+    
     {
-      field: 'able_to_complete',
-      header: 'able-to-complete',
+      field: 'able_to_complete_difference',
+      header: 'able-to-complete-change',
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
@@ -960,12 +962,15 @@ export class OverviewFacade {
       secondaryField: {
         field: 'able_to_complete_difference',
         pipe: 'number',
+        pipeParam: '1.0-2',
       },
       width: '160px',
+      hide: true,
     },
+    { field: 'ease', header: 'ease', translate: true, pipe: 'percent', pipeParam: '1.0-1', frozen: true },
     {
-      field: 'ease',
-      header: 'ease',
+      field: 'ease_difference',
+      header: 'ease-change',
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
@@ -977,11 +982,13 @@ export class OverviewFacade {
         field: 'ease_difference',
         pipe: 'number',
       },
-      width: '160px',
+      width: '120px',
+      hide: true,
     },
+    { field: 'satisfaction', header: 'satisfaction', translate: true, pipe: 'percent', pipeParam: '1.0-1', frozen: true },
     {
-      field: 'satisfaction',
-      header: 'satisfaction',
+      field: 'satisfaction_difference',
+      header: 'satisfaction-change',
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
@@ -993,7 +1000,8 @@ export class OverviewFacade {
         field: 'satisfaction_difference',
         pipe: 'number',
       },
-      width: '160px',
+      width: '120px',
+      hide: true,
     },
     {
       field: 'margin_of_error',
@@ -1001,8 +1009,9 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
+      frozen: true,
     },
-    { field: 'data_reliability', header: 'data-reliability', translate: true },
+    { field: 'data_reliability', header: 'data-reliability', translate: true, frozen: true },
   ]);
 
   gcTasksCommentsTable$ = this.overviewData$.pipe(
