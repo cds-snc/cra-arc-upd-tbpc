@@ -137,6 +137,7 @@ export class OverviewFeedbackComponent {
       header: 'page',
       type: 'link',
       typeParams: { link: 'url', external: true },
+      frozen: true,
     },
     {
       field: 'owners',
@@ -158,6 +159,7 @@ export class OverviewFeedbackComponent {
         link: '_id',
         postLink: 'pagefeedback',
       },
+      frozen: true,
     },
     {
       field: 'percentChange',
