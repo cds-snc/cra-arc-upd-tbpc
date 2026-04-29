@@ -428,6 +428,7 @@ export async function getAggregatedMetricsWithComparison(
   const determinePageStatus = (page) => {
     if (page?.is_404) return '404';
     if (page?.redirect) return 'Redirected';
+    if (page?.is_archive) return 'Archived';
     return 'Live';
   };
 
@@ -459,6 +460,7 @@ export async function getAggregatedMetricsWithComparison(
         language: page.lang === 'fr' ? 'French' : 'English',
         is404: page.is_404,
         isRedirect: !!page.redirect,
+        isArchive: page.is_archive,
         pageStatus: determinePageStatus(page),
         visitsPercentChange:
           prevMetrics?.visits && metrics?.visits

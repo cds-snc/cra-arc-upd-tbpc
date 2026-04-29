@@ -141,6 +141,10 @@ export class PagesDetailsFacade {
         return '404';
       }
 
+      if (data?.isArchive) {
+        return 'Archived';
+      }
+
       return 'Live';
     }),
   );

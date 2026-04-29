@@ -73,7 +73,7 @@ export class DataTableExportsComponent<T> {
       'Planning',
     ];
 
-    const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected'];
+    const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected', 'Archived'];
 
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,

@@ -137,7 +137,8 @@ export class PagesViewService extends DbViewNew<
           url: 1,
           title: 1,
           lang: 1,
-          is_404: 1,
+          is_404: 1,  
+          is_archive: 1,
           redirect: 1,
           sections: 1,
           owners: 1,
@@ -156,7 +157,9 @@ export class PagesViewService extends DbViewNew<
               ? '404'
               : page.redirect
                 ? 'Redirected'
-                : 'Live') as PageStatus,
+                : page.is_archive
+                  ? 'Archived'
+                  : 'Live') as PageStatus,
             redirect: page.redirect,
             owners: page.owners,
             sections: page.sections,

@@ -123,7 +123,13 @@ class PagesViewContext:
                     .otherwise(
                         pl.when(pl.col.redirect.is_not_null())
                         .then(pl.lit("Redirected"))
-                        .otherwise(pl.lit("Live"))
+                        .otherwise(
+                            pl.when(pl.col.is_archive)
+                            .then(pl.lit("Archived"))
+                            .otherwise(
+                                pl.lit("Live")
+                            )
+                        )
                     )
                     .alias("pageStatus"),
                     pl.col("redirect"),

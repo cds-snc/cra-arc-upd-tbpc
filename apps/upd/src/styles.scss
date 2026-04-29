@@ -60,6 +60,11 @@
   color: #262928;
 }
 
+.bg-archived {
+  background-color: #eaa30a;
+  color: #262928;
+}
+
 .bg-delayed {
   background-color: #eda7a7;
   color: #262928;
@@ -98,6 +103,11 @@
 .bg-redirect {
   background-color: #faeb1d;
   color: #262928;
+}
+
+.bg-archived {
+  background-color: hsl(262, 96%, 55%);
+  color: #ffffff;
 }
 
 .p-datatable {

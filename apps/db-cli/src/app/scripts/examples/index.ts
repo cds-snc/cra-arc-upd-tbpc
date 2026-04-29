@@ -19,7 +19,7 @@
  *
  */
 
-import { UrlsService } from '@dua-upd/db-update';
+import { DbUpdateService, UrlsService, PageUpdateService } from '@dua-upd/db-update';
 import { DbService } from '@dua-upd/db';
 import { logJson } from '@dua-upd/utils-common';
 import { RunScriptCommand } from '../../run-script.command';
@@ -40,6 +40,7 @@ import {
   AdobeAnalyticsClient as AdobeAnalyticsClientNew,
   createQuery,
 } from '@dua-upd/api/custom-reports';
+import { BlobStorageService } from '@dua-upd/blob-storage';
 
 /*
  * Simplest example, finds one document in pages_metrics and logs it
@@ -483,4 +484,99 @@ export async function testAAClientNew() {
   );
 
   logJson(results);
+}
+
+export async function testUrlsArchived() {
+  const db = (<RunScriptCommand>this).inject<DbService>(DbService);
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
+    UrlsService,
+  );
+
+  const urlTest = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html";
+
+  const urlDb = await db.collections.urls
+    .find({
+      url: urlTest,
+    })
+    .exec();
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+
+  const urlsDb = await db.collections.urls.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("urlsDb: ");
+  logJson(urlsDb);
+
+  const pagesDb = await db.collections.pages.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("pagesDb: ");
+  logJson(pagesDb);
+
+}
+
+export async function testPagesArchived() {
+  const db = (<RunScriptCommand>this).inject<DbService>(DbService);
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
+    UrlsService,
+  );
+  // const blob = (<RunScriptCommand>this).inject<BlobStorageService>(BlobStorageService.name);
+
+  const urlTest = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html";
+
+  const urlDb = await db.collections.urls.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .exec();
+
+  // const latestHash = urlDb[0].hashes[urlDb[0].hashes.length - 1];
+  // const blobs = await blob.blobModels.urls.blob(latestHash.hash).downloadToString();
+
+  // const processHtml = await urlsService.processHtml(blobs);
+
+  // console.log('Updated hash with website attributes: ')
+  // console.log(processHtml)
+
+  // const syncDataWithPages = await urlsService.syncDataWithPages();
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+
+  const urlsDb = await db.collections.urls.aggregate()
+      .match({
+        url: urlTest,
+      })
+      .project({
+        is_archive: 1,
+      })
+      .exec();
+
+    logJson("urlsDb: ");
+    logJson(urlsDb);
+
+  const pagesDb = await db.collections.pages.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("pagesDb: ");
+  logJson(pagesDb);
+
 }

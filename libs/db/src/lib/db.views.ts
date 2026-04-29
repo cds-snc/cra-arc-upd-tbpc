@@ -210,6 +210,9 @@ export class PageVisitsView
       is_404: {
         $toBool: '$is_404',
       },
+      is_archive: {
+        $toBool: '$is_archive',
+      },
       redirect: 1,
       is_redirect: {
         $toBool: '$redirect',
@@ -223,6 +226,7 @@ export class PageVisitsView
               case: { $eq: [{ $toBool: '$redirect' }, true] },
               then: 'Redirected',
             },
+            { case: { $eq: ['$is_archive', true] }, then: 'Archived' },
           ],
           default: 'Live',
         },

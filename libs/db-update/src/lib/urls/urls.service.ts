@@ -23,6 +23,7 @@ import {
   hours,
   HttpClient,
   HttpClientResponse,
+  logJson,
   prettyJson,
   squishTrim,
   TimingUtility,
@@ -44,6 +45,7 @@ export type UpdateUrlsOptions = {
     check404s?: boolean;
     checkAll?: boolean;
     filter?: FilterQuery<Page>;
+    checkArchive?: boolean;
   };
 };
 
@@ -215,7 +217,7 @@ export class UrlsService {
     };
   }
 
-  private async checkAndUpdateUrlData(urls: Url[]) {
+  async checkAndUpdateUrlData(urls: Url[]) {
     const abortController = new AbortController();
 
     // Updating will stop after 3 hours
@@ -337,6 +339,7 @@ export class UrlsService {
               last_modified: date,
               is_404: true,
               ...redirect,
+              is_archive: false,
             });
           }
 
@@ -356,6 +359,7 @@ export class UrlsService {
               // if the body is empty, it's technically not a 404, but may as well be.
               is_404: true,
               ...redirect,
+              is_archive: false,
             });
           }
 
@@ -508,6 +512,7 @@ export class UrlsService {
                     ...langHrefs,
                     links: processedHtml.links,
                     ...redirect,
+                    is_archive: processedHtml.archived,
                   },
                   readabilityScore,
                 );
@@ -522,6 +527,7 @@ export class UrlsService {
                 ...langHrefs,
                 links: processedHtml.links,
                 ...redirect,
+                is_archive: processedHtml.archived,
               });
             } catch (err) {
               this.logger.error(
@@ -570,6 +576,7 @@ export class UrlsService {
                 is_404: false,
                 hash: { hash, date },
                 latest_snapshot: hash,
+                is_archive: processedHtml.archived,
               },
               readabilityScore,
             );
@@ -734,6 +741,7 @@ export class UrlsService {
           title: string;
           redirect?: string;
           is_404?: boolean;
+          is_archive?: boolean;
           metadata?: { [prop: string]: string | Date };
           page: IPage;
           langHrefs?: {
@@ -750,6 +758,7 @@ export class UrlsService {
           metadata: 1,
           page: 1,
           langHrefs: 1,
+          is_archive: 1,
         })
         .match({
           page: { $exists: true },
@@ -785,6 +794,7 @@ export class UrlsService {
       'redirect',
       'is_404',
       'metadata',
+      'is_archive',
     ]);
 
     const toComparisonString = pipe(pickUrlsProps, JSON.stringify);
@@ -1609,6 +1619,7 @@ type ProcessedHtml = {
   metadata: Record<string, string>;
   links: { href: string; text: string }[];
   langHrefs: { [lang: string]: string };
+  archived: boolean;
 };
 
 export const processHtml = (html: string): ProcessedHtml | null => {
@@ -1620,6 +1631,11 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     false,
   );
   $('script, meta[property="fb:pages"]').remove();
+
+  /* Check for archived class banner */
+  const archived = $('.gc-archv') ? true:false;
+
+  logJson(archived);
 
   const body = $('main').html() || '';
 
@@ -1681,6 +1697,7 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     metadata,
     links,
     langHrefs,
+    archived,
   };
 };
 
