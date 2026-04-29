@@ -27,8 +27,8 @@ import {
 import { environment } from '../environments/environment';
 import { SwUpdateService } from './sw-update.service';
 import { providePrimeNG } from 'primeng/config';
-import { definePreset } from '@primeng/themes';
-import Aura from '@primeng/themes/aura';
+import { definePreset } from '@primeuix/themes';
+import Aura from '@primeuix/themes/aura';
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent, SidebarComponent],
@@ -91,7 +91,6 @@ import Aura from '@primeng/themes/aura';
                 }
             }
         }),
-          // preset: Lara, // based on bootstrap
           options: {
               prefix: 'p',
               darkModeSelector: 'class',
