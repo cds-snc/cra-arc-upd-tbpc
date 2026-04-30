@@ -1,5 +1,5 @@
 /* eslint-disable */
-export default {
+module.exports = {
   displayName: 'upd-views-overview',
 
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

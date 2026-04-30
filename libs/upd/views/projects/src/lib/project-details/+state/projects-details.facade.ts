@@ -559,7 +559,7 @@ export class ProjectsDetailsFacade {
         return [];
       }
 
-      const dateFormat = lang === FR_CA ? 'D MMM YYYY' : 'MMM DD, YYYY';
+      const dateFormat = lang === FR_CA ? 'D MMM yyyy' : 'MMM DD, yyyy';
 
       const maxTotalUsers = Math.max(
         ...uxTests.map((test) => test.total_users || 0),

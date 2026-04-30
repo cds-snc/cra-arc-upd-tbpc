@@ -1,6 +1,5 @@
 import {
   Component,
-  ViewChild,
   Output,
   EventEmitter,
   Input,
@@ -10,6 +9,7 @@ import {
   signal,
   WritableSignal,
   effect,
+  viewChild,
 } from '@angular/core';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -29,14 +29,14 @@ export type DateRangePreset = {
 };
 
 @Component({
-    selector: 'upd-calendar',
-    templateUrl: './calendar.component.html',
-    styleUrls: ['./calendar.component.scss'],
-    encapsulation: ViewEncapsulation.None,
-    standalone: false
+  selector: 'upd-calendar',
+  templateUrl: './calendar.component.html',
+  styleUrls: ['./calendar.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+  standalone: false,
 })
 export class CalendarComponent implements OnChanges {
-  @ViewChild('myCalendar') datePicker!: DatePicker;
+  readonly datePicker = viewChild.required<DatePicker>('myCalendar');
 
   @Input() granularity = 'day';
   @Input() showPreset = false;
@@ -57,7 +57,11 @@ export class CalendarComponent implements OnChanges {
 
   dates: WritableSignal<Date[]> = signal([]);
 
-  minDate = dayjs().subtract(3, 'year').subtract(1, 'month').startOf('month').toDate();
+  minDate = dayjs()
+    .subtract(3, 'year')
+    .subtract(1, 'month')
+    .startOf('month')
+    .toDate();
   minSelectableDate = this.minDate;
   maxSelectableDate = dayjs().startOf('day').subtract(1, 'day').toDate();
 
@@ -85,15 +89,13 @@ export class CalendarComponent implements OnChanges {
   ];
 
   constructor() {
-    effect(
-      () => {
-        const dates = this.dates();
+    effect(() => {
+      const dates = this.dates();
 
-        if (dates.length === 0 || dates.length === 2) {
-          this.dateChange.emit(dates);
-        }
+      if (dates.length === 0 || dates.length === 2) {
+        this.dateChange.emit(dates);
       }
-    );
+    });
   }
 
   resetSelection(): void {
@@ -127,11 +129,11 @@ export class CalendarComponent implements OnChanges {
   }
 
   closeCalendar() {
-    this.datePicker.overlayVisible = false;
+    this.datePicker().overlayVisible = false;
   }
 
   resetCalendar() {
-    this.datePicker.clear();
+    this.datePicker().clear();
     this.minSelectableDate = this.minDate;
     this.dates.set([]);
   }
@@ -195,8 +197,8 @@ export class CalendarComponent implements OnChanges {
   }
 
   isInRangeDate(date: { month: number; day: number; year: number }) {
-    const [startDate, endDate] = this.datePicker.value
-      ? this.datePicker.value.map((d: Date) => dayjs(d))
+    const [startDate, endDate] = this.datePicker().value
+      ? this.datePicker().value.map((d: Date) => dayjs(d))
       : [null, null];
     const currentDate = dayjs(new Date(date.year, date.month, date.day));
     return (
@@ -208,8 +210,8 @@ export class CalendarComponent implements OnChanges {
   }
 
   isStartDate(date: { month: number; day: number; year: number }) {
-    const startDate = this.datePicker.value
-      ? dayjs(this.datePicker.value[0])
+    const startDate = this.datePicker().value
+      ? dayjs(this.datePicker().value[0])
       : null;
     return startDate
       ? date.day === startDate.date() &&
@@ -219,8 +221,8 @@ export class CalendarComponent implements OnChanges {
   }
 
   isEndDate(date: { month: number; day: number; year: number }) {
-    const endDate = this.datePicker.value
-      ? dayjs(this.datePicker.value[1])
+    const endDate = this.datePicker().value
+      ? dayjs(this.datePicker().value[1])
       : null;
     return endDate
       ? date.day === endDate.date() &&

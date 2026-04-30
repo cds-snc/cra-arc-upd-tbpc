@@ -49,7 +49,7 @@ export class ArrowConnectComponent {
     );
   }
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   onResize() {
     this.updateLine();
   }

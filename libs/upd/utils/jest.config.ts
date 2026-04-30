@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-export default {
+module.exports = {
   displayName: 'upd-utils',
   preset: '../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],

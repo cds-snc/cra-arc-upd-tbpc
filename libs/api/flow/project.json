@@ -13,7 +13,6 @@
         "main": "libs/api/flow/src/index.ts",
         "tsConfig": "libs/api/flow/tsconfig.lib.json",
         "assets": ["libs/api/flow/*.md"],
-        "external": ["@dua-upd/api/custom-reports"],
         "clean": true
       }
     },

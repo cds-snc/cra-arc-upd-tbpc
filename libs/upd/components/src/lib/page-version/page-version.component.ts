@@ -71,7 +71,7 @@ export class PageVersionComponent {
 
   currentLang = this.i18n.currentLang;
   dateParams = computed(() => {
-    return this.currentLang() == FR_CA ? 'DD MMM YYYY' : 'MMM DD, YYYY';
+    return this.currentLang() == FR_CA ? 'DD MMM yyyy' : 'MMM DD, yyyy';
   });
 
   dropdownOptions: Signal<DropdownOption<string>[]> = computed(() => {
