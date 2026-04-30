@@ -13,7 +13,6 @@
         "main": "apps/api/src/main.ts",
         "tsConfig": "apps/api/tsconfig.app.json",
         "assets": ["apps/api/src/assets"],
-        "deleteOutputPath": false,
         "compiler": "swc",
         "generateIndexHtml": false,
         "runtimeChunk": false,

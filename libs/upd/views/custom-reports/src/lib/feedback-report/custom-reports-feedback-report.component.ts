@@ -10,7 +10,6 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '@dua-upd/upd/services';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Types } from 'mongoose';
 import type {
   ColumnConfig,
   CustomReportsFeedback,
@@ -42,8 +41,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('pages');
 
     if (param) {
-      const pages = param.split('-');
-      return pages.map((page) => new Types.ObjectId(page));
+      return param.split('-');
     }
 
     return [];
@@ -53,8 +51,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('tasks');
 
     if (param) {
-      const tasks = param.split('-');
-      return tasks.map((task) => new Types.ObjectId(task));
+      return param.split('-');
     }
 
     return [];
@@ -64,8 +61,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('projects');
 
     if (param) {
-      const projects = param.split('-');
-      return projects.map((project) => new Types.ObjectId(project));
+      return param.split('-');
     }
 
     return [];

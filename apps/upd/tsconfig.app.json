@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "preserve",
     "outDir": "../../dist/out-tsc",
     "types": [],
     "target": "ES2022",

@@ -18,7 +18,9 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "lib": ["ESNext", "dom", "dom.iterable"],
-    "target": "es2020"
+    "target": "es2020",
+    "module": "preserve",
+    "moduleResolution": "bundler"
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,
