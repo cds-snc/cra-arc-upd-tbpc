@@ -68,6 +68,7 @@ import { HeatmapComponent } from './heatmap/heatmap.component';
 import { PageFlowComponent } from './page-flow/page-flow.component';
 import { ArrowConnectComponent } from './arrow-connect/arrow-connect.component';
 import { PageVersionComponent } from './page-version/page-version.component';
+import { MarkdownRendererComponent } from './markdown-renderer/markdown-renderer.component';
 
 @NgModule({
   imports: [
@@ -141,6 +142,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    MarkdownRendererComponent,
   ],
   exports: [
     NgbPopoverModule,
@@ -195,6 +197,7 @@ import { PageVersionComponent } from './page-version/page-version.component';
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    MarkdownRendererComponent,
   ],
 })
 export class UpdComponentsModule {}
