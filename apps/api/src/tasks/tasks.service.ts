@@ -283,6 +283,7 @@ export class TasksService {
         success_rate: uxTest.success_rate,
         total_users: uxTest.total_users,
         scenario: uxTest.scenario,
+        scenario_html: uxTest.scenario_html,
       }))
       .sort((a, b) => {
         if (a.date < b.date) return 1;

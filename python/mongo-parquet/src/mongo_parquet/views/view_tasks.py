@@ -180,6 +180,7 @@ class TasksView(ParquetModel):
                         "test_type": string(),
                         "session_type": string(),
                         "scenario": string(),
+                        "scenario_html": string(),
                         "vendor": string(),
                         "version_tested": string(),
                         "github_repo": string(),

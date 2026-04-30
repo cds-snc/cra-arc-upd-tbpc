@@ -15,6 +15,10 @@ import {
   unwind,
 } from 'rambdax';
 import { arrayToDictionary, isNullish } from '../utils-common';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
+import removeMarkdown from 'remove-markdown';
+
 
 export type DbEntity = {
   _id: Types.ObjectId;
@@ -889,3 +893,47 @@ export const getImprovedKpiTopSuccessRates = (
     totalTopTasksCount: topTaskIds.length,
   };
 };
+
+/**
+ * Converts Markdown (or plain text) into clean plain text.
+ * Used for search, filtering, and safe storage in the UX test's 'scenario` field.
+ */
+export function markdownToPlainText(value?: string | null): string | null {
+  if (!value) return null;
+
+  return removeMarkdown(value)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Converts Markdown into sanitized HTML.
+ * Used for safe rendering in the UX test's `scenario_html` field with XSS protection.
+ */
+export function markdownToSanitizedHtml(value?: string | null): string | null {
+  if (!value) return null;
+
+  const rawHtml = marked.parse(value, {
+    gfm: true,
+    breaks: true,
+  }) as string;
+
+  return sanitizeHtml(rawHtml, {
+    allowedTags: [
+      'p',
+      'br',
+      'strong',
+      'b',
+      'em',
+      'i',
+      'ul',
+      'ol',
+      'li',
+      'a',
+    ],
+    allowedAttributes: {
+      a: ['href'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+  });
+}

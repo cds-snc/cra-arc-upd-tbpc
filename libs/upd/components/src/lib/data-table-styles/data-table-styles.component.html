@@ -193,4 +193,10 @@
   </span>
   <ng-container *ngIf="data[config.secondaryField.field]">
   ({{ getValueIndicator(config.secondaryField.field, config.secondaryField.pipe, config.secondaryField.pipeParam) }})
+  </ng-container>
+</ng-container>
+
+<!-- Markdown Type -->
+<ng-container *ngIf="config.type === 'markdown'">
+  <upd-markdown-renderer [html]="$any(data[config.field])"></upd-markdown-renderer>
 </ng-container>

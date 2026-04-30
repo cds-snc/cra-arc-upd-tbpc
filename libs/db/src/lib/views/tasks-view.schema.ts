@@ -228,6 +228,7 @@ export class TasksView implements ITaskView {
         test_type: String,
         session_type: String,
         scenario: String,
+        scenario_html: String,
         vendor: String,
         version_tested: String,
         github_repo: String,

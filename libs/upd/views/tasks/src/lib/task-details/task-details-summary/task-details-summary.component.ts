@@ -190,8 +190,9 @@ export class TaskDetailsSummaryComponent implements OnInit {
           header: this.i18n.service.translate('test-type', lang),
         },
         {
-          field: 'scenario',
+          field: 'scenario_html',
           header: this.i18n.service.translate('Scenario', lang),
+          type: 'markdown',
         },
         {
           field: 'success_rate',
