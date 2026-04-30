@@ -81,8 +81,9 @@ export class TaskDetailsUxTestsComponent implements OnInit {
           header: this.i18n.service.translate('Test type', lang),
         },
         {
-          field: 'scenario',
+          field: 'scenario_html',
           header: this.i18n.service.translate('Scenario', lang),
+          type: 'markdown',
         },
         // { field: 'result', header: this.i18n.service.translate('Result', lang) },
         {
