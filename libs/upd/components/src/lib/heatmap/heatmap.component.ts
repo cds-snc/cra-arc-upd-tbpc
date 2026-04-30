@@ -39,7 +39,7 @@ export class HeatmapComponent<T> {
   title = input('');
   data = input<Cell[]>([]);
   calendarMonths: Cell[][][] = [];
-  dateParams = this.currentLang() == FR_CA ? 'd MMM YYYY' : 'MMM dd, YYYY';
+  dateParams = this.currentLang() == FR_CA ? 'd MMM yyyy' : 'MMM dd, yyyy';
   minSum = Infinity;
   maxSum = -Infinity;
   activeColor = '';

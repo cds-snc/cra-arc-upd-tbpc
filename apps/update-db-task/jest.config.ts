@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   displayName: 'update-db-task',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',

@@ -1,11 +1,11 @@
-<form class="flex flex-wrap gap-4">
+<form class="flex flex-wrap gap-4" [id]="id">
   @for (item of items; track item; let i = $index) {
     <div class="field-checkbox flex items-center">
       <p-radioButton
         [value]="item"
         [inputId]="id + i"
         (onClick)="onSelectionChange(item)"
-        [name]="item.value"
+        [name]="item.value || ' '"
         [(ngModel)]="selectedItem"
       ></p-radioButton>
       @if (displayTooltip) {

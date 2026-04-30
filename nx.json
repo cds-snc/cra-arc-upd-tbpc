@@ -110,7 +110,12 @@
       }
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
+      ],
       "cache": true
     },
     "@nx/js:swc": {
@@ -154,5 +159,6 @@
         "targetName": "eslint:lint"
       }
     }
-  ]
+  ],
+  "analytics": false
 }

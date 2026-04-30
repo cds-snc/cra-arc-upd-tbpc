@@ -13,7 +13,6 @@
         "main": "apps/db-updater/src/main.ts",
         "tsConfig": "apps/db-updater/tsconfig.app.json",
         "assets": ["apps/db-updater/src/assets"],
-        "deleteOutputPath": false,
         "target": "node",
         "generatePackageJson": true,
         "compiler": "tsc",
