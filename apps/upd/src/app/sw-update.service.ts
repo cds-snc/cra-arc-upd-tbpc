@@ -1,14 +1,14 @@
-import { ApplicationRef, Injectable } from '@angular/core';
+import { ApplicationRef, Injectable, inject } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { first } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SwUpdateService {
-  constructor(
-    private appRef: ApplicationRef,
-    private updates: SwUpdate,
-  ) {
+  private appRef = inject(ApplicationRef);
+  private updates = inject(SwUpdate);
+
+  constructor() {
     if (!environment.production) {
       return;
     }
