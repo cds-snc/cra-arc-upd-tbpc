@@ -24,6 +24,7 @@ import { SwUpdateService } from './sw-update.service';
   standalone: false,
 })
 export class AppComponent {
+  private swUpdates = inject(SwUpdateService);
   i18n = inject(I18nFacade);
   contexts = inject(ChildrenOutletContexts);
   router = inject(Router);
@@ -54,7 +55,7 @@ export class AppComponent {
   updVersion = packageJson.version;
   canadaLogo = '../assets/img/canada-black-30mm.png';
 
-  constructor(private swUpdates: SwUpdateService) {
+  constructor() {
     this.i18n.init();
 
     effect(() => {

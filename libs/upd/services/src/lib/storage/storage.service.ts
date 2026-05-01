@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { StorageMap } from '@ngx-pwa/local-storage';
 import { map } from 'rxjs';
 
@@ -6,8 +6,7 @@ import { map } from 'rxjs';
   providedIn: 'root'
 })
 export class StorageService {
-
-  constructor(private storage: StorageMap) { }
+  private storage = inject(StorageMap);
 
   set(key: string, value: string | unknown) {
     if (typeof value === 'string') {
