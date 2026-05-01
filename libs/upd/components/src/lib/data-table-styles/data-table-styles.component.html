@@ -33,6 +33,7 @@
       data[config.field]
     "
     [projectType]="'COPS'"
+    class="d-inline-flex"
   ></upd-project-status-label>
 
   <!-- WOS COPS Type -->
@@ -43,6 +44,7 @@
     data[config.field]
   "
   [projectType]="'WOS_COPS'"
+  class="d-inline-flex"
   ></upd-project-status-label>
 
     <!-- COMBINED WOS COPS Type -->
@@ -50,12 +52,13 @@
     <upd-project-status-label
       *ngIf="data['cops']"
       [projectType]="'COPS'"
-      style="display: block; margin-bottom: 3px"
+      class="d-inline-flex me-1"
     ></upd-project-status-label>
 
     <upd-project-status-label
        *ngIf="data['wos_cops']"
       [projectType]="'WOS_COPS'"
+      class="d-inline-flex"
     ></upd-project-status-label>
   </ng-container>
 
