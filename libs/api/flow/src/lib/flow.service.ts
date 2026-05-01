@@ -4,7 +4,7 @@ import {
   AA_CLIENT_TOKEN,
   AdobeAnalyticsClient,
   createQuery,
-} from '@dua-upd/api/custom-reports';
+} from '@dua-upd/adobe-analytics';
 import {
   AAQueryConfig,
   AAQueryDateRange,

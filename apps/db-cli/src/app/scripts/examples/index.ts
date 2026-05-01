@@ -39,7 +39,7 @@ import {
 import {
   AdobeAnalyticsClient as AdobeAnalyticsClientNew,
   createQuery,
-} from '@dua-upd/api/custom-reports';
+} from '@dua-upd/adobe-analytics';
 
 /*
  * Simplest example, finds one document in pages_metrics and logs it
