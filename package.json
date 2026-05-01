@@ -160,7 +160,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@fullhuman/postcss-purgecss": "6.0.0",
-    "@nestjs/schematics": "11.0.9",
+    "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.1.19",
     "@ngrx/eslint-plugin": "21.1.0",
     "@ngrx/schematics": "21.1.0",
@@ -226,8 +226,12 @@
     "webpack-merge": "6.0.1"
   },
   "overrides": {
-    "chokidar": "^5.0.0",
     "@duckdb/node-api": "$@duckdb/node-api",
-    "picomatch": "^4.0.4"
+    "brace-expansion": "^5.0.5",
+    "chokidar": "^5.0.0",
+    "follow-redirects": "^1.16.0",
+    "picomatch": "^4.0.4",
+    "uuid": "^14.0.0",
+    "yaml": "^2.8.3"
   }
 }
