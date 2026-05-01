@@ -1,0 +1,13 @@
+{
+  "name": "@dua-upd/adobe-analytics",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@swc/helpers": "~0.5.18",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {}
+}

@@ -2,13 +2,15 @@ import { DbService } from '@dua-upd/db';
 import { ReportConfig } from '@dua-upd/types-common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { AdobeAnalyticsClient } from './clients/adobe-analytics.client';
-import { createQuery } from './clients/adobe-analytics.query';
+import {
+  createQuery,
+  AA_CLIENT_TOKEN,
+  AdobeAnalyticsClient,
+} from '@dua-upd/adobe-analytics';
 import { CustomReportsCache } from './custom-reports.cache';
 import { ChildJobMetadata } from './custom-reports.service';
 import { processResults } from './custom-reports.strategies';
 import { Inject } from '@nestjs/common';
-import { AA_CLIENT_TOKEN } from './clients/adobe-analytics.module';
 
 type ReportCreationMetadata = {
   id: string;
