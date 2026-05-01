@@ -51,7 +51,7 @@ export class PagesDetailsReadabilityComponent implements OnInit {
     const dates = this.readabilityArray();
     const currentLang = this.currentLang();
 
-    const dateFormat = currentLang === FR_CA ? 'DD MMM yyyy' : 'MMM DD, yyyy';
+    const dateFormat = currentLang === FR_CA ? 'DD MMM YYYY' : 'MMM DD, YYYY';
 
     return (dates ?? []).map(({ date }) => ({
       label: dayjs(date).locale(this.currentLang()).format(dateFormat),
