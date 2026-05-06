@@ -101,7 +101,11 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
             field: 'tasks',
             header: this.i18n.service.translate('Task list', lang),
             type: 'link',
-            typeParams: { preLink: `/${this.langLink}/tasks`, link: '_id' },
+            typeParams: {
+              link: '_id',
+              multiLinks: true,
+              linksField: 'tasksLinks',
+            },
           },
           {
             field: 'test_type',
