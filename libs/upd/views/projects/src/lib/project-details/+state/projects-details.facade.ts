@@ -551,8 +551,9 @@ export class ProjectsDetailsFacade {
   taskSuccessByUxTest$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
+    this.projectTasks$
   ]).pipe(
-    map(([data, lang]) => {
+    map(([data, lang, projectTasks]) => {
       const uxTests = data?.taskSuccessByUxTest;
 
       if (!uxTests) {
@@ -561,26 +562,56 @@ export class ProjectsDetailsFacade {
 
       const dateFormat = lang === FR_CA ? 'D MMM yyyy' : 'MMM DD, yyyy';
 
+      const langLink = lang === FR_CA ? 'fr' : 'en';
+
       const maxTotalUsers = Math.max(
         ...uxTests.map((test) => test.total_users || 0),
       );
 
-      return uxTests.map((uxTest) => ({
-        ...uxTest,
-        date: uxTest.date
-          ? dayjs.utc(uxTest.date).locale(lang).format(dateFormat)
-          : null,
-        test_type: uxTest.test_type
-          ? this.i18n.service.translate(uxTest.test_type, lang)
-          : uxTest.test_type,
-        tasks: uxTest.tasks
+      // title -> _id (from projectTasks) mapping to create links to tasks in taskSuccessByUxTest
+      const taskIdByTitle = new Map<string, string>(
+        (projectTasks ?? []).map((task) => [
+          (task.title || '').trim().toLowerCase(),
+          task._id,
+        ]),
+      );
+
+      return uxTests.map((uxTest) => {
+      
+        const taskTitles = (uxTest.tasks ?? '')
           .split('; ')
-          .map((task) =>
-            task ? this.i18n.service.translate(task, lang) : task,
-          )
-          .join('; '),
-        total_users: maxTotalUsers,
-      }));
+          .map((t) => t.trim())
+          .filter(Boolean);
+  
+        const tasksLinks = taskTitles
+          .map((title) => {
+            const id = taskIdByTitle.get((title || '').trim().toLowerCase());
+            return {
+              _id: id ?? '',
+              label: this.i18n.service.translate(title, lang),
+              preLink: id ? `/${langLink}/tasks/${id}` : null,
+            };
+          })
+          .filter((t) => !!t._id); // keep only linkable tasks
+ 
+        return {
+          ...uxTest,
+          date: uxTest.date
+            ? dayjs.utc(uxTest.date).locale(lang).format(dateFormat)
+            : null,
+          test_type: uxTest.test_type
+            ? this.i18n.service.translate(uxTest.test_type, lang)
+            : uxTest.test_type,
+          tasks: uxTest.tasks
+            .split('; ')
+            .map((task) =>
+              task ? this.i18n.service.translate(task, lang) : task,
+            )
+            .join('; '),
+          tasksLinks: tasksLinks,  
+          total_users: maxTotalUsers,
+        };
+      });
     }),
   );
 
