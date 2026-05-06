@@ -104,36 +104,51 @@
 
     <!-- When external is false -->
     <ng-container *ngSwitchDefault>
-      <a
-        *ngIf="config.typeParams.postLink"
-        [routerLink]="[
-          config.typeParams.preLink,
-          data[config.typeParams.link],
-          config.typeParams.postLink
-        ]"
-        [queryParamsHandling]="'merge'"
-      >
-        <ng-container *ngIf="config.pipe === 'number'; else displayField">
-          {{
-            data[config.field] | number: config.pipeParam : i18n.currentLang()
-          }}
-        </ng-container>
-        <ng-template #displayField>
+      <ng-container *ngIf="config.typeParams.multiLinks; else singleLink">
           <ng-container
-            [ngTemplateOutlet]="displayData"
-            [ngTemplateOutletContext]="{ item: data[config.field] }"
-          ></ng-container>
-        </ng-template>
-      </a>
-      <a
-        *ngIf="!config.typeParams.postLink"
-        [routerLink]="[config.typeParams.preLink, data[config.typeParams.link]]"
-      >
-        <ng-container
-          [ngTemplateOutlet]="displayData"
-          [ngTemplateOutletContext]="{ item: data[config.field] }"
-        ></ng-container>
-      </a>
+              *ngFor="
+                let item of $any(data)[config.typeParams.linksField!];
+                let last = last;
+                trackBy: trackByLinkId
+              "
+              >
+            <a [routerLink]="item.preLink">{{ item.label }}</a>
+            <ng-container *ngIf="!last">; </ng-container>
+          </ng-container>
+      </ng-container>
+
+      <ng-template #singleLink>
+          <a
+            *ngIf="config.typeParams.postLink"
+            [routerLink]="[
+              config.typeParams.preLink,
+              data[config.typeParams.link],
+              config.typeParams.postLink
+            ]"
+            [queryParamsHandling]="'merge'"
+          >
+            <ng-container *ngIf="config.pipe === 'number'; else displayField">
+              {{
+                data[config.field] | number: config.pipeParam : i18n.currentLang()
+              }}
+            </ng-container>
+            <ng-template #displayField>
+              <ng-container
+                [ngTemplateOutlet]="displayData"
+                [ngTemplateOutletContext]="{ item: data[config.field] }"
+              ></ng-container>
+            </ng-template>
+          </a>
+          <a
+            *ngIf="!config.typeParams.postLink"
+            [routerLink]="[config.typeParams.preLink, data[config.typeParams.link]]"
+          >
+            <ng-container
+              [ngTemplateOutlet]="displayData"
+              [ngTemplateOutletContext]="{ item: data[config.field] }"
+            ></ng-container>
+          </a>
+      </ng-template>  
     </ng-container>
   </ng-container>
 </ng-container>

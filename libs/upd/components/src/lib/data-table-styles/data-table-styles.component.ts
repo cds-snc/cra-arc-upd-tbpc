@@ -152,4 +152,8 @@ export class DataTableStylesComponent implements OnInit {
 
     return link.replace(/^(?!https:\/\/)/, 'https://');
   }
+
+  trackByLinkId(index: number, item: { _id: string }): string {
+    return item._id || index.toString();
+  }
 }

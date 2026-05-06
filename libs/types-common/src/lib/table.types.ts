@@ -47,6 +47,8 @@ export interface typeParams {
   preLink?: string;
   postLink?: string;
   external?: boolean;
+  multiLinks?: boolean;
+  linksField?: string;
 }
 
 export interface FilterConfig<T = any> {
