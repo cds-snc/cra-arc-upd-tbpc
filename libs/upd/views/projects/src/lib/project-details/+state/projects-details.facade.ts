@@ -1045,8 +1045,10 @@ export class ProjectsDetailsFacade {
             const order: Record<string, number> = {
               Baseline: 0,
               Validation: 1,
+              Exploratory: 2,
+              'Spot Check': 3,
             };
-            return (order[a.testType] ?? 2) - (order[b.testType] ?? 2);
+            return (order[a.testType] ?? 99) - (order[b.testType] ?? 99);
           });
 
         const baselineRate = tests.find(

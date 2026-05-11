@@ -56,9 +56,35 @@ export class TasksTestedComponent {
     return data && data.length > 0;
   });
 
+  hasBaseline = computed(() =>
+    (this._tasksTestedData() ?? []).some((task) =>
+      task.tests.some((t) => t.testType === 'Baseline'),
+    ),
+  );
+
+  hasValidation = computed(() =>
+    (this._tasksTestedData() ?? []).some((task) =>
+      task.tests.some((t) => t.testType === 'Validation'),
+    ),
+  );
+
+  hasExploratory = computed(() =>
+    (this._tasksTestedData() ?? []).some((task) =>
+      task.tests.some((t) => t.testType === 'Exploratory'),
+    ),
+  );
+
+  hasSpotCheck = computed(() =>
+    (this._tasksTestedData() ?? []).some((task) =>
+      task.tests.some((t) => t.testType === 'Spot Check'),
+    ),
+  );
+
   readonly testTypeBarColors: Record<string, string> = {
     Baseline: globalColours[0],
     Validation: globalColours[1],
+    Exploratory: globalColours[2],
+    'Spot Check': globalColours[3],
   };
 
   getBarColor(testType: string): string {

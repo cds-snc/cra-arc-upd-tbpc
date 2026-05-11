@@ -98,12 +98,16 @@ export class ProjectDetailsSummaryComponent implements OnInit {
       tasks.map((task) => {
         const baseline = task.tests.find((t) => t.testType === 'Baseline');
         const validation = task.tests.find((t) => t.testType === 'Validation');
+        const exploratory = task.tests.find((t) => t.testType === 'Exploratory');
+        const spotCheck = task.tests.find((t) => t.testType === 'Spot Check');
         return {
           _id: task.taskNumber.toString(),
           taskNumber: task.taskNumber,
           taskTitle: task.taskTitle,
           baseline: baseline?.successRate ?? null,
           validation: validation?.successRate ?? null,
+          exploratory: exploratory?.successRate ?? null,
+          spotCheck: spotCheck?.successRate ?? null,
           change: task.avgTaskSuccessChange != null
             ? task.avgTaskSuccessChange / 100
             : null,
@@ -111,6 +115,22 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         };
       })
     ),
+  );
+
+  testTypesPresent$ = this.projectsDetailsService.tasksTestedData$.pipe(
+    map((tasks) => {
+      const present = new Set<string>();
+      for (const task of tasks || []) {
+        for (const test of task.tests) {
+          present.add(test.testType);
+        }
+      }
+      return {
+        hasValidation: present.has('Validation'),
+        hasExploratory: present.has('Exploratory'),
+        hasSpotCheck: present.has('Spot Check'),
+      };
+    }),
   );
 
   tasksTestedCols: ColumnConfig[] = [];
@@ -139,7 +159,8 @@ export class ProjectDetailsSummaryComponent implements OnInit {
       this.dateRangeLabel$,
       this.comparisonDateRangeLabel$,
       this.currentLang$,
-    ]).subscribe(([dateRange, comparisonDateRange, lang]) => {
+      this.testTypesPresent$,
+    ]).subscribe(([dateRange, comparisonDateRange, lang, testTypesPresent]) => {
       this.langLink = lang === EN_CA ? 'en' : 'fr';
 
       this.documentsCols = [
@@ -207,7 +228,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
       ];
     
 
-      this.tasksTestedCols = [
+      const tasksTestedCols: ColumnConfig[] = [
         {
           field: 'taskNumber',
           header: this.i18n.service.translate('task-num', lang),
@@ -227,7 +248,26 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           header: this.i18n.service.translate('Validation', lang),
           pipe: 'percent',
         },
-        {
+      ];
+
+      if (testTypesPresent.hasExploratory) {
+        tasksTestedCols.push({
+          field: 'exploratory',
+          header: this.i18n.service.translate('Exploratory', lang),
+          pipe: 'percent',
+        });
+      }
+
+      if (testTypesPresent.hasSpotCheck) {
+        tasksTestedCols.push({
+          field: 'spotCheck',
+          header: this.i18n.service.translate('Spot Check', lang),
+          pipe: 'percent',
+        });
+      }
+
+      if (testTypesPresent.hasValidation) {
+        tasksTestedCols.push({
           field: 'change',
           header: this.i18n.service.translate('change', lang),
           pipe: 'percent',
@@ -236,16 +276,24 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           upGoodDownBad: true,
           useArrows: true,
           showTextColours: true,
-        },
-      ];
+        });
+      }
+
+      this.tasksTestedCols = tasksTestedCols;
     });
   }
 
   getScenarioTestTypes(rowData: Record<string, unknown>): string[] {
     const scenarios = rowData['scenariosByTestType'] as Record<string, string[]> | undefined;
     const keys = Object.keys(scenarios || {});
-    return keys.sort((a, b) =>
-      a === 'Baseline' ? -1 : b === 'Baseline' ? 1 : 0
+    const order: Record<string, number> = {
+      Baseline: 0,
+      Validation: 1,
+      Exploratory: 2,
+      'Spot Check': 3,
+    };
+    return keys.sort(
+      (a, b) => (order[a] ?? 99) - (order[b] ?? 99),
     );
   }
 }
