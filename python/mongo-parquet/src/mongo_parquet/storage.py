@@ -14,7 +14,7 @@ def get_aws_config_value(key: str) -> str | None:
     if not os.path.exists(config_path):
         return None
 
-    with open(config_path, 'r') as f:
+    with open(config_path, "r") as f:
         data = json.load(f)
         return data.get("default", {}).get(key)
 
@@ -43,9 +43,19 @@ class RemoteStorageConfig:
             self.remote_container = remote_container or os.getenv(
                 "DATA_BUCKET_NAME", "cra-upd-dashboard-data-staging"
             )
-            self.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID") or get_aws_config_value("aws_access_key_id")
-            self.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY") or get_aws_config_value("aws_secret_access_key")
-            self.region_name = os.getenv("AWS_DEFAULT_REGION") or os.getenv("AWS_REGION") or "ca-central-1"
+            self.aws_access_key_id = os.getenv(
+                "AWS_ACCESS_KEY_ID"
+            ) or get_aws_config_value("aws_access_key_id")
+
+            self.aws_secret_access_key = os.getenv(
+                "AWS_SECRET_ACCESS_KEY"
+            ) or get_aws_config_value("aws_secret_access_key")
+
+            self.region_name = (
+                os.getenv("AWS_DEFAULT_REGION")
+                or os.getenv("AWS_REGION")
+                or "ca-central-1"
+            )
 
             auth_kwargs = (
                 {
@@ -100,6 +110,7 @@ class StorageClient:
         sample: bool = False,
         cleanup_local: bool = False,
         filepaths: list[str] | None = None,
+        dry_run: bool = False,
     ):
         """
         Upload Parquet files to remote storage.
@@ -107,6 +118,7 @@ class StorageClient:
         :param sample: Whether to upload sample files.
         :param cleanup_local: Whether to delete local files after upload.
         :param filepaths: List of specific file paths to upload, relative to the src directory.
+        :param dry_run: Whether to perform a dry run without actual upload.
         """
         local_dir_path = self.target_dirpath(sample=sample, remote=False)
 
@@ -118,14 +130,24 @@ class StorageClient:
             raise FileNotFoundError(f"Local directory {local_dir_path} does not exist.")
 
         filepath_tuples = (
-            [(local_dir_path, None, fp) for fp in filepaths] if filepaths else None
+            [(local_dir_path, None, [fp for fp in filepaths])]
+            if filepaths is not None
+            else os.walk(local_dir_path)
         )
 
-        for root, _, files in filepath_tuples or os.walk(local_dir_path):
+        if isinstance(filepath_tuples, list) and len(filepath_tuples) == 0:
+            print(f"⚠️ No files found in {local_dir_path} to upload.")
+            return
+
+        if dry_run:
+            print(" ⚠️ Dry run enabled - no files will actually be uploaded.")
+
+        for root, _, files in filepath_tuples:
             for file in files:
                 if file.endswith(".parquet"):
-                    # may need a different root if using explicit filepaths?
-                    local_path = os.path.join(root, file)
+                    local_path = (
+                        file if filepaths is not None else os.path.join(root, file)
+                    )
 
                     remote_filepath = local_path.replace(f"{local_dir_path}/", "")
 
@@ -134,6 +156,9 @@ class StorageClient:
                     )
 
                     print(f"⬆️  Uploading: {local_path} → {remote_path}")
+
+                    if dry_run:
+                        continue
 
                     with open(local_path, "rb") as f:
                         self.remote_fs.pipe_file(remote_path, f.read())
@@ -197,9 +222,7 @@ class StorageClient:
         local_path = self.target_filepath(filename, sample=sample, remote=False)
 
         print(f"📤 Writing {local_path}...")
-
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        df.write_parquet(local_path, compression_level=compression_level)
+        df.write_parquet(local_path, compression_level=compression_level, mkdir=True)
 
     def download_from_remote(self, files: list[str], sample: bool = False):
         local_dir_path = self.target_dirpath(sample=sample, remote=False)

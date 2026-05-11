@@ -64,3 +64,5 @@ docs/
 
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
+.omx/
+.codex/

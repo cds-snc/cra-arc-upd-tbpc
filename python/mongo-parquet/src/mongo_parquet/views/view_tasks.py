@@ -372,6 +372,7 @@ class TasksViewContext:
     def get_tasks_by_tpc_id(self) -> pl.DataFrame:
         return (
             self.tasks.select(pl.col("_id"), pl.col("tpc_ids"))
+            .filter(pl.col("tpc_ids").is_not_null(), pl.col("tpc_ids").list.len() > 0)
             .explode("tpc_ids")
             .group_by("tpc_ids")
             .agg(pl.col("_id").implode().alias("tasks"))
@@ -384,8 +385,10 @@ class TasksViewContext:
                 pl.col("_id"),
                 pl.col("gc_tasks")
                 .list.eval(pl.element().struct.field("title"))
+                .list.unique()
                 .alias("gc_task"),
             )
+            .filter(pl.col("gc_task").is_not_null(), pl.col("gc_task").list.len() > 0)
             .explode("gc_task")
             .group_by("gc_task")
             .agg(pl.col("_id").implode().alias("tasks"))
@@ -444,6 +447,12 @@ class TasksViewService:
         for dr in self.date_ranges_with_comparisons.values():  # pyright: ignore[reportAssignmentType]
             dr: DateRangeWithComparison = dr
             for date_range in [dr["date_range"], dr["comparison_date_range"]]:
+                if self.views_utils.is_view_calculated(date_range):
+                    print(
+                        f"Skipping calculation for {date_range['start'].date()} to {date_range['end'].date()} as it was already calculated."
+                    )
+                    continue
+
                 lf = self.get_view_date_range_data(date_range)
 
                 date_range_start_time = datetime.now()
@@ -458,11 +467,20 @@ class TasksViewService:
                 print(
                     f"  Finished in {format_timedelta(datetime.now() - date_range_start_time)}"
                 )
+                self.views_utils.set_view_calculated(date_range)
+
+        self.views_utils.clear_already_calculated_views()
 
     def insert_tasks_view_from_temp(self):
         for dr in self.date_ranges_with_comparisons.values():  # pyright: ignore[reportAssignmentType]
             dr: DateRangeWithComparison = dr
             for date_range in [dr["date_range"], dr["comparison_date_range"]]:
+                if self.views_utils.is_view_inserted(date_range):
+                    print(
+                        f"Skipping insertion for {date_range['start'].date()} to {date_range['end'].date()} as it was already inserted."
+                    )
+                    continue
+
                 date_range_start_time = datetime.now()
                 print(
                     f"Inserting tasks view for {date_range['start']} to {date_range['end']}..."
@@ -477,6 +495,9 @@ class TasksViewService:
                 print(
                     f"  Finished in {format_timedelta(datetime.now() - date_range_start_time)}"
                 )
+                self.views_utils.set_view_inserted(date_range)
+
+        self.views_utils.clear_already_inserted_views()
 
     def get_view_date_range_data(
         self,

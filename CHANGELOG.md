@@ -1,5 +1,27 @@
 # Changelog
 
+## [4.3.5](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.4...v4.3.5) (2026-04-24)
+
+
+### Features
+
+* **mongo-parquet:** Create sample files from data files ([c2e4573](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c2e45732b718a0801774419492758c4decf6a8d9))
+* Parquet ref sync implementation ([057108f](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/057108fef2295e5288327b87c4449e9e1fc5be38))
+
+
+### Bug Fixes
+
+* **mongo-parquet:** Add safeguards to prevent issues if view date ranges are duplicated ([acfd0a7](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/acfd0a7ccea7637c8542510e55cd45d2cfa729c1))
+* **mongo-parquet:** Don't prepend root dir path when uploading using list of paths ([acf1914](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/acf191416e52c95f8f2a40378e11d595cbe9671a))
+* **mongo-parquet:** Fix sync_refs OOM crash ([b5827ab](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b5827ab1cbafcc59c85710e1791ec0c2efe9e94e))
+* **mongo-parquet:** Set s3 as the default storage ([01d66df](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/01d66df4ec29499557f7f0dbf8d72ded0c0097f6))
+* Set s3 as default in storage client ([5775a92](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5775a923b3049b97f9e40da2d6307ae24ea01967))
+
+
+### Miscellaneous Chores
+
+* Update devcontainer Dockerfile and config ([9bdc021](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/9bdc021794d3b32bba6219300bf1498b65dc6292))
+
 ## [4.3.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.3...v4.4.0) (2026-03-26)
 
 

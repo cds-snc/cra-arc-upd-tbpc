@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
   "polars==1.38.1",
-  "pydantic>=2.10.6",
   "pymongo>=4.10.1",
   "pymongoarrow==1.10.0",
   "python-dotenv>=1.0.1",
@@ -21,12 +20,13 @@ dependencies = [
 dev = [
   "basedpyright>=1.31.7",
   "ipykernel>=6.29.5",
+  "pandas>=3.0.1",
   "pyarrow-stubs>=19.4",
-  # "httpx>=0.28.1",
-  # "pytest-xdist>=3.8.0",
-  # "pytest>=8.4.2",
-  # "pytest-asyncio>=1.2.0",
-  # "memray>=1.18.0",
+  "httpx>=0.28.1",
+  "pytest-xdist>=3.8.0",
+  "pytest>=8.4.2",
+  "pytest-asyncio>=1.2.0",
+  "memray>=1.18.0",
 ]
 
 [build-system]

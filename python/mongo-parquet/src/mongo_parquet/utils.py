@@ -138,90 +138,6 @@ def hash_file(filepath: str) -> str:
         return hashlib.file_digest(f, "md5").hexdigest()
 
 
-# Currently unused
-@final
-class RefChangeTracker:
-    """
-    Tracks the changes in references before and after a sync, and calculates
-    the differences, in order to easily update any affected Parquet files.
-    """
-
-    def __init__(self, data_dir: str, temp_dir: str):
-        self.data_dir = data_dir
-        self.temp_dir = temp_dir
-
-    def save_before(self):
-        # Back up the current state of the references
-        for collection in ["pages", "tasks", "projects", "ux_tests"]:
-            filepath = os.path.join(self.data_dir, f"{collection}.parquet")
-            temp_path = os.path.join(f"{self.temp_dir}/before", f"{collection}.parquet")
-
-            pl.scan_parquet(filepath).sink_parquet(temp_path, compression_level=5)
-
-    def get_new_ids(
-        self, before_df: pl.LazyFrame, after_df: pl.LazyFrame
-    ) -> pl.DataFrame:
-        new_ids = after_df.select(["_id"]).join(
-            before_df.select(["_id"]), on="_id", how="anti"
-        )
-        return new_ids.collect()
-
-    def get_removed_ids(
-        self, before_df: pl.LazyFrame, after_df: pl.LazyFrame
-    ) -> pl.DataFrame:
-        removed_ids = before_df.select(["_id"]).join(
-            after_df.select(["_id"]), on="_id", how="anti"
-        )
-        return removed_ids.collect()
-
-    def get_changed(
-        self, ref_fields: list[str], before_df: pl.LazyFrame, after_df: pl.LazyFrame
-    ) -> pl.LazyFrame:
-        schema = before_df.collect_schema()
-        ref_col_expr = pl.col("_id")
-
-        has_url = schema.get("url") is not None
-
-        url_select = [pl.col("url")] if has_url else []
-
-        for field_name in ref_fields:
-            field = schema.get(field_name)
-            if field is None:
-                raise ValueError(f"Field '{field_name}' not found in DataFrame schema.")
-            if field.is_nested():
-                ref_col_expr = ref_col_expr.list.concat(pl.col(field_name).list.sort())
-            else:
-                ref_col_expr = ref_col_expr.list.concat(pl.col(field_name))
-
-        fields_select = ["_id", *url_select, *ref_fields]
-
-        before = (
-            before_df.select(fields_select)
-            .with_columns(ref_col_expr.list.join("-").alias("refs"))
-            .select([*fields_select, "refs"])
-        )
-
-        after = (
-            after_df.select(fields_select)
-            .with_columns(ref_col_expr.list.join("-").alias("refs_new"))
-            .select([*fields_select, "refs_new"])
-        )
-
-        return before.join(
-            after,
-            on=pl.col("_id"),
-            how="left",
-            nulls_equal=True,
-            suffix="_new",
-        ).filter(
-            pl.col("refs_new").is_not_null(),  # don't include deleted refs
-            pl.col("refs") != pl.col("refs_new"),
-        )
-
-    def get_distinct_url_page(self, df: pl.LazyFrame) -> pl.DataFrame:
-        return df.unique(["url", "page"]).collect()
-
-
 @final
 class SyncUtils:
     """
@@ -287,14 +203,24 @@ class SyncUtils:
 
         self.file_hashes[absolute_path] = hash_file(absolute_path)
 
+    def hash_all_files(self):
+        """
+        Hash all files in the parquet directory and store their hashes.
+        """
+        for root, _, files in os.walk(self.parquet_dir_path):
+            for file in files:
+                if file.endswith(".parquet"):
+                    filepath = os.path.join(root, file)
+                    self.add_hash(filepath)
+
     def queue_file_upload(self, file_path: str):
         """
         Queue a file for upload.
 
         :param file_path: File path, relative to the root sync directory.
         """
-        if file_path in self.upload_queue:
-            raise ValueError(f"Upload path for {file_path} already exists.")
+        if file_path not in self.upload_queue:
+            self.upload_queue.append(file_path)
 
     def queue_upload_if_changed(self, file_path: str):
         """
@@ -302,6 +228,14 @@ class SyncUtils:
 
         :param file_path: File path, relative to the root sync directory.
         """
+        if os.path.isdir(file_path):
+            for root, _, files in os.walk(file_path):
+                for file in files:
+                    child_filepath = os.path.join(root, file)
+
+                    self.queue_upload_if_changed(child_filepath)
+            return
+
         if self.file_has_changed(file_path):
             self.queue_file_upload(file_path)
 

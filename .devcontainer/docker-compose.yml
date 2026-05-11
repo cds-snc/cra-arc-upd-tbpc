@@ -14,7 +14,7 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   db:
-    image: mongo:8.2.5 # Version 8 for DocumentDB compatibility
+    image: mongo:8.2.7 # Version 8 for DocumentDB compatibility
     restart: unless-stopped
     volumes:
       - mongodb-data:/data/db

@@ -41,11 +41,21 @@ fi
 
 echo "Exporting sample data from MongoDB to S3"
 mkdir sample
-python -m mongo_parquet --export-from-mongo --upload-to-remote --storage=s3 --sample
+
+python -m mongo_parquet --create-sample-from-local
 
 if [ $? -ne 0 ]; then
-  echo "Exporting sample data failed"
+	echo "Creating sample data failed"
+	exit 1
+else
+	echo "Sample data created successfully"
+fi
+
+python -m mongo_parquet --upload-to-remote --storage=s3 --sample
+
+if [ $? -ne 0 ]; then
+  echo "Uploading sample data failed"
   exit 1
 else
-  echo "Sample data exported successfully"
+  echo "Sample data uploaded successfully"
 fi
