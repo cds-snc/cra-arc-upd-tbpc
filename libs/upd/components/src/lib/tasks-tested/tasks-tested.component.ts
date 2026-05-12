@@ -87,10 +87,6 @@ export class TasksTestedComponent {
     'Spot Check': globalColours[3],
   };
 
-  getBarColor(testType: string): string {
-    return this.testTypeBarColors[testType] || globalColours[2];
-  }
-
   getChangeIndicator(value: number | null): { text: string; cssClass: string } {
     if (value == null) {
       return { text: '-', cssClass: 'text-muted' };

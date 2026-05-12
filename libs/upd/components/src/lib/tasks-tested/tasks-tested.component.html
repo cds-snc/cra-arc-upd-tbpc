@@ -1,5 +1,4 @@
 @if (hasData()) {
-  <!-- Summary Stats -->
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       @if (tasksTestedSummaryValue(); as summary) {
@@ -28,7 +27,6 @@
     </div>
   </div>
 
-  <!-- Tasks Tested Details -->
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
@@ -36,7 +34,7 @@
           @for (task of tasksTestedDataValue(); track task.taskNumber) {
             <div class="mb-3 p-3 border rounded">
               <div class="row">
-                <div [class]="hasValidation() ? 'col-lg-10' : 'col-lg-12'">
+                <div [class]="hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'">
                   <h6 class="mb-3">
                     {{ task.taskNumber }}.
                     @if (task.taskId) {
@@ -68,7 +66,7 @@
                             <ng-template #barTooltip>
                               <strong>{{ task.taskTitle }}</strong>
                               <hr class="my-1" />
-                              <span class="legend_color rounded-circle" [style.background]="getBarColor(test.testType)"></span>
+                              <span class="legend_color rounded-circle" [style.background]="testTypeBarColors[test.testType]"></span>
                               {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
                             </ng-template>
                             <div
@@ -76,7 +74,7 @@
                               role="progressbar"
                               style="height: 16px;"
                               [style.width.%]="test.successRatePercent"
-                              [style.background-color]="getBarColor(test.testType)"
+                              [style.background-color]="testTypeBarColors[test.testType]"
                               [ngbTooltip]="barTooltip"
                               [tooltipClass]="'chart-tooltip'"
                               container="body"
@@ -105,7 +103,7 @@
                   }
                 </div>
 
-                @if (hasValidation()) {
+                @if (hasBaseline() && hasValidation()) {
                   <div class="col-lg-2 d-flex flex-column">
                     <div class="text-muted small mb-1">{{ 'change' | translate }}</div>
                     <span class="h1 mb-0" [class]="getChangeIndicator(task.avgTaskSuccessChange).cssClass">

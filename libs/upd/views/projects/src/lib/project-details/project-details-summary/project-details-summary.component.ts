@@ -4,7 +4,7 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import { combineLatest, map } from 'rxjs';
+import { combineLatest, map, shareReplay } from 'rxjs';
 import {
   callVolumeObjectiveCriteria,
   feedbackKpiObjectiveCriteria,
@@ -93,9 +93,9 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     fail: { icon: 'warning', colourClass: 'text-danger', messageKey: 'kpi-not-met' },
   };
 
-  tasksTestedTableData$ = this.projectsDetailsService.tasksTestedData$.pipe(
-    map((tasks) =>
-      tasks.map((task) => {
+  private tasksTestedView$ = this.projectsDetailsService.tasksTestedData$.pipe(
+    map((tasks) => {
+      const tableData = tasks.map((task) => {
         const baseline = task.tests.find((t) => t.testType === 'Baseline');
         const validation = task.tests.find((t) => t.testType === 'Validation');
         const exploratory = task.tests.find((t) => t.testType === 'Exploratory');
@@ -113,25 +113,30 @@ export class ProjectDetailsSummaryComponent implements OnInit {
             : null,
           scenariosByTestType: task.scenariosByTestType,
         };
-      })
-    ),
-  );
+      });
 
-  testTypesPresent$ = this.projectsDetailsService.tasksTestedData$.pipe(
-    map((tasks) => {
       const present = new Set<string>();
       for (const task of tasks || []) {
         for (const test of task.tests) {
           present.add(test.testType);
         }
       }
+
       return {
-        hasValidation: present.has('Validation'),
-        hasExploratory: present.has('Exploratory'),
-        hasSpotCheck: present.has('Spot Check'),
+        tableData,
+        present: {
+          hasBaseline: present.has('Baseline'),
+          hasValidation: present.has('Validation'),
+          hasExploratory: present.has('Exploratory'),
+          hasSpotCheck: present.has('Spot Check'),
+        },
       };
     }),
+    shareReplay({ bufferSize: 1, refCount: true }),
   );
+
+  tasksTestedTableData$ = this.tasksTestedView$.pipe(map((v) => v.tableData));
+  testTypesPresent$ = this.tasksTestedView$.pipe(map((v) => v.present));
 
   tasksTestedCols: ColumnConfig[] = [];
 
@@ -238,17 +243,23 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           field: 'taskTitle',
           header: this.i18n.service.translate('task', lang),
         },
-        {
+      ];
+
+      if (testTypesPresent.hasBaseline) {
+        tasksTestedCols.push({
           field: 'baseline',
           header: this.i18n.service.translate('Baseline', lang),
           pipe: 'percent',
-        },
-        {
+        });
+      }
+
+      if (testTypesPresent.hasValidation) {
+        tasksTestedCols.push({
           field: 'validation',
           header: this.i18n.service.translate('Validation', lang),
           pipe: 'percent',
-        },
-      ];
+        });
+      }
 
       if (testTypesPresent.hasExploratory) {
         tasksTestedCols.push({
@@ -266,7 +277,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         });
       }
 
-      if (testTypesPresent.hasValidation) {
+      if (testTypesPresent.hasBaseline && testTypesPresent.hasValidation) {
         tasksTestedCols.push({
           field: 'change',
           header: this.i18n.service.translate('change', lang),
