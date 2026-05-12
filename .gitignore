@@ -66,3 +66,9 @@ docs/
 *:Zone.Identifier
 .omx/
 .codex/
+
+# Local working files
+/data.zip
+/local-scenario-id-rollback.js
+/project_revamp_v2.md
+/UPDv434 - ProjectPrototype-updates-Naomi.docx.pdf
