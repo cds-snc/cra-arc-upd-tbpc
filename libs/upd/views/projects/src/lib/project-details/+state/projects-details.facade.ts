@@ -1013,17 +1013,30 @@ export class ProjectsDetailsFacade {
         return [];
       }
 
+      // Group key:
+      //   - scenario_id when present (pairs Baseline+Validation across rows)
+      //   - airtable_id as fallback (each ux_test gets its own row — no
+      //     averaging across scenarios, no Baseline/Validation pairing).
+      // Prefixed to keep the two ID spaces unambiguously separate.
+      const getGroupKey = (uxTest: {
+        scenario_id?: string | null;
+        airtable_id?: string | null;
+      }): string =>
+        uxTest.scenario_id
+          ? `sid:${uxTest.scenario_id}`
+          : `aid:${uxTest.airtable_id ?? ''}`;
+
       const pairs = new Map<
         string,
-        { taskTitle: string; scenarioId: string }
+        { taskTitle: string; groupKey: string }
       >();
       for (const uxTest of uxTests) {
-        const scenarioId = uxTest.scenario_id ?? '';
+        const groupKey = getGroupKey(uxTest);
         for (const title of uxTest.tasks.split('; ')) {
           if (!title) continue;
-          const key = JSON.stringify([title, scenarioId]);
+          const key = JSON.stringify([title, groupKey]);
           if (!pairs.has(key)) {
-            pairs.set(key, { taskTitle: title, scenarioId });
+            pairs.set(key, { taskTitle: title, groupKey });
           }
         }
       }
@@ -1032,14 +1045,14 @@ export class ProjectsDetailsFacade {
         const titleCmp = a.taskTitle.localeCompare(b.taskTitle);
         return titleCmp !== 0
           ? titleCmp
-          : a.scenarioId.localeCompare(b.scenarioId);
+          : a.groupKey.localeCompare(b.groupKey);
       });
 
-      return sortedPairs.map(({ taskTitle, scenarioId }, index) => {
+      return sortedPairs.map(({ taskTitle, groupKey }, index) => {
         const relevantTests = uxTests.filter(
           (uxTest) =>
             uxTest.tasks.split('; ').includes(taskTitle) &&
-            (uxTest.scenario_id ?? '') === scenarioId,
+            getGroupKey(uxTest) === groupKey,
         );
 
         const testsByType: Record<string, { rates: number[] }> = {};
