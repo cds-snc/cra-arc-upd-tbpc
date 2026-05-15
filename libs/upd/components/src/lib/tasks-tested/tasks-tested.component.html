@@ -92,9 +92,13 @@
                           [title]="'view-task-scenario'"
                           [expanded]="true"
                           [headerClass]="'small'">
-                          @for (scenario of scenarios; track scenario; let i = $index) {
+                          @for (scenario of scenarios; track scenario.text; let i = $index) {
                             <div class="small text-muted" [class.mb-3]="i < scenarios.length - 1">
-                              {{ scenario }}
+                              @if (scenario.html) {
+                                <upd-markdown-renderer [html]="scenario.html"></upd-markdown-renderer>
+                              } @else {
+                                {{ scenario.text }}
+                              }
                             </div>
                           }
                         </upd-accordion>

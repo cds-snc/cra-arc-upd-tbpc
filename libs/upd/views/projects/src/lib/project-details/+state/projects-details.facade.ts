@@ -1101,15 +1101,23 @@ export class ProjectsDetailsFacade {
             (round(validationRate, 2) - round(baselineRate, 2)) * 100;
         }
 
-        const scenariosByTestType: Record<string, string[]> = {};
+        const scenariosByTestType: Record<
+          string,
+          { text: string; html?: string | null }[]
+        > = {};
         for (const test of relevantTests) {
           if (!test.scenario) continue;
           const type = normalizeTestType(test.test_type || 'Unknown');
           if (!scenariosByTestType[type]) {
             scenariosByTestType[type] = [];
           }
-          if (!scenariosByTestType[type].includes(test.scenario)) {
-            scenariosByTestType[type].push(test.scenario);
+          if (
+            !scenariosByTestType[type].some((s) => s.text === test.scenario)
+          ) {
+            scenariosByTestType[type].push({
+              text: test.scenario,
+              html: test.scenario_html,
+            });
           }
         }
 

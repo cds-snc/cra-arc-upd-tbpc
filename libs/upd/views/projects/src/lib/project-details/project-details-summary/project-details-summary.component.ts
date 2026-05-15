@@ -149,7 +149,9 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   }
 
   getScenarioTestTypes(rowData: Record<string, unknown>): string[] {
-    const scenarios = rowData['scenariosByTestType'] as Record<string, string[]> | undefined;
+    const scenarios = rowData['scenariosByTestType'] as
+      | Record<string, { text: string; html?: string | null }[]>
+      | undefined;
     const keys = Object.keys(scenarios || {});
     const order: Record<string, number> = {
       Baseline: 0,

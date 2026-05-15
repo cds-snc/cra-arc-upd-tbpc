@@ -70,8 +70,12 @@
     @for (testType of getScenarioTestTypes(rowData); track testType) {
       <div [class.mb-2]="!$last">
         <strong class="small">{{ testType }} {{ 'scenario' | translate }}:</strong>
-        @for (scenario of rowData.scenariosByTestType[testType]; track $index) {
-          <p class="small text-muted mb-1">{{ scenario }}</p>
+        @for (scenario of rowData.scenariosByTestType[testType]; track scenario.text) {
+          @if (scenario.html) {
+            <upd-markdown-renderer [html]="scenario.html" class="small text-muted d-block mb-1"></upd-markdown-renderer>
+          } @else {
+            <p class="small text-muted mb-1">{{ scenario.text }}</p>
+          }
         }
       </div>
     } @empty {
