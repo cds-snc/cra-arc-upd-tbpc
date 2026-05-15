@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import type { DateRange } from './date.types';
 import type { PageStatus } from './data.types';
 
@@ -344,6 +344,7 @@ export interface IUxTest {
   session_type?: string;
   scenario?: string;
   scenario_id?: string;
+  scenario_html?: string;
   vendor?: string;
   version_tested?: string;
   github_repo?: string;

@@ -1,11 +1,4 @@
-import {
-  Component,
-  ElementRef,
-  HostListener,
-  effect,
-  signal,
-  input,
-} from '@angular/core';
+import { Component, ElementRef, HostListener, effect, signal, input, inject } from '@angular/core';
 
 @Component({
     selector: 'upd-arrow-connect',
@@ -14,6 +7,7 @@ import {
     standalone: false
 })
 export class ArrowConnectComponent {
+  private hostElement = inject(ElementRef);
   source = input<ElementRef<HTMLElement>>();
   target = input<ElementRef<HTMLElement>>();
   visible = input<boolean>(false);
@@ -37,7 +31,7 @@ export class ArrowConnectComponent {
   line3EndX = signal(0);
   line3EndY = signal(0);
 
-  constructor(private hostElement: ElementRef) {
+  constructor() {
     effect(
       () => {
         if (this.visible() && this.update()) {
@@ -49,7 +43,7 @@ export class ArrowConnectComponent {
     );
   }
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   onResize() {
     this.updateLine();
   }

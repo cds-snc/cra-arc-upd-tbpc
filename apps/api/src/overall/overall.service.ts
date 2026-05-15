@@ -5,7 +5,7 @@ import type { Cache } from 'cache-manager';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import quarterOfYear from 'dayjs/plugin/quarterOfYear';
-import type { FilterQuery, Model } from 'mongoose';
+import type { QueryFilter, Model } from 'mongoose';
 import { omit, pick } from 'rambdax';
 import type {
   CallDriverModel,
@@ -146,7 +146,7 @@ export class OverallService {
   async getMetrics(params: ApiParams): Promise<OverviewData> {
     const cacheKey = `OverviewMetrics-${params.dateRange}`;
 
-    const cachedData = await this.cacheManager.store.get<string>(cacheKey).then(
+    const cachedData = await this.cacheManager.get<string>(cacheKey).then(
       async (cachedData) =>
         cachedData &&
         // it's actually still a string here, but we want to avoid deserializing it
@@ -313,7 +313,7 @@ export class OverallService {
   async getFeedback(params: ApiParams): Promise<PartialOverviewFeedback> {
     const cacheKey = `OverviewFeedback-${params.dateRange}`;
 
-    const cachedData = await this.cacheManager.store.get<string>(cacheKey).then(
+    const cachedData = await this.cacheManager.get<string>(cacheKey).then(
       async (cachedData) =>
         cachedData &&
         // it's actually still a string here, but we want to avoid deserializing it
@@ -461,26 +461,26 @@ export class OverallService {
     const frCommentsKey = `${cacheKey}-fr-comments-${chunkIndex}`;
     const frWordsKey = `${cacheKey}-fr-words-${chunkIndex}`;
 
-    const enComments = await this.cacheManager.store
+    const enComments = await this.cacheManager
       .get<string>(enCommentsKey)
       .then(
         async (cachedData) =>
           cachedData && (await decompressString(cachedData)),
       );
 
-    const enWords = await this.cacheManager.store
+    const enWords = await this.cacheManager
       .get<string>(enWordsKey)
       .then(
         async (cachedData) =>
           cachedData && (await decompressString(cachedData)),
       );
-    const frComments = await this.cacheManager.store
+    const frComments = await this.cacheManager
       .get<string>(frCommentsKey)
       .then(
         async (cachedData) =>
           cachedData && (await decompressString(cachedData)),
       );
-    const frWords = await this.cacheManager.store
+    const frWords = await this.cacheManager
       .get<string>(frWordsKey)
       .then(
         async (cachedData) =>
@@ -749,7 +749,7 @@ async function getProjects(
     .group({
       _id: '$project',
       cops: { $max: '$cops' },
-      wos_cops: {$max: '$wos_cops'},
+      wos_cops: { $max: '$wos_cops' },
       startDate: { $min: '$date' },
       launchDate: { $max: '$launch_date' },
       avgSuccessRate: { $avg: '$success_rate' },
@@ -939,7 +939,7 @@ async function getOverviewMetrics(
   console.time(`OverviewMetrics-${dateRange}`);
   const [startDate, endDate] = dateRange.split('/').map((d) => new Date(d));
 
-  const dateQuery: FilterQuery<Date> = {
+  const dateQuery: QueryFilter<Date> = {
     $gte: startDate,
     $lte: endDate,
   };
@@ -948,7 +948,7 @@ async function getOverviewMetrics(
     .split('/')
     .map((d) => new Date(d));
 
-  const satDateQuery: FilterQuery<Date> = {
+  const satDateQuery: QueryFilter<Date> = {
     $gte: satStartDate,
     $lte: satEndDate,
   };

@@ -33,38 +33,37 @@
             ></upd-apex-donut-task-success>
           </div>
         </div>
-        <ng-container *ngIf="taskSuccessObjectiveStatus$ | async as status">
-          <div class="mt-3 d-flex align-items-center justify-content-start">
-            <span class="material-icons me-1" [ngClass]="objectiveStatusConfig[status].colourClass" style="font-size: 1.7em;">{{ objectiveStatusConfig[status].icon }}</span>
-            <small>{{ objectiveStatusConfig[status].messageKey | translate }}</small>
-          </div>
-        </ng-container>
+        <upd-task-success-objective-status
+          [status]="taskSuccessObjectiveStatus$ | async"
+        ></upd-task-success-objective-status>
       </upd-card>
     </div>
   </div>
 </div>
 
-<ng-container *ngIf="tasksTestedTableData$ | async as tasksTestedData">
-  <div class="container-fluid my-4 gx-0" *ngIf="tasksTestedData.length">
-    <div class="row">
-      <div class="col">
-        <upd-data-table-card
-          [data]="tasksTestedData"
-          [cols]="tasksTestedCols"
-          [sort]="true"
-          [pagination]="false"
-          [filter]="false"
-          [expandable]="true"
-          [expandableRowTemplate]="scenarioTemplate"
-          expandAfterField="taskTitle"
-          [title]="'tasks-tested'"
-          sortField="taskNumber"
-        >
-        </upd-data-table-card>
+@if (tasksTestedTableData$ | async; as tasksTestedData) {
+  @if (tasksTestedData.length) {
+    <div class="container-fluid my-4 gx-0">
+      <div class="row">
+        <div class="col">
+          <upd-data-table-card
+            [data]="tasksTestedData"
+            [cols]="tasksTestedCols"
+            [sort]="true"
+            [pagination]="false"
+            [filter]="false"
+            [expandable]="true"
+            [expandableRowTemplate]="scenarioTemplate"
+            expandAfterField="taskTitle"
+            [title]="'tasks-tested'"
+            sortField="taskNumber"
+          >
+          </upd-data-table-card>
+        </div>
       </div>
     </div>
-  </div>
-</ng-container>
+  }
+}
 
 <ng-template #scenarioTemplate let-rowData>
   <div class="p-3">
@@ -80,142 +79,3 @@
     }
   </div>
 </ng-template>
-
-<!-- Hidden for UX projects revamp
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-lg-6 col-md-12 col-sm-12">
-      <upd-apex-spark-line
-        [title]="'kpi-calls-per-100-title'"
-        [titleTooltip]="'kpi-calls-per-100-tooltip-project'"
-        [series]="(apexCallDrivers$ | async) || []"
-        [current]="(callPerVisits$ | async) || 0"
-        [comparison]="(apexCallPercentChange$ | async) || 0"
-        [keyword]="'calls'"
-        [scale]="100"
-        [difference]="(apexCallDifference$ | async) || 0"
-        modal=" {{ 'kpi-calls-per-100-guidance-project' | translate }}"
-      ></upd-apex-spark-line>
-    </div>
-    <div class="col-lg-6 col-md-12 col-sm-12">
-      <upd-apex-spark-line
-        [title]="'kpi-feedback-per-1000-title'"
-        [titleTooltip]="'kpi-feedback-per-1000-tooltip-project'"
-        [series]="(apexKpiFeedback$ | async) || []"
-        [current]="(currentKpiFeedback$ | async) || 0"
-        [comparison]="(kpiFeedbackPercentChange$ | async) || 0"
-        [scale]="1000"
-        [kpiObjectiveCriteria]="feedbackKpiObjectiveCriteria"
-        [difference]="(kpiFeedbackDifference$ | async) || 0"
-        modal=" {{ 'kpi-feedback-per-1000-guidance-project' | translate }} "
-        [keyword]="'feedback'"
-      ></upd-apex-spark-line>
-    </div>
-  </div>
-</div>
--->
-
-<!-- Hidden for UX projects revamp
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-lg-6 col-sm-12">
-      <upd-data-card
-        [current]="visits$ | async"
-        [comparison]="visitsPercentChange$ | async"
-        [title]="'Total visits from all pages'"
-      ></upd-data-card>
-    </div>
-    <div class="col-lg-6 col-sm-12">
-      <upd-data-card
-        [current]="totalCalldriver$ | async"
-        [comparison]="totalCalldriverPercentChange$ | async"
-        [title]="'Call volume'"
-        [displayKpis]="false"
-        [kpiObjectiveCriteria]="callVolumeObjectiveCriteria"
-        [kpiStylesConfig]="callVolumeKpiConfig"
-        [comparisonMode]="'upBadDownGood'"
-      ></upd-data-card>
-    </div>
-  </div>
-</div>
--->
-
-<!-- Hidden for UX projects revamp
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-data-table-card
-        [data]="(participantTasks$ | async) || []"
-        [cols]="participantTasksCols"
-        [sort]="true"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'related-tasks'"
-        sortField="title"
-      >
-      </upd-data-table-card>
-    </div>
-  </div>
-</div>
--->
-
-<!-- Hidden for UX projects revamp
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-lg-12 col-md-12 col-sm-12">
-      <upd-apex-bar
-        [title]="'d3-dyfwywlf'"
-        titleTooltip="{{ 'tooltip-d3-dyfwywlf' | translate }}"
-        [series]="(dyfChartApex$ | async) || []"
-        [yAxis]="'Date range' | translate"
-        [xAxis]="[
-          (fullDateRangeLabel$ | async) || [],
-          (fullComparisonDateRangeLabel$ | async) || []
-        ]"
-        [tableCols]="dyfTableCols"
-        [table]="dyfChart$ | async"
-        [horizontal]="{ isHorizontal: true, colorDistributed: false }"
-        [stacked]="{ isStacked: true, isStacked100: true, hasDataLabels: true }"
-      ></upd-apex-bar>
-    </div>
-  </div>
-</div>
--->
-
-
-<!-- Hidden for UX projects revamp
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-lg-12">
-      <upd-card [title]="'Timeline'">
-        <ng-container
-          *ngIf="(startDate$ | async) || (launchDate$ | async); else noTimeline"
-        >
-          <p>Start Date: {{ startDate$ | async | localeDate }}</p>
-          <p>Launch Date: {{ launchDate$ | async | localeDate }}</p>
-        </ng-container>
-        <ng-template #noTimeline>
-          <p>{{ 'Timeline not available' | translate }}.</p>
-        </ng-template>
-      </upd-card>
-    </div>
-  </div>
-</div>
--->
-
-<!-- Hidden for UX projects revamp
-<div *ngIf="documents$ | async as documents" class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-data-table-card
-        [data]="documents || []"
-        [cols]="documentsCols"
-        [sort]="false"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'Documents'"
-      ></upd-data-table-card>
-    </div>
-  </div>
-</div>
--->

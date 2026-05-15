@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/db-updater/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
@@ -12,14 +13,12 @@
         "main": "apps/db-updater/src/main.ts",
         "tsConfig": "apps/db-updater/tsconfig.app.json",
         "assets": ["apps/db-updater/src/assets"],
-        "deleteOutputPath": false,
         "target": "node",
         "generatePackageJson": true,
         "compiler": "tsc",
         "generateIndexHtml": false,
         "runtimeChunk": false,
         "optimization": false,
-        "externalDependencies": "none",
         "inspect": false,
         "webpackConfig": "apps/db-updater/webpack.config.js"
       },
@@ -68,6 +67,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }

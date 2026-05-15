@@ -60,6 +60,7 @@ export interface UxTestData {
   session_type?: string;
   scenario?: string;
   scenario_id?: string;
+  scenario_html?: string;
   tasks?: string[];
   pages?: string[];
   subtask?: string;

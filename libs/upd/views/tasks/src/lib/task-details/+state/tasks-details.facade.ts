@@ -654,8 +654,9 @@ export class TasksDetailsFacade {
           : d.test_type,
         date: d.date,
         total_users: totalSum,
-        scenario: d.scenario,
-      }));
+        // Use rich text HTML if available, otherwise wrap plain text scenario in a paragraph tag as fallback
+        scenario_html: d.scenario_html || (d.scenario ? `<p>${d.scenario}</p>` : null),
+      }))      
       return [...(taskSuccessByUxTest || [])];
     }),
   );

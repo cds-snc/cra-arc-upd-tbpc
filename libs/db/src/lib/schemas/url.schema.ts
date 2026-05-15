@@ -3,7 +3,7 @@ import { wait } from '@dua-upd/utils-common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import {
   Document,
-  FilterQuery,
+  QueryFilter,
   Model,
   ProjectionType,
   Schema as MSchema,
@@ -16,8 +16,8 @@ export type UrlDocument = Url & Document;
 export type MapBlobsFunc = (url: IUrl & { blobContent: string }) => unknown;
 
 export type MapBlobsArgs<T extends MapBlobsFunc> =
-  | [FilterQuery<Url>, ProjectionType<Url>, T]
-  | [FilterQuery<Url>, T]
+  | [QueryFilter<Url>, ProjectionType<Url>, T]
+  | [QueryFilter<Url>, T]
   | [T];
 
 @Schema({ collection: 'urls' })
@@ -77,14 +77,14 @@ export class Url implements IUrl {
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
     blobClient: IStorageModel<any>,
-    filter: FilterQuery<Url>,
+    filter: QueryFilter<Url>,
     mapFunc: T,
   ): Promise<(ReturnType<T> | void)[]>;
 
   static async mapBlobs<T extends MapBlobsFunc>(
     this: Model<Url>,
     blobClient: IStorageModel<any>,
-    filter: FilterQuery<Url>,
+    filter: QueryFilter<Url>,
     projection: ProjectionType<Url>,
     mapFunc: T,
   ): Promise<(ReturnType<T> | void)[]>;

@@ -165,7 +165,7 @@ export class ProjectsService {
   async getProjectsHomeData(): Promise<ProjectsHomeData> {
     const cacheKey = `getProjectsHomeData`;
     const cachedData =
-      await this.cacheManager.store.get<ProjectsHomeData>(cacheKey);
+      await this.cacheManager.get<ProjectsHomeData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
@@ -318,7 +318,7 @@ export class ProjectsService {
 
     const cacheKey = `getProjectDetails-${params.id}-${params.dateRange}-${params.comparisonDateRange}`;
     const cachedData =
-      await this.cacheManager.store.get<ProjectsDetailsData>(cacheKey);
+      await this.cacheManager.get<ProjectsDetailsData>(cacheKey);
 
     if (cachedData) {
       return cachedData;

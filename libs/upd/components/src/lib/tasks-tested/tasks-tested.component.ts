@@ -1,27 +1,23 @@
-import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { globalColours } from '@dua-upd/utils-common';
 
 export interface TaskTestedData {
   taskNumber: number;
   taskTitle: string;
   taskId: string;
-  scenarioId: string;
   scenariosByTestType: Record<string, string[]>;
   tests: {
     testType: string;
     testTypeLabel: string;
     successRate: number | null;
     successRatePercent: number | null;
-    totalUsers: number;
   }[];
   avgTaskSuccessChange: number | null;
-  avgTaskSuccessPercentChange: number | null;
 }
 
 export interface TasksTestedSummary {
   tasksCount: number;
   scenariosCount: number;
-  participantsPerTest: number | null;
 }
 
 @Component({
@@ -32,50 +28,36 @@ export interface TasksTestedSummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TasksTestedComponent {
-  @Input() set tasksTestedData(value: TaskTestedData[] | null | undefined) {
-    this._tasksTestedData.set(value ?? null);
-  }
-  @Input() set tasksTestedSummary(value: TasksTestedSummary | null | undefined) {
-    this._tasksTestedSummary.set(value ?? null);
-  }
-  @Input() set totalParticipants(value: number | null | undefined) {
-    this._totalParticipants.set(value ?? null);
-  }
-  @Input() langLink = 'en';
-
-  private _tasksTestedData = signal<TaskTestedData[] | null>(null);
-  private _tasksTestedSummary = signal<TasksTestedSummary | null>(null);
-  private _totalParticipants = signal<number | null>(null);
-
-  tasksTestedDataValue = computed(() => this._tasksTestedData());
-  tasksTestedSummaryValue = computed(() => this._tasksTestedSummary());
-  totalParticipantsValue = computed(() => this._totalParticipants());
+  tasksTestedData = input<TaskTestedData[] | null>(null);
+  tasksTestedSummary = input<TasksTestedSummary | null>(null);
+  totalParticipants = input<number | null>(null);
+  langLink = input('en');
 
   hasData = computed(() => {
-    const data = this._tasksTestedData();
+    const data = this.tasksTestedData();
     return data && data.length > 0;
   });
 
   hasBaseline = computed(() =>
-    (this._tasksTestedData() ?? []).some((task) =>
+    (this.tasksTestedData() ?? []).some((task) =>
       task.tests.some((t) => t.testType === 'Baseline'),
     ),
   );
 
   hasValidation = computed(() =>
-    (this._tasksTestedData() ?? []).some((task) =>
+    (this.tasksTestedData() ?? []).some((task) =>
       task.tests.some((t) => t.testType === 'Validation'),
     ),
   );
 
   hasExploratory = computed(() =>
-    (this._tasksTestedData() ?? []).some((task) =>
+    (this.tasksTestedData() ?? []).some((task) =>
       task.tests.some((t) => t.testType === 'Exploratory'),
     ),
   );
 
   hasSpotCheck = computed(() =>
-    (this._tasksTestedData() ?? []).some((task) =>
+    (this.tasksTestedData() ?? []).some((task) =>
       task.tests.some((t) => t.testType === 'Spot Check'),
     ),
   );

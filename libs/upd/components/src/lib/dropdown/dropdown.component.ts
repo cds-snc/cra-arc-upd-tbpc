@@ -17,8 +17,8 @@ export interface DropdownOption<T> {
 }
 
 @Component({
-    selector: 'upd-dropdown',
-    template: `
+  selector: 'upd-dropdown',
+  template: `
     <p-select
       [options]="this.placeholder ? displayedOptions : options"
       optionLabel="label"
@@ -33,12 +33,11 @@ export interface DropdownOption<T> {
       (onHide)="this.hideOptions()"
     >
       <ng-template pTemplate="selectedItem">
-        <span
-          *ngIf="icon"
-          class="material-icons align-top pe-1 "
-          aria-hidden="true"
-          >{{ icon }}</span
-        >
+        @if (icon) {
+          <span class="material-icons align-top pe-1 " aria-hidden="true">{{
+            icon
+          }}</span>
+        }
         <span class="dropdown-label">{{
           selectedOption?.label || '' | translate
         }}</span>
@@ -46,25 +45,26 @@ export interface DropdownOption<T> {
 
       <ng-template pTemplate="item" let-option>
         <div [class]="option.styleClasses || ''">
-          <span
-            *ngIf="option.icon"
-            class="pe-1 pi pi-{{ option.icon }} me-2"
-            aria-hidden="true"
-          ></span
-          >{{ option.label | translate }}
+          @if (option.icon) {
+            <span
+              class="pe-1 pi pi-{{ option.icon }} me-2"
+              aria-hidden="true"
+            ></span>
+          }
+          {{ option.label | translate }}
         </div>
       </ng-template>
     </p-select>
   `,
-    styles: [
-        `
+  styles: [
+    `
       .dropdown-label {
         font-family: 'Noto Sans', sans-serif;
         font-size: 1rem;
       }
     `,
-    ],
-    standalone: false
+  ],
+  standalone: false,
 })
 export class DropdownComponent<T> implements OnInit {
   @Input() @Required id!: string;

@@ -18,7 +18,7 @@ declare module '@adobe/aio-lib-analytics' {
    * Before calling any method initialize the instance by calling init method on it
    * with valid company id, apiKey and auth token
    */
-  declare class AnalyticsCoreAPI {
+  class AnalyticsCoreAPI {
     /** Initialize sdk.
      *
      * @param companyId {string} company ID to be used with Adobe Analytics.

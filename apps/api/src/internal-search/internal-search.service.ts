@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FilterQuery } from 'mongoose';
+import { QueryFilter } from 'mongoose';
 import type { Cache } from 'cache-manager';
 import type {
   Overall,
@@ -30,7 +30,7 @@ export class InternalSearchService {
 
   async getMasterList(lang) {
     const cacheKey = `getMasterList_${lang}`;
-    const cachedData = await this.cacheManager.store.get<string[]>(cacheKey);
+    const cachedData = await this.cacheManager.get<string[]>(cacheKey);
 
     if (cachedData) {
       return cachedData;
@@ -42,7 +42,7 @@ export class InternalSearchService {
 
   async getInternalSearchTerms(lang, dateRange) {
     const cacheKey = `getInternalSearchTermsData`;
-    const cachedData = await this.cacheManager.store.get<TopSearchPages>(
+    const cachedData = await this.cacheManager.get<TopSearchPages>(
       cacheKey
     );
 
@@ -79,7 +79,7 @@ export class InternalSearchService {
 
   async getTopSearchFromOverall(
     lang: 'en' | 'fr',
-    dateRange: FilterQuery<Overall>
+    dateRange: QueryFilter<Overall>
   ) {
     const searchTermSelector =
       lang === 'en' ? 'aa_searchterms_en' : 'aa_searchterms_fr';
@@ -137,7 +137,7 @@ export class InternalSearchService {
 
   async getTopSearchTermPages(
     lang: 'en' | 'fr',
-    dateRange: FilterQuery<Overall>,
+    dateRange: QueryFilter<Overall>,
     data: { term: string; clicks: number; num_searches: number }[]
   ) {
     const topSearchTerms = data.map((result) => result.term);

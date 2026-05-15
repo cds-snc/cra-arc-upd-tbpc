@@ -611,36 +611,67 @@ export class ProjectsDetailsFacade {
   taskSuccessByUxTest$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
+    this.projectTasks$
   ]).pipe(
-    map(([data, lang]) => {
+    map(([data, lang, projectTasks]) => {
       const uxTests = data?.taskSuccessByUxTest;
 
       if (!uxTests) {
         return [];
       }
 
-      const dateFormat = lang === FR_CA ? 'D MMM YYYY' : 'MMM DD, YYYY';
+      const dateFormat = lang === FR_CA ? 'D MMM yyyy' : 'MMM DD, yyyy';
+
+      const langLink = lang === FR_CA ? 'fr' : 'en';
 
       const maxTotalUsers = Math.max(
         ...uxTests.map((test) => test.total_users || 0),
       );
 
-      return uxTests.map((uxTest) => ({
-        ...uxTest,
-        date: uxTest.date
-          ? dayjs.utc(uxTest.date).locale(lang).format(dateFormat)
-          : null,
-        test_type: uxTest.test_type
-          ? this.i18n.service.translate(uxTest.test_type, lang)
-          : uxTest.test_type,
-        tasks: uxTest.tasks
+      // title -> _id (from projectTasks) mapping to create links to tasks in taskSuccessByUxTest
+      const taskIdByTitle = new Map<string, string>(
+        (projectTasks ?? []).map((task) => [
+          (task.title || '').trim().toLowerCase(),
+          task._id,
+        ]),
+      );
+
+      return uxTests.map((uxTest) => {
+      
+        const taskTitles = (uxTest.tasks ?? '')
           .split('; ')
-          .map((task) =>
-            task ? this.i18n.service.translate(task, lang) : task,
-          )
-          .join('; '),
-        total_users: maxTotalUsers,
-      }));
+          .map((t) => t.trim())
+          .filter(Boolean);
+  
+        const tasksLinks = taskTitles
+          .map((title) => {
+            const id = taskIdByTitle.get((title || '').trim().toLowerCase());
+            return {
+              _id: id ?? '',
+              label: this.i18n.service.translate(title, lang),
+              preLink: id ? `/${langLink}/tasks/${id}` : null,
+            };
+          })
+          .filter((t) => !!t._id); // keep only linkable tasks
+ 
+        return {
+          ...uxTest,
+          date: uxTest.date
+            ? dayjs.utc(uxTest.date).locale(lang).format(dateFormat)
+            : null,
+          test_type: uxTest.test_type
+            ? this.i18n.service.translate(uxTest.test_type, lang)
+            : uxTest.test_type,
+          tasks: uxTest.tasks
+            .split('; ')
+            .map((task) =>
+              task ? this.i18n.service.translate(task, lang) : task,
+            )
+            .join('; '),
+          tasksLinks: tasksLinks,  
+          total_users: maxTotalUsers,
+        };
+      });
     }),
   );
 
@@ -1011,27 +1042,20 @@ export class ProjectsDetailsFacade {
             (uxTest.scenario_id ?? '') === scenarioId,
         );
 
-        const testsByType: Record<
-          string,
-          { rates: number[]; totalUsers: number }
-        > = {};
+        const testsByType: Record<string, { rates: number[] }> = {};
 
         for (const test of relevantTests) {
           const type = normalizeTestType(test.test_type || 'Unknown');
           if (!testsByType[type]) {
-            testsByType[type] = { rates: [], totalUsers: 0 };
+            testsByType[type] = { rates: [] };
           }
           if (test.success_rate != null) {
             testsByType[type].rates.push(test.success_rate);
           }
-          testsByType[type].totalUsers = Math.max(
-            testsByType[type].totalUsers,
-            test.total_users || 0,
-          );
         }
 
         const tests = Object.entries(testsByType)
-          .map(([type, { rates, totalUsers }]) => ({
+          .map(([type, { rates }]) => ({
             testType: type,
             testTypeLabel: this.i18n.service.translate(type, lang),
             successRate: rates.length ? avg(rates) : null,
@@ -1039,7 +1063,6 @@ export class ProjectsDetailsFacade {
               rates.length && avg(rates) != null
                 ? round(avg(rates)! * 100, 1)
                 : null,
-            totalUsers: totalUsers,
           }))
           .sort((a, b) => {
             const order: Record<string, number> = {
@@ -1059,15 +1082,10 @@ export class ProjectsDetailsFacade {
         )?.successRate;
 
         let avgTaskSuccessChange: number | null = null;
-        let avgTaskSuccessPercentChange: number | null = null;
 
         if (baselineRate != null && validationRate != null) {
           avgTaskSuccessChange =
             (round(validationRate, 2) - round(baselineRate, 2)) * 100;
-          avgTaskSuccessPercentChange = percentChange(
-            round(validationRate, 2),
-            round(baselineRate, 2),
-          );
         }
 
         const scenariosByTestType: Record<string, string[]> = {};
@@ -1092,11 +1110,9 @@ export class ProjectsDetailsFacade {
             ? this.i18n.service.translate(taskTitle, lang)
             : taskTitle,
           taskId,
-          scenarioId,
           scenariosByTestType,
           tests,
           avgTaskSuccessChange,
-          avgTaskSuccessPercentChange,
         };
       });
     }),
@@ -1105,18 +1121,10 @@ export class ProjectsDetailsFacade {
   tasksTestedSummary$ = combineLatest([
     this.projectsDetailsData$,
     this.tasksTestedData$,
-    this.totalParticipants$,
   ]).pipe(
-    map(([data, tasks, totalParticipants]) => {
+    map(([data, tasks]) => {
       if (!tasks?.length) {
         return null;
-      }
-
-      const testTypes = new Set<string>();
-      for (const task of tasks) {
-        for (const test of task.tests) {
-          testTypes.add(test.testType);
-        }
       }
 
       const uniqueTaskTitles = new Set<string>();
@@ -1133,24 +1141,20 @@ export class ProjectsDetailsFacade {
       return {
         tasksCount: uniqueTaskTitles.size,
         scenariosCount: uniqueScenarioIds.size,
-        participantsPerTest:
-          testTypes.size > 0
-            ? Math.round(totalParticipants / testTypes.size)
-            : null,
       };
     }),
   );
 
   taskSuccessObjectiveStatus$ = combineLatest([
     this.avgTaskSuccessFromLastTest$,
-    this.avgSuccessPercentChange$,
+    this.avgSuccessValueChange$,
   ]).pipe(
-    map(([current, comparison]) => {
+    map(([current, pointDifference]) => {
       if (current == null) return null;
 
       if (current >= 0.8) {
         return 'pass' as const;
-      } else if ((comparison || 0) >= 0.2) {
+      } else if ((pointDifference ?? 0) >= 0.2) {
         return 'partial' as const;
       } else {
         return 'fail' as const;

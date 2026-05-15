@@ -5,25 +5,10 @@ import {
   OnInit,
 } from '@angular/core';
 import { combineLatest, map, shareReplay } from 'rxjs';
-import {
-  callVolumeObjectiveCriteria,
-  feedbackKpiObjectiveCriteria,
-} from '@dua-upd/upd-components';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
-import type { GetTableProps } from '@dua-upd/utils-common';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
-
-type ParticipantTasksColTypes = GetTableProps<
-  ProjectDetailsSummaryComponent,
-  'participantTasks$'
->;
-
-type DocumentsColTypes = GetTableProps<
-  ProjectDetailsSummaryComponent,
-  'documents$'
->;
 
 @Component({
     selector: 'upd-project-details-summary',
@@ -39,59 +24,13 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   currentLang$ = this.i18n.currentLang$;
   langLink = 'en';
 
-  fullDateRangeLabel$ = this.projectsDetailsService.fullDateRangeLabel$;
-  fullComparisonDateRangeLabel$ =
-    this.projectsDetailsService.fullComparisonDateRangeLabel$;
-
-  documents$ = this.projectsDetailsService.documents$;
-  documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
+  description$ = this.projectsDetailsService.description$;
 
   baselineTestData$ = this.projectsDetailsService.baselineTestData$;
   validationTestData$ = this.projectsDetailsService.validationTestData$;
   taskSuccessChange$ = this.projectsDetailsService.taskSuccessChange$;
 
-  feedbackKpiObjectiveCriteria = feedbackKpiObjectiveCriteria;
-
-  apexCallDrivers$ = this.projectsDetailsService.apexCallDrivers$;
-  apexKpiFeedback$ = this.projectsDetailsService.apexKpiFeedback$;
-
-  callPerVisits$ = this.projectsDetailsService.callPerVisits$;
-  apexCallPercentChange$ = this.projectsDetailsService.apexCallPercentChange$;
-  apexCallDifference$ = this.projectsDetailsService.apexCallDifference$;
-
-  currentKpiFeedback$ = this.projectsDetailsService.currentKpiFeedback$;
-  kpiFeedbackPercentChange$ =
-    this.projectsDetailsService.kpiFeedbackPercentChange$;
-  kpiFeedbackDifference$ = this.projectsDetailsService.kpiFeedbackDifference$;
-
-  visits$ = this.projectsDetailsService.visits$;
-  visitsPercentChange$ = this.projectsDetailsService.visitsPercentChange$;
-
-  participantTasks$ = this.projectsDetailsService.projectTasks$;
-
-  dyfChart$ = this.projectsDetailsService.dyfData$;
-
-  dyfChartApex$ = this.projectsDetailsService.dyfDataApex$;
-  dyfChartLegend: string[] = [];
-
-  totalCalldriver$ = this.projectsDetailsService.totalCalldriver$;
-  totalCalldriverPercentChange$ =
-    this.projectsDetailsService.totalCalldriverPercentChange$;
-
-  callVolumeObjectiveCriteria = callVolumeObjectiveCriteria;
-  callVolumeKpiConfig = {
-    pass: { message: 'kpi-met-volume' },
-    fail: { message: 'kpi-not-met-volume' },
-  };
-
-
   taskSuccessObjectiveStatus$ = this.projectsDetailsService.taskSuccessObjectiveStatus$;
-
-  objectiveStatusConfig: Record<string, { icon: string; colourClass: string; messageKey: string }> = {
-    pass: { icon: 'check_circle', colourClass: 'text-success', messageKey: 'kpi-met' },
-    partial: { icon: 'check_circle', colourClass: 'text-semisuccess', messageKey: 'kpi-half-met' },
-    fail: { icon: 'warning', colourClass: 'text-danger', messageKey: 'kpi-not-met' },
-  };
 
   private tasksTestedView$ = this.projectsDetailsService.tasksTestedData$.pipe(
     map((tasks) => {
@@ -140,158 +79,73 @@ export class ProjectDetailsSummaryComponent implements OnInit {
 
   tasksTestedCols: ColumnConfig[] = [];
 
-  description$ = this.projectsDetailsService.description$;
-
-  startDate$ = this.projectsDetailsService.startDate$;
-  launchDate$ = this.projectsDetailsService.launchDate$;
-
-  participantTasksCols: ColumnConfig<ParticipantTasksColTypes>[] = [];
-    
-  dyfTableCols: ColumnConfig<{
-    name: string;
-    currValue: number;
-    prevValue: string;
-  }>[] = [];
-
-  dateRangeLabel$ = this.projectsDetailsService.dateRangeLabel$;
-  comparisonDateRangeLabel$ =
-    this.projectsDetailsService.comparisonDateRangeLabel$;
-
   ngOnInit() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    combineLatest([
-      this.dateRangeLabel$,
-      this.comparisonDateRangeLabel$,
-      this.currentLang$,
-      this.testTypesPresent$,
-    ]).subscribe(([dateRange, comparisonDateRange, lang, testTypesPresent]) => {
-      this.langLink = lang === EN_CA ? 'en' : 'fr';
+    combineLatest([this.currentLang$, this.testTypesPresent$]).subscribe(
+      ([lang, testTypesPresent]) => {
+        this.langLink = lang === EN_CA ? 'en' : 'fr';
 
-      this.documentsCols = [
-        {
-          field: 'filename',
-          header: this.i18n.service.translate('File link', lang),
-          type: 'link',
-          typeParams: { link: 'url', external: true },
-        },
-      ];
+        const tasksTestedCols: ColumnConfig[] = [
+          {
+            field: 'taskNumber',
+            header: this.i18n.service.translate('task-num', lang),
+            width: '80px',
+          },
+          {
+            field: 'taskTitle',
+            header: this.i18n.service.translate('task', lang),
+          },
+        ];
 
-      this.dyfChartLegend = [
-        this.i18n.service.translate('yes', lang),
-        this.i18n.service.translate('no', lang),
-      ];
+        if (testTypesPresent.hasBaseline) {
+          tasksTestedCols.push({
+            field: 'baseline',
+            header: this.i18n.service.translate('Baseline', lang),
+            pipe: 'percent',
+          });
+        }
 
-      this.dyfTableCols = [
-        {
-          field: 'name',
-          header: this.i18n.service.translate('Selection', lang),
-        },
-        {
-          field: 'currValue',
-          header: dateRange,
-          pipe: 'number',
-        },
-        {
-          field: 'prevValue',
-          header: comparisonDateRange,
-          pipe: 'number',
-        },
-      ];
+        if (testTypesPresent.hasValidation) {
+          tasksTestedCols.push({
+            field: 'validation',
+            header: this.i18n.service.translate('Validation', lang),
+            pipe: 'percent',
+          });
+        }
 
-      this.participantTasksCols = [
-        {
-          field: 'title',
-          header: 'Task list',
-          translate: true,
-          type: 'link',
-          typeParams: { preLink: '/' + this.langLink + '/tasks', link: '_id' },
-        },
-        {
-          field: 'callsPer100Visits',
-          header: 'kpi-calls-per-100-title',
-          pipe: 'number',
-          pipeParam: '1.0-2',
-        },
-        {
-          field: 'dyfNoPer1000Visits',
-          header: 'kpi-feedback-per-1000-title',
-          pipe: 'number',
-          pipeParam: '1.0-2',
-        },
-        {
-          field: 'uxTestInLastTwoYears',
-          header: 'UX Test in Past 2 Years?',
-          translate: true,
-        },
-        {
-          field: 'latestSuccessRate',
-          header: 'Latest success rate',
-          pipe: 'percent',
-          tooltip: 'tooltip-latest-success-rate-projectsection',
-        },
-      ];
-    
+        if (testTypesPresent.hasExploratory) {
+          tasksTestedCols.push({
+            field: 'exploratory',
+            header: this.i18n.service.translate('Exploratory', lang),
+            pipe: 'percent',
+          });
+        }
 
-      const tasksTestedCols: ColumnConfig[] = [
-        {
-          field: 'taskNumber',
-          header: this.i18n.service.translate('task-num', lang),
-          width: '80px',
-        },
-        {
-          field: 'taskTitle',
-          header: this.i18n.service.translate('task', lang),
-        },
-      ];
+        if (testTypesPresent.hasSpotCheck) {
+          tasksTestedCols.push({
+            field: 'spotCheck',
+            header: this.i18n.service.translate('Spot Check', lang),
+            pipe: 'percent',
+          });
+        }
 
-      if (testTypesPresent.hasBaseline) {
-        tasksTestedCols.push({
-          field: 'baseline',
-          header: this.i18n.service.translate('Baseline', lang),
-          pipe: 'percent',
-        });
-      }
+        if (testTypesPresent.hasBaseline && testTypesPresent.hasValidation) {
+          tasksTestedCols.push({
+            field: 'change',
+            header: this.i18n.service.translate('change', lang),
+            pipe: 'percent',
+            pipeParam: '1.0-0',
+            indicator: true,
+            upGoodDownBad: true,
+            useArrows: true,
+            showTextColours: true,
+          });
+        }
 
-      if (testTypesPresent.hasValidation) {
-        tasksTestedCols.push({
-          field: 'validation',
-          header: this.i18n.service.translate('Validation', lang),
-          pipe: 'percent',
-        });
-      }
-
-      if (testTypesPresent.hasExploratory) {
-        tasksTestedCols.push({
-          field: 'exploratory',
-          header: this.i18n.service.translate('Exploratory', lang),
-          pipe: 'percent',
-        });
-      }
-
-      if (testTypesPresent.hasSpotCheck) {
-        tasksTestedCols.push({
-          field: 'spotCheck',
-          header: this.i18n.service.translate('Spot Check', lang),
-          pipe: 'percent',
-        });
-      }
-
-      if (testTypesPresent.hasBaseline && testTypesPresent.hasValidation) {
-        tasksTestedCols.push({
-          field: 'change',
-          header: this.i18n.service.translate('change', lang),
-          pipe: 'percent',
-          pipeParam: '1.0-0',
-          indicator: true,
-          upGoodDownBad: true,
-          useArrows: true,
-          showTextColours: true,
-        });
-      }
-
-      this.tasksTestedCols = tasksTestedCols;
-    });
+        this.tasksTestedCols = tasksTestedCols;
+      },
+    );
   }
 
   getScenarioTestTypes(rowData: Record<string, unknown>): string[] {

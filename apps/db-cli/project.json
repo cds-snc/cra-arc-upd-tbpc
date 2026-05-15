@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/db-cli/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
       "defaultConfiguration": "production",
@@ -13,7 +14,6 @@
         "main": "apps/db-cli/src/main.ts",
         "tsConfig": "apps/db-cli/tsconfig.app.json",
         "assets": ["apps/db-cli/src/assets"],
-        "deleteOutputPath": false,
         "compiler": "tsc",
         "generateIndexHtml": false,
         "runtimeChunk": false,
@@ -80,6 +80,5 @@
         }
       }
     }
-  },
-  "tags": []
+  }
 }

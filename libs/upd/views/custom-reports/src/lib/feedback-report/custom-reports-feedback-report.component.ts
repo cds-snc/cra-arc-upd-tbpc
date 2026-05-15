@@ -6,11 +6,10 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '@dua-upd/upd/services';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Types } from 'mongoose';
 import type {
   ColumnConfig,
   CustomReportsFeedback,
@@ -21,11 +20,11 @@ import { I18nModule } from '@dua-upd/upd/i18n';
 import { catchError, of } from 'rxjs';
 
 @Component({
-    selector: 'dua-upd-custom-reports-feedback-report',
-    imports: [CommonModule, I18nModule, UpdComponentsModule],
-    templateUrl: './custom-reports-feedback-report.component.html',
-    styleUrl: './custom-reports-feedback-report.component.scss',
-    providers: [ApiService, I18nFacade]
+  selector: 'dua-upd-custom-reports-feedback-report',
+  imports: [I18nModule, UpdComponentsModule],
+  templateUrl: './custom-reports-feedback-report.component.html',
+  styleUrl: './custom-reports-feedback-report.component.scss',
+  providers: [ApiService, I18nFacade],
 })
 export class CustomReportsFeedbackReportComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -42,8 +41,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('pages');
 
     if (param) {
-      const pages = param.split('-');
-      return pages.map((page) => new Types.ObjectId(page));
+      return param.split('-');
     }
 
     return [];
@@ -53,8 +51,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('tasks');
 
     if (param) {
-      const tasks = param.split('-');
-      return tasks.map((task) => new Types.ObjectId(task));
+      return param.split('-');
     }
 
     return [];
@@ -64,8 +61,7 @@ export class CustomReportsFeedbackReportComponent implements OnInit {
     const param = this.queryParams()?.get('projects');
 
     if (param) {
-      const projects = param.split('-');
-      return projects.map((project) => new Types.ObjectId(project));
+      return param.split('-');
     }
 
     return [];

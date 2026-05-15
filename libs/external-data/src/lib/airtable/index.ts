@@ -21,6 +21,7 @@ import {
   ReportsData,
   GCTasksMappingsData,
 } from './types';
+import { markdownToPlainText, markdownToSanitizedHtml } from '@dua-upd/utils-common';
 
 dayjs.extend(utc);
 dayjs.extend(quarterOfYear);
@@ -317,6 +318,7 @@ export class AirtableClient {
     return (await this.selectAll(query))
       .filter(({ fields }) => fields['UX Research Project Title'])
       .map(({ id, fields }) => {
+        const rawScenario = fields['Scenario/Questions'];
         const results = {
           airtable_id: id,
           date: fields['Date']
@@ -328,7 +330,9 @@ export class AirtableClient {
           session_type: Array.isArray(fields['Session Type'])
             ? fields['Session Type'][0]
             : undefined,
-          scenario: fields['Scenario/Questions'],
+          // scenario: fields['Scenario/Questions'],
+          scenario: markdownToPlainText(rawScenario),
+          scenario_html: markdownToSanitizedHtml(rawScenario),
           scenario_id: fields['Scenario ID'],
           tasks: fields['Task'],
           subtask: fields['Sub-Task'],
@@ -353,6 +357,10 @@ export class AirtableClient {
 
         return Object.fromEntries(
           Object.entries(results).map(([key, val]) => {
+            if (key === 'scenario_html') {
+              return [key, val];
+            }
+            
             if (typeof val === 'string') {
               return [key, squishTrim(val)];
             }

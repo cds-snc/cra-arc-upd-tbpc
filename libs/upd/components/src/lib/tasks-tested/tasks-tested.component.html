@@ -1,24 +1,24 @@
 @if (hasData()) {
   <div class="container-fluid my-4 gx-0">
     <div class="row">
-      @if (tasksTestedSummaryValue(); as summary) {
-        <div [class]="totalParticipantsValue() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+      @if (tasksTestedSummary(); as summary) {
+        <div [class]="totalParticipants() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'tasks'"
             [current]="summary.tasksCount">
           </upd-data-card>
         </div>
-        <div [class]="totalParticipantsValue() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+        <div [class]="totalParticipants() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'scenarios'"
             [current]="summary.scenariosCount">
           </upd-data-card>
         </div>
-        @if (totalParticipantsValue() != null) {
+        @if (totalParticipants() != null) {
           <div class="col-lg-4 col-sm-12">
             <upd-data-card
               [title]="'Total participants from all tests'"
-              [current]="totalParticipantsValue()"
+              [current]="totalParticipants()"
               [emptyMessage]="'project-tasks-not-tested'">
             </upd-data-card>
           </div>
@@ -31,14 +31,14 @@
     <div class="row">
       <div class="col">
         <upd-card [title]="'tasks-tested'">
-          @for (task of tasksTestedDataValue(); track task.taskNumber) {
+          @for (task of tasksTestedData(); track task.taskNumber) {
             <div class="mb-3 p-3 border rounded">
               <div class="row">
                 <div [class]="hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'">
                   <h6 class="mb-3">
                     {{ task.taskNumber }}.
                     @if (task.taskId) {
-                      <a [routerLink]="['/', langLink, 'tasks', task.taskId]">
+                      <a [routerLink]="['/', langLink(), 'tasks', task.taskId]">
                         {{ task.taskTitle }}
                       </a>
                     } @else {

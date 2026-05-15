@@ -3,9 +3,10 @@ import {
   type ProjectionType,
   type QueryOptions,
   Types,
-  type FilterQuery,
+  type QueryFilter,
   type UpdateOneModel,
   type mongo,
+  type PipelineStage,
 } from 'mongoose';
 import { difference, omit, pick } from 'rambdax';
 import type { TasksView, TasksViewSchema } from './tasks-view.schema';
@@ -101,7 +102,9 @@ export class TasksViewService extends DbViewNew<
   }
 
   async prepareRefreshContext(
-    filter: FilterQuery<TasksView> & DateRange<Date>,
+    filter: QueryFilter<TasksView> & { task?: Types.ObjectId } & {
+      dateRange: DateRange<Date>;
+    },
   ) {
     const tasksCollectionIdFilter = filter.task ? { _id: filter.task } : {};
 
@@ -579,7 +582,7 @@ export class TasksViewService extends DbViewNew<
 
   // overriding inherited methods for cleaner types
   override find<ReturnT = TasksView>(
-    filter?: FilterQuery<TasksView>,
+    filter?: QueryFilter<TasksView>,
     projection: ProjectionType<TasksView> = {},
     options: QueryOptions<TasksView> = {},
   ): Promise<ReturnT[] | null> {
@@ -587,7 +590,7 @@ export class TasksViewService extends DbViewNew<
   }
 
   override findOne<ReturnT = TasksView>(
-    filter?: FilterQuery<TasksView>,
+    filter?: QueryFilter<TasksView>,
     projection: ProjectionType<TasksView> = {},
     options: QueryOptions<TasksView> = {},
   ): Promise<ReturnT | null> {
@@ -595,7 +598,7 @@ export class TasksViewService extends DbViewNew<
   }
 
   override aggregate<T>(
-    filter: FilterQuery<TasksView>,
+    filter: QueryFilter<TasksView>,
     options?: AggregateOptions,
   ) {
     return super.aggregate<T>(filter, options);
@@ -856,7 +859,9 @@ export class TasksViewService extends DbViewNew<
       searchTerms: getArraySelectedPercentChange(
         ['clicks'],
         'term',
-        (metricsWithPercentChange.aa_searchterms || []).filter(({ term }) => term),
+        (metricsWithPercentChange.aa_searchterms || []).filter(
+          ({ term }) => term,
+        ),
         (previousMetrics.aa_searchterms || []).filter(({ term }) => term),
         { round: 2, suffix: 'Change' },
       ).slice(0, 25),
@@ -905,7 +910,7 @@ export class TasksViewService extends DbViewNew<
       ux_tests: TasksView['ux_tests'];
     };
 
-    const projection: ProjectionType<TasksView> = {
+    const projection: PipelineStage.Project['$project'] = {
       _id: '$task._id',
       title: '$task.title',
       tmf_ranking_index: 1,

@@ -1,6 +1,6 @@
-import {
-  type FilterQuery,
-  type ProjectionType,
+import type {
+  QueryFilter,
+  ProjectionType,
   Types,
   SortOrder,
 } from 'mongoose';
@@ -258,6 +258,7 @@ export interface OverviewData
     success_rate?: number | null;
     total_users?: number;
     scenario?: string;
+    scenario_html?: string;
   }[];
   calldriverTopics: TopCalldriverTopics[];
   top5IncreasedCalldriverTopics: TopCalldriverTopics[];
@@ -444,6 +445,7 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     success_rate: number | null;
     total_users: number;
     scenario: string;
+    scenario_html: string;
   }[];
   projects: {
     _id: string;
@@ -668,7 +670,7 @@ export type SortOption<T> = {
 export type DbQuery = {
   [key: string]: {
     collection: CollectionKeys;
-    filter: FilterQuery<unknown>;
+    filter: QueryFilter<unknown>;
     project?: ProjectionType<unknown>;
     sort?: SortOption<unknown>;
   };

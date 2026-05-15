@@ -38,3 +38,5 @@ export * from './lib/arrow-connect/arrow-connect.component';
 export * from './lib/page-version/page-version.component';
 export * from './lib/apex-donut-task-success/apex-donut-task-success.component';
 export * from './lib/tasks-tested/tasks-tested.component';
+export * from './lib/markdown-renderer/markdown-renderer.component';
+export * from './lib/task-success-objective-status/task-success-objective-status.component';

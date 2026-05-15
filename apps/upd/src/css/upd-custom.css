@@ -469,6 +469,10 @@ margin: 0px 20px 0px 20px;
   border-top-color: #e3e3e3;
 }
 
+.kpi-status-icon {
+  font-size: 1.7em;
+}
+
 .datatable-headers {
   color: #000 !important;
   /* font-weight: 600; */
@@ -562,9 +566,9 @@ margin: 0px 20px 0px 20px;
   color: rgb(33, 37, 41);
 }
 
-.p-treeselect {
+/* .p-treeselect {
   margin: 0 10px;
-}
+} */
 
 .p-tree-root-children {
   margin-left: 0px;

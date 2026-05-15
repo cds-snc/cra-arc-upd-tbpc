@@ -53,6 +53,7 @@ interface PageConfig {
     standalone: false
 })
 export class PageVersionComponent {
+  private renderer = inject(Renderer2);
   i18n = inject(I18nFacade);
   loading = input<boolean>(true);
   hashes = input<UrlHash[]>([]);
@@ -168,7 +169,7 @@ export class PageVersionComponent {
     },
   ]);
 
-  constructor(private renderer: Renderer2) {
+  constructor() {
     effect(() => {
       const liveContainer = this.liveContainer()?.nativeElement;
       if (!liveContainer) return;

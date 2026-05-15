@@ -4,7 +4,7 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -52,7 +52,8 @@
       "@dua-upd/utils-common/types": [
         "libs/utils-common/src/lib/types/index.ts"
       ],
-      "@dua-upd/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
+      "@dua-upd/workspace-plugin": ["tools/workspace-plugin/src/index.ts"],
+      "@dua-upd/adobe-analytics": ["./libs/adobe-analytics/src/index.ts"]
     },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

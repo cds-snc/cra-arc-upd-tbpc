@@ -33,7 +33,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { AlertComponent } from './alert/alert.component';
@@ -70,6 +70,8 @@ import { ArrowConnectComponent } from './arrow-connect/arrow-connect.component';
 import { PageVersionComponent } from './page-version/page-version.component';
 import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-donut-task-success.component';
 import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
+import { MarkdownRendererComponent } from './markdown-renderer/markdown-renderer.component';
+import { TaskSuccessObjectiveStatusComponent } from './task-success-objective-status/task-success-objective-status.component';
 
 @NgModule({
   imports: [
@@ -88,7 +90,7 @@ import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
     CheckboxModule,
     RadioButtonModule,
     TabsModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     InputIconModule,
     IconFieldModule,
     SelectModule,
@@ -145,6 +147,8 @@ import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
     PageVersionComponent,
     ApexDonutTaskSuccessComponent,
     TasksTestedComponent,
+    MarkdownRendererComponent,
+    TaskSuccessObjectiveStatusComponent,
   ],
   exports: [
     NgbPopoverModule,
@@ -157,7 +161,7 @@ import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
     CheckboxModule,
     RadioButtonModule,
     TabsModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     InputIconModule,
     IconFieldModule,
     SelectModule,
@@ -202,6 +206,8 @@ import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
     PageVersionComponent,
     ApexDonutTaskSuccessComponent,
     TasksTestedComponent,
+    MarkdownRendererComponent,
+    TaskSuccessObjectiveStatusComponent,
   ],
 })
 export class UpdComponentsModule {}
