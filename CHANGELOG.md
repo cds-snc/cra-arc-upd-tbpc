@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.3.6](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.5...v4.3.6) (2026-05-19)
+
+
+### Bug Fixes
+
+* Add gap for SelectColumns, Filter and Export elements in a data table ([43dc767](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/43dc767a6fb9f82b087eef4dd49a7eb22b318365))
+* Add gap-2 class for SelectColumns, Filter and Export elements gap ([aabfe12](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/aabfe12d4fdb0a3ebf64e618650c980985eb0728))
+* COPS and SSE badges aligned in data table ([5881d1b](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5881d1b63bf75c0f12fbaadbc46501c3d2db767b))
+* Correct npm install command and add verification URL for AWS SSO login ([2892dc9](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2892dc935e556ac0b5b71c100d4603ffca2f84a6))
+* Export markdown renderer component from library entrypoint ([ecfff82](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/ecfff8251b76f92edc1f7cc48178bc9003f709c1))
+* Extracted AA Nest module into separate lib to fix build issues ([e1c32fb](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/e1c32fb14171394c604ee87a8d5fc04bf5c4d751))
+* Freeze columns in data tables ([fc89f5d](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/fc89f5dc70bfbb1bcfa999786c7f8b10711936ec))
+* GC TSS Report table updates - new Change columns for Completion, Ease and Satisfaction ([2feb56b](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2feb56bbfdd02e960e2957c2eac1c72db00206ab))
+* Make linting errors warnings, date formatting issue ([97d625a](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/97d625aa6889fc54a7342f4f38f04346464edd13))
+* Mitigate more CVEs and fix linting error ([60fa08a](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/60fa08aa2876d5e1f55deed990c45fd100dc3023))
+* Tasks link updated on "Tasks success by UX test" data table for Projects ([5909a20](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5909a20dedf088d4ccb856ec99ad28a844eec155))
+* updated package-lock ([1f604d1](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/1f604d17939ec60d947d72962f9123b1435771d0))
+
 ## [4.3.5](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.4...v4.3.5) (2026-04-24)
 
 
