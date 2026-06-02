@@ -55,6 +55,7 @@
             [expandable]="true"
             [expandableRowTemplate]="scenarioTemplate"
             expandAfterField="taskTitle"
+            [expandAll]="true"
             [title]="'tasks-tested'"
             sortField="taskNumber"
           >
@@ -69,7 +70,7 @@
   <div class="p-3">
     @for (testType of getScenarioTestTypes(rowData); track testType) {
       <div [class.mb-2]="!$last">
-        <strong class="small">{{ testType }} {{ 'scenario' | translate }}:</strong>
+        <strong class="small">{{ scenarioHeadingKey(testType) | translate }}:</strong>
         @for (scenario of rowData.scenariosByTestType[testType]; track scenario.text) {
           @if (scenario.html) {
             <upd-markdown-renderer [html]="scenario.html" class="small text-muted d-block mb-1"></upd-markdown-renderer>

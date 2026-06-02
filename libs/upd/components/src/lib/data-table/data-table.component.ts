@@ -63,6 +63,7 @@ export class DataTableComponent<T extends object> {
   columnSelection = input(false);
   groupedColumnSelection = input(false);
   resizableColumns = input(false);
+  expandAll = input(false);
 
   cols = this.i18n.service.computedMap(this.initialCols, (col, translate) => ({
     ...col,
@@ -123,7 +124,22 @@ export class DataTableComponent<T extends object> {
     return cols;
   });
 
-  expandedRows = {};
+  expandedRows = computed<Record<string, boolean>>(() => {
+    if (!this.expandable || !this.expandAll()) {
+      return {};
+    }
+
+    return (this.translatedData() || []).reduce<Record<string, boolean>>(
+      (keys, row) => {
+        const key = (row as Record<string, unknown>)['_id'];
+        if (key != null) {
+          keys[String(key)] = true;
+        }
+        return keys;
+      },
+      {},
+    );
+  });
 
   constructor() {
     effect(() => {

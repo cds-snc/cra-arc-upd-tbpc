@@ -30,6 +30,7 @@ export class DataTableCardComponent<T> {
   @Input() expandable = false;
   @Input() expandableRowTemplate: TemplateRef<unknown> | null = null;
   @Input() expandAfterField = '';
+  @Input() expandAll = false;
   @Input() allowHeaderWrap = false;
 
   get defaultSearchFields() {

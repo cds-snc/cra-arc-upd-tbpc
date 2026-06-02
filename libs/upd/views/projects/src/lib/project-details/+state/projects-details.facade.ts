@@ -628,7 +628,6 @@ export class ProjectsDetailsFacade {
         ...uxTests.map((test) => test.total_users || 0),
       );
 
-      // title -> _id (from projectTasks) mapping to create links to tasks in taskSuccessByUxTest
       const taskIdByTitle = new Map<string, string>(
         (projectTasks ?? []).map((task) => [
           (task.title || '').trim().toLowerCase(),
@@ -708,7 +707,6 @@ export class ProjectsDetailsFacade {
 
       const taskSuccessRatesByTestType = uniqueTestTypes.map((testType) => ({
         name: this.i18n.service.translate(testType as string, lang),
-        // `data` is an array of avg success rate by task
         data: taskTitles.map((taskTitle) => {
           const taskSuccessRates =
             validTestsByTask[taskTitle]
@@ -734,7 +732,7 @@ export class ProjectsDetailsFacade {
 
   taskSuccessByUxTestKpi$ = combineLatest([
     this.projectsDetailsData$,
-    this.projectTasks$, // combined to access tasks id
+    this.projectTasks$,
     this.currentLang$,
   ]).pipe(
     map(([data, projectTasks, lang]) => {
@@ -813,14 +811,12 @@ export class ProjectsDetailsFacade {
             (taskSuccessByUxTestKpi[testType].count || 1);
 
           return {
-            // test_type: testType,
-            // avg_success_rate: successRate,
             [testType]: successRate,
           };
         });
 
         return {
-          _id: projectTasks.find((t) => t.title === task.task)?._id.toString(), // combined from projectTasks
+          _id: projectTasks.find((t) => t.title === task.task)?._id.toString(),
           task: task.task
             ? this.i18n.service.translate(task.task, lang)
             : task.task,
@@ -1074,7 +1070,7 @@ export class ProjectsDetailsFacade {
             successRate: rates.length ? avg(rates) : null,
             successRatePercent:
               rates.length && avg(rates) != null
-                ? round(avg(rates)! * 100, 1)
+                ? round(avg(rates)! * 100, 0)
                 : null,
           }))
           .sort((a, b) => {

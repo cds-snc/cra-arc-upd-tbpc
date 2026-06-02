@@ -25,7 +25,7 @@
   (sortFunction)="customSort($event)"
   [(selection)]="selectedRows"
   [resizableColumns]="resizableColumns"
-  [expandedRowKeys]="expandedRows"
+  [expandedRowKeys]="expandedRows()"
 >
   <ng-template *ngIf="filter || captionTitle || exports" pTemplate="caption">
     <div>

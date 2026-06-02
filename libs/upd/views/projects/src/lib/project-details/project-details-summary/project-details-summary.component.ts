@@ -163,4 +163,15 @@ export class ProjectDetailsSummaryComponent implements OnInit {
       (a, b) => (order[a] ?? 99) - (order[b] ?? 99),
     );
   }
+
+  private readonly scenarioHeadingKeys: Record<string, string> = {
+    Baseline: 'baseline-scenario',
+    Validation: 'validation-scenario',
+    Exploratory: 'exploratory-scenario',
+    'Spot Check': 'spot-check-scenario',
+  };
+
+  scenarioHeadingKey(testType: string): string {
+    return this.scenarioHeadingKeys[testType] ?? 'scenario';
+  }
 }
