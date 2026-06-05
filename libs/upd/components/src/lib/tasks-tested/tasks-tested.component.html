@@ -58,7 +58,7 @@
                   @for (test of task.tests; track test.testType) {
                     <div class="row align-items-center mt-2 mb-2">
                       <div class="col-lg-3 col-sm-12">
-                        <small>{{ test.testTypeLabel }}</small>
+                        <span class="fw-bold">{{ test.testTypeLabel }}</span>
                       </div>
                       <div class="col-lg-9 col-sm-12">
                         <div class="d-flex align-items-center gap-2 w-100">
@@ -79,9 +79,9 @@
                               [tooltipClass]="'chart-tooltip'"
                               container="body"
                             ></div>
-                            <small class="text-nowrap">{{ test.successRatePercent }}%</small>
+                            <span class="fw-bold text-nowrap">{{ test.successRatePercent }}%</span>
                           } @else {
-                            <small>-</small>
+                            <span class="fw-bold">-</span>
                           }
                         </div>
                       </div>
@@ -91,7 +91,8 @@
                         <upd-accordion
                           [title]="'view-task-scenario'"
                           [expanded]="true"
-                          [headerClass]="'small'">
+                          [headerClass]="'small'"
+                          [styleClass]="'scenario-accordion'">
                           @for (scenario of scenarios; track scenario.text; let i = $index) {
                             <div class="small text-muted" [class.mb-3]="i < scenarios.length - 1">
                               @if (scenario.html) {
