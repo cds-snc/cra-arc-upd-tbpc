@@ -70,9 +70,12 @@
                               {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
                             </ng-template>
                             <div
-                              class="rounded-1"
-                              role="progressbar"
-                              style="height: 16px;"
+                              class="rounded-1 task-success-bar"
+                              role="meter"
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                              [attr.aria-valuenow]="test.successRatePercent"
+                              [attr.aria-label]="test.testTypeLabel"
                               [style.width.%]="test.successRatePercent"
                               [style.background-color]="testTypeBarColors[test.testType]"
                               [ngbTooltip]="barTooltip"

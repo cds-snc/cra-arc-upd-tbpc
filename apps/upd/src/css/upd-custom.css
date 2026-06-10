@@ -473,6 +473,10 @@ margin: 0px 20px 0px 20px;
   font-size: 1.7em;
 }
 
+.task-success-bar {
+  height: 16px;
+}
+
 .datatable-headers {
   color: #000 !important;
   /* font-weight: 600; */
