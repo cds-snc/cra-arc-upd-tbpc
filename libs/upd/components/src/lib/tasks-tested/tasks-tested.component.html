@@ -2,19 +2,19 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       @if (tasksTestedSummary(); as summary) {
-        <div [class]="totalParticipants() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'tasks'"
             [current]="summary.tasksCount">
           </upd-data-card>
         </div>
-        <div [class]="totalParticipants() != null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
           <upd-data-card
             [title]="'scenarios'"
             [current]="summary.scenariosCount">
           </upd-data-card>
         </div>
-        @if (totalParticipants() != null) {
+        @if (totalParticipants() !== null) {
           <div class="col-lg-4 col-sm-12">
             <upd-data-card
               [title]="'Total participants from all tests'"
@@ -62,7 +62,7 @@
                       </div>
                       <div class="col-lg-9 col-sm-12">
                         <div class="d-flex align-items-center gap-2 w-100">
-                          @if (test.successRatePercent != null) {
+                          @if (test.successRatePercent !== null) {
                             <ng-template #barTooltip>
                               <strong>{{ task.taskTitle }}</strong>
                               <hr class="my-1" />

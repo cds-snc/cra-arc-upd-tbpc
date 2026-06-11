@@ -1,7 +1,7 @@
 <upd-card [title]="title" [titleTooltip]="titleTooltip" [h]="100">
   <div class="task-success-donut">
     <div class="donut-container">
-      @if (successRate != null) {
+      @if (successRate !== null && successRate !== undefined) {
         @if (vm$ | async; as vm) {
           <div>
             <apx-chart
@@ -20,7 +20,7 @@
         }
         <div class="center-label">
           <span class="percentage">{{ centerLabel }}</span>
-          @if (showChange && change != null && change !== 0) {
+          @if (showChange && change !== null && change !== undefined && change !== 0) {
             <span
               class="change"
               [class.text-success]="change > 0"
