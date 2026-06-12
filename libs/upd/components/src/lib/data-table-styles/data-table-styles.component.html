@@ -34,6 +34,15 @@
       [pageStatus]="pageStatus"
     ></upd-project-status-label>
   }
+  <upd-project-status-label
+    *ngIf="
+      labelType === 'archive' &&
+      config.type === 'label' &&
+      config.typeParam === 'archiveStatus'  &&
+      data[config.field] === 'Archived'
+      "
+    [archiveStatus]="archiveStatus"
+  ></upd-project-status-label>
 
   <!-- COPS Type -->
   @if (
@@ -80,6 +89,20 @@
       [taskStatus]="taskStatus"
     ></upd-project-status-label>
   }
+
+  <!-- Archived status -->
+   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'archiveStatus'">
+    <upd-project-status-label
+      *ngIf="data['archiveStatus'] === 'Archived'"
+      [archiveStatus]="'Archived'"
+      style="display: block; margin-bottom: 3px"
+    ></upd-project-status-label>
+    
+  </ng-container>
+
+  <!-- COMBINED Live Archived Type -->
+   
+  <!-- COMBINED Redirected Archived Type -->
 
   <!-- Pass/Fail Label -->
   @if (
