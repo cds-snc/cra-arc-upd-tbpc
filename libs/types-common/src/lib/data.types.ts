@@ -53,6 +53,7 @@ export interface EntityDetailsData<T> extends ViewData<T> {
 export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
+  archiveStatus?: ArchiveStatus;
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -111,6 +112,7 @@ export interface PageDetailsData extends EntityDetailsData<PageAggregatedData> {
   is404?: boolean;
   isRedirect?: boolean;
   redirect?: string;
+  isArchive?: boolean;
   topSearchTermsIncrease?: GscSearchTermMetrics[];
   topSearchTermsDecrease?: GscSearchTermMetrics[];
   top25GSCSearchTerms?: GscSearchTermMetrics[];
@@ -536,6 +538,8 @@ export type ProjectStatus =
   | 'Unknown';
 
 export type PageStatus = 'Live' | '404' | 'Redirected';
+
+export type ArchiveStatus = 'Archived';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 

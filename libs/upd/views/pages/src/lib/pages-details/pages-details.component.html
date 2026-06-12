@@ -15,6 +15,10 @@
         <upd-project-status-label [pageStatus]="pageStatus$ | async">
         </upd-project-status-label>
       }
+      @if ((archiveStatus$ | async) !== null) {
+        <upd-project-status-label [archiveStatus]="archiveStatus$ | async">
+        </upd-project-status-label>
+      }
     </span>
   </h2>
   <p class="page_url">

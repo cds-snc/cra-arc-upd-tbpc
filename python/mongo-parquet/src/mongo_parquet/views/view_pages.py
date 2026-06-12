@@ -48,6 +48,7 @@ class PagesView(ParquetModel):
             ),
             **metrics_common_schema,
             "pageStatus": string(),
+            "archiveStatus": string(),
             "numComments": int32(),
             "aa_searchterms": list_(
                 struct(
@@ -126,6 +127,11 @@ class PagesViewContext:
                         .otherwise(pl.lit("Live"))
                     )
                     .alias("pageStatus"),
+                    pl.when(pl.col.is_archive)
+                    .then(pl.lit("Archived"))
+                    .otherwise(
+                        pl.lit("Not archived"))
+                    .alias("archiveStatus"),
                     pl.col("redirect"),
                     pl.col("owners"),
                     pl.col("sections"),
@@ -306,6 +312,7 @@ class PagesViewService:
             pl.col("tasks"),
             pl.col("projects"),
             pl.col("pageStatus"),
+            pl.col("archiveStatus"),
             pl.lit(datetime.now()).alias("lastUpdated"),
         )
 
