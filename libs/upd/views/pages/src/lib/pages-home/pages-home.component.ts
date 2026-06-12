@@ -46,6 +46,20 @@ export class PagesHomeComponent implements OnInit {
             },
           },
           {
+            field: 'archiveStatus',
+            header: 'Archive status',
+            type: 'label',
+            typeParam: 'archiveStatus',
+            filterConfig: {
+              type: 'archiveStatus',
+              categories: createCategoryConfig({
+                i18n: this.i18n.service,
+                data,
+                field: 'archiveStatus',
+              }),
+            },
+          },
+          {
             field: 'url',
             header: 'URL',
             type: 'link',

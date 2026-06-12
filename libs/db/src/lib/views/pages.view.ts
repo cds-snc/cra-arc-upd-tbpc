@@ -16,6 +16,7 @@ import type {
   IPage,
   IPageView,
   PageStatus,
+  ArchiveStatus,
 } from '@dua-upd/types-common';
 import { DbViewNew, ViewConfig } from '../db.views.new';
 import { PagesView, PagesViewSchema } from './pages-view.schema';
