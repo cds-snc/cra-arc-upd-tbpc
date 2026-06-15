@@ -1,15 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
+  computed,
+  effect,
   inject,
-  Input,
-  OnInit,
-  ViewChild,
+  input,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import type { ApexNonAxisChartSeries } from 'ng-apexcharts';
-import { ChartComponent } from 'ng-apexcharts';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
 
@@ -21,47 +19,46 @@ import { ApexStore } from './apex.store';
   providers: [ApexStore],
   standalone: false,
 })
-export class ApexDonutTaskSuccessComponent implements OnInit {
+export class ApexDonutTaskSuccessComponent {
   private i18n = inject(I18nFacade);
   private readonly apexStore = inject(ApexStore);
-  private destroyRef = inject(DestroyRef);
 
-  @ViewChild('chart', { static: false }) chart: ChartComponent | undefined;
+  readonly title = input('');
+  readonly titleTooltip = input('');
+  readonly successRate = input<number | null | undefined>(null);
+  readonly launchDate = input<Date | string | null | undefined>(null);
+  readonly change = input<number | null | undefined>(null);
+  readonly showChange = input(false);
+  readonly colours = input<string[]>();
 
-  @Input() title = '';
-  @Input() titleTooltip = '';
-  @Input() successRate: number | null | undefined = null;
-  @Input() launchDate: Date | string | null | undefined = null;
-  @Input() change: number | null | undefined = null;
-  @Input() showChange = false;
+  readonly vm = toSignal(this.apexStore.vm$);
 
-  @Input() set colours(value: string[]) {
-    this.apexStore.setColours(value);
-  }
-
-  readonly vm$ = this.apexStore.vm$.pipe(takeUntilDestroyed(this.destroyRef));
-
-  get series(): ApexNonAxisChartSeries {
-    const rate = this.successRate ?? 0;
+  readonly series = computed<ApexNonAxisChartSeries>(() => {
+    const rate = this.successRate() ?? 0;
     const success = Math.round(rate * 10000) / 100;
     return [success, Math.round((100 - success) * 100) / 100];
-  }
+  });
 
-  get centerLabel(): string {
-    return this.successRate != null
-      ? `${Math.round(this.successRate * 100)}%`
-      : '';
-  }
+  readonly centerLabel = computed(() => {
+    const rate = this.successRate();
+    return rate != null ? `${Math.round(rate * 100)}%` : '';
+  });
 
-  ngOnInit(): void {
-    this.i18n.currentLang$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((lang) => {
-        this.apexStore.setLocale(lang);
-        this.apexStore.setLabels([
-          this.i18n.service.translate('Success', lang),
-          this.i18n.service.translate('Remaining', lang),
-        ]);
-      });
+  constructor() {
+    effect(() => {
+      const colours = this.colours();
+      if (colours) {
+        this.apexStore.setColours(colours);
+      }
+    });
+
+    effect(() => {
+      const lang = this.i18n.currentLang();
+      this.apexStore.setLocale(lang);
+      this.apexStore.setLabels([
+        this.i18n.service.translate('Success', lang),
+        this.i18n.service.translate('Remaining', lang),
+      ]);
+    });
   }
 }
