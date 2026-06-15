@@ -330,7 +330,6 @@ export class AirtableClient {
           session_type: Array.isArray(fields['Session Type'])
             ? fields['Session Type'][0]
             : undefined,
-          // scenario: fields['Scenario/Questions'],
           scenario: markdownToPlainText(rawScenario),
           scenario_html: markdownToSanitizedHtml(rawScenario),
           scenario_id: fields['Scenario ID'],
