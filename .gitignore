@@ -57,11 +57,21 @@ vitest.config.*.timestamp*
 
 # Project documentation files
 CLAUDE.md
+docs/
+
+# Claude Code
+.claude/
 
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
 .omx/
 .codex/
+# Local working files
+/data.zip
+/local-scenario-id-rollback.js
+/project_revamp_v2.md
+/UPDv434 - ProjectPrototype-updates-Naomi.docx.pdf
+
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 

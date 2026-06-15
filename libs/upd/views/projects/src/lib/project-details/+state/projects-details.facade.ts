@@ -43,6 +43,13 @@ type CallsByTopicTableType = GetTableProps<
   'callsByTopic$'
 >;
 
+function normalizeTestType(type: string): string {
+  const trimmed = type.replace(/\s+\d+$/, '').trim();
+  if (trimmed === 'Validation') return 'Validation';
+  if (trimmed === 'Baseline') return 'Baseline';
+  return type;
+}
+
 @Injectable()
 export class ProjectsDetailsFacade {
   private i18n = inject(I18nFacade);
@@ -86,6 +93,59 @@ export class ProjectsDetailsFacade {
 
   avgSuccessValueChange$ = this.projectsDetailsData$.pipe(
     map((data) => data?.avgSuccessValueChange),
+  );
+
+  baselineTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const baselineTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          normalizeTestType(t.test_type || '') === 'Baseline' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!baselineTests?.length) return null;
+      const avgSuccessRate =
+        baselineTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        baselineTests.length;
+      const latest = baselineTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
+  validationTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const validationTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          normalizeTestType(t.test_type || '') === 'Validation' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!validationTests?.length) return null;
+      const avgSuccessRate =
+        validationTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        validationTests.length;
+      const latest = validationTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
+  taskSuccessChange$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const pctChange = data?.avgSuccessPercentChange;
+      if (pctChange == null) return null;
+      const rounded = Math.round(pctChange * 100);
+      return rounded !== 0 ? rounded : null;
+    }),
   );
 
   dateFromLastTest$ = this.projectsDetailsData$.pipe(
@@ -568,7 +628,6 @@ export class ProjectsDetailsFacade {
         ...uxTests.map((test) => test.total_users || 0),
       );
 
-      // title -> _id (from projectTasks) mapping to create links to tasks in taskSuccessByUxTest
       const taskIdByTitle = new Map<string, string>(
         (projectTasks ?? []).map((task) => [
           (task.title || '').trim().toLowerCase(),
@@ -648,7 +707,6 @@ export class ProjectsDetailsFacade {
 
       const taskSuccessRatesByTestType = uniqueTestTypes.map((testType) => ({
         name: this.i18n.service.translate(testType as string, lang),
-        // `data` is an array of avg success rate by task
         data: taskTitles.map((taskTitle) => {
           const taskSuccessRates =
             validTestsByTask[taskTitle]
@@ -674,7 +732,7 @@ export class ProjectsDetailsFacade {
 
   taskSuccessByUxTestKpi$ = combineLatest([
     this.projectsDetailsData$,
-    this.projectTasks$, // combined to access tasks id
+    this.projectTasks$,
     this.currentLang$,
   ]).pipe(
     map(([data, projectTasks, lang]) => {
@@ -753,14 +811,12 @@ export class ProjectsDetailsFacade {
             (taskSuccessByUxTestKpi[testType].count || 1);
 
           return {
-            // test_type: testType,
-            // avg_success_rate: successRate,
             [testType]: successRate,
           };
         });
 
         return {
-          _id: projectTasks.find((t) => t.title === task.task)?._id.toString(), // combined from projectTasks
+          _id: projectTasks.find((t) => t.title === task.task)?._id.toString(),
           task: task.task
             ? this.i18n.service.translate(task.task, lang)
             : task.task,
@@ -938,6 +994,188 @@ export class ProjectsDetailsFacade {
         .sort((a, b) => {
           return a.series.length < b.series.length ? 1 : -1;
         });
+    }),
+  );
+
+  tasksTestedData$ = combineLatest([
+    this.projectsDetailsData$,
+    this.projectTasks$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, projectTasks, lang]) => {
+      const uxTests = data?.taskSuccessByUxTest;
+
+      if (!uxTests?.length) {
+        return [];
+      }
+
+      // Group key:
+      //   - scenario_id when present (pairs Baseline+Validation across rows)
+      //   - airtable_id as fallback (each ux_test gets its own row — no
+      //     averaging across scenarios, no Baseline/Validation pairing).
+      // Prefixed to keep the two ID spaces unambiguously separate.
+      const getGroupKey = (uxTest: {
+        scenario_id?: string | null;
+        airtable_id?: string | null;
+      }): string =>
+        uxTest.scenario_id
+          ? `sid:${uxTest.scenario_id}`
+          : `aid:${uxTest.airtable_id ?? ''}`;
+
+      const pairs = new Map<
+        string,
+        { taskTitle: string; groupKey: string }
+      >();
+      for (const uxTest of uxTests) {
+        const groupKey = getGroupKey(uxTest);
+        for (const title of uxTest.tasks.split('; ')) {
+          if (!title) continue;
+          const key = JSON.stringify([title, groupKey]);
+          if (!pairs.has(key)) {
+            pairs.set(key, { taskTitle: title, groupKey });
+          }
+        }
+      }
+
+      const sortedPairs = [...pairs.values()].sort((a, b) => {
+        const titleCmp = a.taskTitle.localeCompare(b.taskTitle);
+        return titleCmp !== 0
+          ? titleCmp
+          : a.groupKey.localeCompare(b.groupKey);
+      });
+
+      return sortedPairs.map(({ taskTitle, groupKey }, index) => {
+        const relevantTests = uxTests.filter(
+          (uxTest) =>
+            uxTest.tasks.split('; ').includes(taskTitle) &&
+            getGroupKey(uxTest) === groupKey,
+        );
+
+        const testsByType: Record<string, { rates: number[] }> = {};
+
+        for (const test of relevantTests) {
+          const type = normalizeTestType(test.test_type || 'Unknown');
+          if (!testsByType[type]) {
+            testsByType[type] = { rates: [] };
+          }
+          if (test.success_rate != null) {
+            testsByType[type].rates.push(test.success_rate);
+          }
+        }
+
+        const tests = Object.entries(testsByType)
+          .map(([type, { rates }]) => ({
+            testType: type,
+            testTypeLabel: this.i18n.service.translate(type, lang),
+            successRate: rates.length ? avg(rates) : null,
+            successRatePercent:
+              rates.length && avg(rates) != null
+                ? round(avg(rates)! * 100, 0)
+                : null,
+          }))
+          .sort((a, b) => {
+            const order: Record<string, number> = {
+              Baseline: 0,
+              Validation: 1,
+              Exploratory: 2,
+              'Spot Check': 3,
+            };
+            return (order[a.testType] ?? 99) - (order[b.testType] ?? 99);
+          });
+
+        const baselineRate = tests.find(
+          (t) => t.testType === 'Baseline',
+        )?.successRate;
+        const validationRate = tests.find(
+          (t) => t.testType === 'Validation',
+        )?.successRate;
+
+        let avgTaskSuccessChange: number | null = null;
+
+        if (baselineRate != null && validationRate != null) {
+          avgTaskSuccessChange =
+            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+        }
+
+        const scenariosByTestType: Record<
+          string,
+          { text: string; html?: string | null }[]
+        > = {};
+        for (const test of relevantTests) {
+          if (!test.scenario) continue;
+          const type = normalizeTestType(test.test_type || 'Unknown');
+          if (!scenariosByTestType[type]) {
+            scenariosByTestType[type] = [];
+          }
+          if (
+            !scenariosByTestType[type].some((s) => s.text === test.scenario)
+          ) {
+            scenariosByTestType[type].push({
+              text: test.scenario,
+              html: test.scenario_html,
+            });
+          }
+        }
+
+        const taskId =
+          projectTasks.find((t) => t.title === taskTitle)?._id?.toString() ||
+          '';
+
+        return {
+          taskNumber: index + 1,
+          taskTitle: taskTitle
+            ? this.i18n.service.translate(taskTitle, lang)
+            : taskTitle,
+          taskId,
+          scenariosByTestType,
+          tests,
+          avgTaskSuccessChange,
+        };
+      });
+    }),
+  );
+
+  tasksTestedSummary$ = combineLatest([
+    this.projectsDetailsData$,
+    this.tasksTestedData$,
+  ]).pipe(
+    map(([data, tasks]) => {
+      if (!tasks?.length) {
+        return null;
+      }
+
+      const uniqueTaskTitles = new Set<string>();
+      const uniqueScenarioIds = new Set<string>();
+      for (const uxTest of data?.taskSuccessByUxTest ?? []) {
+        for (const title of uxTest.tasks.split('; ')) {
+          if (title) uniqueTaskTitles.add(title);
+        }
+        if (uxTest.scenario_id) {
+          uniqueScenarioIds.add(uxTest.scenario_id);
+        }
+      }
+
+      return {
+        tasksCount: uniqueTaskTitles.size,
+        scenariosCount: uniqueScenarioIds.size,
+      };
+    }),
+  );
+
+  taskSuccessObjectiveStatus$ = combineLatest([
+    this.avgTaskSuccessFromLastTest$,
+    this.avgSuccessValueChange$,
+  ]).pipe(
+    map(([current, pointDifference]) => {
+      if (current == null) return null;
+
+      if (current >= 0.8) {
+        return 'pass' as const;
+      } else if ((pointDifference ?? 0) >= 0.2) {
+        return 'partial' as const;
+      } else {
+        return 'fail' as const;
+      }
     }),
   );
 

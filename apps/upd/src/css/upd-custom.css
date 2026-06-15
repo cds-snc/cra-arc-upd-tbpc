@@ -455,6 +455,28 @@ margin: 0px 20px 0px 20px;
   text-align: left;
 }
 
+.chart-tooltip .tooltip-inner {
+  background-color: #fff;
+  color: #373d3f;
+  border: 1px solid #e3e3e3;
+  text-align: left;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 0.75rem;
+  max-width: 280px;
+}
+
+.chart-tooltip .tooltip-arrow::before {
+  border-top-color: #e3e3e3;
+}
+
+.kpi-status-icon {
+  font-size: 1.7em;
+}
+
+.task-success-bar {
+  height: 16px;
+}
+
 .datatable-headers {
   color: #000 !important;
   /* font-weight: 600; */
@@ -587,4 +609,16 @@ ol[role='listbox'], ul[role='listbox'] {
 h3 span.title-suffix {
   font-weight: normal;
   color: #555;
+}
+
+/* Neutralize Bootstrap's blue open-state theming for the "view task scenario"
+   rows in the UX Tests > Tasks Tested view, scoped so other accordions are
+   unaffected. The blue focus ring is intentionally left as Bootstrap's default. */
+.scenario-accordion .accordion-button:not(.collapsed) {
+  color: #212529 !important;
+  background-color: transparent !important;
+}
+
+.scenario-accordion .accordion-button:not(.collapsed)::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
 }

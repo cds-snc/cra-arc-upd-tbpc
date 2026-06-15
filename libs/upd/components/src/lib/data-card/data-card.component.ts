@@ -166,7 +166,7 @@ export class DataCardComponent {
 
   get kpiObjectiveStatus() {
     return typeof this.current === 'number'
-      ? this.kpiObjectiveCriteria(this.current, this.comparison || 0)
+      ? this.kpiObjectiveCriteria(this.current, this.comparisonValue || 0)
       : 'none';
   }
 
