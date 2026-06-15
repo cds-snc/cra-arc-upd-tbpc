@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
 } from '@angular/core';
-import { combineLatest, map, shareReplay } from 'rxjs';
-import { EN_CA } from '@dua-upd/upd/i18n';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, shareReplay } from 'rxjs';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
@@ -21,8 +22,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);
   private readonly projectsDetailsService = inject(ProjectsDetailsFacade);
 
-  currentLang$ = this.i18n.currentLang$;
-  langLink = 'en';
+  currentLang = this.i18n.currentLang;
 
   description$ = this.projectsDetailsService.description$;
 
@@ -77,75 +77,74 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   tasksTestedTableData$ = this.tasksTestedView$.pipe(map((v) => v.tableData));
   testTypesPresent$ = this.tasksTestedView$.pipe(map((v) => v.present));
 
-  tasksTestedCols: ColumnConfig[] = [];
+  private testTypesPresent = toSignal(this.testTypesPresent$);
+
+  tasksTestedCols = computed<ColumnConfig[]>(() => {
+    const lang = this.currentLang();
+    const present = this.testTypesPresent();
+
+    const tasksTestedCols: ColumnConfig[] = [
+      {
+        field: 'taskNumber',
+        header: this.i18n.service.translate('task-num', lang),
+        width: '80px',
+      },
+      {
+        field: 'taskTitle',
+        header: this.i18n.service.translate('task', lang),
+      },
+    ];
+
+    if (present?.hasBaseline) {
+      tasksTestedCols.push({
+        field: 'baseline',
+        header: this.i18n.service.translate('Baseline', lang),
+        pipe: 'percent',
+      });
+    }
+
+    if (present?.hasValidation) {
+      tasksTestedCols.push({
+        field: 'validation',
+        header: this.i18n.service.translate('Validation', lang),
+        pipe: 'percent',
+      });
+    }
+
+    if (present?.hasExploratory) {
+      tasksTestedCols.push({
+        field: 'exploratory',
+        header: this.i18n.service.translate('Exploratory', lang),
+        pipe: 'percent',
+      });
+    }
+
+    if (present?.hasSpotCheck) {
+      tasksTestedCols.push({
+        field: 'spotCheck',
+        header: this.i18n.service.translate('Spot Check', lang),
+        pipe: 'percent',
+      });
+    }
+
+    if (present?.hasBaseline && present?.hasValidation) {
+      tasksTestedCols.push({
+        field: 'change',
+        header: this.i18n.service.translate('change', lang),
+        pipe: 'percent',
+        pipeParam: '1.0-0',
+        indicator: true,
+        upGoodDownBad: true,
+        useArrows: true,
+        showTextColours: true,
+      });
+    }
+
+    return tasksTestedCols;
+  });
 
   ngOnInit() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    combineLatest([this.currentLang$, this.testTypesPresent$]).subscribe(
-      ([lang, testTypesPresent]) => {
-        this.langLink = lang === EN_CA ? 'en' : 'fr';
-
-        const tasksTestedCols: ColumnConfig[] = [
-          {
-            field: 'taskNumber',
-            header: this.i18n.service.translate('task-num', lang),
-            width: '80px',
-          },
-          {
-            field: 'taskTitle',
-            header: this.i18n.service.translate('task', lang),
-          },
-        ];
-
-        if (testTypesPresent.hasBaseline) {
-          tasksTestedCols.push({
-            field: 'baseline',
-            header: this.i18n.service.translate('Baseline', lang),
-            pipe: 'percent',
-          });
-        }
-
-        if (testTypesPresent.hasValidation) {
-          tasksTestedCols.push({
-            field: 'validation',
-            header: this.i18n.service.translate('Validation', lang),
-            pipe: 'percent',
-          });
-        }
-
-        if (testTypesPresent.hasExploratory) {
-          tasksTestedCols.push({
-            field: 'exploratory',
-            header: this.i18n.service.translate('Exploratory', lang),
-            pipe: 'percent',
-          });
-        }
-
-        if (testTypesPresent.hasSpotCheck) {
-          tasksTestedCols.push({
-            field: 'spotCheck',
-            header: this.i18n.service.translate('Spot Check', lang),
-            pipe: 'percent',
-          });
-        }
-
-        if (testTypesPresent.hasBaseline && testTypesPresent.hasValidation) {
-          tasksTestedCols.push({
-            field: 'change',
-            header: this.i18n.service.translate('change', lang),
-            pipe: 'percent',
-            pipeParam: '1.0-0',
-            indicator: true,
-            upGoodDownBad: true,
-            useArrows: true,
-            showTextColours: true,
-          });
-        }
-
-        this.tasksTestedCols = tasksTestedCols;
-      },
-    );
   }
 
   getScenarioTestTypes(rowData: Record<string, unknown>): string[] {

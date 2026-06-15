@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
-  OnInit,
 } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
@@ -22,12 +22,12 @@ type DocumentsColTypes = GetTableProps<
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class ProjectDetailsUxTestsComponent implements OnInit {
+export class ProjectDetailsUxTestsComponent {
   private i18n = inject(I18nFacade);
   private readonly projectsDetailsService = inject(ProjectsDetailsFacade);
 
-  currentLang$ = this.i18n.currentLang$;
-  langLink = 'en';
+  currentLang = this.i18n.currentLang;
+  langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
   baselineTestData$ = this.projectsDetailsService.baselineTestData$;
   validationTestData$ = this.projectsDetailsService.validationTestData$;
@@ -42,19 +42,12 @@ export class ProjectDetailsUxTestsComponent implements OnInit {
   tasksTestedData$ = this.projectsDetailsService.tasksTestedData$;
   tasksTestedSummary$ = this.projectsDetailsService.tasksTestedSummary$;
 
-  documentsCols: ColumnConfig<DocumentsColTypes>[] = [];
-
-  ngOnInit() {
-    this.currentLang$.subscribe((lang) => {
-      this.langLink = lang === EN_CA ? 'en' : 'fr';
-      this.documentsCols = [
-        {
-          field: 'filename',
-          header: this.i18n.service.translate('File link', lang),
-          type: 'link',
-          typeParams: { link: 'url', external: true },
-        },
-      ];
-    });
-  }
+  documentsCols = computed<ColumnConfig<DocumentsColTypes>[]>(() => [
+    {
+      field: 'filename',
+      header: this.i18n.service.translate('File link', this.currentLang()),
+      type: 'link',
+      typeParams: { link: 'url', external: true },
+    },
+  ]);
 }

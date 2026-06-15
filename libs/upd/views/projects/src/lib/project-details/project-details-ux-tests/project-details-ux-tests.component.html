@@ -34,7 +34,7 @@
   [tasksTestedData]="tasksTestedData$ | async"
   [tasksTestedSummary]="tasksTestedSummary$ | async"
   [totalParticipants]="totalParticipants$ | async"
-  [langLink]="langLink"
+  [langLink]="langLink()"
 ></upd-tasks-tested>
 
 @if (documents$ | async; as docs) {
@@ -44,7 +44,7 @@
         <div class="col">
           <upd-data-table-card
             [data]="docs"
-            [cols]="documentsCols"
+            [cols]="documentsCols()"
             [sort]="false"
             [pagination]="false"
             [filter]="false"
