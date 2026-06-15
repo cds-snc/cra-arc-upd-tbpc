@@ -68,7 +68,10 @@ import { HeatmapComponent } from './heatmap/heatmap.component';
 import { PageFlowComponent } from './page-flow/page-flow.component';
 import { ArrowConnectComponent } from './arrow-connect/arrow-connect.component';
 import { PageVersionComponent } from './page-version/page-version.component';
+import { ApexDonutTaskSuccessComponent } from './apex-donut-task-success/apex-donut-task-success.component';
+import { TasksTestedComponent } from './tasks-tested/tasks-tested.component';
 import { MarkdownRendererComponent } from './markdown-renderer/markdown-renderer.component';
+import { TaskSuccessObjectiveStatusComponent } from './task-success-objective-status/task-success-objective-status.component';
 
 @NgModule({
   imports: [
@@ -142,11 +145,15 @@ import { MarkdownRendererComponent } from './markdown-renderer/markdown-renderer
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    ApexDonutTaskSuccessComponent,
+    TasksTestedComponent,
     MarkdownRendererComponent,
+    TaskSuccessObjectiveStatusComponent,
   ],
   exports: [
     NgbPopoverModule,
     NgbAlertModule,
+    NgbTooltipModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -197,7 +204,10 @@ import { MarkdownRendererComponent } from './markdown-renderer/markdown-renderer
     PageFlowComponent,
     ArrowConnectComponent,
     PageVersionComponent,
+    ApexDonutTaskSuccessComponent,
+    TasksTestedComponent,
     MarkdownRendererComponent,
+    TaskSuccessObjectiveStatusComponent,
   ],
 })
 export class UpdComponentsModule {}

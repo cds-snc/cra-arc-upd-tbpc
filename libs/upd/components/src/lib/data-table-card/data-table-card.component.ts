@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, TemplateRef } from '@angular/core';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
@@ -27,6 +27,10 @@ export class DataTableCardComponent<T> {
   @Input() loading = false;
   @Input() id?: string;
   @Input() emptyStateMessage?: string;
+  @Input() expandable = false;
+  @Input() expandableRowTemplate: TemplateRef<unknown> | null = null;
+  @Input() expandAfterField = '';
+  @Input() expandAll = false;
   @Input() allowHeaderWrap = false;
 
   get defaultSearchFields() {

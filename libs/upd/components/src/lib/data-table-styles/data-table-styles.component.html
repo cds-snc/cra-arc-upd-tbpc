@@ -201,7 +201,7 @@
 </ng-container>
 
 <!-- Indicator -->
-<ng-container *ngIf="config.indicator && data[config.field] && ( config.secondaryField && data[config.secondaryField.field] )">
+<ng-container *ngIf="config.indicator && data[config.field]">
   <span [ngClass]="comparisonClassMap(config.field, config.upGoodDownBad, config.showTextColours)">
     <span [ngClass]="{
       'material-icons': config.useArrows
@@ -209,7 +209,7 @@
     <span>{{ getValueIndicator(config.field, config.pipe, config.pipeParam, false) }}
     </span>
   </span>
-  <ng-container *ngIf="data[config.secondaryField.field]">
+  <ng-container *ngIf="config.secondaryField && data[config.secondaryField.field]">
   ({{ getValueIndicator(config.secondaryField.field, config.secondaryField.pipe, config.secondaryField.pipeParam) }})
   </ng-container>
 </ng-container>
