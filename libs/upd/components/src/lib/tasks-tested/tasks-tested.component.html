@@ -1,0 +1,151 @@
+@if (hasData()) {
+  <div class="container-fluid my-4 gx-0">
+    <div class="row">
+      @if (tasksTestedSummary(); as summary) {
+        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+          <upd-data-card
+            [title]="'tasks'"
+            [current]="summary.tasksCount">
+          </upd-data-card>
+        </div>
+        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+          <upd-data-card
+            [title]="'scenarios'"
+            [current]="summary.scenariosCount">
+          </upd-data-card>
+        </div>
+        @if (totalParticipants() !== null) {
+          <div class="col-lg-4 col-sm-12">
+            <upd-data-card
+              [title]="'Total participants from all tests'"
+              [current]="totalParticipants()"
+              [emptyMessage]="'project-tasks-not-tested'">
+            </upd-data-card>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="container-fluid my-4 gx-0">
+    <div class="row">
+      <div class="col">
+        <upd-card [title]="'tasks-tested'">
+          @for (task of tasksTestedData(); track task.taskNumber) {
+            <div class="mb-3 p-3 border rounded">
+              <div class="row">
+                <div [class]="hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'">
+                  <h6 class="mb-3">
+                    {{ task.taskNumber }}.
+                    @if (task.taskId) {
+                      <a [routerLink]="['/', langLink(), 'tasks', task.taskId]">
+                        {{ task.taskTitle }}
+                      </a>
+                    } @else {
+                      {{ task.taskTitle }}
+                    }
+                  </h6>
+
+                  <div class="row mb-2">
+                    <div class="col-lg-3 col-sm-12">
+                      <small class="fw-bold text-muted">{{ 'test' | translate }}</small>
+                    </div>
+                    <div class="col-lg-9 col-sm-12">
+                      <small class="fw-bold text-muted">{{ 'task-success' | translate }}</small>
+                    </div>
+                  </div>
+
+                  @for (test of task.tests; track test.testType) {
+                    <div class="row align-items-center mt-2 mb-2">
+                      <div class="col-lg-3 col-sm-12">
+                        <span class="fw-bold">{{ test.testTypeLabel }}</span>
+                      </div>
+                      <div class="col-lg-9 col-sm-12">
+                        <div class="d-flex align-items-center gap-2 w-100">
+                          @if (test.successRatePercent !== null) {
+                            <ng-template #barTooltip>
+                              <strong>{{ task.taskTitle }}</strong>
+                              <hr class="my-1" />
+                              <span class="legend_color rounded-circle" [style.background]="testTypeBarColors[test.testType]"></span>
+                              {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
+                            </ng-template>
+                            <div
+                              class="rounded-1 task-success-bar"
+                              role="meter"
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                              [attr.aria-valuenow]="test.successRatePercent"
+                              [attr.aria-label]="test.testTypeLabel"
+                              [style.width.%]="test.successRatePercent"
+                              [style.background-color]="testTypeBarColors[test.testType]"
+                              [ngbTooltip]="barTooltip"
+                              [tooltipClass]="'chart-tooltip'"
+                              container="body"
+                            ></div>
+                            <span class="fw-bold text-nowrap">{{ test.successRatePercent }}%</span>
+                          } @else {
+                            <span class="fw-bold">-</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    @if (task.scenariosByTestType[test.testType]; as scenarios) {
+                      @if (scenarios.length) {
+                        <upd-accordion
+                          [title]="'view-task-scenario'"
+                          [expanded]="true"
+                          [headerClass]="'small'"
+                          [styleClass]="'scenario-accordion'">
+                          @for (scenario of scenarios; track scenario.text; let i = $index) {
+                            <div class="small text-muted" [class.mb-3]="i < scenarios.length - 1">
+                              @if (scenario.html) {
+                                <upd-markdown-renderer [html]="scenario.html"></upd-markdown-renderer>
+                              } @else {
+                                {{ scenario.text }}
+                              }
+                            </div>
+                          }
+                        </upd-accordion>
+                      }
+                    }
+                  }
+                </div>
+
+                @if (hasBaseline() && hasValidation()) {
+                  <div class="col-lg-2 d-flex flex-column">
+                    <div class="text-muted small mb-1">{{ 'change' | translate }}</div>
+                    <span class="h1 mb-0" [class]="getChangeIndicator(task.avgTaskSuccessChange).cssClass">
+                      {{ getChangeIndicator(task.avgTaskSuccessChange).text }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          <div class="legend mt-3 d-flex flex-row align-items-center gap-3">
+            @if (hasBaseline()) {
+              <p class="legend_field">
+                <span class="legend_color" [style.background]="testTypeBarColors['Baseline']"></span>{{ 'Baseline' | translate }}
+              </p>
+            }
+            @if (hasValidation()) {
+              <p class="legend_field">
+                <span class="legend_color" [style.background]="testTypeBarColors['Validation']"></span>{{ 'Validation' | translate }}
+              </p>
+            }
+            @if (hasExploratory()) {
+              <p class="legend_field">
+                <span class="legend_color" [style.background]="testTypeBarColors['Exploratory']"></span>{{ 'Exploratory' | translate }}
+              </p>
+            }
+            @if (hasSpotCheck()) {
+              <p class="legend_field">
+                <span class="legend_color" [style.background]="testTypeBarColors['Spot Check']"></span>{{ 'Spot Check' | translate }}
+              </p>
+            }
+          </div>
+        </upd-card>
+      </div>
+    </div>
+  </div>
+}

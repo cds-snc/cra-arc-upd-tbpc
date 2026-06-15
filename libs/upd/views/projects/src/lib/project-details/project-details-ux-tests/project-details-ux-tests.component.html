@@ -1,110 +1,57 @@
 <div class="container-fluid my-4 gx-0">
   <div class="row">
-    <div class="col-lg-6 col-sm-12">
-      <upd-data-card
-        [current]="avgTaskSuccessFromLastTest$ | async"
-        [comparison]="avgSuccessPercentChange$ | async"
-        [comparisonValue]="avgSuccessValueChange$ | async"
-        [title]="'Average task success from last UX test'"
-        [emptyMessage]="'project-tasks-not-tested'"
-        [displayKpis]="true"
-        [displayComparison]="true"
-        pipe="percent"
-      >
-        <p>
-          ({{ 'Last UX test date:' | translate }}
-          {{ dateFromLastTest$ | async | localeDate }})
-        </p>
-      </upd-data-card>
-    </div>
-
-    <div class="col-lg-6 col-sm-12">
-      <upd-data-card
-        [current]="totalParticipants$ | async"
-        [emptyMessage]="'project-tasks-not-tested'"
-        [title]="'Total participants from all tests'"
-      ></upd-data-card>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col-lg-12">
-      <upd-apex-bar
-        [title]="'Tasks success by Test'"
-        [series]="(apexTaskSuccessByUxTest$ | async)?.series || []"
-        [yAxis]="'tasks' | translate"
-        [xAxis]="(apexTaskSuccessByUxTest$ | async)?.xaxis || []"
-        [height]="(taskSuccessChartHeight$ | async) || 0"
-        [horizontal]="{ isHorizontal: true, colorDistributed: false }"
-        [showPercent]="{
-          isPercent: true,
-          showTitleTooltip: true,
-          showMarker: true,
-          shared: true,
-        }"
-        [table]="(taskSuccessByUxTest$ | async) || []"
-        [tableCols]="taskSuccessRateCols"
-        [emptyMessage]="'project-tasks-not-tested'"
-      ></upd-apex-bar>
-    </div>
-  </div>
-</div>
-
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
     <div class="col">
-      <upd-data-table-card
-        [data]="(projectTasks$ | async) || []"
-        [cols]="participantTasksCols"
-        [sort]="true"
-        [pagination]="false"
-        [filter]="false"
-        [title]="'Related tasks'"
-        sortField="title"
-      >
-      </upd-data-table-card>
+      <upd-card [title]="'Average Task Success'">
+        <div class="row">
+          <div class="col-6">
+            <upd-apex-donut-task-success
+              [title]="'Baseline'"
+              [titleTooltip]="'tooltip-baseline-task-success'"
+              [successRate]="(baselineTestData$ | async)?.successRate"
+              [launchDate]="(baselineTestData$ | async)?.launchDate"
+            ></upd-apex-donut-task-success>
+          </div>
+          <div class="col-6">
+            <upd-apex-donut-task-success
+              [title]="'Validation'"
+              [titleTooltip]="'tooltip-validation-task-success'"
+              [successRate]="(validationTestData$ | async)?.successRate"
+              [launchDate]="(validationTestData$ | async)?.launchDate"
+              [change]="taskSuccessChange$ | async"
+              [showChange]="true"
+            ></upd-apex-donut-task-success>
+          </div>
+        </div>
+        <upd-task-success-objective-status
+          [status]="taskSuccessObjectiveStatus$ | async"
+        ></upd-task-success-objective-status>
+      </upd-card>
     </div>
   </div>
 </div>
 
-@if (taskSuccessByUxTestKpi$ | async; as taskSuccessKpi) {
-  @if (successRateCols.length) {
+<upd-tasks-tested
+  [tasksTestedData]="tasksTestedData$ | async"
+  [tasksTestedSummary]="tasksTestedSummary$ | async"
+  [totalParticipants]="totalParticipants$ | async"
+  [langLink]="langLink()"
+></upd-tasks-tested>
+
+@if (documents$ | async; as docs) {
+  @if (docs.length) {
     <div class="container-fluid my-4 gx-0">
       <div class="row">
         <div class="col">
           <upd-data-table-card
-            [data]="taskSuccessKpi"
-            [cols]="successRateCols"
-            [sort]="true"
+            [data]="docs"
+            [cols]="documentsCols()"
+            [sort]="false"
             [pagination]="false"
             [filter]="false"
-            [kpi]="true"
-            [title]="'Task success by UX test'"
-            sortField="task"
-          >
-          </upd-data-table-card>
+            [title]="'Documents'"
+          ></upd-data-table-card>
         </div>
       </div>
     </div>
   }
-}
-
-@if (documents$ | async; as documents) {
-  <div class="container-fluid my-4 gx-0">
-    <div class="row">
-      <div class="col">
-        <upd-data-table-card
-          [data]="documents || []"
-          [cols]="documentsCols"
-          [sort]="false"
-          [pagination]="false"
-          [filter]="false"
-          [title]="'Documents'"
-          [emptyStateMessage]="'project-tasks-not-tested'"
-        ></upd-data-table-card>
-      </div>
-    </div>
-  </div>
 }

@@ -59,8 +59,8 @@ export interface UxTestData {
   test_type?: string;
   session_type?: string;
   scenario?: string;
-  scenario_html?: string;
   scenario_id?: string;
+  scenario_html?: string;
   tasks?: string[];
   pages?: string[];
   subtask?: string;
