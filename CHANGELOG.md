@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.7](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.6...v4.3.7) (2026-06-17)
+
+
+### Features
+
+* add scenario_id field to ux-test types and schemas ([8dca22a](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/8dca22aea0186b5f1db76beeeffcacf39e27deed))
+
 ## [4.3.6](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.5...v4.3.6) (2026-05-19)
 
 
