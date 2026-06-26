@@ -1,5 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ProjectStatus, PageStatus, ProjectType } from '@dua-upd/types-common';
+import {
+  ProjectStatus,
+  PageStatus,
+  ProjectType,
+  TaskStatus,
+} from '@dua-upd/types-common';
 
 @Component({
   selector: 'upd-project-status-label',
@@ -28,6 +33,14 @@ import { ProjectStatus, PageStatus, ProjectType } from '@dua-upd/types-common';
         >{{ projectType | translate }}</span
       >
     }
+    @if (taskStatus) {
+      <span
+        class="badge {{ styleClass }} {{
+          taskStatusClassMap[taskStatus]
+        }} d-block"
+        >{{ taskStatus | translate }}</span
+      >
+    }
   `,
   styleUrls: ['./project-status-label.component.scss'],
   standalone: false,
@@ -36,6 +49,7 @@ export class ProjectStatusLabelComponent {
   @Input() projectStatus: ProjectStatus | null = null;
   @Input() pageStatus: PageStatus | null = null;
   @Input() projectType: ProjectType | null = null;
+  @Input() taskStatus: TaskStatus | null = null;
   @Input() styleClass: string | null = null;
 
   projectStatusClassMap: Record<ProjectStatus, string> = {
@@ -59,5 +73,12 @@ export class ProjectStatusLabelComponent {
   projectTypeClassMap: Record<ProjectType, string> = {
     COPS: 'bg-primary',
     WOS_COPS: 'bg-info',
+  };
+
+  taskStatusClassMap: Record<TaskStatus, string> = {
+    Healthy: 'bg-healthy',
+    Watch: 'bg-watch',
+    Improving: 'bg-improving',
+    'Needs action': 'bg-needs-action',
   };
 }

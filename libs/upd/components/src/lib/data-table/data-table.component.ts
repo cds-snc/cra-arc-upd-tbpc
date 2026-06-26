@@ -21,6 +21,12 @@ import { SortEvent } from 'primeng/api';
 import { FilterService } from 'primeng/api';
 import { isNullish } from '@dua-upd/utils-common';
 
+type HeaderGroup<T> = {
+  label: string | null;
+  colspan: number;
+  columns: ColumnConfig<T>[];
+};
+
 @Component({
   selector: 'upd-data-table',
   templateUrl: './data-table.component.html',
@@ -141,6 +147,32 @@ export class DataTableComponent<T extends object> {
     );
   });
 
+  hasColumnGroups = computed(() =>
+    this.displayColumns().some((col) => !!col.group),
+  );
+
+  columnGroups = computed<HeaderGroup<T>[]>(() => {
+    const groups: HeaderGroup<T>[] = [];
+
+    for (const col of this.displayColumns()) {
+      const label = col.group ?? null;
+      const last = groups.at(-1);
+
+      if (last && last.label === label) {
+        last.colspan++;
+        last.columns.push(col);
+      } else {
+        groups.push({ label, colspan: 1, columns: [col] });
+      }
+    }
+
+    return groups;
+  });
+
+  groupedColumns = computed(() =>
+    this.displayColumns().filter((col) => !!col.group),
+  );
+
   constructor() {
     effect(() => {
       this.translatedData();
@@ -163,35 +195,33 @@ export class DataTableComponent<T extends object> {
         },
       );
     });
-    effect(
-      () => {
-        const selectedColumns = this.selectedColumns();
+    effect(() => {
+      const selectedColumns = this.selectedColumns();
 
-        const initialColumns: ColumnConfig<T>[] =
-          JSON.parse(
-            sessionStorage.getItem(`selectedColumns-${this.id}`) || '[]',
-          ) || this.cols().filter((col) => !col.hide && !col.frozen);
+      const initialColumns: ColumnConfig<T>[] =
+        JSON.parse(
+          sessionStorage.getItem(`selectedColumns-${this.id}`) || '[]',
+        ) || this.cols().filter((col) => !col.hide && !col.frozen);
 
-        if (!selectedColumns.length && initialColumns.length) {
-          this.selectedColumns.set(initialColumns);
-          return;
-        }
+      if (!selectedColumns.length && initialColumns.length) {
+        this.selectedColumns.set(initialColumns);
+        return;
       }
-    );
+    });
   }
 
   multiKeywordGlobalFilter(table: Table, event: Event) {
     const input = this.getEventValue(event);
 
     const keywords = input
-        .toLowerCase()
-        .split(' ')
-        .map((k) => k.trim())
-        .filter(Boolean);
+      .toLowerCase()
+      .split(' ')
+      .map((k) => k.trim())
+      .filter(Boolean);
 
     table.filters['global'] = {
-        value: keywords,
-        matchMode: 'globalAndFilter'
+      value: keywords,
+      matchMode: 'globalAndFilter',
     };
 
     table._filter();
@@ -259,19 +289,24 @@ export class DataTableComponent<T extends object> {
   }
 
   ngOnInit() {
-    this.filterService.register('globalAndFilter', (value: any, filters: string[]) => {
-      if (!filters?.length) return true;
-      if (!value) return false;
-      const val = String(value).toLowerCase();
-      return filters.every((keyword) => val.includes(keyword));
-    });
-    
+    this.filterService.register(
+      'globalAndFilter',
+      (value: any, filters: string[]) => {
+        if (!filters?.length) return true;
+        if (!value) return false;
+        const val = String(value).toLowerCase();
+        return filters.every((keyword) => val.includes(keyword));
+      },
+    );
+
     // Custom filter for COPS types filter so its not using 'in' but 'contains' for an array of values
-    this.filterService.register('arrayContains', (rowValue: any[], filterValue: string[]): boolean => {
-      if (!filterValue || filterValue.length === 0) return true;
-      if (!Array.isArray(rowValue)) return false;
-      return filterValue.some(fv => rowValue.includes(fv));
-    });
+    this.filterService.register(
+      'arrayContains',
+      (rowValue: any[], filterValue: string[]): boolean => {
+        if (!filterValue || filterValue.length === 0) return true;
+        if (!Array.isArray(rowValue)) return false;
+        return filterValue.some((fv) => rowValue.includes(fv));
+      },
+    );
   }
-  
 }

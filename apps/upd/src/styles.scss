@@ -100,6 +100,34 @@
   color: #262928;
 }
 
+.bg-healthy {
+  background-color: #e8f5ec;
+  color: #16713e;
+  border: 1px solid #bfe3cb;
+  border-radius: 10px;
+}
+
+.bg-watch {
+  background-color: #fdf3e3;
+  color: #b06a12;
+  border: 1px solid #f3d29a;
+  border-radius: 10px;
+}
+
+.bg-needs-action {
+  background-color: #fbeae8;
+  color: #b03726;
+  border: 1px solid #efbdb5;
+  border-radius: 10px;
+}
+
+.bg-improving {
+  background-color: #eefafb;
+  color: #008c95;
+  border: 1px solid #9edee2;
+  border-radius: 10px;
+}
+
 .p-datatable {
   border-width: 1px 1px 1px 1px;
   border-collapse: collapse;
@@ -140,7 +168,8 @@ div.apexcharts-tooltip.apexcharts-theme-light {
   transform: scale(0.89);
 }
 
-div.apexcharts-legend-series.event-annotation-legend > .apexcharts-legend-marker {
+div.apexcharts-legend-series.event-annotation-legend
+  > .apexcharts-legend-marker {
   background-color: #fff !important;
   height: 8px !important;
   width: 8px !important;
@@ -157,6 +186,55 @@ div.apexcharts-legend-series.event-annotation-legend > .apexcharts-legend-marker
   font-size: 14px;
   font-weight: 400;
   font-family: 'Noto Sans', sans-serif;
+}
+
+.max-annotation-legend > .apexcharts-legend-text,
+.min-annotation-legend > .apexcharts-legend-text,
+.avg-annotation-legend > .apexcharts-legend-text {
+  color: rgb(55, 61, 63);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+div.apexcharts-legend-series.max-annotation-legend
+  > .apexcharts-legend-marker,
+div.apexcharts-legend-series.min-annotation-legend
+  > .apexcharts-legend-marker {
+  height: 12px !important;
+  width: 12px !important;
+  border-radius: 50% !important;
+  margin: 0 8px 0 9px !important;
+  display: inline-block !important;
+  position: relative;
+  top: -1px;
+}
+
+div.apexcharts-legend-series.max-annotation-legend
+  > .apexcharts-legend-marker {
+  background-color: #198754 !important;
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+div.apexcharts-legend-series.min-annotation-legend
+  > .apexcharts-legend-marker {
+  background-color: #dc3545 !important;
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+div.apexcharts-legend-series.avg-annotation-legend > .apexcharts-legend-marker {
+  background: transparent !important;
+  border-top: 2px dashed #ffc107 !important;
+  width: 14px !important;
+  height: 0 !important;
+  margin: 0 8px 0 9px !important;
+  display: inline-block !important;
+  position: relative;
+  top: -1px;
 }
 
 .p-datatable .p-datatable-tbody > tr > td {

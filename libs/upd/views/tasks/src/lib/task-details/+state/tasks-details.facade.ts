@@ -51,29 +51,40 @@ export class TasksDetailsFacade {
 
   taskHeader$ = this.store.select(selectTasksDetailsDataWithI18n).pipe(
     map(([data, lang]) => {
-      const translateAndSortAudience = (values?: string | string[]): { text: string; index: number }[] => {
+      const translateAndSortAudience = (
+        values?: string | string[],
+      ): { text: string; index: number }[] => {
         if (!values) return [];
-        if (!Array.isArray(values)) return [{ text: this.i18n.service.translate(values, lang), index: 0 }];
-  
+        if (!Array.isArray(values))
+          return [
+            { text: this.i18n.service.translate(values, lang), index: 0 },
+          ];
+
         return values
-          .map((val, i) => ({ text: this.i18n.service.translate(val, lang), index: i }))
+          .map((val, i) => ({
+            text: this.i18n.service.translate(val, lang),
+            index: i,
+          }))
           .sort((a, b) => a.text.localeCompare(b.text));
       };
-  
-      const translateAndSortService = (values?: string | string[]): string[] => {
+
+      const translateAndSortService = (
+        values?: string | string[],
+      ): string[] => {
         if (!values) return [];
-        if (!Array.isArray(values)) return [this.i18n.service.translate(values, lang)];
-  
+        if (!Array.isArray(values))
+          return [this.i18n.service.translate(values, lang)];
+
         return values
           .map((val) => this.i18n.service.translate(val, lang))
           .sort((a, b) => a.localeCompare(b));
       };
-  
+
       return {
         audience: translateAndSortAudience(data?.user_type),
         service: translateAndSortService(data?.service),
       };
-    })
+    }),
   );
 
   detailsTable$ = this.store.select(selectTasksDetailsDataWithI18n).pipe(
@@ -130,6 +141,88 @@ export class TasksDetailsFacade {
         ? new Date(data?.dateFromLastTest)
         : data?.dateFromLastTest,
     ),
+  );
+
+  individualScore$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.historical_average || 0),
+  );
+
+  individualScoreDifference$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.individualScoreDifference || 0),
+  );
+
+  performanceScore$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.performance_score || 0),
+  );
+
+  performanceScoreDifference$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.performanceScoreDifference),
+  );
+
+  seasonalHistoricAverage$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.seasonal_average || 0),
+  );
+
+  tmfRank$ = this.tasksDetailsData$.pipe(map((data) => data?.tmf_rank || 0));
+
+  tmfTotalTasks$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.tmf_total_tasks || 0),
+  );
+
+  perfRank$ = this.tasksDetailsData$.pipe(map((data) => data?.perf_rank || 0));
+
+  perfTotalTasks$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.perf_total_tasks || 0),
+  );
+
+  individualHistory$ = this.tasksDetailsData$.pipe(
+    map((data) => {
+      const current = data?.dateRangeData?.individualHistory ?? [];
+
+      return [
+        {
+          name: 'Historical performance %',
+          data: current.map((item) => item.individual_score),
+        },
+      ] as ApexAxisChartSeries;
+    }),
+  );
+
+  individualHistoryChart$ = combineLatest([
+    this.tasksDetailsData$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, lang]) => {
+      const current = data?.dateRangeData?.individualHistory ?? [];
+
+      if (!current.length) {
+        return [];
+      }
+
+      return current.map((item, idx) => ({
+        name: item.month
+          ? dayjs(item.month).utc().locale(lang).format('MMM YYYY')
+          : `${idx + 1}`,
+        currValue: current[idx].individual_score || 0,
+      }));
+    }),
+  );
+
+  individualHistoryXAxis$ = combineLatest([
+    this.tasksDetailsData$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, lang]) =>
+      (data?.dateRangeData?.individualHistory ?? []).map((item, idx) =>
+        item.month
+          ? dayjs(item.month).utc().locale(lang).format('MMM YYYY')
+          : `${idx + 1}`,
+      ),
+    ),
+  );
+
+  currentSurvey$ = this.tasksDetailsData$.pipe(
+    map((data) => ((data?.survey || 0) / (data?.survey_completed || 0)) * 100),
   );
 
   visits$ = this.tasksDetailsData$.pipe(map((data) => data?.visits || 0));

@@ -1,0 +1,40 @@
+.task-rank-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 125px;
+  padding: 0.55rem 0.8rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.45rem;
+  color: #343a40;
+  line-height: 1.15;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.task-rank-card__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.task-rank-card__rank {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.task-rank-card__icon {
+  color: #b26b00;
+  font-size: 0.95rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  line-height: 0.95rem;
+}

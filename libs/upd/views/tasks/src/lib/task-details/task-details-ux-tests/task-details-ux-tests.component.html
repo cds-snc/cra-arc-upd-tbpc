@@ -42,7 +42,8 @@
           isPercent: true,
           showTitleTooltip: false,
           showMarker: true,
-          shared: false
+          shared: false,
+          showValueLabel: true,
         }"
         [height]="(taskSuccessChartHeight$ | async) || 0"
         [table]="(taskSuccessChart$ | async) || []"

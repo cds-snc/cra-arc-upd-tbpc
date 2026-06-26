@@ -1,5 +1,6 @@
 from typing import final, override
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import polars as pl
 from mongo_parquet.schemas import (
     AnyFrame,
@@ -24,9 +25,17 @@ from .daterange_utils import (
     DateRange,
     DateRangeWithComparison,
     get_date_ranges_with_comparisons,
+
 )
 from ..schemas import get_parquet_models, ParquetModels
 from ..utils import objectid
+from ..utils_math import (
+    ind_status,
+    metric_flags_and_weights,
+    perf_score_higher_better_0_100,
+    perf_score_lower_better_0_100,
+    weighted_raw_score_over_available,
+)
 
 
 @final
@@ -102,9 +111,23 @@ class TasksView(ParquetModel):
             "survey": int32(),
             "survey_completed": int32(),
             "tmf_ranking_index": int32(),
+            "seasonal_average": float64(),
+            "historical_average": float64(),
+            "performance_score": float64(),
             "cops": bool_(),
             "wos_cops": bool_(),
             "numComments": int32(),
+            "individualHistory": list_(
+                struct(
+                    {
+                        "month": timestamp("ms"),
+                        "individual_score": float64(),
+                        "calls_per_100": float64(),
+                        "neg_feedback_per_1000": float64(),
+                        "survey_success_rate": float64(),
+                    }.items()
+                )
+            ),
             "aa_searchterms": list_(
                 struct(
                     {
@@ -407,6 +430,9 @@ class TasksViewService:
             views_utils.parquet_dir_path
         )
         self.date_ranges_with_comparisons = get_date_ranges_with_comparisons()
+        # self.date_ranges = [
+        #     {"start": datetime(2024, 1, 1), "end": datetime(2025, 12, 31),},
+        # ]
         self.context = TasksViewContext(
             parquet_models=self.dependencies,
         )
@@ -507,6 +533,7 @@ class TasksViewService:
         self.write_temp_aa_searchterms(date_range)
         self.write_temp_gsc_searchterms(date_range)
         self.write_temp_metrics_by_day(date_range)
+        self.write_temp_individual_history_for_date_range(date_range)
 
         top_level_metrics = self.get_top_level_metrics(date_range)
 
@@ -519,6 +546,12 @@ class TasksViewService:
         pages = self.get_pages(date_range)
 
         gc_task_metrics = self.get_gc_task_metrics(date_range)
+
+        performance_scores = self.get_performance_scores_for_date_range(date_range)
+
+        performance_history = self.get_individual_history(date_range)
+
+        seasonal_average = self.get_seasonal_average_for_date_range(date_range)
 
         num_tasks = self.context.tasks.height
 
@@ -571,6 +604,24 @@ class TasksViewService:
             )
             .join(
                 gc_task_metrics,
+                on="_id",
+                how="left",
+                coalesce=True,
+            )
+            .join(
+                performance_scores,
+                on="_id",
+                how="left",
+                coalesce=True,
+            )
+            .join(
+                performance_history,
+                on="_id",
+                how="left",
+                coalesce=True,
+            )
+            .join(
+                seasonal_average,
                 on="_id",
                 how="left",
                 coalesce=True,
@@ -821,6 +872,114 @@ class TasksViewService:
 
         filename = f"tasks_gsc_searchterms_{date_range['start'].date()}_{date_range['end'].date()}.parquet"
         self.views_utils.sink_temp(gsc_searchterms, filename)
+        
+    def write_temp_individual_history_for_date_range(
+        self,
+        date_range: DateRange,
+    ):
+        period_start = date_range["start"]
+
+        anchor_month_start = (
+            datetime(period_start.year, period_start.month, 1)
+            - relativedelta(months=1)
+        )
+
+        history_month_starts = [
+            anchor_month_start - relativedelta(months=i)
+            for i in range(23, -1, -1)
+        ]
+
+        overall_start = history_month_starts[0] - relativedelta(years=2)
+        overall_end = (anchor_month_start + relativedelta(months=1)) - timedelta(days=1)
+
+        history_range: DateRange = {
+            "start": overall_start,
+            "end": overall_end,
+        }
+
+        by_month_lf = self.build_task_metrics_by_month(history_range)
+
+        by_month_filename = (
+            f"tasks_individual_history_by_month_"
+            f"{date_range['start'].date()}_{date_range['end'].date()}.parquet"
+        )
+        self.views_utils.sink_temp(by_month_lf, by_month_filename)
+        by_month_lf = self.views_utils.scan_temp(by_month_filename)
+
+        benchmark_bundle = self.get_performance_benchmark_bundle()
+
+        monthly_lfs: list[pl.LazyFrame] = []
+
+        for month_start in history_month_starts:
+            period_lf = (
+                by_month_lf
+                .filter(pl.col("month") == pl.lit(month_start))
+                .select(
+                    "_id",
+                    "visits",
+                    "calls",
+                    "dyfNo",
+                    "survey",
+                    "survey_completed",
+                    "calls_per_100",
+                    "neg_feedback_per_1000",
+                    "survey_success_rate",
+                )
+            )
+
+            monthly_lf = (
+                self.score_with_performance_benchmarks(
+                    period_lf=period_lf,
+                    benchmark_bundle=benchmark_bundle,
+                    score_col="individual_score",
+                    insufficient_col="individual_insufficient_data",
+                )
+                .select(
+                    pl.col("_id"),
+                    pl.lit(month_start).alias("month"),
+                    pl.col("individual_score"),
+                    pl.col("calls_per_100"),
+                    pl.col("neg_feedback_per_1000"),
+                    pl.col("survey_success_rate"),
+                )
+            )
+
+            monthly_lfs.append(monthly_lf)
+
+        combined = pl.concat(monthly_lfs)
+
+        final_lf = (
+            combined
+            .sort(["_id", "month"])
+            .group_by("_id")
+            .agg(
+                pl.struct(
+                    "month",
+                    "individual_score",
+                    "calls_per_100",
+                    "neg_feedback_per_1000",
+                    "survey_success_rate",
+                ).alias("individualHistory"),
+                pl.col("individual_score").mean().alias("historical_average"),
+            )
+        )
+
+        final_filename = (
+            f"tasks_individual_history_"
+            f"{date_range['start'].date()}_{date_range['end'].date()}.parquet"
+        )
+
+        self.views_utils.sink_temp(final_lf, final_filename)
+        
+    def get_individual_history(
+        self,
+        date_range: DateRange,
+    ) -> pl.LazyFrame:
+        filename = (
+            f"tasks_individual_history_"
+            f"{date_range['start'].date()}_{date_range['end'].date()}.parquet"
+        )
+        return self.views_utils.scan_temp(filename)
 
     def get_gsc_searchterms(
         self,
@@ -829,58 +988,10 @@ class TasksViewService:
         filename = f"tasks_gsc_searchterms_{date_range['start'].date()}_{date_range['end'].date()}.parquet"
         return self.views_utils.scan_temp(filename)
 
-    def write_temp_metrics_by_day(
+    def _build_task_day_base(
         self,
         date_range: DateRange,
-    ):
-        num_comments_by_page = (
-            self.dependencies["feedback"]
-            .lf()
-            .filter(pl.col("date").is_between(date_range["start"], date_range["end"]))
-            .select("date", pl.col("url").cast(self.context.page_urls_enum))
-            .group_by("date", "url")
-            .agg(pl.len().alias("numComments"))
-        )
-        num_comments_by_task = (
-            self.context.urls_by_task.lazy()
-            .join(
-                num_comments_by_page,
-                on="url",
-                how="inner",
-                coalesce=True,
-            )
-            .group_by("task", "date")
-            .agg(pl.col("numComments").sum().alias("numComments"))
-            .rename({"task": "_id"})
-            .sort(["_id", "date"])
-        )
-
-        calls_by_day = (
-            self.dependencies["calldrivers"]
-            .lf()
-            .select(
-                pl.col("date"),
-                pl.col("tpc_id"),
-                pl.col("calls"),
-            )
-            .filter(pl.col("date").is_between(date_range["start"], date_range["end"]))
-            .group_by("tpc_id", "date")
-            .agg(
-                pl.col("calls").sum().alias("calls"),
-            )
-            .join(
-                self.context.tasks_by_tpc_id.lazy(),
-                on="tpc_id",
-                how="inner",
-                coalesce=True,
-            )
-            .explode("tasks")
-            .group_by("tasks", "date")
-            .agg(pl.col("calls").sum())
-            .rename({"tasks": "_id"})
-            .sort(["_id", "date"])
-        )
-
+    ) -> pl.LazyFrame:
         metrics_by_day = (
             self.dependencies["page_metrics"]
             .lf()
@@ -899,32 +1010,40 @@ class TasksViewService:
                 pl.col("dyf_yes").sum().alias("dyf_yes"),
             )
             .join(
-                self.context.urls_by_task.lazy(),
-                on="url",
-                how="inner",
-                coalesce=True,
+                self.context.urls_by_task.lazy(), on="url", how="inner", coalesce=True
             )
             .group_by("task", "date")
             .agg(
-                pl.col("visits").sum().fill_null(0),
-                pl.col("dyf_no").sum().fill_null(0),
-                pl.col("dyf_yes").sum().fill_null(0),
-            )
-            .with_columns(
-                pl.when(pl.col("visits") == pl.lit(0))
-                .then(pl.lit(None))
-                .otherwise((pl.col("dyf_no") / pl.col("visits")).round_sig_figs(8))
-                .alias("dyfNoPerVisit"),
+                pl.col("visits").sum().alias("visits"),
+                pl.col("dyf_no").sum().alias("dyf_no"),
+                pl.col("dyf_yes").sum().alias("dyf_yes"),
             )
             .rename({"task": "_id"})
-            .sort(["_id", "date"])
         )
 
-        combined_by_day = metrics_by_day.join(
-            calls_by_day, on=["_id", "date"], how="full", coalesce=True
-        ).join(num_comments_by_task, on=["_id", "date"], how="full", coalesce=True)
+        calls_by_day = (
+            self.dependencies["calldrivers"]
+            .lf()
+            .select(pl.col("date"), pl.col("tpc_id"), pl.col("calls"))
+            .filter(pl.col("date").is_between(date_range["start"], date_range["end"]))
+            .group_by("tpc_id", "date")
+            .agg(pl.col("calls").sum().alias("calls"))
+            .join(
+                self.context.tasks_by_tpc_id.lazy(),
+                on="tpc_id",
+                how="inner",
+                coalesce=True,
+            )
+            .explode("tasks")
+            .group_by("tasks", "date")
+            .agg(pl.col("calls").sum().alias("calls"))
+            .rename({"tasks": "_id"})
+        )
 
-        # to make sure all dates are present
+        combined_sparse = metrics_by_day.join(
+            calls_by_day, on=["_id", "date"], how="full", coalesce=True
+        )
+
         dates_lf = pl.LazyFrame(
             {
                 "date": pl.datetime_range(
@@ -937,28 +1056,58 @@ class TasksViewService:
             }
         )
 
-        full_by_day = (
-            self.context.tasks.lazy()
-            .select(pl.col("_id"))
-            .join(dates_lf, how="cross", maintain_order="right")
-            .sort(by=["_id", "date"])
-            .join(combined_by_day, on=["_id", "date"], how="left", coalesce=True)
+        tasks_lf = self.context.tasks.lazy().select(pl.col("_id"))
+
+        return (
+            tasks_lf.join(dates_lf, how="cross", maintain_order="right")
+            .sort(["_id", "date"])
+            .join(combined_sparse, on=["_id", "date"], how="left", coalesce=True)
             .with_columns(
-                pl.col("calls").fill_null(0),
-                pl.col("numComments").fill_null(0),
                 pl.col("visits").fill_null(0),
                 pl.col("dyf_no").fill_null(0),
                 pl.col("dyf_yes").fill_null(0),
+                pl.col("calls").fill_null(0),
             )
+        )
+
+    def write_temp_metrics_by_day(self, date_range: DateRange):
+        base = self._build_task_day_base(date_range)
+
+        num_comments_by_page = (
+            self.dependencies["feedback"]
+            .lf()
+            .filter(pl.col("date").is_between(date_range["start"], date_range["end"]))
+            .select("date", pl.col("url").cast(self.context.page_urls_enum))
+            .group_by("date", "url")
+            .agg(pl.len().alias("numComments"))
+        )
+
+        num_comments_by_task = (
+            self.context.urls_by_task.lazy()
+            .join(num_comments_by_page, on="url", how="inner", coalesce=True)
+            .group_by("task", "date")
+            .agg(pl.col("numComments").sum().alias("numComments"))
+            .rename({"task": "_id"})
+        )
+
+        full_by_day = (
+            base.join(
+                num_comments_by_task, on=["_id", "date"], how="left", coalesce=True
+            )
+            .with_columns(pl.col("numComments").fill_null(0))
             .with_columns(
-                pl.when(pl.col("visits") == pl.lit(0))
-                .then(pl.lit(None))
-                .otherwise((pl.col("numComments") / pl.col("visits")).round_sig_figs(8))
-                .alias("commentsPerVisit"),
-                pl.when(pl.col("visits") == pl.lit(0))
-                .then(pl.lit(None))
+                pl.when(pl.col("visits") == 0)
+                .then(None)
+                .otherwise((pl.col("dyf_no") / pl.col("visits")).round_sig_figs(8))
+                .alias("dyfNoPerVisit"),
+                pl.when(pl.col("visits") == 0)
+                .then(None)
                 .otherwise((pl.col("calls") / pl.col("visits")).round_sig_figs(8))
                 .alias("callsPerVisit"),
+                pl.when(pl.col("visits") == 0)
+                .then(None)
+                .otherwise((pl.col("numComments") / pl.col("visits")).round_sig_figs(8))
+                .alias("commentsPerVisit"),
             )
             .group_by("_id")
             .agg(pl.struct(pl.all().exclude("_id")).alias("metricsByDay"))
@@ -1022,4 +1171,313 @@ class TasksViewService:
             )
             .round(5)
             .alias("tmf_ranking_index")
+        )
+
+    def two_year_benchmark_window(self, period_start: datetime) -> DateRange:
+        bench_end = period_start - timedelta(days=1)
+        bench_start = period_start - relativedelta(years=2)
+        return {"start": bench_start, "end": bench_end}
+
+    def build_task_metrics_by_day(self, history_range: DateRange) -> pl.LazyFrame:
+        base = self._build_task_day_base(history_range).select(
+            "_id", "date", "visits", "dyf_no", "calls"
+        )
+
+        surveys_by_day = (
+            self.dependencies["gc_tss"]
+            .lf()
+            .select("date", "gc_task", "sampling_task", "able_to_complete")
+            .filter(
+                pl.col("date").is_between(history_range["start"], history_range["end"])
+            )
+            .filter(
+                pl.col("sampling_task") == "y",
+                pl.col("able_to_complete").is_in(["Yes", "No"]),
+            )
+            .group_by("gc_task", "date")
+            .agg(
+                pl.len().alias("survey"),
+                pl.col("able_to_complete").eq("Yes").sum().alias("survey_completed"),
+            )
+            .join(
+                self.context.tasks_by_gc_task.lazy(),
+                on="gc_task",
+                how="inner",
+                coalesce=True,
+            )
+            .explode("tasks")
+            .group_by("tasks", "date")
+            .agg(
+                pl.col("survey").sum(),
+                pl.col("survey_completed").sum(),
+            )
+            .rename({"tasks": "_id"})
+        )
+
+        return base.join(
+            surveys_by_day, on=["_id", "date"], how="left", coalesce=True
+        ).with_columns(
+            pl.col("survey").fill_null(0),
+            pl.col("survey_completed").fill_null(0),
+        )
+
+    def get_rate_exprs_for_scoring(self) -> list[pl.Expr]:
+        return [
+            pl.when(pl.col("visits") > 0)
+            .then(pl.col("calls") / pl.col("visits") * 100.0)
+            .otherwise(None)
+            .alias("calls_per_100"),
+
+            pl.when(pl.col("visits") > 0)
+            .then(pl.col("dyfNo") / pl.col("visits") * 1000.0)
+            .otherwise(None)
+            .alias("neg_feedback_per_1000"),
+
+            # fraction 0..1 (matches Excel sheet values like 0.80..1.00)
+            pl.when(pl.col("survey") > 0)
+            .then(pl.col("survey_completed") / pl.col("survey"))
+            .otherwise(None)
+            .alias("survey_success_rate"),
+        ]
+
+    def aggregate_period_from_by_day(
+        self,
+        by_day_lf: pl.LazyFrame,
+        *,
+        period_start: datetime,
+        period_end: datetime,
+    ) -> pl.LazyFrame:
+        return (
+            by_day_lf.filter(pl.col("date").is_between(period_start, period_end))
+            .group_by("_id")
+            .agg(
+                pl.col("visits").sum().alias("visits"),
+                pl.col("calls").sum().alias("calls"),
+                pl.col("dyf_no").sum().alias("dyfNo"),
+                pl.col("survey").sum().alias("survey"),
+                pl.col("survey_completed").sum().alias("survey_completed"),
+            )
+            .with_columns(*self.get_rate_exprs_for_scoring())
+        )
+
+    def score_period_rows(
+        self,
+        *,
+        period_lf: pl.LazyFrame,
+    ) -> pl.LazyFrame:
+        return (
+            self.score_with_performance_benchmarks(
+                period_lf=period_lf,
+                benchmark_bundle=self.get_performance_benchmark_bundle(),
+                score_col="performance_score",
+                insufficient_col="performance_insufficient_data",
+            )
+            .select(
+                "_id",
+                "performance_score",
+            )
+        )
+
+    def get_performance_scores_for_date_range(
+        self,
+        date_range: DateRange,
+    ) -> pl.LazyFrame:
+        period_start, period_end = date_range["start"], date_range["end"]
+        bench_range = self.two_year_benchmark_window(period_start)
+
+        history_range: DateRange = {
+            "start": bench_range["start"],
+            "end": period_end,
+        }
+
+        by_day_lf = self.build_task_metrics_by_day(history_range)
+
+        period_lf = self.aggregate_period_from_by_day(
+            by_day_lf,
+            period_start=period_start,
+            period_end=period_end,
+        )
+
+        scored_lf = self.score_period_rows(
+            period_lf=period_lf,
+        )
+
+        return scored_lf.select(
+            pl.col("_id"),
+            "performance_score",
+        )
+    
+    def build_task_metrics_by_month(
+        self,
+        history_range: DateRange,
+    ) -> pl.LazyFrame:
+        return (
+            self.build_task_metrics_by_day(history_range)
+            .with_columns(
+                pl.col("date").dt.truncate("1mo").alias("month")
+            )
+            .group_by(["_id", "month"])
+            .agg(
+                pl.col("visits").sum().alias("visits"),
+                pl.col("calls").sum().alias("calls"),
+                pl.col("dyf_no").sum().alias("dyfNo"),
+                pl.col("survey").sum().alias("survey"),
+                pl.col("survey_completed").sum().alias("survey_completed"),
+            )
+            .with_columns(*self.get_rate_exprs_for_scoring())
+        )
+    
+    def get_performance_benchmark_bundle(
+        self,
+        survey_benchmark: float = 0.80,
+        survey_ceiling: float = 1.00,
+        fixed_calls_bench: float = 8.62,
+        fixed_calls_ceil: float = 31.80,
+        fixed_feedback_bench: float = 5.91,
+        fixed_feedback_ceil: float = 21.54,
+    ) -> pl.LazyFrame:
+        return pl.LazyFrame(
+            {
+                "perf_bench_calls_per_100": [fixed_calls_bench],
+                "perf_ceil_calls_per_100": [fixed_calls_ceil],
+                "perf_bench_neg_feedback_per_1000": [fixed_feedback_bench],
+                "perf_ceil_neg_feedback_per_1000": [fixed_feedback_ceil],
+                "perf_bench_survey_success_rate": [survey_benchmark],
+                "perf_ceil_survey_success_rate": [survey_ceiling],
+            }
+        )
+    
+
+    def score_with_performance_benchmarks(
+        self,
+        *,
+        period_lf: pl.LazyFrame,
+        benchmark_bundle: pl.LazyFrame,
+        score_col: str,
+        status_col: str | None = None,
+        insufficient_col: str = "insufficient_data",
+        w_calls: float = 0.3,
+        w_feedback: float = 0.4,
+        w_survey: float = 0.3,
+    ) -> pl.LazyFrame:
+        lf = (
+            period_lf.join(benchmark_bundle, how="cross")
+            .with_columns(
+                *metric_flags_and_weights(
+                    w_calls=w_calls,
+                    w_feedback=w_feedback,
+                    w_survey=w_survey,
+                )
+            )
+            .with_columns(
+                (pl.col("_metric_count") < 2).alias(insufficient_col),
+            )
+            .with_columns(
+                perf_score_lower_better_0_100(
+                    pl.col("calls_per_100"),
+                    pl.col("perf_bench_calls_per_100"),
+                    pl.col("perf_ceil_calls_per_100"),
+                ).alias("_score_calls"),
+                perf_score_lower_better_0_100(
+                    pl.col("neg_feedback_per_1000"),
+                    pl.col("perf_bench_neg_feedback_per_1000"),
+                    pl.col("perf_ceil_neg_feedback_per_1000"),
+                ).alias("_score_feedback"),
+                perf_score_higher_better_0_100(
+                    pl.col("survey_success_rate"),
+                    pl.col("perf_bench_survey_success_rate"),
+                    pl.col("perf_ceil_survey_success_rate"),
+                ).alias("_score_survey"),
+            )
+            .with_columns(
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(
+                    weighted_raw_score_over_available(
+                        pl.col("_score_calls"),
+                        pl.col("_score_feedback"),
+                        pl.col("_score_survey"),
+                        w_calls=w_calls,
+                        w_feedback=w_feedback,
+                        w_survey=w_survey,
+                    )
+                    / 100.0
+                )
+                .alias(score_col),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("calls_per_100"))
+                .alias("calls_per_100"),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("neg_feedback_per_1000"))
+                .alias("neg_feedback_per_1000"),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("survey_success_rate"))
+                .alias("survey_success_rate"),
+            )
+        )
+
+        if status_col is not None:
+            lf = lf.with_columns(
+                ind_status(
+                    pl.when(pl.col(score_col).is_not_null())
+                    .then(pl.col(score_col) * 10.0)
+                    .otherwise(None)
+                ).alias(status_col)
+            )
+
+        return lf
+    
+    def get_seasonal_average_for_date_range(
+        self,
+        date_range: DateRange,
+    ) -> pl.LazyFrame:
+        historical_ranges: list[DateRange] = [
+            {
+                "start": date_range["start"] - relativedelta(years=1),
+                "end": date_range["end"] - relativedelta(years=1),
+            },
+            {
+                "start": date_range["start"] - relativedelta(years=2),
+                "end": date_range["end"] - relativedelta(years=2),
+            },
+        ]
+
+        history_range: DateRange = {
+            "start": historical_ranges[-1]["start"],
+            "end": historical_ranges[0]["end"],
+        }
+
+        by_day_lf = self.build_task_metrics_by_day(history_range)
+        benchmark_bundle = self.get_performance_benchmark_bundle()
+
+        seasonal_lfs: list[pl.LazyFrame] = []
+
+        for historical_range in historical_ranges:
+            period_lf = self.aggregate_period_from_by_day(
+                by_day_lf,
+                period_start=historical_range["start"],
+                period_end=historical_range["end"],
+            )
+
+            seasonal_lfs.append(
+                self.score_with_performance_benchmarks(
+                    period_lf=period_lf,
+                    benchmark_bundle=benchmark_bundle,
+                    score_col="seasonal_score",
+                    insufficient_col="seasonal_insufficient_data",
+                ).select(
+                    "_id",
+                    "seasonal_score",
+                )
+            )
+
+        return (
+            pl.concat(seasonal_lfs)
+            .group_by("_id")
+            .agg(
+                pl.col("seasonal_score").mean().alias("seasonal_average")
+            )
         )

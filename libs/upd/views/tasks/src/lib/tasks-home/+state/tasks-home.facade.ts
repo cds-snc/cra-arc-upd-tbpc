@@ -4,6 +4,7 @@ import { map } from 'rxjs';
 import * as TasksHomeActions from './tasks-home.actions';
 import * as TasksHomeSelectors from './tasks-home.selectors';
 import { I18nFacade } from '@dua-upd/upd/state';
+import { getTaskStatus } from '@dua-upd/utils-common';
 
 @Injectable()
 export class TasksHomeFacade {
@@ -27,6 +28,15 @@ export class TasksHomeFacade {
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
             : '',
+        status:
+          getTaskStatus(
+            row.performance_score,
+            row.historical_average,
+          ) || '',
+        change:
+          row.performance_score && row.performance_score !== 0
+            ? row.performance_score - (row.historical_average ?? 0)
+            : null,
       })),
     ),
   );
