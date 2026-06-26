@@ -1,9 +1,10 @@
 <upd-card [status]="healthTier()">
-  <ng-container *ngIf="hasData(); else emptyBlock">
+  @if (hasData()) {
     <div class="task-health">
       <div class="task-health-header">
-        <div class="health-label" [class]="'health-label ' + healthTier()">
+        <div class="health-label" [ngClass]="healthTier()">
           <span class="health-dot"></span>
+
           {{ healthBadge() }}
 
           <upd-modal
@@ -41,6 +42,7 @@
             <div class="confidence-row">
               <div>
                 <span class="confidence-badge">PS</span>
+
                 <strong [innerHTML]="psConfidenceTitle()"></strong>
 
                 <div class="confidence-subtitle">
@@ -52,6 +54,7 @@
             <div class="confidence-row">
               <div>
                 <span class="confidence-badge">HA</span>
+
                 <strong [innerHTML]="haConfidenceTitle()"></strong>
 
                 <div class="confidence-subtitle">
@@ -60,30 +63,35 @@
               </div>
             </div>
 
-            <div class="confidence-row" *ngIf="sha() != null">
-              <div>
-                <span class="confidence-badge">SHA</span>
-                <strong [innerHTML]="shaConfidenceTitle()"></strong>
+            @if (sha() !== null) {
+              <div class="confidence-row">
+                <div>
+                  <span class="confidence-badge">SHA</span>
 
-                <div class="confidence-subtitle">
-                  <span
-                    class="change-value"
-                    [ngClass]="getChangeClass(shaVariance()!)"
-                  >
-                    <span class="change-icon material-icons">
-                      {{ getArrow(shaVariance()!) }}
+                  <strong [innerHTML]="shaConfidenceTitle()"></strong>
+
+                  <div class="confidence-subtitle">
+                    <span
+                      class="change-value"
+                      [ngClass]="getChangeClass(shaVariance()!)"
+                    >
+                      <span class="change-icon material-icons">
+                        {{ getArrow(shaVariance()!) }}
+                      </span>
+
+                      {{
+                        getAbsChange(shaVariance()!) * 100
+                          | localeNumber: '1.0-1'
+                      }}
+
+                      {{ 'task-status-points-abbreviation' | translate }}
                     </span>
 
-                    {{
-                      getAbsChange(shaVariance()!) * 100 | localeNumber: '1.0-1'
-                    }}
-                    {{ 'task-status-points-abbreviation' | translate }}
-                  </span>
-
-                  {{ 'task-status-vs-seasonal-baseline' | translate }}
+                    {{ 'task-status-vs-seasonal-baseline' | translate }}
+                  </div>
                 </div>
               </div>
-            </div>
+            }
           </upd-accordion>
         </div>
 
@@ -115,6 +123,7 @@
                       {{
                         getAbsChange(rpsChange()) * 100 | localeNumber: '1.0-1'
                       }}
+
                       {{ 'task-status-points-abbreviation' | translate }}
                     </span>
                   </div>
@@ -160,26 +169,33 @@
                 </div>
               </div>
 
-              <div class="score-rank-row" *ngIf="tmfRank() && tmfTotalTasks()">
-                <span>
-                  {{ 'task-status-ranks' | translate }}
-                  <strong>{{ tmfRank() }}</strong>
+              @if (tmfRank() && tmfTotalTasks()) {
+                <div class="score-rank-row">
+                  <span>
+                    {{ 'task-status-ranks' | translate }}
 
-                  {{ 'task-status-of' | translate }}
-                  <strong>{{ tmfTotalTasks() }}</strong>
+                    <strong>{{ tmfRank() }}</strong>
 
-                  {{ 'task-status-scored-tasks' | translate }}
-                </span>
+                    {{ 'task-status-of' | translate }}
 
-                @if (tmfTopPercent() < 26) {
-                  <span class="score-rank-pill">
-                    {{
-                      'task-status-top-percent'
-                        | translate: { percent: tmfTopPercent() }
-                    }}
+                    <strong>{{ tmfTotalTasks() }}</strong>
+
+                    {{ 'task-status-scored-tasks' | translate }}
                   </span>
-                }
-              </div>
+
+                  @if (tmfTopPercent() < 26) {
+                    <span class="score-rank-pill">
+                      {{
+                        'task-status-top-percent'
+                          | translate
+                            : {
+                                percent: tmfTopPercent(),
+                              }
+                      }}
+                    </span>
+                  }
+                </div>
+              }
             </div>
 
             <div class="score-card score-card--stacked">
@@ -233,67 +249,67 @@
                 </div>
               </div>
 
-              <div class="score-stacked-row" *ngIf="sha() != null">
-                <div class="score-stacked-header">
-                  <div class="score-copy">
-                    <div>
-                      <span class="score-title">
-                        {{
-                          'task-status-seasonal-historic-average' | translate
-                        }}
-                      </span>
-
-                      <span class="score-badge">SHA</span>
-                    </div>
-
-                    <div class="score-subtitle">
-                      {{ 'task-status-same-period-prior-years' | translate }}
-                    </div>
-                  </div>
-
-                  <div class="score-value-block">
-                    <div class="score-value score-value--small">
-                      {{ sha()! | localePercent: '1.0-0' }}
-                    </div>
-
-                    <div class="score-change-row">
-                      <span
-                        class="change-value"
-                        [ngClass]="getChangeClass(shaVariance()!)"
-                      >
-                        <span class="change-icon material-icons">
-                          {{ getArrow(shaVariance()!) }}
+              @if (sha() !== null) {
+                <div class="score-stacked-row">
+                  <div class="score-stacked-header">
+                    <div class="score-copy">
+                      <div>
+                        <span class="score-title">
+                          {{
+                            'task-status-seasonal-historic-average' | translate
+                          }}
                         </span>
 
-                        {{
-                          getAbsChange(shaVariance()!) * 100
-                            | localeNumber: '1.0-1'
-                        }}
+                        <span class="score-badge">SHA</span>
+                      </div>
 
-                        {{ 'task-status-points-abbreviation' | translate }}
-                      </span>
+                      <div class="score-subtitle">
+                        {{ 'task-status-same-period-prior-years' | translate }}
+                      </div>
+                    </div>
+
+                    <div class="score-value-block">
+                      <div class="score-value score-value--small">
+                        {{ sha()! | localePercent: '1.0-0' }}
+                      </div>
+
+                      <div class="score-change-row">
+                        <span
+                          class="change-value"
+                          [ngClass]="getChangeClass(shaVariance()!)"
+                        >
+                          <span class="change-icon material-icons">
+                            {{ getArrow(shaVariance()!) }}
+                          </span>
+
+                          {{
+                            getAbsChange(shaVariance()!) * 100
+                              | localeNumber: '1.0-1'
+                          }}
+
+                          {{ 'task-status-points-abbreviation' | translate }}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="score-chart score-chart--compact">
-                  <upd-apex-score
-                    [title]="
-                      'task-status-seasonal-historic-average' | translate
-                    "
-                    [score]="sha()!"
-                    [ranges]="historicalRanges()"
-                  ></upd-apex-score>
+                  <div class="score-chart score-chart--compact">
+                    <upd-apex-score
+                      [title]="
+                        'task-status-seasonal-historic-average' | translate
+                      "
+                      [score]="sha()!"
+                      [ranges]="historicalRanges()"
+                    ></upd-apex-score>
+                  </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
         </div>
       </div>
     </div>
-  </ng-container>
-
-  <ng-template #emptyBlock>
+  } @else {
     <div class="task-health task-health--unscored">
       <div class="task-health-header">
         <div class="health-label grey">
@@ -332,7 +348,11 @@
               (availableMetricCount() === 1
                 ? 'task-status-unscored-message-singular'
                 : 'task-status-unscored-message-plural'
-              ) | translate: { count: availableMetricCount() }
+              )
+                | translate
+                  : {
+                      count: availableMetricCount(),
+                    }
             }}
           </p>
         </div>
@@ -367,5 +387,5 @@
         </div>
       </div>
     </div>
-  </ng-template>
+  }
 </upd-card>
