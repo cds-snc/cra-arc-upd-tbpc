@@ -12,12 +12,12 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
 
 @Component({
-    selector: 'upd-apex-bar',
-    templateUrl: './apex-bar.component.html',
-    styleUrls: ['./apex-bar.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [ApexStore],
-    standalone: false
+  selector: 'upd-apex-bar',
+  templateUrl: './apex-bar.component.html',
+  styleUrls: ['./apex-bar.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [ApexStore],
+  standalone: false,
 })
 export class ApexBarComponent implements OnInit {
   private i18n = inject(I18nFacade);
@@ -39,6 +39,8 @@ export class ApexBarComponent implements OnInit {
     showTitleTooltip: boolean;
     showMarker: boolean;
     shared: boolean;
+    showValueLabel?: boolean;
+    valueLabel?: string;
   }) {
     this.apexStore.showPercent(value);
   }
@@ -58,8 +60,16 @@ export class ApexBarComponent implements OnInit {
     this.apexStore.setXAxis(value);
   }
 
+  @Input() set xAxisTitle(value: string) {
+    this.apexStore.setXAxisTitle(value);
+  }
+
   @Input() set yAxis(value: string) {
     this.apexStore.setYAxis(value);
+  }
+
+  @Input() set showStatsAnnotations(value: boolean) {
+    this.apexStore.setShowStatsAnnotations(value);
   }
 
   @Input() set horizontal(value: {

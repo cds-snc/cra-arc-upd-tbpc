@@ -9,24 +9,56 @@
   @if ((error$ | async) === '' || (title$ | async) === '') {
     <upd-page-404></upd-page-404>
   } @else {
-    <h2 class="h3 pt-2 pb-2" data-i18n="task-title">
-      <span [translate]="'task'"></span>: {{ title$ | async }}
-      <span class="d-block h6 mt-1">
+    <div class="row align-items-start g-2 pt-2 pb-2">
+      <div class="col">
+        <h2 class="h3 mb-0" data-i18n="task-title">
+          <span [translate]="'task'"></span>: {{ title$ | async }}
+        </h2>
+
         @if (audience().length > 0) {
-          @for (d of audience(); track d) {
-            <span
-              class="badge mt-1 me-2"
-              [style.backgroundColor]="colours[d.index % colours.length]"
-              [style.color]="
-                getOptimalTextColour(colours[d.index % colours.length])
-              "
-            >
-              {{ d.text }}
-            </span>
-          }
+          <div class="h6 mt-1 mb-0">
+            @for (d of audience(); track d) {
+              <span
+                class="badge mt-1 me-2"
+                [style.backgroundColor]="colours[d.index % colours.length]"
+                [style.color]="
+                  getOptimalTextColour(colours[d.index % colours.length])
+                "
+              >
+                {{ d.text }}
+              </span>
+            }
+          </div>
         }
-      </span>
-    </h2>
+      </div>
+
+      @if (tmfRank(); as rank) {
+        @if (tmfTotalTasks(); as total) {
+          <div class="col-auto">
+            <span class="task-rank-card flex-shrink-0">
+              <span class="task-rank-card__label"> Task Rank </span>
+
+              <span class="task-rank-card__rank">
+                #{{ rank }} / {{ total }}
+              </span>
+
+              <span class="task-rank-card__label">
+                @if (rank <= 50) {
+                  <span
+                    class="material-icons task-rank-card__icon"
+                    aria-hidden="true"
+                  >
+                    star
+                  </span>
+                  Top Task
+                }
+              </span>
+            </span>
+          </div>
+        }
+      }
+    </div>
+
     <upd-project-header
       [data]="(projects$ | async) || []"
       [config]="projectsCol"

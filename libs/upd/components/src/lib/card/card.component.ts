@@ -5,7 +5,16 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 @Component({
   selector: 'upd-card',
   template: `
-    <div class="card pt-2" [ngClass]="[cardHeight, styleClass]" tabindex="0">
+    <div
+      class="card pt-2"
+      [ngClass]="[
+        status ? 'status-card' : '',
+        status ? 'status-' + status : '',
+        cardHeight,
+        styleClass,
+      ]"
+      tabindex="0"
+    >
       <div class="card-body card-pad pt-2 h-100">
         <div class="d-flex justify-content-between">
           @if (title !== '') {
@@ -45,6 +54,7 @@ import type { ColumnConfig } from '@dua-upd/types-common';
       </div>
     </div>
   `,
+  styleUrls: ['./card.component.css'],
   providers: [NgbPopoverConfig],
   standalone: false,
 })
@@ -62,6 +72,7 @@ export class CardComponent {
   @Input() modal = '';
   @Input() modalSize: 'xl' | 'lg' | 'md' | 'sm' = 'md';
   @Input() styleClass = '';
+  @Input() status?: 'green' | 'yellow' | 'blue' | 'red' | 'grey';
 
   constructor() {
     const popoverConfig = inject(NgbPopoverConfig);

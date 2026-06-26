@@ -171,20 +171,6 @@ export class TasksViewService extends DbViewNew<
     };
     const taskFilter = { ...dateFilter, tasks: task._id };
 
-    const existingTaskView = await this.findOne<Pick<TasksView,
-      'performance_score' | 'individual_score_pct' | 'individual_history'
-    >>(
-      {
-        dateRange,
-        'task._id': task._id,
-      },
-      {
-        performance_score: 1,
-        individual_score_pct: 1,
-        individual_history: 1,
-      },
-    );
-
     const [
       topLevelMetrics,
       aaSearchterms,
@@ -281,9 +267,6 @@ export class TasksViewService extends DbViewNew<
         ],
         task,
       ),
-      performance_score: existingTaskView?.performance_score,
-      individual_score_pct: existingTaskView?.individual_score_pct,
-      individual_history: existingTaskView?.individual_history ?? [],
       ...topLevelMetrics,
       aa_searchterms: aaSearchterms,
       gsc_searchterms: gscSearchterms,
@@ -649,6 +632,8 @@ export class TasksViewService extends DbViewNew<
       _id: string;
       callsPer100Visits: number;
       dyfNoPer1000Visits: number;
+      performanceScore: number;
+      individualScore: number;
       title: string;
       group: string;
       subgroup: string;
@@ -693,6 +678,9 @@ export class TasksViewService extends DbViewNew<
             },
           },
         },
+        performanceScore: '$performance_score',
+        historicalAverage: '$historical_average',
+        seasonalAverage: '$seasonal_average',
         title: '$task.title',
         group: '$task.group',
         subgroup: '$task.subgroup',
@@ -747,6 +735,9 @@ export class TasksViewService extends DbViewNew<
       'callsPer100Visits',
       'dyfNoPer1000Visits',
       'numComments',
+      'performanceScore',
+      'historical_average',
+      'seasonal_average',
     ] satisfies (keyof MetricsType)[];
 
     const metricsWithPercentChange = getSelectedPercentChange(
@@ -758,6 +749,9 @@ export class TasksViewService extends DbViewNew<
     const differenceProps = [
       'callsPer100Visits',
       'dyfNoPer1000Visits',
+      'performanceScore',
+      'historical_average',
+      'seasonal_average',
     ] satisfies (keyof MetricsType)[];
 
     const metricsWithComparisons = getSelectedAbsoluteChange(
@@ -829,7 +823,10 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: metricsWithComparisons.dyfYes,
-      individual_history: metricsWithComparisons.individual_history ?? [],
+      individualHistory: metricsWithComparisons.individualHistory ?? [],
+      performanceScore: metricsWithComparisons.performanceScore,
+      historicalAverage: metricsWithComparisons.historical_average,
+      seasonalAverage: metricsWithComparisons.seasonal_average,
     };
 
     const comparisonDateRangeData = {
@@ -848,7 +845,10 @@ export class TasksViewService extends DbViewNew<
         }),
       ),
       dyfYes: previousMetrics.dyfYes,
-      individual_history: previousMetrics.individual_history ?? [],
+      individualHistory: previousMetrics.individualHistory ?? [],
+      performanceScore: previousMetrics.performanceScore,
+      historicalAverage: metricsWithComparisons.historical_average,
+      seasonalAverage: metricsWithComparisons.seasonal_average,
     };
 
     const callsByTopicPercentChange = getArraySelectedPercentChange(
@@ -903,14 +903,10 @@ export class TasksViewService extends DbViewNew<
       title: string;
       tmf_ranking_index: number;
       performance_score: number | null;
-      individual_score_pct: number | null;
-      individual_history: {
-        month: Date;
-        individual_score_pct: number | null;
-        calls_per_100: number | null;
-        neg_feedback_per_1000: number | null;
-        survey_success_rate: number | null;
-      }[];
+      historical_average: number | null;
+      seasonal_average: number | null;
+      performance_score_status: string;
+      individual_status: string;
       cops: boolean;
       wos_cops: boolean;
       group: string;
@@ -943,8 +939,10 @@ export class TasksViewService extends DbViewNew<
       title: '$task.title',
       tmf_ranking_index: 1,
       performance_score: 1,
-      individual_score_pct: 1,
-      individual_history: 1,
+      historical_average: 1,
+      seasonal_average: 1,
+      performance_score_status: 1,
+      individual_status: 1,
       cops: 1,
       wos_cops: 1,
       group: '$task.group',
@@ -1039,6 +1037,9 @@ export class TasksViewService extends DbViewNew<
       'dyf_no_per_1000_visits',
       'survey',
       'survey_completed',
+      'historical_average',
+      'seasonal_average',
+      'performance_score',
     ] satisfies (keyof ProjectedTask)[];
 
     const dataWithPercentChange = getArraySelectedPercentChange(
@@ -1058,6 +1059,9 @@ export class TasksViewService extends DbViewNew<
         'dyf_no',
         'survey',
         'survey_completed',
+        'historical_average',
+        'seasonal_average',
+        'performance_score',
       ],
       '_id',
       dataWithPercentChange,

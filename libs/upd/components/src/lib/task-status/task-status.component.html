@@ -1,0 +1,371 @@
+<upd-card [status]="healthTier()">
+  <ng-container *ngIf="hasData(); else emptyBlock">
+    <div class="task-health">
+      <div class="task-health-header">
+        <div class="health-label" [class]="'health-label ' + healthTier()">
+          <span class="health-dot"></span>
+          {{ healthBadge() }}
+
+          <upd-modal
+            [modalTitle]="'task-status-how-health-calculated' | translate"
+            modalSize="xl"
+          >
+            <upd-zone-map
+              [relative]="performanceBand()"
+              [historical]="trendBand()"
+              [relativeRanges]="relativeRanges()"
+              [historicalRanges]="historicalRanges()"
+            ></upd-zone-map>
+          </upd-modal>
+        </div>
+
+        <div class="unscored-header-divider" aria-hidden="true"></div>
+
+        <div class="health-action-pill" [ngClass]="healthTier()">
+          {{ healthNote() }}
+        </div>
+      </div>
+
+      <div class="row g-4 align-items-start">
+        <div class="col-lg-7">
+          <div
+            class="health-title"
+            [ngClass]="healthTier()"
+            [innerHTML]="healthTitle()"
+          ></div>
+
+          <upd-accordion
+            [title]="'task-status-why-confident' | translate"
+            [expanded]="true"
+          >
+            <div class="confidence-row">
+              <div>
+                <span class="confidence-badge">PS</span>
+                <strong [innerHTML]="psConfidenceTitle()"></strong>
+
+                <div class="confidence-subtitle">
+                  {{ 'task-status-based-all-tasks' | translate }}
+                </div>
+              </div>
+            </div>
+
+            <div class="confidence-row">
+              <div>
+                <span class="confidence-badge">HA</span>
+                <strong [innerHTML]="haConfidenceTitle()"></strong>
+
+                <div class="confidence-subtitle">
+                  {{ 'task-status-based-24-month-history' | translate }}
+                </div>
+              </div>
+            </div>
+
+            <div class="confidence-row" *ngIf="sha() != null">
+              <div>
+                <span class="confidence-badge">SHA</span>
+                <strong [innerHTML]="shaConfidenceTitle()"></strong>
+
+                <div class="confidence-subtitle">
+                  <span
+                    class="change-value"
+                    [ngClass]="getChangeClass(shaVariance()!)"
+                  >
+                    <span class="change-icon material-icons">
+                      {{ getArrow(shaVariance()!) }}
+                    </span>
+
+                    {{
+                      getAbsChange(shaVariance()!) * 100 | localeNumber: '1.0-1'
+                    }}
+                    {{ 'task-status-points-abbreviation' | translate }}
+                  </span>
+
+                  {{ 'task-status-vs-seasonal-baseline' | translate }}
+                </div>
+              </div>
+            </div>
+          </upd-accordion>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="overview-scores">
+            <div class="score-card score-card--performance">
+              <div class="score-card-main">
+                <div class="score-copy">
+                  <div>
+                    <span class="score-title">
+                      {{ 'task-status-performance-score' | translate }}
+                    </span>
+
+                    <span class="score-badge">PS</span>
+                  </div>
+
+                  <div class="score-subtitle">
+                    {{ 'task-status-current-period-comparison' | translate }}
+                    ·
+
+                    <span
+                      class="change-value"
+                      [ngClass]="getChangeClass(rpsChange())"
+                    >
+                      <span class="change-icon material-icons">
+                        {{ getArrow(rpsChange()) }}
+                      </span>
+
+                      {{
+                        getAbsChange(rpsChange()) * 100 | localeNumber: '1.0-1'
+                      }}
+                      {{ 'task-status-points-abbreviation' | translate }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="score-value">
+                  {{ ps() | localePercent: '1.0-0' }}
+                </div>
+              </div>
+
+              <div class="score-chart">
+                <upd-apex-score
+                  [title]="'task-status-performance-score' | translate"
+                  [score]="ps()"
+                  [ranges]="relativeRanges()"
+                ></upd-apex-score>
+              </div>
+
+              <div class="score-detail-block">
+                <div class="score-detail-title">
+                  {{ 'task-status-in-this-score' | translate }}
+                </div>
+
+                <div class="score-metric-list">
+                  @for (metric of scoreMetrics(); track metric.label) {
+                    <div
+                      class="score-metric-item"
+                      [ngClass]="{
+                        'score-metric-item--included': metric.included,
+                        'score-metric-item--excluded': !metric.included,
+                      }"
+                    >
+                      <span
+                        class="score-metric-icon material-icons"
+                        aria-hidden="true"
+                      >
+                        {{ metric.included ? 'check_circle' : 'cancel' }}
+                      </span>
+
+                      <span>{{ metric.label }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="score-rank-row" *ngIf="tmfRank() && tmfTotalTasks()">
+                <span>
+                  {{ 'task-status-ranks' | translate }}
+                  <strong>{{ tmfRank() }}</strong>
+
+                  {{ 'task-status-of' | translate }}
+                  <strong>{{ tmfTotalTasks() }}</strong>
+
+                  {{ 'task-status-scored-tasks' | translate }}
+                </span>
+
+                @if (tmfTopPercent() < 26) {
+                  <span class="score-rank-pill">
+                    {{
+                      'task-status-top-percent'
+                        | translate: { percent: tmfTopPercent() }
+                    }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="score-card score-card--stacked">
+              <div class="score-stacked-row">
+                <div class="score-stacked-header">
+                  <div class="score-copy">
+                    <div>
+                      <span class="score-title">
+                        {{ 'task-status-historical-average' | translate }}
+                      </span>
+
+                      <span class="score-badge">HA</span>
+                    </div>
+
+                    <div class="score-subtitle">
+                      {{ 'task-status-24-month-average' | translate }}
+                    </div>
+                  </div>
+
+                  <div class="score-value-block">
+                    <div class="score-value score-value--small">
+                      {{ ha() | localePercent: '1.0-0' }}
+                    </div>
+
+                    <div class="score-change-row">
+                      <span
+                        class="change-value"
+                        [ngClass]="getChangeClass(historicalVariance())"
+                      >
+                        <span class="change-icon material-icons">
+                          {{ getArrow(historicalVariance()) }}
+                        </span>
+
+                        {{
+                          getAbsChange(historicalVariance()) * 100
+                            | localeNumber: '1.0-1'
+                        }}
+
+                        {{ 'task-status-points-abbreviation' | translate }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="score-chart score-chart--compact">
+                  <upd-apex-score
+                    [title]="'task-status-historical-average' | translate"
+                    [score]="ha()"
+                    [ranges]="historicalRanges()"
+                  ></upd-apex-score>
+                </div>
+              </div>
+
+              <div class="score-stacked-row" *ngIf="sha() != null">
+                <div class="score-stacked-header">
+                  <div class="score-copy">
+                    <div>
+                      <span class="score-title">
+                        {{
+                          'task-status-seasonal-historic-average' | translate
+                        }}
+                      </span>
+
+                      <span class="score-badge">SHA</span>
+                    </div>
+
+                    <div class="score-subtitle">
+                      {{ 'task-status-same-period-prior-years' | translate }}
+                    </div>
+                  </div>
+
+                  <div class="score-value-block">
+                    <div class="score-value score-value--small">
+                      {{ sha()! | localePercent: '1.0-0' }}
+                    </div>
+
+                    <div class="score-change-row">
+                      <span
+                        class="change-value"
+                        [ngClass]="getChangeClass(shaVariance()!)"
+                      >
+                        <span class="change-icon material-icons">
+                          {{ getArrow(shaVariance()!) }}
+                        </span>
+
+                        {{
+                          getAbsChange(shaVariance()!) * 100
+                            | localeNumber: '1.0-1'
+                        }}
+
+                        {{ 'task-status-points-abbreviation' | translate }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="score-chart score-chart--compact">
+                  <upd-apex-score
+                    [title]="
+                      'task-status-seasonal-historic-average' | translate
+                    "
+                    [score]="sha()!"
+                    [ranges]="historicalRanges()"
+                  ></upd-apex-score>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-template #emptyBlock>
+    <div class="task-health task-health--unscored">
+      <div class="task-health-header">
+        <div class="health-label grey">
+          <span class="health-dot"></span>
+
+          {{ 'task-status-badge-unscored' | translate }}
+
+          <upd-modal
+            [modalTitle]="'task-status-how-health-calculated' | translate"
+            modalSize="xl"
+          >
+            <upd-zone-map
+              [relative]="performanceBand()"
+              [historical]="trendBand()"
+              [relativeRanges]="relativeRanges()"
+              [historicalRanges]="historicalRanges()"
+            ></upd-zone-map>
+          </upd-modal>
+        </div>
+
+        <div class="unscored-header-divider" aria-hidden="true"></div>
+
+        <div class="health-action-pill health-action-pill--unscored">
+          {{ 'task-status-no-score-insufficient-data' | translate }}
+        </div>
+      </div>
+
+      <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+          <div class="unscored-title">
+            {{ 'task-status-performance-score-unavailable' | translate }}
+          </div>
+
+          <p class="unscored-message">
+            {{
+              (availableMetricCount() === 1
+                ? 'task-status-unscored-message-singular'
+                : 'task-status-unscored-message-plural'
+              ) | translate: { count: availableMetricCount() }
+            }}
+          </p>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="unscored-sources">
+            <div class="unscored-sources-title">
+              {{ 'task-status-data-sources' | translate }}
+            </div>
+
+            <div class="score-metric-list">
+              @for (metric of scoreMetrics(); track metric.label) {
+                <div
+                  class="score-metric-item"
+                  [ngClass]="{
+                    'score-metric-item--included': metric.included,
+                    'score-metric-item--excluded': !metric.included,
+                  }"
+                >
+                  <span
+                    class="score-metric-icon material-icons"
+                    aria-hidden="true"
+                  >
+                    {{ metric.included ? 'check_circle' : 'cancel' }}
+                  </span>
+
+                  <span>{{ metric.label }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</upd-card>

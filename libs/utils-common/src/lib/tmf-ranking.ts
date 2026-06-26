@@ -1,4 +1,5 @@
 import { isNullish } from './utils-common';
+export type TaskStatus = 'Healthy' | 'Watch' | 'Improving' | 'Needs action' | '';
 
 const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
 
@@ -215,4 +216,44 @@ export function addTmfScoresToTasks<T extends TaskRankingParams>(
       ...t,
       tmf_rank: i + 1,
     }));
+}
+
+export function getTaskStatus(
+  rps?: number | null,
+  hps?: number | null,
+): TaskStatus {
+  if (
+    rps == null ||
+    hps == null ||
+    rps === 0 ||
+    hps === 0 ||
+    Number.isNaN(rps) ||
+    Number.isNaN(hps)
+  ) {
+    return '';
+  }
+
+  const variance = rps - hps;
+
+  if (rps >= 0.5 && variance >= -0.05) {
+    return 'Healthy';
+  }
+
+  if (rps >= 0.5) {
+    return 'Watch';
+  }
+
+  if (rps >= 0.36 && variance > 0.05) {
+    return 'Improving';
+  }
+
+  if (rps >= 0.36 && variance >= -0.05) {
+    return 'Watch';
+  }
+
+  if (rps < 0.36 && variance > 0.05) {
+    return 'Improving';
+  }
+
+  return 'Needs action';
 }

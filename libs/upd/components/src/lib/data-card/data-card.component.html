@@ -1,9 +1,11 @@
 <upd-card
   [title]="title | translate"
   [titleTooltip]="tooltip | translate"
+  [modal]="modal"
   [h]="100"
+  [ngClass]="cardStatusClass"
 >
-  <div class="container-fluid p-0">
+ <div class="container-fluid p-0">
     <div class="row row-no-gutters">
       @if (current) {
         <div class="col">

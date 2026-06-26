@@ -1,0 +1,22 @@
+<div class="score-chart">
+  <apx-chart
+    [series]="chartOptions().series!"
+    [chart]="chartOptions().chart!"
+    [annotations]="chartOptions().annotations!"
+    [xaxis]="chartOptions().xaxis!"
+    [yaxis]="chartOptions().yaxis!"
+    [dataLabels]="chartOptions().dataLabels!"
+    [plotOptions]="chartOptions().plotOptions!"
+    [tooltip]="chartOptions().tooltip!"
+    [legend]="chartOptions().legend!"
+    [grid]="chartOptions().grid!"
+    [states]="chartOptions().states!"
+    [colors]="chartOptions().colors!"
+    [fill]="chartOptions().fill!"
+  ></apx-chart>
+
+  <div
+    class="score-marker"
+    [style.left.%]="scorePercent()"
+  ></div>
+</div>

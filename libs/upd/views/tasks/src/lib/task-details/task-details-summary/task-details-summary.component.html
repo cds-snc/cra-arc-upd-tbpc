@@ -1,4 +1,43 @@
 <div class="container-fluid my-4 gx-0">
+  <upd-task-status
+    [ps]="(performanceScore$ | async) || 0"
+    [ha]="(individualScore$ | async) || 0"
+    [sha]="(seasonalHistoricAverage$ | async) || 0"
+    [rpsChange]="(performanceScoreDifference$ | async) || 0"
+    [hpsChange]="(individualScoreDifference$ | async) || 0"
+    [tmfRank]="(perfRank$ | async) || 0"
+    [tmfTotalTasks]="(perfTotalTasks$ | async) || 0"
+    [calls]="(callPerVisits$ | async) || 0"
+    [feedback]="(currentKpiFeedback$ | async) || 0"
+    [survey]="(currentSurvey$ | async) || 0"
+  ></upd-task-status>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row g-3 align-items-stretch">
+    <div class="col-lg-12 d-flex">
+      <upd-apex-bar
+        class="flex-fill w-100"
+        [title]="'Historical performance (24 month period)' | translate"
+        [series]="(individualHistory$ | async) || []"
+        [yAxis]="'Percent' | translate"
+        [xAxis]="(individualHistoryXAxis$ | async) || []"
+        [tableCols]="individualHistoryTableCols"
+        [table]="individualHistoryChart$ | async"
+        [showPercent]="{
+          isPercent: true,
+          showTitleTooltip: true,
+          showMarker: true,
+          shared: true,
+          showValueLabel: false,
+        }"
+        [showStatsAnnotations]="true"
+      ></upd-apex-bar>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
   <div class="row">
     <div class="col-lg-4 col-sm-12">
       <upd-data-card
@@ -95,11 +134,18 @@
         titleTooltip="{{ 'tooltip-d3-dyfwywlf' | translate }}"
         [series]="(dyfChartApex$ | async) || []"
         [yAxis]="'Date range' | translate"
-        [xAxis]="[ (fullDateRangeLabel$ | async) || [], (fullComparisonDateRangeLabel$ | async) || [] ]"
+        [xAxis]="[
+          (fullDateRangeLabel$ | async) || [],
+          (fullComparisonDateRangeLabel$ | async) || [],
+        ]"
         [tableCols]="dyfTableCols"
         [table]="dyfChart$ | async"
         [horizontal]="{ isHorizontal: true, colorDistributed: false }"
-        [stacked]="{ isStacked: true, isStacked100: true, hasDataLabels: true }"
+        [stacked]="{
+          isStacked: true,
+          isStacked100: true,
+          hasDataLabels: true,
+        }"
       ></upd-apex-bar>
     </div>
   </div>

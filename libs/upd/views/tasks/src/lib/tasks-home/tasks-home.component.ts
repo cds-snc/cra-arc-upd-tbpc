@@ -4,11 +4,18 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import type { UnwrapObservable } from '@dua-upd/utils-common';
 import { TasksHomeFacade } from './+state/tasks-home.facade';
 
+const taskStatusCategories = [
+  'Healthy',
+  'Watch',
+  'Improving',
+  'Needs action',
+] as const;
+
 @Component({
-    selector: 'upd-tasks-home',
-    templateUrl: './tasks-home.component.html',
-    styleUrls: ['./tasks-home.component.css'],
-    standalone: false
+  selector: 'upd-tasks-home',
+  templateUrl: './tasks-home.component.html',
+  styleUrls: ['./tasks-home.component.css'],
+  standalone: false,
 })
 export class TasksHomeComponent implements OnInit {
   private readonly tasksHomeService = inject(TasksHomeFacade);
@@ -125,7 +132,8 @@ export class TasksHomeComponent implements OnInit {
       field: 'user_type',
       header: 'Audience',
       translate: true,
-      frozen: true,
+      hide: true,
+      group: 'categories',
     },
     {
       field: 'topic',
@@ -167,6 +175,65 @@ export class TasksHomeComponent implements OnInit {
       group: 'tab-webtraffic',
     },
     {
+      field: 'status',
+      header: 'Status',
+      group: 'tab-taskperformance',
+      type: 'label',
+      typeParam: 'taskStatus',
+      filterConfig: {
+        type: 'category',
+        categories: taskStatusCategories.map((status) => ({
+          name: status,
+          value: status,
+        })),
+      },
+      translate: false,
+      frozen: true,
+    },
+    {
+      field: 'performance_score',
+      header: 'rps',
+      pipe: 'percent',
+      group: 'tab-taskperformance',
+      tooltip: 'rps-tooltip',
+      hide: true,
+    },
+    {
+      field: 'performance_score_percent_change',
+      header: 'rps-change',
+      pipe: 'percent',
+      pipeParam: '1.0-2',
+      upGoodDownBad: true,
+      indicator: true,
+      useArrows: true,
+      showTextColours: true,
+      secondaryField: {
+        field: 'performance_score_difference',
+        pipe: 'number',
+        pipeParam: '1.0-2',
+      },
+      hide: true,
+      width: '175px',
+      group: 'tab-taskperformance',
+    },
+    {
+      field: 'historical_average',
+      header: 'hps',
+      pipe: 'percent',
+      hide: true,
+      group: 'tab-taskperformance',
+      tooltip: 'hps-tooltip',
+    },
+    {
+      field: 'change',
+      header: 'Change vs. Expected',
+      pipe: 'percent',
+      pipeParam: '1.0',
+      hide: true,
+      width: '175px',
+      group: 'tab-taskperformance',
+    },
+    {
       field: 'calls',
       header: 'Call volume',
       pipe: 'number',
@@ -191,7 +258,7 @@ export class TasksHomeComponent implements OnInit {
       width: '120px',
       group: 'tab-calldrivers',
     },
-        {
+    {
       field: 'calls_per_100_visits',
       header: 'kpi-calls-per-100-title',
       pipe: 'number',
@@ -301,6 +368,7 @@ export class TasksHomeComponent implements OnInit {
       pipe: 'percent',
       tooltip: 'tooltip-self-reported-success',
       group: 'tab-gctasks',
+      hide: true,
     },
     {
       field: 'survey_completed_percent_change',

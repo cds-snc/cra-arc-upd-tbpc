@@ -115,10 +115,13 @@ export class TasksView implements ITaskView {
   tmf_ranking_index: number;
 
   @Prop({ type: Number })
-  individual_score_pct?: number;
+  historical_average?: number;
 
   @Prop({ type: Number })
   performance_score?: number;
+
+  @Prop({ type: Number })
+  seasonal_average?: number;
 
   @Prop({
     type: [
@@ -132,9 +135,9 @@ export class TasksView implements ITaskView {
     ],
     _id: false,
   })
-  individual_history?: {
+  individualHistory?: {
     month: Date;
-    individual_score_pct: number;
+    individual_score: number;
     calls_per_100: number;
     neg_feedback_per_1000: number;
     survey_success_rate: number;

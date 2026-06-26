@@ -1,0 +1,298 @@
+<div class="zone-map container-fluid px-2">
+  <div class="row">
+    <div class="zone-explainer mb-3">
+      <div class="zone-explainer-section">
+        <h6>
+          {{ 'task-status-performance-score' | translate }}
+        </h6>
+
+        <p
+          [innerHTML]="
+            'zone-map-performance-description' | translate
+          "
+        ></p>
+
+        <p class="mb-2">
+          {{ 'zone-map-performance-calculated-using' | translate }}
+        </p>
+
+        <ul>
+          <li>
+            <strong>
+              {{ 'zone-map-calls-per-100-visits' | translate }}
+            </strong>
+            <span>
+              {{ 'zone-map-calls-target' | translate }}
+            </span>
+          </li>
+
+          <li>
+            <strong>
+              {{
+                'zone-map-negative-feedback-per-1000-visits'
+                  | translate
+              }}
+            </strong>
+            <span>
+              {{ 'zone-map-feedback-target' | translate }}
+            </span>
+          </li>
+
+          <li>
+            <strong>
+              {{ 'zone-map-survey-success-rate' | translate }}
+            </strong>
+            <span>
+              {{ 'zone-map-survey-target' | translate }}
+            </span>
+          </li>
+        </ul>
+
+        <p>
+          {{ 'zone-map-two-metrics-description' | translate }}
+        </p>
+
+        <p>
+          {{ 'zone-map-combined-score-description' | translate }}
+        </p>
+
+        <div class="zone-score-guide">
+          <div>
+            <strong>50%</strong>
+            <span>
+              {{ 'zone-map-meeting-targets' | translate }}
+            </span>
+          </div>
+
+          <div>
+            <strong>
+              {{ 'zone-map-above-50' | translate }}
+            </strong>
+            <span>
+              {{ 'zone-map-outperforming-targets' | translate }}
+            </span>
+          </div>
+
+          <div>
+            <strong>
+              {{ 'zone-map-below-50' | translate }}
+            </strong>
+            <span>
+              {{ 'zone-map-not-meeting-targets' | translate }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-explainer-section">
+        <h6>
+          {{
+            'zone-map-historical-and-seasonal-average'
+              | translate
+          }}
+        </h6>
+
+        <p
+          [innerHTML]="
+            'zone-map-historical-average-description' | translate
+          "
+        ></p>
+
+        <p>
+          {{ 'zone-map-historical-calculation' | translate }}
+        </p>
+
+        <p>
+          {{ 'zone-map-seasonal-change-description' | translate }}
+        </p>
+
+        <p
+          [innerHTML]="
+            'zone-map-seasonal-average-description' | translate
+          "
+        ></p>
+      </div>
+
+      <upd-accordion
+        [title]="'zone-map-additional-tips' | translate"
+      >
+        <div class="zone-tip">
+          <strong>
+            {{ 'zone-map-tip-other-tasks-title' | translate }}
+          </strong>
+
+          <p>
+            {{ 'zone-map-tip-other-tasks-text' | translate }}
+          </p>
+        </div>
+
+        <div class="zone-tip">
+          <strong>
+            {{ 'zone-map-tip-period-title' | translate }}
+          </strong>
+
+          <p
+            [innerHTML]="
+              'zone-map-tip-period-text' | translate
+            "
+          ></p>
+        </div>
+
+        <div class="zone-tip">
+          <strong>
+            {{ 'zone-map-tip-normal-title' | translate }}
+          </strong>
+
+          <p
+            [innerHTML]="
+              'zone-map-tip-normal-text' | translate
+            "
+          ></p>
+        </div>
+      </upd-accordion>
+    </div>
+
+    <upd-accordion
+      [title]="'zone-map-task-health-matrix' | translate"
+    >
+      <div class="zone-map-title fw-bold mb-1">
+        {{
+          'zone-map-current-vs-historical-average'
+            | translate
+        }}
+      </div>
+
+      <p class="zone-map-subtitle mb-3">
+        {{ 'zone-map-matrix-description' | translate }}
+      </p>
+
+      <div
+        class="zone-bootstrap-grid"
+        role="grid"
+        [attr.aria-label]="
+          'zone-map-grid-aria-label' | translate
+        "
+      >
+        <div aria-hidden="true"></div>
+        <div aria-hidden="true"></div>
+
+        @for (column of columns; track column) {
+          <div
+            class="zone-column-header d-flex flex-column align-items-center justify-content-center"
+            role="columnheader"
+          >
+            <div>{{ getHistoricalName(column) }}</div>
+            <small>{{ getHistoricalRangeLabel(column) }}</small>
+          </div>
+        }
+
+        <div
+          class="zone-axis-label d-flex align-items-center justify-content-center"
+          aria-hidden="true"
+        >
+          <div>
+            {{ 'task-status-performance-score' | translate }}
+          </div>
+        </div>
+
+        @for (row of rows; track row) {
+          <div
+            class="zone-row-header d-flex flex-column align-items-center justify-content-center"
+            [ngClass]="getRowClass(row)"
+            role="rowheader"
+          >
+            <div>{{ getRelativeName(row) }}</div>
+            <small>{{ getRelativeRangeLabel(row) }}</small>
+          </div>
+
+          @for (column of columns; track column) {
+            <div
+              class="zone-cell d-flex flex-column align-items-center justify-content-center"
+              [ngClass]="[
+                getStatus(row, column).className,
+                isActive(row, column) ? 'active' : '',
+              ]"
+              role="gridcell"
+              tabindex="0"
+              [attr.title]="
+                'zone-map-cell-title'
+                  | translate
+                    : {
+                        row: getRelativeName(row),
+                        column: getHistoricalName(column),
+                      }
+              "
+              [attr.aria-current]="
+                isActive(row, column) ? 'true' : null
+              "
+              [attr.aria-label]="
+                'zone-map-cell-aria-label'
+                  | translate
+                    : {
+                        row: getRelativeName(row),
+                        rowRange: getRelativeRangeLabel(row),
+                        column: getHistoricalName(column),
+                        columnRange:
+                          getHistoricalRangeLabel(column),
+                        status:
+                          (getStatus(row, column).labelKey
+                            | translate),
+                        current: isActive(row, column)
+                          ? ('zone-map-current-task-status'
+                            | translate)
+                          : '',
+                      }
+              "
+            >
+              <div
+                class="zone-status-pill text-center fw-bold"
+                [ngClass]="getStatus(row, column).className"
+                aria-hidden="true"
+              >
+                {{ getStatus(row, column).labelKey | translate }}
+              </div>
+
+              <div
+                class="zone-cell-subtitle mt-2"
+                aria-hidden="true"
+              >
+                {{ getRelativeName(row) }} +
+                {{ getHistoricalName(column) }}
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div
+        class="zone-legend zone-legend--horizontal mt-3"
+        [attr.aria-label]="'zone-map-status-legend' | translate"
+      >
+        <div class="zone-legend-title fw-bold">
+          {{ 'zone-map-status-legend' | translate }}
+        </div>
+
+        <div
+          class="d-flex flex-wrap align-items-center justify-content-center gap-3"
+        >
+          @for (item of legend; track item.labelKey) {
+            <div
+              class="zone-legend-item d-flex align-items-center gap-2"
+            >
+              <div
+                class="zone-legend-pill text-center fw-bold flex-shrink-0"
+                [ngClass]="item.className"
+              >
+                {{ item.labelKey | translate }}
+              </div>
+
+              <div class="zone-legend-note">
+                {{ item.noteKey | translate }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </upd-accordion>
+  </div>
+</div>

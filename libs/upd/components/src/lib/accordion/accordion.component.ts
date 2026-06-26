@@ -1,12 +1,19 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    selector: 'upd-accordion',
-    template: `
-    <div ngbAccordion [class]="flash" [ngClass]="styleClass">
+  selector: 'upd-accordion',
+  template: `
+    <div
+      ngbAccordion
+      class="upd-accordion"
+      [class.flash]="flash === 'flash'"
+      [ngClass]="styleClass"
+    >
       <div ngbAccordionItem [collapsed]="!expanded">
         <h2 ngbAccordionHeader [ngClass]="headerClass">
-          <button ngbAccordionButton>{{ title | translate }}</button>
+          <button ngbAccordionButton>
+            {{ title | translate }}
+          </button>
         </h2>
 
         <div ngbAccordionCollapse>
@@ -19,8 +26,8 @@ import { Component, Input } from '@angular/core';
       </div>
     </div>
   `,
-    styleUrls: ['./accordion.component.scss'],
-    standalone: false
+  styleUrls: ['./accordion.component.scss'],
+  standalone: false,
 })
 export class AccordionComponent {
   @Input() title = 'view-data-table';

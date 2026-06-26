@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import type { ColumnConfig, TaskStatus } from '@dua-upd/types-common';
 import { formatPercent, formatNumber, formatDate } from '@angular/common';
 import { PageStatus, ProjectStatus } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
@@ -19,7 +19,7 @@ export class DataTableStylesComponent implements OnInit {
   @Input() data: Record<string, number | string> = {};
 
   array: string[] = [];
-  labelType?: 'project' | 'page';
+  labelType?: 'project' | 'page' | 'task';
   numberVal: number | string = 0;
 
   ngOnInit() {
@@ -54,6 +54,10 @@ export class DataTableStylesComponent implements OnInit {
 
   get pageStatus(): PageStatus {
     return this.data[this.config.field] as PageStatus;
+  }
+
+  get taskStatus(): TaskStatus {
+    return this.data[this.config.field] as TaskStatus;
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {

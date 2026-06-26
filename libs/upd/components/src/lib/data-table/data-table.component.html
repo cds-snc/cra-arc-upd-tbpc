@@ -34,6 +34,7 @@
           @if (captionTitle) {
             {{ captionTitle | translate }}
           }
+
           <div class="searh-url-field">
             @if (filter) {
               <span class="p-input-icon-left p-ml-auto">
@@ -41,6 +42,7 @@
                   <p-inputicon>
                     <i class="pi pi-search"></i>
                   </p-inputicon>
+
                   <input
                     pInputText
                     type="text"
@@ -51,6 +53,7 @@
               </span>
             }
           </div>
+
           <div class="d-flex gap-2">
             @if (columnSelection()) {
               <p-multiSelect
@@ -75,19 +78,23 @@
                       white-space: nowrap;
                     "
                   >
-                    <span
-                      ><span class="pi pi-cog"></span>
+                    <span>
+                      <span class="pi pi-cog"></span>
+
                       @if (selectedColumns().length) {
                         {{ 'change-columns' | translate }}
-                      }</span
-                    >&NonBreakingSpace;
+                      }
+                    </span>
+
+                    &NonBreakingSpace;
+
                     @if (selectedColumns().length) {
                       <span
                         class="badge bg-primary d-flex align-items-center justify-content-center"
                         style="padding: 0.25em 0.5em; height: 1.8rem"
                       >
-                        {{ selectedColumns().length }}</span
-                      >
+                        {{ selectedColumns().length }}
+                      </span>
                     }
                   </div>
                 </ng-template>
@@ -129,116 +136,189 @@
   }
 
   <ng-template pTemplate="header" let-columns>
-    <tr>
-      @if (checkboxes) {
-        <th style="min-width: 2rem; width: 2rem">
-          &nbsp;
-        </th>
-      }
+    @if (hasColumnGroups()) {
+      <tr>
+        @if (checkboxes) {
+          <th rowspan="2" style="min-width: 2rem; width: 2rem">&nbsp;</th>
+        }
+        
 
-      @for (col of columns; track col.field) {
-        <th
-          [pSortableColumn]="sort ? col.field : undefined"
-          [ngClass]="col.headerClass || ''"
-          class="{{ col.columnClass || '' }}"
-          [style]="
-            col.width ? 'min-width: ' + col.width + '; width: ' + col.width : ''
-          "
-        >
-          <div
-            [ngClass]="sort ? 'd-flex align-items-center' : ''"
-            [ngStyle]="{ 'white-space': allowHeaderWrap ? 'normal' : 'nowrap' }"
-          >
-            <span
-              class="p-column-title datatable-headers me-2"
-              [class.card-tooltip]="col.tooltip"
-              [ngbTooltip]="col.tooltip | translate"
-              placement="top"
-              container="body"
+        
+        @for (
+          group of columnGroups();
+          track group.label ?? group.columns[0].field
+        ) {
+          @if (group.label) {
+            <th
+              [attr.colspan]="group.colspan"
+              class="text-center"
+              [class.task-performance-group]="
+                group.label === 'tab-taskperformance'
+              "
             >
-              {{ col.header | translate }}
-            </span>
+              {{ group.label | translate }}
+            </th>
+          } @else {
+            @for (col of group.columns; track col.field) {
+              <th
+                rowspan="2"
+                [pSortableColumn]="sort ? col.field : undefined"
+                [ngClass]="col.headerClass || ''"
+                class="{{ col.columnClass || '' }}"
+                [style]="
+                  col.width
+                    ? 'min-width: ' + col.width + '; width: ' + col.width
+                    : ''
+                "
+              >
+                <ng-container
+                  *ngTemplateOutlet="headerCell; context: { col: col }"
+                />
+              </th>
+            }
+          }
+        }
 
-            @if (sort) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-              @if (col.filterConfig) {
-                <!-- Boolean Filtering -->
+        @if (expandable && !expandAfterField) {
+          <th rowspan="2" style="min-width: 2rem; width: 2rem">&nbsp;</th>
+        }
+      </tr>
 
-                @if (col.filterConfig.type === 'boolean') {
-                  <p-columnFilter
-                    type="boolean"
-                    [field]="col.field"
-                    display="menu"
-                    [hideOnClear]="true"
-                    [showApplyButton]="false"
+      <tr>
+        @for (col of groupedColumns(); track col.field) {
+          <th
+            [pSortableColumn]="sort ? col.field : undefined"
+            [ngClass]="col.headerClass || ''"
+            [class.task-performance-col]="col.group === 'tab-taskperformance'"
+            class="{{ col.columnClass || '' }}"
+            [style]="
+              col.width
+                ? 'min-width: ' + col.width + '; width: ' + col.width
+                : ''
+            "
+          >
+            <ng-container
+              *ngTemplateOutlet="headerCell; context: { col: col }"
+            />
+          </th>
+        }
+      </tr>
+    } @else {
+      <tr>
+        @if (checkboxes) {
+          <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
+        }
+
+        @for (col of columns; track col.field) {
+          <th
+            [pSortableColumn]="sort ? col.field : undefined"
+            [ngClass]="col.headerClass || ''"
+            class="{{ col.columnClass || '' }}"
+            [style]="
+              col.width
+                ? 'min-width: ' + col.width + '; width: ' + col.width
+                : ''
+            "
+          >
+            <ng-container
+              *ngTemplateOutlet="headerCell; context: { col: col }"
+            />
+          </th>
+        }
+
+        @if (expandable && !expandAfterField) {
+          <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
+        }
+      </tr>
+    }
+
+    <ng-template #headerCell let-col="col">
+      <div
+        [ngClass]="sort ? 'd-flex align-items-center' : ''"
+        [ngStyle]="{ 'white-space': allowHeaderWrap ? 'normal' : 'nowrap' }"
+      >
+        <span
+          class="p-column-title datatable-headers me-2"
+          [class.card-tooltip]="col.tooltip"
+          [ngbTooltip]="col.tooltip | translate"
+          placement="top"
+          container="body"
+        >
+          {{ col.header | translate }}
+        </span>
+
+        @if (sort) {
+          <p-sortIcon [field]="col.field"></p-sortIcon>
+
+          @if (col.filterConfig) {
+            <!-- Boolean filtering -->
+            @if (col.filterConfig.type === 'boolean') {
+              <p-columnFilter
+                type="boolean"
+                [field]="col.field"
+                display="menu"
+                [hideOnClear]="true"
+                [showApplyButton]="false"
+              >
+                <ng-template pTemplate="header">
+                  <div class="px-3 pt-3 pb-0">
+                    <span class="fw-bold">
+                      @if (col.field === 'cops' || col.field === 'wos_cops') {
+                        {{ col.field | uppercase | translate }}
+                      } @else {
+                        {{ col.field | translate }}
+                      }
+                    </span>
+                  </div>
+                </ng-template>
+              </p-columnFilter>
+            }
+
+            <!-- Category/multiselect filtering -->
+            @if (
+              col.filterConfig.type === 'category' ||
+              col.filterConfig.type === 'pageStatus'
+            ) {
+              <p-columnFilter
+                [field]="col.field"
+                [matchMode]="col.filterConfig?.matchMode || 'in'"
+                display="menu"
+                [showMatchModes]="false"
+                [showOperator]="false"
+                [showAddButton]="false"
+                [showApplyButton]="false"
+                [hideOnClear]="true"
+              >
+                <ng-template
+                  pTemplate="filter"
+                  let-value
+                  let-filter="filterCallback"
+                >
+                  <p-multiSelect
+                    [ngModel]="value"
+                    [options]="col.filterConfig.categories"
+                    optionValue="value"
+                    optionLabel="name"
+                    [placeholder]="'Options'"
+                    (onChange)="filter($event.value)"
+                    [filter]="false"
+                    [showHeader]="false"
                   >
-                    <ng-template pTemplate="header">
-                      <div class="px-3 pt-3 pb-0">
-                        <span class="fw-bold">
-                          @if (col.field === 'cops' || col.field === 'wos_cops') {
-                            {{ col.field | uppercase | translate }}
-                          } @else {
-                            {{ col.field | translate }}
-                          }
+                    <ng-template let-option pTemplate="item">
+                      <div class="p-multiselect-representative-option">
+                        <span class="badge bg-unknown">
+                          {{ option.name }}
                         </span>
                       </div>
                     </ng-template>
-                  </p-columnFilter>
-                }
-
-                <!-- Category/Multiselect Filtering -->
-                @if (
-                  col.filterConfig.type === 'category' ||
-                  col.filterConfig.type === 'pageStatus'
-                ) {
-                  <p-columnFilter
-                    [field]="col.field"
-                    [matchMode]="col.filterConfig?.matchMode || 'in'"
-                    display="menu"
-                    [showMatchModes]="false"
-                    [showOperator]="false"
-                    [showAddButton]="false"
-                    [showApplyButton]="false"
-                    [hideOnClear]="true"
-                  >
-                    <ng-template
-                      pTemplate="filter"
-                      let-value
-                      let-filter="filterCallback"
-                    >
-                      <p-multiSelect
-                        [ngModel]="value"
-                        [options]="col.filterConfig.categories"
-                        optionValue="value"
-                        optionLabel="name"
-                        [placeholder]="'Options'"
-                        (onChange)="filter($event.value)"
-                        [filter]="false"
-                        [showHeader]="false"
-                      >
-                        <ng-template let-option pTemplate="item">
-                          <div class="p-multiselect-representative-option">
-                            <span [class]="'badge bg-unknown'">
-                              {{ option.name }}
-                            </span>
-                          </div>
-                        </ng-template>
-                      </p-multiSelect>
-                    </ng-template>
-                  </p-columnFilter>
-                }
-              }
+                  </p-multiSelect>
+                </ng-template>
+              </p-columnFilter>
             }
-          </div>
-        </th>
-        @if (expandable && expandAfterField === col.field) {
-          <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
+          }
         }
-      }
-      @if (expandable && !expandAfterField) {
-        <th style="min-width: 2rem; width: 2rem">&nbsp;</th>
-      }
-    </tr>
+      </div>
+    </ng-template>
   </ng-template>
 
   <ng-template
@@ -246,15 +326,18 @@
     let-rowData
     let-columns="columns"
     let-expanded="expanded"
+    let-rowIndex="rowIndex"
   >
-    <tr>
+    <tr [class.task-row-odd]="rowIndex % 2 === 1">
       @if (checkboxes) {
         <td>
           <p-tableCheckbox [value]="rowData" class="ps-2" />
         </td>
       }
+
       @for (col of columns; track col.field) {
         <td
+          [class.task-performance-col]="col.group === 'tab-taskperformance'"
           [ngClass]="{
             'validation-kpi-not-met':
               kpi && col.field === 'Validation' && rowData[col.field] < 0.8,
@@ -271,10 +354,13 @@
             [ngbTooltip]="col.tooltip"
             placement="top"
             [class.card-tooltip]="col.tooltip"
-            >{{ col.header | translate }}</span
           >
+            {{ col.header | translate }}
+          </span>
+
           <upd-data-table-styles [config]="col" [data]="rowData" />
         </td>
+
         @if (expandable && expandAfterField === col.field) {
           <td>
             <button
@@ -288,6 +374,7 @@
           </td>
         }
       }
+
       @if (expandable && !expandAfterField) {
         <td>
           <button
@@ -307,12 +394,19 @@
     @if (expandableRowTemplate) {
       <tr>
         @if (expandAfterField) {
+          @if (checkboxes) {
+            <td></td>
+          }
+
           @for (col of columns; track col.field) {
             @if (col.field === expandAfterField) {
-              <td colspan="2" style="max-width: 0; overflow: hidden;">
+              <td colspan="2" style="max-width: 0; overflow: hidden">
                 <div class="text-wrap text-break">
                   <ng-container
-                    *ngTemplateOutlet="expandableRowTemplate; context: { $implicit: rowData }"
+                    *ngTemplateOutlet="
+                      expandableRowTemplate;
+                      context: { $implicit: rowData }
+                    "
                   ></ng-container>
                 </div>
               </td>
@@ -321,9 +415,18 @@
             }
           }
         } @else {
-          <td [attr.colspan]="displayColumns().length + 1">
+          <td
+            [attr.colspan]="
+              displayColumns().length +
+              (checkboxes ? 1 : 0) +
+              (expandable ? 1 : 0)
+            "
+          >
             <ng-container
-              *ngTemplateOutlet="expandableRowTemplate; context: { $implicit: rowData }"
+              *ngTemplateOutlet="
+                expandableRowTemplate;
+                context: { $implicit: rowData }
+              "
             ></ng-container>
           </td>
         }
@@ -333,7 +436,16 @@
 
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td translate>No data found.</td>
+      <td
+        translate
+        [attr.colspan]="
+          displayColumns().length +
+          (checkboxes ? 1 : 0) +
+          (expandable && !expandAfterField ? 1 : 0)
+        "
+      >
+        No data found.
+      </td>
     </tr>
   </ng-template>
 
@@ -341,12 +453,13 @@
     <ng-template pTemplate="footer">
       <div class="legend">
         <p class="legend_field">
-          <span class="legend_color" style="background: #90ee90"></span
-          >{{ 'kpi-met' | translate }}
+          <span class="legend_color" style="background: #90ee90"></span>
+          {{ 'kpi-met' | translate }}
         </p>
+
         <p class="legend_field">
-          <span class="legend_color" style="background: #f8e6d2"></span
-          >{{ 'kpi-half-met' | translate }}
+          <span class="legend_color" style="background: #f8e6d2"></span>
+          {{ 'kpi-half-met' | translate }}
         </p>
       </div>
     </ng-template>

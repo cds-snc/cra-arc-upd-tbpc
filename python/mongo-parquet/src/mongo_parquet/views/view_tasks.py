@@ -25,14 +25,13 @@ from .daterange_utils import (
     DateRange,
     DateRangeWithComparison,
     get_date_ranges_with_comparisons,
+
 )
 from ..schemas import get_parquet_models, ParquetModels
 from ..utils import objectid
 from ..utils_math import (
     ind_status,
     metric_flags_and_weights,
-    score_higher_better_ind,
-    score_lower_better_ind,
     perf_score_higher_better_0_100,
     perf_score_lower_better_0_100,
     weighted_raw_score_over_available,
@@ -112,10 +111,8 @@ class TasksView(ParquetModel):
             "survey": int32(),
             "survey_completed": int32(),
             "tmf_ranking_index": int32(),
-            "individual_score_raw": float64(),
-            "individual_score_pct": float64(),
-            "individual_score_scale": float64(),
-            "individual_status": string(),
+            "seasonal_average": float64(),
+            "historical_average": float64(),
             "performance_score": float64(),
             "cops": bool_(),
             "wos_cops": bool_(),
@@ -124,10 +121,7 @@ class TasksView(ParquetModel):
                 struct(
                     {
                         "month": timestamp("ms"),
-                        "individual_score_raw": float64(),
-                        "individual_score_pct": float64(),
-                        "individual_score_scale": float64(),
-                        "individual_status": string(),
+                        "individual_score": float64(),
                         "calls_per_100": float64(),
                         "neg_feedback_per_1000": float64(),
                         "survey_success_rate": float64(),
@@ -436,6 +430,9 @@ class TasksViewService:
             views_utils.parquet_dir_path
         )
         self.date_ranges_with_comparisons = get_date_ranges_with_comparisons()
+        # self.date_ranges = [
+        #     {"start": datetime(2024, 1, 1), "end": datetime(2025, 12, 31),},
+        # ]
         self.context = TasksViewContext(
             parquet_models=self.dependencies,
         )
@@ -554,6 +551,8 @@ class TasksViewService:
 
         performance_history = self.get_individual_history(date_range)
 
+        seasonal_average = self.get_seasonal_average_for_date_range(date_range)
+
         num_tasks = self.context.tasks.height
 
         doc_ids = [str(objectid()) for _ in range(num_tasks)]
@@ -617,6 +616,12 @@ class TasksViewService:
             )
             .join(
                 performance_history,
+                on="_id",
+                how="left",
+                coalesce=True,
+            )
+            .join(
+                seasonal_average,
                 on="_id",
                 how="left",
                 coalesce=True,
@@ -867,7 +872,7 @@ class TasksViewService:
 
         filename = f"tasks_gsc_searchterms_{date_range['start'].date()}_{date_range['end'].date()}.parquet"
         self.views_utils.sink_temp(gsc_searchterms, filename)
-
+        
     def write_temp_individual_history_for_date_range(
         self,
         date_range: DateRange,
@@ -892,17 +897,7 @@ class TasksViewService:
             "end": overall_end,
         }
 
-        # Build once
-        by_day_lf = self.build_task_metrics_by_day(history_range)
         by_month_lf = self.build_task_metrics_by_month(history_range)
-
-        # Optional but recommended: materialize once to avoid repeated recompute
-        by_day_filename = (
-            f"tasks_individual_history_by_day_"
-            f"{date_range['start'].date()}_{date_range['end'].date()}.parquet"
-        )
-        self.views_utils.sink_temp(by_day_lf, by_day_filename)
-        by_day_lf = self.views_utils.scan_temp(by_day_filename)
 
         by_month_filename = (
             f"tasks_individual_history_by_month_"
@@ -911,11 +906,11 @@ class TasksViewService:
         self.views_utils.sink_temp(by_month_lf, by_month_filename)
         by_month_lf = self.views_utils.scan_temp(by_month_filename)
 
+        benchmark_bundle = self.get_performance_benchmark_bundle()
+
         monthly_lfs: list[pl.LazyFrame] = []
 
         for month_start in history_month_starts:
-            bench_range = self.two_year_benchmark_window(month_start)
-
             period_lf = (
                 by_month_lf
                 .filter(pl.col("month") == pl.lit(month_start))
@@ -933,19 +928,16 @@ class TasksViewService:
             )
 
             monthly_lf = (
-                self.score_individual_period_rows(
+                self.score_with_performance_benchmarks(
                     period_lf=period_lf,
-                    by_day_lf=by_day_lf,
-                    bench_start=bench_range["start"],
-                    bench_end=bench_range["end"],
+                    benchmark_bundle=benchmark_bundle,
+                    score_col="individual_score",
+                    insufficient_col="individual_insufficient_data",
                 )
                 .select(
                     pl.col("_id"),
                     pl.lit(month_start).alias("month"),
-                    pl.col("individual_score_raw"),
-                    pl.col("individual_score_pct"),
-                    pl.col("individual_score_scale"),
-                    pl.col("individual_status"),
+                    pl.col("individual_score"),
                     pl.col("calls_per_100"),
                     pl.col("neg_feedback_per_1000"),
                     pl.col("survey_success_rate"),
@@ -963,14 +955,12 @@ class TasksViewService:
             .agg(
                 pl.struct(
                     "month",
-                    "individual_score_raw",
-                    "individual_score_pct",
-                    "individual_score_scale",
-                    "individual_status",
+                    "individual_score",
                     "calls_per_100",
                     "neg_feedback_per_1000",
                     "survey_success_rate",
-                ).alias("individualHistory")
+                ).alias("individualHistory"),
+                pl.col("individual_score").mean().alias("historical_average"),
             )
         )
 
@@ -1270,390 +1260,21 @@ class TasksViewService:
             .with_columns(*self.get_rate_exprs_for_scoring())
         )
 
-    def get_individual_baselines(self, bench_daily: pl.LazyFrame) -> pl.LazyFrame:
-        bench_buckets = bench_daily.with_columns(
-            pl.col("date").dt.truncate("1mo").alias("_bucket")
-        )
-
-        return (
-            bench_buckets.group_by(["_id", "_bucket"])
-            .agg(
-                pl.col("visits").sum().alias("_b_visits"),
-                pl.col("calls").sum().alias("_b_calls"),
-                pl.col("dyf_no").sum().alias("_b_dyfNo"),
-                pl.col("survey").sum().alias("_b_survey"),
-                pl.col("survey_completed").sum().alias("_b_survey_completed"),
-            )
-            .with_columns(
-                pl.when(pl.col("_b_visits") > 0)
-                .then(pl.col("_b_calls") / pl.col("_b_visits") * 100.0)
-                .otherwise(None)
-                .alias("_b_calls_per_100"),
-                pl.when(pl.col("_b_visits") > 0)
-                .then(pl.col("_b_dyfNo") / pl.col("_b_visits") * 1000.0)
-                .otherwise(None)
-                .alias("_b_neg_feedback_per_1000"),
-                pl.when(pl.col("_b_survey") > 0)
-                .then(pl.col("_b_survey_completed") / pl.col("_b_survey"))
-                .otherwise(None)
-                .alias("_b_survey_success_rate"),
-            )
-            .group_by("_id")
-            .agg(
-                pl.col("_b_calls_per_100").mean().alias("ind_bench_calls_per_100"),
-                pl.col("_b_calls_per_100").min().alias("ind_floor_calls_per_100"),
-                pl.col("_b_calls_per_100").max().alias("ind_ceil_calls_per_100"),
-                pl.col("_b_neg_feedback_per_1000")
-                .mean()
-                .alias("ind_bench_neg_feedback_per_1000"),
-                pl.col("_b_neg_feedback_per_1000")
-                .min()
-                .alias("ind_floor_neg_feedback_per_1000"),
-                pl.col("_b_neg_feedback_per_1000")
-                .max()
-                .alias("ind_ceil_neg_feedback_per_1000"),
-                pl.col("_b_survey_success_rate")
-                .mean()
-                .alias("ind_bench_survey_success_rate"),
-                pl.col("_b_survey_success_rate")
-                .min()
-                .alias("ind_floor_survey_success_rate"),
-                pl.col("_b_survey_success_rate")
-                .max()
-                .alias("ind_ceil_survey_success_rate"),
-            )
-        )
-
     def score_period_rows(
         self,
         *,
         period_lf: pl.LazyFrame,
-        by_day_lf: pl.LazyFrame,
-        bench_start: datetime,
-        bench_end: datetime,
-        survey_benchmark: float = 0.80,
-        survey_ceiling: float = 1.00,
-        w_calls: float = 0.3,
-        w_feedback: float = 0.4,
-        w_survey: float = 0.3,
-        feedback_k: float = 0.75,
-        robust_sd_scale_factor: float = 1.4826,
-        use_fixed_benchmarks: bool = True,
-        fixed_calls_bench: float = 8.62,
-        fixed_calls_ceil: float = 31.80,
-        fixed_feedback_bench: float = 5.91,
-        fixed_feedback_ceil: float = 21.54,
     ) -> pl.LazyFrame:
-        bench_daily = by_day_lf.filter(
-            pl.col("date").is_between(bench_start, bench_end)
-        )
-
-        if use_fixed_benchmarks:
-            benchmark_bundle = pl.LazyFrame(
-                {
-                    "perf_bench_calls_per_100": [fixed_calls_bench],
-                    "perf_ceil_calls_per_100": [fixed_calls_ceil],
-                    "perf_bench_neg_feedback_per_1000": [fixed_feedback_bench],
-                    "perf_ceil_neg_feedback_per_1000": [fixed_feedback_ceil],
-                    "perf_bench_survey_success_rate": [survey_benchmark],
-                    "perf_ceil_survey_success_rate": [survey_ceiling],
-                }
-            )
-        else:
-            bench_rates = bench_daily.with_columns(*self.get_rate_exprs_for_scoring())
-
-            perf_calls_bench = bench_rates.select(
-                pl.col("calls_per_100")
-                .drop_nulls()
-                .quantile(0.75, interpolation="nearest")
-                .alias("perf_bench_calls_per_100")
-            )
-
-            perf_ceils = (
-                bench_rates.select(
-                    pl.col("calls_per_100").drop_nulls().quantile(0.25).alias("calls_q1"),
-                    pl.col("calls_per_100").drop_nulls().quantile(0.75).alias("calls_q3"),
-                    pl.col("neg_feedback_per_1000").drop_nulls().quantile(0.25).alias("feedback_q1"),
-                    pl.col("neg_feedback_per_1000").drop_nulls().quantile(0.75).alias("feedback_q3"),
-                )
-                .with_columns(
-                    (pl.col("calls_q3") - pl.col("calls_q1")).alias("calls_iqr"),
-                    (pl.col("feedback_q3") - pl.col("feedback_q1")).alias("feedback_iqr"),
-                )
-                .with_columns(
-                    (pl.col("calls_q3") + 3.0 * pl.col("calls_iqr")).alias("perf_ceil_calls_per_100"),
-                    (pl.col("feedback_q3") + 3.0 * pl.col("feedback_iqr")).alias("perf_ceil_neg_feedback_per_1000"),
-                    pl.lit(survey_benchmark).alias("perf_bench_survey_success_rate"),
-                    pl.lit(survey_ceiling).alias("perf_ceil_survey_success_rate"),
-                )
-                .select(
-                    "perf_ceil_calls_per_100",
-                    "perf_ceil_neg_feedback_per_1000",
-                    "perf_bench_survey_success_rate",
-                    "perf_ceil_survey_success_rate",
-                )
-            )
-
-            def feedback_benchmark_from_period(
-                period_source_lf: pl.LazyFrame,
-            ) -> pl.LazyFrame:
-                median_lf = period_source_lf.select(
-                    pl.col("neg_feedback_per_1000").drop_nulls().median().alias("feedback_median")
-                )
-
-                mad_lf = (
-                    period_source_lf.join(median_lf, how="cross")
-                    .with_columns(
-                        (pl.col("neg_feedback_per_1000") - pl.col("feedback_median"))
-                        .abs()
-                        .alias("feedback_abs_dev")
-                    )
-                    .select(
-                        pl.col("feedback_abs_dev").drop_nulls().median().alias("feedback_mad")
-                    )
-                )
-
-                return (
-                    median_lf.join(mad_lf, how="cross")
-                    .with_columns(
-                        (pl.col("feedback_mad") * pl.lit(robust_sd_scale_factor)).alias("feedback_robust_sd")
-                    )
-                    .with_columns(
-                        (
-                            pl.col("feedback_median")
-                            + pl.lit(feedback_k) * pl.col("feedback_robust_sd")
-                        ).alias("perf_bench_neg_feedback_per_1000")
-                    )
-                    .select("perf_bench_neg_feedback_per_1000")
-                )
-
-            shared_feedback_bench = feedback_benchmark_from_period(period_lf)
-
-            benchmark_bundle = (
-                perf_calls_bench
-                .join(shared_feedback_bench, how="cross")
-                .join(perf_ceils, how="cross")
-                .with_columns(
-                    pl.max_horizontal(
-                        pl.col("perf_ceil_calls_per_100"),
-                        pl.col("perf_bench_calls_per_100"),
-                    ).alias("perf_ceil_calls_per_100"),
-                    pl.max_horizontal(
-                        pl.col("perf_ceil_neg_feedback_per_1000"),
-                        pl.col("perf_bench_neg_feedback_per_1000"),
-                    ).alias("perf_ceil_neg_feedback_per_1000"),
-                )
-                .select(
-                    "perf_bench_calls_per_100",
-                    "perf_ceil_calls_per_100",
-                    "perf_bench_neg_feedback_per_1000",
-                    "perf_ceil_neg_feedback_per_1000",
-                    "perf_bench_survey_success_rate",
-                    "perf_ceil_survey_success_rate",
-                )
-            )
-
-        ind_stats = self.get_individual_baselines(bench_daily)
-
         return (
-            period_lf.join(benchmark_bundle, how="cross")
-            .join(ind_stats, on="_id", how="left", coalesce=True)
-            .with_columns(
-                *metric_flags_and_weights(
-                    w_calls=w_calls,
-                    w_feedback=w_feedback,
-                    w_survey=w_survey,
-                )
-            )
-            .with_columns(
-                (pl.col("_metric_count") < 2).alias("performance_insufficient_data"),
-                (pl.col("_metric_count") < 2).alias("individual_insufficient_data"),
-            )
-            .with_columns(
-                perf_score_lower_better_0_100(
-                    pl.col("calls_per_100"),
-                    pl.col("perf_bench_calls_per_100"),
-                    pl.col("perf_ceil_calls_per_100"),
-                ).alias("perf_score_calls"),
-                perf_score_lower_better_0_100(
-                    pl.col("neg_feedback_per_1000"),
-                    pl.col("perf_bench_neg_feedback_per_1000"),
-                    pl.col("perf_ceil_neg_feedback_per_1000"),
-                ).alias("perf_score_feedback"),
-                perf_score_higher_better_0_100(
-                    pl.col("survey_success_rate"),
-                    pl.col("perf_bench_survey_success_rate"),
-                    pl.col("perf_ceil_survey_success_rate"),
-                ).alias("perf_score_survey"),
-                score_lower_better_ind(
-                    pl.col("calls_per_100"),
-                    pl.col("ind_bench_calls_per_100"),
-                    pl.col("ind_floor_calls_per_100"),
-                    pl.col("ind_ceil_calls_per_100"),
-                    scale=10.0,
-                ).alias("ind_score_calls"),
-                score_lower_better_ind(
-                    pl.col("neg_feedback_per_1000"),
-                    pl.col("ind_bench_neg_feedback_per_1000"),
-                    pl.col("ind_floor_neg_feedback_per_1000"),
-                    pl.col("ind_ceil_neg_feedback_per_1000"),
-                    scale=10.0,
-                ).alias("ind_score_feedback"),
-                score_higher_better_ind(
-                    pl.col("survey_success_rate"),
-                    pl.col("ind_bench_survey_success_rate"),
-                    pl.col("ind_floor_survey_success_rate"),
-                    pl.col("ind_ceil_survey_success_rate"),
-                    scale=10.0,
-                ).alias("ind_score_survey"),
-            )
-            .with_columns(
-                pl.when(pl.col("performance_insufficient_data"))
-                .then(None)
-                .otherwise(
-                    weighted_raw_score_over_available(
-                        pl.col("perf_score_calls"),
-                        pl.col("perf_score_feedback"),
-                        pl.col("perf_score_survey"),
-                        w_calls=w_calls,
-                        w_feedback=w_feedback,
-                        w_survey=w_survey,
-                    )
-                )
-                .alias("performance_score"),
-                pl.when(pl.col("individual_insufficient_data"))
-                .then(None)
-                .otherwise(
-                    weighted_raw_score_over_available(
-                        pl.col("ind_score_calls"),
-                        pl.col("ind_score_feedback"),
-                        pl.col("ind_score_survey"),
-                        w_calls=w_calls,
-                        w_feedback=w_feedback,
-                        w_survey=w_survey,
-                    )
-                )
-                .alias("individual_score_raw"),
-            )
-            .with_columns(
-                pl.when(pl.col("individual_score_raw").is_not_null())
-                .then((pl.col("individual_score_raw") + 10.0) / 20.0)
-                .otherwise(None)
-                .alias("individual_score_pct"),
-                pl.when(pl.col("individual_score_raw").is_not_null())
-                .then(((pl.col("individual_score_raw") + 10.0) / 2.0) - 5.0)
-                .otherwise(None)
-                .alias("individual_score_scale"),
-                ind_status(
-                    pl.when(pl.col("individual_score_raw").is_not_null())
-                    .then((pl.col("individual_score_raw") + 10.0) / 2.0)
-                    .otherwise(None)
-                ).alias("individual_status"),
+            self.score_with_performance_benchmarks(
+                period_lf=period_lf,
+                benchmark_bundle=self.get_performance_benchmark_bundle(),
+                score_col="performance_score",
+                insufficient_col="performance_insufficient_data",
             )
             .select(
                 "_id",
-                "calls_per_100",
-                "neg_feedback_per_1000",
-                "survey_success_rate",
-                "individual_score_raw",
-                "individual_score_pct",
-                "individual_score_scale",
-                "individual_status",
                 "performance_score",
-            )
-        )
-    
-    def score_individual_period_rows(
-        self,
-        *,
-        period_lf: pl.LazyFrame,
-        by_day_lf: pl.LazyFrame,
-        bench_start: datetime,
-        bench_end: datetime,
-        w_calls: float = 0.3,
-        w_feedback: float = 0.4,
-        w_survey: float = 0.3,
-    ) -> pl.LazyFrame:
-        bench_daily = by_day_lf.filter(
-            pl.col("date").is_between(bench_start, bench_end)
-        )
-
-        ind_stats = self.get_individual_baselines(bench_daily)
-
-        return (
-            period_lf.join(ind_stats, on="_id", how="left", coalesce=True)
-            .with_columns(
-                *metric_flags_and_weights(
-                    w_calls=w_calls,
-                    w_feedback=w_feedback,
-                    w_survey=w_survey,
-                )
-            )
-            .with_columns(
-                (pl.col("_metric_count") < 2).alias("individual_insufficient_data"),
-            )
-            .with_columns(
-                score_lower_better_ind(
-                    pl.col("calls_per_100"),
-                    pl.col("ind_bench_calls_per_100"),
-                    pl.col("ind_floor_calls_per_100"),
-                    pl.col("ind_ceil_calls_per_100"),
-                    scale=10.0,
-                ).alias("ind_score_calls"),
-                score_lower_better_ind(
-                    pl.col("neg_feedback_per_1000"),
-                    pl.col("ind_bench_neg_feedback_per_1000"),
-                    pl.col("ind_floor_neg_feedback_per_1000"),
-                    pl.col("ind_ceil_neg_feedback_per_1000"),
-                    scale=10.0,
-                ).alias("ind_score_feedback"),
-                score_higher_better_ind(
-                    pl.col("survey_success_rate"),
-                    pl.col("ind_bench_survey_success_rate"),
-                    pl.col("ind_floor_survey_success_rate"),
-                    pl.col("ind_ceil_survey_success_rate"),
-                    scale=10.0,
-                ).alias("ind_score_survey"),
-            )
-            .with_columns(
-                pl.when(pl.col("individual_insufficient_data"))
-                .then(None)
-                .otherwise(
-                    weighted_raw_score_over_available(
-                        pl.col("ind_score_calls"),
-                        pl.col("ind_score_feedback"),
-                        pl.col("ind_score_survey"),
-                        w_calls=w_calls,
-                        w_feedback=w_feedback,
-                        w_survey=w_survey,
-                    )
-                )
-                .alias("individual_score_raw"),
-            )
-            .with_columns(
-                pl.when(pl.col("individual_score_raw").is_not_null())
-                .then((pl.col("individual_score_raw") + 10.0) / 20.0)
-                .otherwise(None)
-                .alias("individual_score_pct"),
-                pl.when(pl.col("individual_score_raw").is_not_null())
-                .then(((pl.col("individual_score_raw") + 10.0) / 2.0) - 5.0)
-                .otherwise(None)
-                .alias("individual_score_scale"),
-                ind_status(
-                    pl.when(pl.col("individual_score_raw").is_not_null())
-                    .then((pl.col("individual_score_raw") + 10.0) / 2.0)
-                    .otherwise(None)
-                ).alias("individual_status"),
-            )
-            .select(
-                "_id",
-                "calls_per_100",
-                "neg_feedback_per_1000",
-                "survey_success_rate",
-                "individual_score_raw",
-                "individual_score_pct",
-                "individual_score_scale",
-                "individual_status",
             )
         )
 
@@ -1679,19 +1300,13 @@ class TasksViewService:
 
         scored_lf = self.score_period_rows(
             period_lf=period_lf,
-            by_day_lf=by_day_lf,
-            bench_start=bench_range["start"],
-            bench_end=bench_range["end"],
         )
 
         return scored_lf.select(
             pl.col("_id"),
-            "individual_score_raw",
-            "individual_score_pct",
-            "individual_score_scale",
-            "individual_status",
             "performance_score",
         )
+    
     def build_task_metrics_by_month(
         self,
         history_range: DateRange,
@@ -1710,4 +1325,159 @@ class TasksViewService:
                 pl.col("survey_completed").sum().alias("survey_completed"),
             )
             .with_columns(*self.get_rate_exprs_for_scoring())
+        )
+    
+    def get_performance_benchmark_bundle(
+        self,
+        survey_benchmark: float = 0.80,
+        survey_ceiling: float = 1.00,
+        fixed_calls_bench: float = 8.62,
+        fixed_calls_ceil: float = 31.80,
+        fixed_feedback_bench: float = 5.91,
+        fixed_feedback_ceil: float = 21.54,
+    ) -> pl.LazyFrame:
+        return pl.LazyFrame(
+            {
+                "perf_bench_calls_per_100": [fixed_calls_bench],
+                "perf_ceil_calls_per_100": [fixed_calls_ceil],
+                "perf_bench_neg_feedback_per_1000": [fixed_feedback_bench],
+                "perf_ceil_neg_feedback_per_1000": [fixed_feedback_ceil],
+                "perf_bench_survey_success_rate": [survey_benchmark],
+                "perf_ceil_survey_success_rate": [survey_ceiling],
+            }
+        )
+    
+
+    def score_with_performance_benchmarks(
+        self,
+        *,
+        period_lf: pl.LazyFrame,
+        benchmark_bundle: pl.LazyFrame,
+        score_col: str,
+        status_col: str | None = None,
+        insufficient_col: str = "insufficient_data",
+        w_calls: float = 0.3,
+        w_feedback: float = 0.4,
+        w_survey: float = 0.3,
+    ) -> pl.LazyFrame:
+        lf = (
+            period_lf.join(benchmark_bundle, how="cross")
+            .with_columns(
+                *metric_flags_and_weights(
+                    w_calls=w_calls,
+                    w_feedback=w_feedback,
+                    w_survey=w_survey,
+                )
+            )
+            .with_columns(
+                (pl.col("_metric_count") < 2).alias(insufficient_col),
+            )
+            .with_columns(
+                perf_score_lower_better_0_100(
+                    pl.col("calls_per_100"),
+                    pl.col("perf_bench_calls_per_100"),
+                    pl.col("perf_ceil_calls_per_100"),
+                ).alias("_score_calls"),
+                perf_score_lower_better_0_100(
+                    pl.col("neg_feedback_per_1000"),
+                    pl.col("perf_bench_neg_feedback_per_1000"),
+                    pl.col("perf_ceil_neg_feedback_per_1000"),
+                ).alias("_score_feedback"),
+                perf_score_higher_better_0_100(
+                    pl.col("survey_success_rate"),
+                    pl.col("perf_bench_survey_success_rate"),
+                    pl.col("perf_ceil_survey_success_rate"),
+                ).alias("_score_survey"),
+            )
+            .with_columns(
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(
+                    weighted_raw_score_over_available(
+                        pl.col("_score_calls"),
+                        pl.col("_score_feedback"),
+                        pl.col("_score_survey"),
+                        w_calls=w_calls,
+                        w_feedback=w_feedback,
+                        w_survey=w_survey,
+                    )
+                    / 100.0
+                )
+                .alias(score_col),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("calls_per_100"))
+                .alias("calls_per_100"),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("neg_feedback_per_1000"))
+                .alias("neg_feedback_per_1000"),
+                pl.when(pl.col(insufficient_col))
+                .then(None)
+                .otherwise(pl.col("survey_success_rate"))
+                .alias("survey_success_rate"),
+            )
+        )
+
+        if status_col is not None:
+            lf = lf.with_columns(
+                ind_status(
+                    pl.when(pl.col(score_col).is_not_null())
+                    .then(pl.col(score_col) * 10.0)
+                    .otherwise(None)
+                ).alias(status_col)
+            )
+
+        return lf
+    
+    def get_seasonal_average_for_date_range(
+        self,
+        date_range: DateRange,
+    ) -> pl.LazyFrame:
+        historical_ranges: list[DateRange] = [
+            {
+                "start": date_range["start"] - relativedelta(years=1),
+                "end": date_range["end"] - relativedelta(years=1),
+            },
+            {
+                "start": date_range["start"] - relativedelta(years=2),
+                "end": date_range["end"] - relativedelta(years=2),
+            },
+        ]
+
+        history_range: DateRange = {
+            "start": historical_ranges[-1]["start"],
+            "end": historical_ranges[0]["end"],
+        }
+
+        by_day_lf = self.build_task_metrics_by_day(history_range)
+        benchmark_bundle = self.get_performance_benchmark_bundle()
+
+        seasonal_lfs: list[pl.LazyFrame] = []
+
+        for historical_range in historical_ranges:
+            period_lf = self.aggregate_period_from_by_day(
+                by_day_lf,
+                period_start=historical_range["start"],
+                period_end=historical_range["end"],
+            )
+
+            seasonal_lfs.append(
+                self.score_with_performance_benchmarks(
+                    period_lf=period_lf,
+                    benchmark_bundle=benchmark_bundle,
+                    score_col="seasonal_score",
+                    insufficient_col="seasonal_insufficient_data",
+                ).select(
+                    "_id",
+                    "seasonal_score",
+                )
+            )
+
+        return (
+            pl.concat(seasonal_lfs)
+            .group_by("_id")
+            .agg(
+                pl.col("seasonal_score").mean().alias("seasonal_average")
+            )
         )
