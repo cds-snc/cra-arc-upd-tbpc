@@ -50,7 +50,7 @@ export class TaskStatusComponent {
   hasData = computed(() => {
     return !!(
       this.hasPerformanceScore() &&
-      this.ha() != null &&
+      this.ha() !== null &&
       this.ha() !== 0
     );
   });
@@ -332,7 +332,7 @@ readonly historicalRanges = computed<ScoreRange<TrendBand>[]>(() => [
     const score = this.ps();
 
     return (
-      score != null &&
+      score !== null &&
       typeof score === 'number' &&
       Number.isFinite(score) &&
       score !== 0
