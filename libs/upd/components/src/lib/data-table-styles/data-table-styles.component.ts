@@ -1,7 +1,7 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
 import type { ColumnConfig, TaskStatus } from '@dua-upd/types-common';
 import { formatPercent, formatNumber, formatDate } from '@angular/common';
-import { PageStatus, ProjectStatus, ArchiveStatus } from '@dua-upd/types-common';
+import { PageStatus, ProjectStatus, ArchiveStatus, PageArchiveStatus } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
 
@@ -12,6 +12,7 @@ import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
   standalone: false,
 })
 export class DataTableStylesComponent implements OnInit {
+[x: string]: any;
   private secondsToMinutesPipe = inject(SecondsToMinutesPipe);
   public i18n = inject(I18nFacade);
 
@@ -19,7 +20,7 @@ export class DataTableStylesComponent implements OnInit {
   @Input() data: Record<string, number | string> = {};
 
   array: string[] = [];
-  labelType?: 'project' | 'page' | 'task' | 'archive';
+  labelType?: 'project' | 'page' | 'task' | 'archive' | 'pageArchive';
   numberVal: number | string = 0;
 
   ngOnInit() {
@@ -38,6 +39,8 @@ export class DataTableStylesComponent implements OnInit {
         this.labelType = 'page';
       } else if (this.config.typeParam === 'archiveStatus') {
         this.labelType = 'archive';
+      } else if (this.config.typeParam == 'pageArchiveStatus') {
+        this.labelType = 'pageArchive';
       }
     }
   }
@@ -64,6 +67,10 @@ export class DataTableStylesComponent implements OnInit {
 
   get archiveStatus(): ArchiveStatus {
     return this.data[this.config.field] as ArchiveStatus;
+  }
+
+  get pageArchiveStatus(): PageArchiveStatus {
+    return this.data[this.config.field] as PageArchiveStatus;
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {
