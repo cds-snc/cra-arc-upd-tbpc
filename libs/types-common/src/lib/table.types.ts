@@ -16,7 +16,7 @@ export interface ColumnConfig<T = any> {
   field: OptionalKeyOf<T>;
   header: string;
   group?: string;
-  type?: 'link' | 'comparison' | 'label' | 'text' | 'markdown';
+  type?: 'link' | 'comparison' | 'label' | 'text' | 'markdown' | 'boolean';
   typeParam?: string;
   typeParams?: typeParams;
   pipe?: ColumnConfigPipe;

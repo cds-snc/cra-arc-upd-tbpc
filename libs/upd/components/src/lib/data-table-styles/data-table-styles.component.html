@@ -218,3 +218,8 @@
 <ng-container *ngIf="config.type === 'markdown'">
   <upd-markdown-renderer [html]="$any(data[config.field])"></upd-markdown-renderer>
 </ng-container>
+
+<!-- Boolean Type -->
+<ng-container *ngIf="config.type === 'boolean'">
+  {{ (typeof data[config.field] === 'boolean' ? (data[config.field] ? 'Yes' : 'No') : '') }}
+</ng-container>

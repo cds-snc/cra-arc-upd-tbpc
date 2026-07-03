@@ -171,6 +171,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           field: 'uxTestInLastTwoYears',
           header: 'UX Test in Past 2 Years?',
           translate: true,
+          type: 'boolean',
         },
         {
           field: 'latestSuccessRate',
