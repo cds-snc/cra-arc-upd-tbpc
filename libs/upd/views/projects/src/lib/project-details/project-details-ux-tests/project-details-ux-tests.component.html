@@ -9,6 +9,7 @@
               [titleTooltip]="'tooltip-baseline-task-success'"
               [successRate]="(baselineTestData$ | async)?.successRate"
               [launchDate]="(baselineTestData$ | async)?.launchDate"
+              [noDataMessage]="'no-baseline-ux-tests'"
             ></upd-apex-donut-task-success>
           </div>
           <div class="col-6">
@@ -19,12 +20,15 @@
               [launchDate]="(validationTestData$ | async)?.launchDate"
               [change]="taskSuccessChange$ | async"
               [showChange]="true"
+              [noDataMessage]="'no-validation-ux-tests'"
             ></upd-apex-donut-task-success>
           </div>
         </div>
-        <upd-task-success-objective-status
-          [status]="taskSuccessObjectiveStatus$ | async"
-        ></upd-task-success-objective-status>
+        @if ((baselineTestData$ | async) || (validationTestData$ | async)) {
+          <upd-task-success-objective-status
+            [status]="taskSuccessObjectiveStatus$ | async"
+          ></upd-task-success-objective-status>
+        }
       </upd-card>
     </div>
   </div>

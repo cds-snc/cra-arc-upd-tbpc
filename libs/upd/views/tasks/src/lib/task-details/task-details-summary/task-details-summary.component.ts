@@ -6,7 +6,9 @@ import {
 } from '@angular/core';
 import {
   callVolumeObjectiveCriteria,
+  DefaultRankingStatusConfig,
   feedbackKpiObjectiveCriteria,
+  getRankingStatus,
 } from '@dua-upd/upd-components';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
@@ -16,11 +18,11 @@ import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { combineLatest, map } from 'rxjs';
 
 @Component({
-    selector: 'upd-task-details-summary',
-    templateUrl: './task-details-summary.component.html',
-    styleUrls: ['./task-details-summary.component.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'upd-task-details-summary',
+  templateUrl: './task-details-summary.component.html',
+  styleUrls: ['./task-details-summary.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class TaskDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);
@@ -51,6 +53,8 @@ export class TaskDetailsSummaryComponent implements OnInit {
   currentCallVolume$ = this.taskDetailsService.currentCallVolume$;
   callPercentChange$ = this.taskDetailsService.callPercentChange$;
 
+  currentSurvey$ = this.taskDetailsService.currentSurvey$;
+
   visitsByPage$ = this.taskDetailsService.visitsByPage$;
 
   dyfChart$ = this.taskDetailsService.dyfData$;
@@ -63,6 +67,23 @@ export class TaskDetailsSummaryComponent implements OnInit {
     pass: { message: 'kpi-met-volume' },
     fail: { message: 'kpi-not-met-volume' },
   };
+
+  rankingObjectiveCriteria = getRankingStatus;
+  rankingConfig = DefaultRankingStatusConfig;
+  individualScore$ = this.taskDetailsService.individualScore$;
+  individualScoreDifference$ =
+    this.taskDetailsService.individualScoreDifference$;
+  individualHistory$ = this.taskDetailsService.individualHistory$;
+  individualHistoryXAxis$ = this.taskDetailsService.individualHistoryXAxis$;
+  individualHistoryChart$ = this.taskDetailsService.individualHistoryChart$;
+  individualHistoryTableCols: ColumnConfig[] = [];
+  performanceScore$ = this.taskDetailsService.performanceScore$;
+  performanceScoreDifference$ =
+    this.taskDetailsService.performanceScoreDifference$;
+  seasonalHistoricAverage$ = this.taskDetailsService.seasonalHistoricAverage$;
+
+  perfRank$ = this.taskDetailsService.perfRank$;
+  perfTotalTasks$ = this.taskDetailsService.perfTotalTasks$;
 
   currentLang$ = this.i18n.currentLang$;
   langLink = 'en';
@@ -215,6 +236,18 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'prevValue',
           header: comparisonDateRange,
           pipe: 'number',
+        },
+      ];
+
+      this.individualHistoryTableCols = [
+        {
+          field: 'name',
+          header: this.i18n.service.translate('Month', lang),
+        },
+        {
+          field: 'currValue',
+          header: 'Historical performance score',
+          pipe: 'percent',
         },
       ];
     });

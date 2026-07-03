@@ -30,6 +30,7 @@ export class ApexDonutTaskSuccessComponent {
   readonly change = input<number | null | undefined>(null);
   readonly showChange = input(false);
   readonly colours = input<string[]>();
+  readonly noDataMessage = input('nodata-available');
 
   readonly vm = toSignal(this.apexStore.vm$);
 

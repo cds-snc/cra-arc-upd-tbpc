@@ -36,13 +36,13 @@
         </div>
       } @else {
         <p>
-          <span [translate]="'nodata-available'"></span>
+          <span [translate]="noDataMessage()"></span>
         </p>
       }
     </div>
     @if (launchDate()) {
       <p class="launch-date text-muted text-center mt-2">
-        {{ 'Launched:' | translate }} {{ launchDate() | localeDate }}
+        {{ 'date-tested' | translate }} {{ launchDate() | localeDate }}
       </p>
     }
   </div>

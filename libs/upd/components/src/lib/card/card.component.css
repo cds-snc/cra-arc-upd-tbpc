@@ -1,0 +1,24 @@
+.status-card {
+  border-left: 6px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.status-green {
+  border-left-color: #1f9d55;
+}
+
+.status-yellow {
+  border-left-color: #d38e26;
+}
+
+.status-red {
+  border-left-color: #d93025;
+}
+
+.status-blue {
+  border-left-color: #008c95;
+}
+
+.status-grey {
+  border-left-color: #808080;
+}
