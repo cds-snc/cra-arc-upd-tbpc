@@ -26,6 +26,7 @@ export class PagesDetailsComponent {
   url = toSignal(this.pageDetailsService.pageUrl$);
   pageStatus$ = this.pageDetailsService.pageStatus$;
   archiveStatus$ = this.pageDetailsService.archiveStatus$;
+  pageArchiveStatus$ = this.pageDetailsService.pageArchiveStatus$;
   loading$ = this.pageDetailsService.loading$;
   showUrl = true;
   showAlert = false;

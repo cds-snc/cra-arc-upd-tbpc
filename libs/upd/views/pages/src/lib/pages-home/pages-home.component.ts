@@ -60,6 +60,20 @@ export class PagesHomeComponent implements OnInit {
             },
           },
           {
+            field: 'pageArchiveStatusLabel',
+            header: 'Page Archive status',
+            type: 'label',
+            typeParam: 'pageArchive',
+            filterConfig: {
+              type: 'pageArchiveStatus',
+              categories: createCategoryConfig({
+                i18n: this.i18n.service,
+                data,
+                field: 'pageArchiveStatusLabel',
+              }),
+            },
+          },
+          {
             field: 'url',
             header: 'URL',
             type: 'link',

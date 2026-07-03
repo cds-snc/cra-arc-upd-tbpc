@@ -484,3 +484,52 @@ export async function testAAClientNew() {
 
   logJson(results);
 }
+
+// test one url to see if the "is_archive" field is being set correctly in urls and pages collections after processing the html and syncing data between the two collections
+export async function testUrlsArchived() {
+  const db = (<RunScriptCommand>this).inject<DbService>(DbService);
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
+    UrlsService,
+  );
+
+  const urlTest = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2024.html"
+  const urlTest2 = "www.canada.ca/en/revenue-agency/services/forms-publications/forms/rc722.html"
+  const urlTest3 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html"
+
+
+  const urlDb = await db.collections.urls
+    .find({
+      url: urlTest,
+    })
+    .exec();
+
+  logJson
+  logJson(urlDb);
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+
+  const urlsDb = await db.collections.urls.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("urlsDb: ");
+  logJson(urlsDb);
+
+  const pagesDb = await db.collections.pages.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("pagesDb: ");
+  logJson(pagesDb);
+
+}

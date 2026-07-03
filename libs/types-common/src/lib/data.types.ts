@@ -59,6 +59,7 @@ export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
   archiveStatus?: ArchiveStatus;
+  pageArchiveStatus?: string[];
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -541,6 +542,8 @@ export type ProjectStatus =
 export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ArchiveStatus = 'Archived';
+
+export type PageArchiveStatus = PageStatus | ArchiveStatus;
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
