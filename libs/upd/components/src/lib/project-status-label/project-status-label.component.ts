@@ -5,6 +5,7 @@ import {
   ProjectType,
   TaskStatus,
   ArchiveStatus,
+  PageArchiveStatus,
 } from '@dua-upd/types-common';
 
 @Component({
@@ -50,6 +51,14 @@ import {
         >{{ archiveStatus | translate }}</span
       >
     }
+    @if (pageArchiveStatus) {
+      <span
+        class="badge w-100 {{ styleClass }} {{
+          pageArchiveStatusClassMap[pageArchiveStatus]
+        }} d-block"
+        >{{ pageArchiveStatus | translate }}</span
+      >
+    }
   `,
   styleUrls: ['./project-status-label.component.scss'],
   standalone: false,
@@ -61,6 +70,7 @@ export class ProjectStatusLabelComponent {
   @Input() taskStatus: TaskStatus | null = null;
   @Input() archiveStatus: ArchiveStatus | null = null;
   @Input() styleClass: string | null = null;
+  @Input() pageArchiveStatus: PageArchiveStatus | null = null;
 
   projectStatusClassMap: Record<ProjectStatus, string> = {
     Unknown: 'bg-unknown',
@@ -93,6 +103,13 @@ export class ProjectStatusLabelComponent {
   };
 
   archiveStatusClassMap: Record<ArchiveStatus, string> = {
+    Archived: 'bg-archive',
+  };
+
+  pageArchiveStatusClassMap: Record<PageArchiveStatus, string> = {
+    Live: 'bg-complete',
+    '404': 'bg-404',
+    Redirected: 'bg-redirect',
     Archived: 'bg-archive',
   };
 }
