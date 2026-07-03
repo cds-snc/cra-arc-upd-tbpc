@@ -541,9 +541,14 @@ export type ProjectStatus =
 
 export type PageStatus = 'Live' | '404' | 'Redirected';
 
-export type ArchiveStatus = 'Archived';
+export type ArchiveStatus = 'Archived' | 'Not archived';
 
 export type PageArchiveStatus = PageStatus | ArchiveStatus;
+// export type PageArchiveStatus =
+  // | 'Live'
+  // | '404'
+  // | 'Redirect'
+  // | 'Archived';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
