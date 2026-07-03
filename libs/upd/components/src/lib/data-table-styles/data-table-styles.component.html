@@ -43,6 +43,7 @@
       "
     [archiveStatus]="archiveStatus"
   ></upd-project-status-label>
+  <!--
   <upd-project-status-label
     *ngIf="
       config.type === 'label' &&
@@ -51,6 +52,7 @@
       "
       [pageArchiveStatus]="pageArchiveStatus"
   ></upd-project-status-label>
+  -->
 
   <!-- COPS Type -->
   @if (
@@ -153,14 +155,15 @@
   </ng-container>
 
   <!-- COMBINED PageStatus ArchiveStatus Type -->
-  @if (config.type === 'label' && config.typeParam === 'pageArchiveStatus') {
-      @for (status of pageArchiveStatus; track pageArchive) {
-        <upd-project-status-label
-          [pageArchiveStatus]="pageArchive"
+  <ng-container *ngIf="config.type === 'label' && config.typeParam === 'pageArchive'">
+      
+      <upd-project-status-label
+        *ngFor= "let status of pageArchiveStatus "
+          [pageArchiveStatus]="status"
           class="d-inline-flex me-1"
-        ></upd-project-status-label>
-      }
-  }
+      ></upd-project-status-label>
+  </ng-container>
+  
 
   <!-- Pass/Fail Label -->
   @if (

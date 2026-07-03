@@ -17,10 +17,15 @@ export class PagesHomeFacade {
   map((pagesHomeData) =>
     [...(pagesHomeData?.dateRangeData || [])].map((d) => ({
       ...d,
+      // pageArchiveStatusLabel: [
+      //   ...(d.pageStatus ? [d.pageStatus] : []),
+      //   ...(d.archiveStatus ? [d.archiveStatus] : []),
+      // ] as PageArchiveStatus[],
       pageArchiveStatusLabel: [
-        ...(d.pageStatus ? [d.pageStatus] : []),
-        ...(d.archiveStatus ? [d.archiveStatus] : []),
-      ] as PageArchiveStatus[],
+        ...(d.pageStatus ? [d.pageStatus as PageArchiveStatus] : []),
+        ...(d.archiveStatus ? [d.archiveStatus as PageArchiveStatus] : []),
+      ],
+ 
     })),
   ),
 );

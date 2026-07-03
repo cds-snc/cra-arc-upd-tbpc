@@ -39,7 +39,7 @@ export class DataTableStylesComponent implements OnInit {
         this.labelType = 'page';
       } else if (this.config.typeParam === 'archiveStatus') {
         this.labelType = 'archive';
-      } else if (this.config.typeParam == 'pageArchiveStatus') {
+      } else if (this.config.typeParam == 'pageArchive') {
         this.labelType = 'pageArchive';
       }
     }
@@ -69,8 +69,8 @@ export class DataTableStylesComponent implements OnInit {
     return this.data[this.config.field] as ArchiveStatus;
   }
 
-  get pageArchiveStatus(): PageArchiveStatus {
-    return this.data[this.config.field] as PageArchiveStatus;
+  get pageArchiveStatus(): PageArchiveStatus[] {
+    return this.data[this.config.field] as PageArchiveStatus[];
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {
