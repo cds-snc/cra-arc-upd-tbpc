@@ -7,7 +7,7 @@ import * as FileSaver from 'file-saver';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { DropdownOption } from '../dropdown/dropdown.component';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { PageStatus, ProjectStatus } from '@dua-upd/types-common';
+import { PageStatus, ProjectStatus, TaskStatus } from '@dua-upd/types-common';
 
 @Component({
     selector: 'upd-data-table-exports',
@@ -75,12 +75,18 @@ export class DataTableExportsComponent<T> {
 
     const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected'];
 
+    const taskStatusKeys: TaskStatus[] = ['Healthy', 'Watch', 'Improving', 'Needs action'];
+
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,
     )) as Record<string, string>;
 
     const pageStatuses = (await this.i18n.service.get(
       pageStatusKeys,
+    )) as Record<string, string>;
+
+    const taskStatuses = (await this.i18n.service.get(
+      taskStatusKeys,
     )) as Record<string, string>;
 
     return this.data.map((row) =>
@@ -126,6 +132,8 @@ export class DataTableExportsComponent<T> {
             formattedRow[colKey] = cellValue ? wos_cops : ''; 
           } else if (col.filterConfig?.type === 'pageStatus') {
             formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'taskStatus') {
+            formattedRow[colKey] = taskStatuses[(<unknown>cellValue) as string];
           } else if (col.type === 'label') {
             formattedRow[colKey] =
               projectStatuses[(<unknown>cellValue) as string];
