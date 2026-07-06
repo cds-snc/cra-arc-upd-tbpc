@@ -181,7 +181,7 @@ export class TasksHomeComponent implements OnInit {
       type: 'label',
       typeParam: 'taskStatus',
       filterConfig: {
-        type: 'category',
+        type: 'taskStatus',
         categories: taskStatusCategories.map((status) => ({
           name: status,
           value: status,
