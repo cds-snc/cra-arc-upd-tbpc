@@ -60,7 +60,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
       0;
       const isPercent = state.added?.isPercent ?? false;
 
-      const statsAnnotations = getStatsAnnotations(
+      const statsAnnotations = this.getStatsAnnotations(
         value ?? [],
         state.xaxis?.categories as string[] | string[][],
       );
@@ -226,7 +226,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
     (state, value: string[][] | string[]): ChartOptions => {
       const showStatsAnnotations = state.added?.showStatsAnnotations ?? false;
 
-      const statsAnnotations = getStatsAnnotations(
+      const statsAnnotations = this.getStatsAnnotations(
         (state.series ?? []) as ApexAxisChartSeries,
         value,
       );
@@ -296,7 +296,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
 
   readonly setShowStatsAnnotations = this.updater(
     (state, value: boolean): ChartOptions => {
-      const statsAnnotations = getStatsAnnotations(
+      const statsAnnotations = this.getStatsAnnotations(
         (state.series ?? []) as ApexAxisChartSeries,
         state.xaxis?.categories as string[] | string[][],
       );
@@ -427,7 +427,7 @@ export class ApexStore extends ComponentStore<ChartOptions> {
   readonly setLocale = this.updater((state, value: string): ChartOptions => {
     const showStatsAnnotations = state.added?.showStatsAnnotations ?? false;
 
-    const statsAnnotations = getStatsAnnotations(
+    const statsAnnotations = this.getStatsAnnotations(
       (state.series ?? []) as ApexAxisChartSeries,
       state.xaxis?.categories as string[] | string[][],
     );
@@ -470,6 +470,75 @@ export class ApexStore extends ComponentStore<ChartOptions> {
         }),
       ) > 0,
   );
+
+  readonly getStatsAnnotations = (
+    series: ApexAxisChartSeries,
+    categories: string[] | string[][] = [],
+  ): { points: PointAnnotation[]; yaxis: YAxisAnnotation[] } => {
+    const values: { x: string | number; y: number }[] = [];
+
+    for (const s of series) {
+      const data = Array.isArray(s.data) ? s.data : [];
+
+      data.forEach((point, index) => {
+        if (typeof point === 'number' && Number.isFinite(point)) {
+          const category = categories[index];
+
+          values.push({
+            x: Array.isArray(category)
+              ? category.join(' ')
+              : (category ?? index + 1),
+            y: point,
+          });
+        }
+      });
+    }
+
+    if (!values.length) {
+      return { points: [], yaxis: [] };
+    }
+
+    const maxPoint = values.reduce((a, b) => (a.y > b.y ? a : b));
+    const minPoint = values.reduce((a, b) => (a.y < b.y ? a : b));
+    const avg = values.reduce((sum, item) => sum + item.y, 0) / values.length;
+
+    const maxText = this.i18n.service.translate(
+      'max-short',
+      this.i18n.service.currentLang,
+    );
+    const minText = this.i18n.service.translate(
+      'min-short',
+      this.i18n.service.currentLang,
+    );
+    const avgText = this.i18n.service.translate(
+      'Average',
+      this.i18n.service.currentLang,
+    );
+
+    return {
+      points: [
+        makePointAnnotation(maxPoint, '#198754', maxText, '#fff'),
+        makePointAnnotation(minPoint, '#dc3545', minText, '#fff'),
+      ],
+      yaxis: [
+        {
+          y: avg,
+          borderColor: '#ffc107',
+          borderWidth: 2,
+          strokeDashArray: 4,
+          label: {
+            text: avgText,
+            borderColor: '#ffc107',
+            style: {
+              background: '#ffc107',
+              color: '#000',
+              fontSize: '12px',
+            },
+          },
+        },
+      ],
+    };
+  };
 }
 
 type PointAnnotation = NonNullable<
@@ -479,65 +548,6 @@ type PointAnnotation = NonNullable<
 type YAxisAnnotation = NonNullable<
   NonNullable<ApexOptions['annotations']>['yaxis']
 >[number];
-
-function getStatsAnnotations(
-  series: ApexAxisChartSeries,
-  categories: string[] | string[][] = [],
-): {
-  points: PointAnnotation[];
-  yaxis: YAxisAnnotation[];
-} {
-  const values: { x: string | number; y: number }[] = [];
-
-  for (const s of series) {
-    const data = Array.isArray(s.data) ? s.data : [];
-
-    data.forEach((point, index) => {
-      if (typeof point === 'number' && Number.isFinite(point)) {
-        const category = categories[index];
-
-        values.push({
-          x: Array.isArray(category)
-            ? category.join(' ')
-            : (category ?? index + 1),
-          y: point,
-        });
-      }
-    });
-  }
-
-  if (!values.length) {
-    return { points: [], yaxis: [] };
-  }
-
-  const maxPoint = values.reduce((a, b) => (a.y > b.y ? a : b));
-  const minPoint = values.reduce((a, b) => (a.y < b.y ? a : b));
-  const avg = values.reduce((sum, item) => sum + item.y, 0) / values.length;
-
-  return {
-    points: [
-      makePointAnnotation(maxPoint, '#198754', 'Max', '#fff'),
-      makePointAnnotation(minPoint, '#dc3545', 'Min', '#fff'),
-    ],
-    yaxis: [
-      {
-        y: avg,
-        borderColor: '#ffc107',
-        borderWidth: 2,
-        strokeDashArray: 4,
-        label: {
-          text: 'Average',
-          borderColor: '#ffc107',
-          style: {
-            background: '#ffc107',
-            color: '#000',
-            fontSize: '12px',
-          },
-        },
-      },
-    ],
-  };
-}
 
 function makePointAnnotation(
   point: { x: string | number | string[]; y: number },
