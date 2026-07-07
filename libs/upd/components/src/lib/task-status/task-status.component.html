@@ -41,7 +41,7 @@
           >
             <div class="confidence-row">
               <div>
-                <span class="confidence-badge">PS</span>
+                <span class="confidence-badge">{{ 'PS' | translate }}</span>
 
                 <strong [innerHTML]="psConfidenceTitle()"></strong>
 
@@ -53,7 +53,7 @@
 
             <div class="confidence-row">
               <div>
-                <span class="confidence-badge">HA</span>
+                <span class="confidence-badge">{{ 'HA' | translate }}</span>
 
                 <strong [innerHTML]="haConfidenceTitle()"></strong>
 
@@ -66,7 +66,7 @@
             @if (sha() !== null) {
               <div class="confidence-row">
                 <div>
-                  <span class="confidence-badge">SHA</span>
+                  <span class="confidence-badge">{{ 'SHA' | translate }}</span>
 
                   <strong [innerHTML]="shaConfidenceTitle()"></strong>
 
@@ -105,7 +105,7 @@
                       {{ 'task-status-performance-score' | translate }}
                     </span>
 
-                    <span class="score-badge">PS</span>
+                    <span class="score-badge">{{ 'PS' | translate }}</span>
                   </div>
 
                   <div class="score-subtitle">
@@ -207,7 +207,7 @@
                         {{ 'task-status-historical-average' | translate }}
                       </span>
 
-                      <span class="score-badge">HA</span>
+                      <span class="score-badge">{{ 'HA' | translate }}</span>
                     </div>
 
                     <div class="score-subtitle">
@@ -230,7 +230,7 @@
                         </span>
 
                         {{
-                          getAbsChange(historicalVariance()) * 100
+                          getAbsChange(historicalVariance()!) * 100
                             | localeNumber: '1.0-1'
                         }}
 
@@ -239,11 +239,11 @@
                     </div>
                   </div>
                 </div>
-
+                
                 <div class="score-chart score-chart--compact">
                   <upd-apex-score
                     [title]="'task-status-historical-average' | translate"
-                    [score]="ha()"
+                    [score]="historicalVariance()!"
                     [ranges]="historicalRanges()"
                   ></upd-apex-score>
                 </div>
@@ -260,7 +260,7 @@
                           }}
                         </span>
 
-                        <span class="score-badge">SHA</span>
+                        <span class="score-badge">{{ 'SHA' | translate }}</span>
                       </div>
 
                       <div class="score-subtitle">
@@ -298,7 +298,7 @@
                       [title]="
                         'task-status-seasonal-historic-average' | translate
                       "
-                      [score]="sha()!"
+                      [score]="shaVariance()!"
                       [ranges]="historicalRanges()"
                     ></upd-apex-score>
                   </div>

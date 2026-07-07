@@ -246,7 +246,7 @@ export class TaskDetailsSummaryComponent implements OnInit {
         },
         {
           field: 'currValue',
-          header: 'Historical performance score',
+          header: this.i18n.service.translate('task-status-historical-performance-score', lang),
           pipe: 'percent',
         },
       ];

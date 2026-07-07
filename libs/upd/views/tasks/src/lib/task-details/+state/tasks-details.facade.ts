@@ -175,13 +175,16 @@ export class TasksDetailsFacade {
     map((data) => data?.perf_total_tasks || 0),
   );
 
-  individualHistory$ = this.tasksDetailsData$.pipe(
-    map((data) => {
+  individualHistory$ = combineLatest([
+    this.tasksDetailsData$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, lang]) => {
       const current = data?.dateRangeData?.individualHistory ?? [];
 
       return [
         {
-          name: 'Historical performance %',
+          name: this.i18n.service.translate(`task-status-historical-performance-series`, lang),
           data: current.map((item) => item.individual_score),
         },
       ] as ApexAxisChartSeries;
