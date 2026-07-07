@@ -28,7 +28,7 @@ export class TasksHomeFacade {
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
             : '',
-        status:
+        taskStatus:
           getTaskStatus(
             row.performance_score,
             row.historical_average,
