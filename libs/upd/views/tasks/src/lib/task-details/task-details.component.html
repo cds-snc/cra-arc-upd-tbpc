@@ -36,10 +36,12 @@
         @if (tmfTotalTasks(); as total) {
           <div class="col-auto">
             <span class="task-rank-card flex-shrink-0">
-              <span class="task-rank-card__label"> Task Rank </span>
+              <span class="task-rank-card__label">{{
+                'task-status-rank-title' | translate
+              }}</span>
 
               <span class="task-rank-card__rank">
-                #{{ rank }} / {{ total }}
+                {{ 'task-status-rank-position' | translate: { rank, total } }}
               </span>
 
               <span class="task-rank-card__label">
@@ -50,7 +52,7 @@
                   >
                     star
                   </span>
-                  Top Task
+                  {{ 'task-status-rank-top-task' | translate }}
                 }
               </span>
             </span>

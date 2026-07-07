@@ -1,22 +1,24 @@
 <div class="score-chart">
-  <apx-chart
-    [series]="chartOptions().series!"
-    [chart]="chartOptions().chart!"
-    [annotations]="chartOptions().annotations!"
-    [xaxis]="chartOptions().xaxis!"
-    [yaxis]="chartOptions().yaxis!"
-    [dataLabels]="chartOptions().dataLabels!"
-    [plotOptions]="chartOptions().plotOptions!"
-    [tooltip]="chartOptions().tooltip!"
-    [legend]="chartOptions().legend!"
-    [grid]="chartOptions().grid!"
-    [states]="chartOptions().states!"
-    [colors]="chartOptions().colors!"
-    [fill]="chartOptions().fill!"
-  ></apx-chart>
+  @if (chartOptions(); as options) {
+    <apx-chart
+      [series]="options.series!"
+      [chart]="options.chart!"
+      [annotations]="options.annotations!"
+      [xaxis]="options.xaxis!"
+      [yaxis]="options.yaxis!"
+      [dataLabels]="options.dataLabels!"
+      [plotOptions]="options.plotOptions!"
+      [tooltip]="options.tooltip!"
+      [legend]="options.legend!"
+      [grid]="options.grid!"
+      [states]="options.states!"
+      [colors]="options.colors!"
+      [fill]="options.fill!"
+    ></apx-chart>
+  }
 
   <div
     class="score-marker"
-    [style.left.%]="scorePercent()"
+    [style.left.%]="scorePosition()"
   ></div>
 </div>

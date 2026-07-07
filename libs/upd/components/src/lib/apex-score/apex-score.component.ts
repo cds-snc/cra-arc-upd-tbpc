@@ -14,12 +14,6 @@ export type ScoreRange = {
   color: string;
 };
 
-const DEFAULT_RANGES: ScoreRange[] = [
-  { name: 'Low', from: 0, to: 40, color: '#d93025' },
-  { name: 'Medium', from: 40, to: 60, color: '#f2a93b' },
-  { name: 'High', from: 60, to: 100, color: '#1f9d55' },
-];
-
 @Component({
   selector: 'upd-apex-score',
   templateUrl: './apex-score.component.html',
@@ -29,27 +23,45 @@ const DEFAULT_RANGES: ScoreRange[] = [
 })
 export class ApexScoreComponent {
   readonly title = input('Individual Score');
-  readonly badge = input<'PRIMARY' | 'SECONDARY'>('PRIMARY');
+  readonly ranges = input<ScoreRange[]>();
+
+  readonly currentRange = computed(() => this.getCurrentRange());
   readonly score = input(0);
-  readonly ranges = input<ScoreRange[]>(DEFAULT_RANGES);
-
-  readonly scorePercent = computed(() =>
-    Math.round(this.score() * 100)
-  );
-
-  readonly currentRange = computed(() => {
-    const score = this.scorePercent();
-
-    return this.ranges().find(({ from, to }) => score >= from && score <= to);
-  });
-
   readonly summary = computed(
     () => this.currentRange()?.name.toUpperCase() ?? '',
   );
 
+  readonly scoreMultiplier = input(100);
+
+  readonly scoreValue = computed(() => {
+    const value = this.score() * this.scoreMultiplier();
+    return Number.isFinite(value) ? value : 0;
+  });
+
+  readonly scorePosition = computed(() => {
+    const ranges = this.getSortedRanges();
+
+    if (!ranges.length) {
+      return 0;
+    }
+
+    const domainMin = ranges[0].from;
+    const domainMax = ranges[ranges.length - 1].to;
+    const domainSize = domainMax - domainMin;
+
+    if (domainSize <= 0) {
+      return 0;
+    }
+
+    return this.clampPercent(
+      ((this.scoreValue() - domainMin) / domainSize) * 100,
+    );
+  });
+
   readonly chartOptions = computed<ApexOptions>(() => {
     const currentRange = this.currentRange();
-    const score = this.scorePercent();
+    const score = this.scoreValue();
+    const colorStops = this.createColorStops();
 
     const base = createBaseConfig((value: number) => `${value}%`);
 
@@ -76,35 +88,17 @@ export class ApexScoreComponent {
         },
       ],
 
-      colors: ['#d93025'],
+      colors: [colorStops[0]?.color ?? ''],
 
       fill: {
         type: 'gradient',
         gradient: {
           type: 'horizontal',
           shadeIntensity: 0,
-          gradientToColors: ['#1f9d55'],
           inverseColors: false,
           opacityFrom: 1,
           opacityTo: 1,
-          stops: [0, 50, 100],
-          colorStops: [
-            {
-              offset: 0,
-              color: '#d93025',
-              opacity: 1,
-            },
-            {
-              offset: 50,
-              color: '#f2a93b',
-              opacity: 1,
-            },
-            {
-              offset: 100,
-              color: '#1f9d55',
-              opacity: 1,
-            },
-          ],
+          colorStops,
         },
       },
 
@@ -178,7 +172,7 @@ export class ApexScoreComponent {
             <div class="apexcharts-tooltip-y-group">
               <span class="apexcharts-tooltip-text-y-label">
                 <strong>${currentRange?.name ?? ''}:</strong>
-                ${score}%
+                ${score.toFixed(0)}%
               </span>
             </div>
           </div>
@@ -210,4 +204,91 @@ export class ApexScoreComponent {
       },
     };
   });
+
+  private getSortedRanges(): ScoreRange[] {
+    return [...(this.ranges() ?? [])]
+      .filter(
+        ({ from, to }) =>
+          Number.isFinite(from) && Number.isFinite(to) && from <= to,
+      )
+      .sort((left, right) => left.from - right.from);
+  }
+
+  private createColorStops(): Array<{
+    offset: number;
+    color: string;
+    opacity: number;
+  }> {
+    const ranges = this.getSortedRanges();
+
+    if (!ranges.length) {
+      return [];
+    }
+
+    const domainMin = Math.min(...ranges.map(({ from }) => from));
+    const domainMax = Math.max(...ranges.map(({ to }) => to));
+    const domainSize = domainMax - domainMin;
+
+    if (domainSize <= 0) {
+      return [
+        {
+          offset: 0,
+          color: ranges[0].color,
+          opacity: 1,
+        },
+        {
+          offset: 100,
+          color: ranges[0].color,
+          opacity: 1,
+        },
+      ];
+    }
+
+    const toApexOffset = (value: number): number =>
+      this.clampPercent(((value - domainMin) / domainSize) * 100);
+
+    const firstRange = ranges[0];
+    const lastRange = ranges[ranges.length - 1];
+
+    return [
+      {
+        offset: 0,
+        color: firstRange.color,
+        opacity: 1,
+      },
+
+      ...ranges.map(({ from, to, color }) => ({
+        offset: toApexOffset((from + to) / 2),
+        color,
+        opacity: 1,
+      })),
+
+      {
+        offset: 100,
+        color: lastRange.color,
+        opacity: 1,
+      },
+    ];
+  }
+
+  private clampPercent(value: number): number {
+    return Math.max(0, Math.min(value, 100));
+  }
+
+  private getCurrentRange(): ScoreRange {
+    const score = this.scoreValue();
+
+    const sortedRanges = [...(this.ranges() ?? [])].sort(
+      (left, right) => left.from - right.from,
+    );
+
+    return sortedRanges.find((range, index) => {
+      const isLastRange = index === sortedRanges.length - 1;
+
+      return (
+        score >= range.from &&
+        (isLastRange ? score <= range.to : score < range.to)
+      );
+    }) ?? sortedRanges[0];
+  }
 }

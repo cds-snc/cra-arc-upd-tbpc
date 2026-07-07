@@ -18,7 +18,7 @@
     <div class="col-lg-12 d-flex">
       <upd-apex-bar
         class="flex-fill w-100"
-        [title]="'Historical performance (24 month period)' | translate"
+        [title]="'task-status-historical-performance-title' | translate"
         [series]="(individualHistory$ | async) || []"
         [yAxis]="'Percent' | translate"
         [xAxis]="(individualHistoryXAxis$ | async) || []"
