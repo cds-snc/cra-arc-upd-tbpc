@@ -175,7 +175,7 @@ export class TasksHomeComponent implements OnInit {
       group: 'tab-webtraffic',
     },
     {
-      field: 'status',
+      field: 'taskStatus',
       header: 'Status',
       group: 'tab-taskperformance',
       type: 'label',
@@ -187,7 +187,6 @@ export class TasksHomeComponent implements OnInit {
           value: status,
         })),
       },
-      translate: false,
       frozen: true,
     },
     {
