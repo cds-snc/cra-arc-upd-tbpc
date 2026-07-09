@@ -61,7 +61,7 @@ export class PagesHomeComponent implements OnInit {
           },
           {
             field: 'pageArchiveStatusLabel',
-            header: 'Page Archive status',
+            header: 'Page archive status',
             type: 'label',
             typeParam: 'pageArchive',
             filterConfig: {
