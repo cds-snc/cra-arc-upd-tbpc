@@ -7,7 +7,7 @@ import * as FileSaver from 'file-saver';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { DropdownOption } from '../dropdown/dropdown.component';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { PageStatus, ProjectStatus, TaskStatus } from '@dua-upd/types-common';
+import { PageStatus, ArchiveStatus, ProjectStatus, TaskStatus, PageArchiveStatus } from '@dua-upd/types-common';
 
 @Component({
     selector: 'upd-data-table-exports',
@@ -77,6 +77,10 @@ export class DataTableExportsComponent<T> {
 
     const taskStatusKeys: TaskStatus[] = ['Stable', 'Watch', 'Action required', 'Unscored'];
 
+    const archiveStatusKeys: ArchiveStatus[] = ['Archived', 'Not archived'];
+
+    const pageArchiveStatusKeys: PageArchiveStatus[] = pageStatusKeys || archiveStatusKeys;
+
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,
     )) as Record<string, string>;
@@ -87,6 +91,14 @@ export class DataTableExportsComponent<T> {
 
     const taskStatuses = (await this.i18n.service.get(
       taskStatusKeys,
+    )) as Record<string, string>;
+
+    const archiveStatuses = (await this.i18n.service.get (
+      archiveStatusKeys,
+    )) as Record<string, string>;
+
+    const pageArchiveStatuses = (await this.i18n.service.get (
+      pageArchiveStatusKeys,
     )) as Record<string, string>;
 
     return this.data.map((row) =>
@@ -134,6 +146,10 @@ export class DataTableExportsComponent<T> {
             formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
           } else if (col.filterConfig?.type === 'taskStatus') {
             formattedRow[colKey] = taskStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'archiveStatus') {
+            formattedRow[colKey] = archiveStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'pageArchiveStatus') {
+            formattedRow[colKey] = pageArchiveStatuses[(<unknown>cellValue) as string];
           } else if (col.type === 'label') {
             formattedRow[colKey] =
               projectStatuses[(<unknown>cellValue) as string];
