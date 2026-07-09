@@ -53,7 +53,7 @@ import {
     }
     @if (pageArchiveStatus) {
       <span
-        class="badge w-100 {{ styleClass }} {{
+        class="badge {{ styleClass }} {{
           pageArchiveStatusClassMap[pageArchiveStatus]
         }} d-block"
         >{{ pageArchiveStatus | translate }}</span
@@ -105,6 +105,7 @@ export class ProjectStatusLabelComponent {
 
   archiveStatusClassMap: Record<ArchiveStatus, string> = {
     Archived: 'bg-archive',
+    'Not archived': 'bg-primary',
   };
 
   pageArchiveStatusClassMap: Record<PageArchiveStatus, string> = {
@@ -112,5 +113,6 @@ export class ProjectStatusLabelComponent {
     '404': 'bg-404',
     Redirected: 'bg-redirect',
     Archived: 'bg-archive',
+    'Not archived': 'bg-primary',
   };
 }
