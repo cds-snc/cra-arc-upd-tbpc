@@ -192,6 +192,7 @@ export interface IPage {
   altLangHref?: string;
   redirect?: string;
   is_404?: boolean;
+  is_archive?: boolean;
   lastChecked?: Date;
   lastModified?: Date;
   owners?: string;

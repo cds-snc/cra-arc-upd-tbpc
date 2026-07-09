@@ -41,7 +41,7 @@ export interface ColumnConfig<T = any> {
 export type GroupedColumns<T> = {
   label: string;
   items: ColumnConfig<T>[];
-}
+};
 
 export interface typeParams {
   link: string;
@@ -53,7 +53,14 @@ export interface typeParams {
 }
 
 export interface FilterConfig<T = any> {
-  type: 'category' | 'boolean' | 'passFail' | 'pageStatus' | 'taskStatus';
+  type:
+    | 'category'
+    | 'boolean'
+    | 'passFail'
+    | 'pageStatus'
+    | 'taskStatus'
+    | 'archiveStatus'
+    | 'pageArchiveStatus';
   categories?: { name: string; value: T[keyof T] | null }[];
   matchMode?: string;
 }
