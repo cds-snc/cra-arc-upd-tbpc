@@ -54,7 +54,7 @@ export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
   archiveStatus?: ArchiveStatus;
-  pageArchiveStatus?: string[];
+  pageArchiveStatus?: PageArchiveStatus;
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -542,12 +542,8 @@ export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ArchiveStatus = 'Archived' | 'Not archived';
 
-export type PageArchiveStatus = PageStatus | ArchiveStatus;
-// export type PageArchiveStatus =
-  // | 'Live'
-  // | '404'
-  // | 'Redirect'
-  // | 'Archived';
+// export type PageArchiveStatus = PageStatus | ArchiveStatus;
+export type PageArchiveStatus = 'Live' | '404' | 'Redirected' | 'Archived' | 'Not archived';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
@@ -623,8 +619,10 @@ export interface VisitsByPage {
   dyfNo?: number;
   is404?: boolean;
   isRedirect?: boolean;
+  isArchive?: boolean;
   redirect?: string;
   pageStatus?: PageStatus;
+  archiveStatus?: ArchiveStatus;
   owners?: string;
   sections?: string;
 }
