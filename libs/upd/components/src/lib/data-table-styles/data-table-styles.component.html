@@ -36,23 +36,9 @@
   }
   <upd-project-status-label
     *ngIf="
-      labelType === 'archive' &&
-      config.type === 'label' &&
-      config.typeParam === 'archiveStatus'  &&
-      data[config.field] === 'Archived'
-      "
+      labelType === 'archive'"
     [archiveStatus]="archiveStatus"
   ></upd-project-status-label>
-  <!--
-  <upd-project-status-label
-    *ngIf="
-      config.type === 'label' &&
-      config.typeParam === 'pageArchiveStatus' &&
-      data[config.field]
-      "
-      [pageArchiveStatus]="pageArchiveStatus"
-  ></upd-project-status-label>
-  -->
 
   <!-- COPS Type -->
   @if (
@@ -100,70 +86,14 @@
     ></upd-project-status-label>
   }
 
-  <!-- Archived status -->
-   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'archiveStatus'">
-    <upd-project-status-label
-      *ngIf="data['archiveStatus'] === 'Archived'"
-      [archiveStatus]="'Archived'"
-      style="display: block; margin-bottom: 3px"
-    ></upd-project-status-label>
-  </ng-container>
-
-  <!-- COMBINED Live Archived Type -->
-   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'pageArchiveStatus'">
-    <upd-project-status-label
-      *ngIf="data['Live']"
-      [pageStatus]="pageStatus"
-      class="d-inline-flex me-1"
-    ></upd-project-status-label>
-
-    <upd-project-status-label
-       *ngIf="data['archiveStatus']"
-      [archiveStatus]="archiveStatus"
-      class="d-inline-flex"
-    ></upd-project-status-label>
-  </ng-container>
-   
-  <!-- COMBINED Redirected Archived Type -->
-   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'pageArchiveStatus'">
-    <upd-project-status-label
-      *ngIf="data['Redirected']"
-      [pageStatus]="pageStatus"
-      class="d-inline-flex me-1"
-    ></upd-project-status-label>
-
-    <upd-project-status-label
-       *ngIf="data['archiveStatus']"
-      [archiveStatus]="archiveStatus"
-      class="d-inline-flex"
-    ></upd-project-status-label>
-  </ng-container>
-
-  <!-- COMBINED 404 Archived Type -->
-   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'pageArchiveStatus'">
-    <upd-project-status-label
-      *ngIf="data['404']"
-      [pageStatus]="pageStatus"
-      class="d-inline-flex me-1"
-    ></upd-project-status-label>
-
-    <upd-project-status-label
-       *ngIf="data['archiveStatus']"
-      [archiveStatus]="archiveStatus"
-      class="d-inline-flex"
-    ></upd-project-status-label>
-  </ng-container>
-
   <!-- COMBINED PageStatus ArchiveStatus Type -->
   <ng-container *ngIf="config.type === 'label' && config.typeParam === 'pageArchive'">
-      
       <upd-project-status-label
         *ngFor= "let status of pageArchiveStatus "
           [pageArchiveStatus]="status"
           class="d-inline-flex me-1"
       ></upd-project-status-label>
   </ng-container>
-  
 
   <!-- Pass/Fail Label -->
   @if (

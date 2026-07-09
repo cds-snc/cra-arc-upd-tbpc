@@ -282,7 +282,9 @@
             @if (
               col.filterConfig.type === 'category' ||
               col.filterConfig.type === 'pageStatus' ||
-              col.filterConfig.type === 'taskStatus'
+              col.filterConfig.type === 'taskStatus'||
+              col.filterConfig.type === 'archiveStatus' ||
+              col.filterConfig.type === 'pageArchiveStatus'
             ) {
               <p-columnFilter
                 [field]="col.field"
