@@ -89,6 +89,7 @@
   "validation-scenario": "Scénario de validation",
   "exploratory-scenario": "Scénario exploratoire",
   "spot-check-scenario": "Scénario de contrôle ponctuel",
+  "baseline-validation-scenario": "Scénario de base de référence / de validation",
   "no-scenarios-available": "Aucun scénario disponible",
   "Task": "Tâche",
   "tasks": "Tâches",

@@ -72,15 +72,13 @@
 
 <ng-template #scenarioTemplate let-rowData>
   <div>
-    @for (testType of getScenarioTestTypes(rowData); track testType) {
+    @for (desc of getScenarioDescriptions(rowData); track desc.text) {
       <div [class.mb-2]="!$last">
-        <strong class="small">{{ scenarioHeadingKey(testType) | translate }}:</strong>
-        @for (scenario of rowData.scenariosByTestType[testType]; track scenario.text) {
-          @if (scenario.html) {
-            <upd-markdown-renderer [html]="scenario.html" class="small text-muted d-block mb-1"></upd-markdown-renderer>
-          } @else {
-            <p class="small text-muted mb-1">{{ scenario.text }}</p>
-          }
+        <strong class="small text-muted">{{ desc.heading }}:</strong>
+        @if (desc.html) {
+          <upd-markdown-renderer [html]="desc.html" class="small d-block mb-1"></upd-markdown-renderer>
+        } @else {
+          <p class="small mb-1">{{ desc.text }}</p>
         }
       </div>
     } @empty {

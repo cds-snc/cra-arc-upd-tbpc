@@ -147,20 +147,86 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  getScenarioTestTypes(rowData: Record<string, unknown>): string[] {
+  private readonly scenarioTypeOrder: Record<string, number> = {
+    Baseline: 0,
+    Validation: 1,
+    Exploratory: 2,
+    'Spot Check': 3,
+  };
+
+  getScenarioDescriptions(
+    rowData: Record<string, unknown>,
+  ): { heading: string; text: string; html: string | null }[] {
     const scenarios = rowData['scenariosByTestType'] as
       | Record<string, { text: string; html?: string | null }[]>
       | undefined;
-    const keys = Object.keys(scenarios || {});
-    const order: Record<string, number> = {
-      Baseline: 0,
-      Validation: 1,
-      Exploratory: 2,
-      'Spot Check': 3,
-    };
-    return keys.sort(
-      (a, b) => (order[a] ?? 99) - (order[b] ?? 99),
+    if (!scenarios) return [];
+
+    const descByKey = new Map<
+      string,
+      { types: string[]; text: string; html: string | null; order: number }
+    >();
+    for (const [type, entries] of Object.entries(scenarios)) {
+      const order = this.scenarioTypeOrder[type] ?? 99;
+      for (const entry of entries) {
+        const key = entry.text
+          .replace(/[\u200B-\u200D\uFEFF]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+        const existing = descByKey.get(key);
+        if (existing) {
+          if (!existing.types.includes(type)) {
+            existing.types.push(type);
+          }
+          if (order < existing.order) {
+            existing.text = entry.text;
+            existing.html = entry.html ?? null;
+            existing.order = order;
+          }
+        } else {
+          descByKey.set(key, {
+            types: [type],
+            text: entry.text,
+            html: entry.html ?? null,
+            order,
+          });
+        }
+      }
+    }
+
+    return [...descByKey.values()]
+      .sort((a, b) => a.order - b.order)
+      .map((desc) => ({
+        heading: this.scenarioHeading(desc.types),
+        text: desc.text,
+        html: desc.html,
+      }));
+  }
+
+  private scenarioHeading(types: string[]): string {
+    const lang = this.currentLang();
+    const ordered = [...types].sort(
+      (a, b) =>
+        (this.scenarioTypeOrder[a] ?? 99) - (this.scenarioTypeOrder[b] ?? 99),
     );
+    if (ordered.length === 1) {
+      return this.i18n.service.translate(
+        this.scenarioHeadingKeys[ordered[0]] ?? 'scenario',
+        lang,
+      );
+    }
+    const mergedKey = this.mergedScenarioHeadingKeys[ordered.join('+')];
+    if (mergedKey) {
+      return this.i18n.service.translate(mergedKey, lang);
+    }
+    const typeNames = ordered
+      .map((type) => this.i18n.service.translate(type, lang))
+      .join(' / ');
+    const scenarioWord = this.i18n.service
+      .translate('scenario', lang)
+      .toLowerCase();
+    return `${typeNames} ${scenarioWord}`;
   }
 
   private readonly scenarioHeadingKeys: Record<string, string> = {
@@ -170,7 +236,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     'Spot Check': 'spot-check-scenario',
   };
 
-  scenarioHeadingKey(testType: string): string {
-    return this.scenarioHeadingKeys[testType] ?? 'scenario';
-  }
+  private readonly mergedScenarioHeadingKeys: Record<string, string> = {
+    'Baseline+Validation': 'baseline-validation-scenario',
+  };
 }

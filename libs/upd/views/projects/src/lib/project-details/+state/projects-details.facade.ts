@@ -1227,7 +1227,11 @@ export class ProjectsDetailsFacade {
         for (const test of relevantTests) {
           if (!test.scenario) continue;
           const type = normalizeTestType(test.test_type || 'Unknown');
-          const key = test.scenario.replace(/\s+/g, ' ').trim().toLowerCase();
+          const key = test.scenario
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
           const order = typeOrder[type] ?? 99;
           const existing = descByKey.get(key);
           if (existing) {

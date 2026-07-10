@@ -89,6 +89,7 @@
   "validation-scenario": "Validation scenario",
   "exploratory-scenario": "Exploratory scenario",
   "spot-check-scenario": "Spot Check scenario",
+  "baseline-validation-scenario": "Baseline / Validation scenario",
   "no-scenarios-available": "No scenarios available",
   "Task": "Task",
   "tasks": "Tasks",

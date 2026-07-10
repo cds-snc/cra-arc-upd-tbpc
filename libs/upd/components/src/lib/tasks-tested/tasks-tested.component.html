@@ -44,9 +44,9 @@
                       <div class="small text-muted mb-1">{{ desc.label }}</div>
                     }
                     @if (desc.html) {
-                      <upd-markdown-renderer [html]="desc.html" class="small text-muted d-block mb-2"></upd-markdown-renderer>
+                      <upd-markdown-renderer [html]="desc.html" class="small d-block mb-2"></upd-markdown-renderer>
                     } @else if (desc.text) {
-                      <p class="small text-muted mb-2">{{ desc.text }}</p>
+                      <p class="small mb-2">{{ desc.text }}</p>
                     }
                   }
 
