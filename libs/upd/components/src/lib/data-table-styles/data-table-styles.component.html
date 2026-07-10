@@ -219,7 +219,7 @@
 }
 
 <!-- Array Data -->
-@if (isArray(data[config.field]) && config.typeParam !== 'projectType') {
+@if (isArray(data[config.field]) && config.typeParam !== 'projectType' && config.typeParam !== 'pageArchive') {
   {{ array | translateArray | arrayToText }}
 }
 
