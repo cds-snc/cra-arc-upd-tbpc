@@ -31,46 +31,55 @@ export class PagesHomeComponent implements OnInit {
             type: 'link',
             typeParam: '_id',
           },
-          {
-            field: 'pageStatus',
-            header: 'Current status',
-            type: 'label',
-            typeParam: 'pageStatus',
-            filterConfig: {
-              type: 'pageStatus',
-              categories: createCategoryConfig({
-                i18n: this.i18n.service,
-                data,
-                field: 'pageStatus',
-              }),
-            },
-          },
-          {
-            field: 'archiveStatus',
-            header: 'Archive status',
-            type: 'label',
-            typeParam: 'archiveStatus',
-            filterConfig: {
-              type: 'archiveStatus',
-              categories: createCategoryConfig({
-                i18n: this.i18n.service,
-                data,
-                field: 'archiveStatus',
-              }),
-            },
-          },
+          // {
+          //   field: 'pageStatus',
+          //   header: 'Current status',
+          //   type: 'label',
+          //   typeParam: 'pageStatus',
+          //   filterConfig: {
+          //     type: 'pageStatus',
+          //     categories: createCategoryConfig({
+          //       i18n: this.i18n.service,
+          //       data,
+          //       field: 'pageStatus',
+          //     }),
+          //   },
+          // },
+          // {
+          //   field: 'archiveStatus',
+          //   header: 'Archive status',
+          //   type: 'label',
+          //   typeParam: 'archiveStatus',
+          //   filterConfig: {
+          //     type: 'archiveStatus',
+          //     categories: createCategoryConfig({
+          //       i18n: this.i18n.service,
+          //       data,
+          //       field: 'archiveStatus',
+          //     }),
+          //   },
+          // },
           {
             field: 'pageArchiveStatusLabel',
-            header: 'Page archive status',
+            header: 'Current page status',
             type: 'label',
             typeParam: 'pageArchive',
             filterConfig: {
               type: 'pageArchiveStatus',
-              categories: createCategoryConfig({
-                i18n: this.i18n.service,
-                data,
-                field: 'pageArchiveStatusLabel',
-              }),
+              categories: 
+                [
+                  { name: '404', value: '404' },
+                  { name: 'Redirected', value: 'Redirected' },
+                  { name: 'Live', value: 'Live' },
+                  { name: 'Archived', value: 'Archived' },
+                  { name: 'Not archived', value: 'Not archived' },
+                  // createCategoryConfig({
+                  //   i18n: this.i18n.service,
+                  //   data,
+                  //   field: 'pageArchiveStatusLabel',
+                  // }),
+                ],
+                matchMode: 'arrayContains'
             },
           },
           {
