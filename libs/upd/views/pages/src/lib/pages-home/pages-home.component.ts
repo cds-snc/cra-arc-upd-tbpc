@@ -73,11 +73,6 @@ export class PagesHomeComponent implements OnInit {
                   { name: 'Live', value: 'Live' },
                   { name: 'Archived', value: 'Archived' },
                   { name: 'Not archived', value: 'Not archived' },
-                  // createCategoryConfig({
-                  //   i18n: this.i18n.service,
-                  //   data,
-                  //   field: 'pageArchiveStatusLabel',
-                  // }),
                 ],
                 matchMode: 'arrayContains'
             },
