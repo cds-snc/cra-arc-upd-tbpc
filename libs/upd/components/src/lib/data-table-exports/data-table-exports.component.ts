@@ -79,8 +79,7 @@ export class DataTableExportsComponent<T> {
 
     const archiveStatusKeys: ArchiveStatus[] = ['Archived', 'Not archived'];
 
-    // const pageArchiveStatusKeys: PageArchiveStatus[] = pageStatusKeys || archiveStatusKeys;
-    const pageArchiveStatusKeys: PageArchiveStatus[] = ['Live', '404', 'Redirected', 'Archived', 'Not archived'];
+    const pageArchiveStatusKeys: PageArchiveStatus[] = pageStatusKeys || archiveStatusKeys;
 
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,
