@@ -65,61 +65,60 @@ export class TaskStatusComponent {
 
     return this.i18n.service.instant(key);
   }
+  readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
+    {
+      key: 'poor',
+      name: this.translate('task-status-range-poor'),
+      from: 0,
+      to: 35,
+      color: '#b42318',
+    },
+    {
+      key: 'low',
+      name: this.translate('task-status-range-low'),
+      from: 36,
+      to: 49,
+      color: '#f2b632',
+    },
+    {
+      key: 'good',
+      name: this.translate('task-status-range-good'),
+      from: 50,
+      to: 64,
+      color: '#6bdd51',
+    },
+    {
+      key: 'great',
+      name: this.translate('task-status-range-great'),
+      from: 65,
+      to: 100,
+      color: '#2f7d4d',
+    },
+  ]);
 
-readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
-  {
-    key: 'poor',
-    name: this.translate('task-status-range-poor'),
-    from: 0,
-    to: 35,
-    color: '#b42318',
-  },
-  {
-    key: 'low',
-    name: this.translate('task-status-range-low'),
-    from: 36,
-    to: 49,
-    color: '#fff0cf',
-  },
-  {
-    key: 'good',
-    name: this.translate('task-status-range-good'),
-    from: 50,
-    to: 64,
-    color: '#dff3e8',
-  },
-  {
-    key: 'great',
-    name: this.translate('task-status-range-great'),
-    from: 65,
-    to: 100,
-    color: '#b9dfc9',
-  },
-]);
-
-readonly historicalRanges = computed<ScoreRange<TrendBand>[]>(() => [
-  {
-    key: 'lower',
-    name: this.translate('task-status-range-lower'),
-    from: -100,
-    to: -0.05,
-    color: '#b42318',
-  },
-  {
-    key: 'normal',
-    name: this.translate('task-status-range-normal'),
-    from: -0.05,
-    to: 0.05,
-    color: '#d38e26',
-  },
-  {
-    key: 'higher',
-    name: this.translate('task-status-range-higher'),
-    from: 0.05,
-    to: 100,
-    color: '#006b3f',
-  },
-]);
+  readonly historicalRanges = computed<ScoreRange<TrendBand>[]>(() => [
+    {
+      key: 'lower',
+      name: this.translate('task-status-range-lower'),
+      from: -100,
+      to: -5,
+      color: '#b42318',
+    },
+    {
+      key: 'normal',
+      name: this.translate('task-status-range-normal'),
+      from: -5,
+      to: 5,
+      color: '#f2b632',
+    },
+    {
+      key: 'higher',
+      name: this.translate('task-status-range-higher'),
+      from: 5,
+      to: 100,
+      color: '#2f7d4d',
+    },
+  ]);
 
   private readonly statusMap = computed<Record<string, StatusView>>(() => ({
     'great-higher': {

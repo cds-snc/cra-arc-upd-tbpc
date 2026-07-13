@@ -175,19 +175,18 @@ export class TasksHomeComponent implements OnInit {
       group: 'tab-webtraffic',
     },
     {
-      field: 'status',
+      field: 'taskStatus',
       header: 'Status',
       group: 'tab-taskperformance',
       type: 'label',
       typeParam: 'taskStatus',
       filterConfig: {
-        type: 'category',
+        type: 'taskStatus',
         categories: taskStatusCategories.map((status) => ({
           name: status,
           value: status,
         })),
       },
-      translate: false,
       frozen: true,
     },
     {
