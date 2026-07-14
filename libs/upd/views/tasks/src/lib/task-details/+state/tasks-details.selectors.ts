@@ -100,11 +100,12 @@ export const selectCallsPerVisitsChartData = createSelector(
     const comparisonCallsByDay =
       comparisonDateRangeData?.callsPer100VisitsByDay || [];
 
-    const callsPerVisitsSeries = callsByDay.map(({ date, calls }) => ({
-      x: date,
-      y: calls,
-    }))
-    .filter(({ y }) => y);
+    const callsPerVisitsSeries = callsByDay
+      .map(({ date, calls }) => ({
+        x: date,
+        y: calls,
+      }))
+      .filter(({ y }) => y);
 
     const comparisonCallsPerVisitsSeries = comparisonCallsByDay
       .filter(({ date }) => dates.has(date))
@@ -115,10 +116,12 @@ export const selectCallsPerVisitsChartData = createSelector(
       .filter(({ y }) => y);
 
     const isCallsPerVisitsEmpty = callsPerVisitsSeries.every(
-      ({ y }) => y === 0 || isNaN(y),
+      ({ y }) => y === 0 || Number.isNaN(y),
     );
     const isComparisonCallsPerVisitsEmpty =
-      comparisonCallsPerVisitsSeries.every(({ y }) => y === 0 || isNaN(y));
+      comparisonCallsPerVisitsSeries.every(
+        ({ y }) => y === 0 || Number.isNaN(y),
+      );
 
     if (isCallsPerVisitsEmpty && isComparisonCallsPerVisitsEmpty) {
       return [];
@@ -168,10 +171,12 @@ export const selectDyfNoPerVisitsSeries = createSelector(
       .filter(({ x }) => x);
 
     const isDyfNoPerVisitsEmpty = dyfNoPerVisitsSeries.every(
-      ({ y }) => y === 0 || isNaN(y),
+      ({ y }) => y === 0 || Number.isNaN(y),
     );
     const isComparisonDyfNoPerVisitsEmpty =
-      comparisonDyfNoPerVisitsSeries.every(({ y }) => y === 0 || isNaN(y));
+      comparisonDyfNoPerVisitsSeries.every(
+        ({ y }) => y === 0 || Number.isNaN(y),
+      );
 
     if (isDyfNoPerVisitsEmpty && isComparisonDyfNoPerVisitsEmpty) {
       return [];

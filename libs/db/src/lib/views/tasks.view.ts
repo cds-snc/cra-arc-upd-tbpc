@@ -22,13 +22,16 @@ import type {
 } from '@dua-upd/types-common';
 import {
   $trunc,
+  addTmfScoresToTasks,
   arrayToDictionary,
   arrayToDictionaryMultiref,
   getArraySelectedAbsoluteChange,
   getArraySelectedPercentChange,
+  getAvgSuccessFromLatestTests,
   getSelectedAbsoluteChange,
   getSelectedPercentChange,
   isNullish,
+  percentChange,
   sum,
 } from '@dua-upd/utils-common';
 import { DbService } from '../db.service';
@@ -905,7 +908,6 @@ export class TasksViewService extends DbViewNew<
       performance_score: number | null;
       historical_average: number | null;
       seasonal_average: number | null;
-      performance_score_status: string;
       individual_status: string;
       cops: boolean;
       wos_cops: boolean;
@@ -935,13 +937,14 @@ export class TasksViewService extends DbViewNew<
     };
 
     const projection: PipelineStage.Project['$project'] = {
-      _id: '$task._id',
+      _id: {
+        $toString: '$task._id',
+      },
       title: '$task.title',
       tmf_ranking_index: 1,
       performance_score: 1,
       historical_average: 1,
       seasonal_average: 1,
-      performance_score_status: 1,
       individual_status: 1,
       cops: 1,
       wos_cops: 1,
@@ -1004,15 +1007,19 @@ export class TasksViewService extends DbViewNew<
         .project(projection)
         .exec()
         .then((results) =>
-          results
-            .sort((a, b) => {
-              const aIfActive =
-                a.status === 'Inactive' ? 0 : a.tmf_ranking_index;
-              const bIfActive =
-                b.status === 'Inactive' ? 0 : b.tmf_ranking_index;
-              return bIfActive - aIfActive;
-            })
-            .map((task, i) => ({
+          // `addTmfScoresToTasks` already sorts the tasks by TMF score, so no need to sort here
+          addTmfScoresToTasks(results).map((task, i) => {
+            const { avgTestSuccess, percentChange: latest_success_rate } =
+              getAvgSuccessFromLatestTests(task.ux_tests);
+
+            const latest_success_rate_percent_change = percentChange(
+              avgTestSuccess,
+              avgTestSuccess - latest_success_rate,
+            );
+
+            const latest_success_rate_difference = latest_success_rate * 100;
+
+            return {
               ...task,
               tmf_rank: i + 1,
               top_task: i < 50,
@@ -1022,7 +1029,11 @@ export class TasksViewService extends DbViewNew<
               ux_testing: !!task.ux_tests?.find(
                 (test) => !isNullish(test.success_rate),
               ),
-            })),
+              latest_ux_success: avgTestSuccess,
+              latest_success_rate_difference,
+              latest_success_rate_percent_change,
+            };
+          }),
         ),
       this.aggregate<ProjectedTask>({ dateRange: comparisonDateRange })
         .project(projection)
