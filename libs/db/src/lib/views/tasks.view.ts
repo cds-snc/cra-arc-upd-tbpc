@@ -607,23 +607,39 @@ export class TasksViewService extends DbViewNew<
     return super.aggregate<T>(filter, options);
   }
 
-  async getTop50TaskIds(dateRange: { start: Date; end: Date }) {
+  async getTop50TaskIds(dateRange: {
+    start: Date;
+    end: Date;
+  }): Promise<string[] | null> {
     return await this._model
       .aggregate<{
-        _id: Types.ObjectId;
+        _id: string;
+        visits: number;
+        calls: number;
+        dyf_total: number;
+        survey: number;
+        status: string;
       }>()
       .match({
         dateRange,
       })
-      .sort({
-        tmf_ranking_index: -1,
-      })
-      .limit(50)
       .project({
-        _id: '$task._id',
+        _id: {
+          $toString: '$task._id',
+        },
+        visits: 1,
+        calls: 1,
+        dyf_total: 1,
+        survey: 1,
+        status: 1,
       })
       .exec()
-      .then((results) => results.map(({ _id }) => _id.toString()));
+      .then((results) =>
+        // `addTmfScoresToTasks` already sorts the tasks by TMF score, so no need to sort here
+        addTmfScoresToTasks(results)
+          .slice(0, 50)
+          .map((task) => task._id),
+      );
   }
 
   async getTaskMetricsWithComparisons(
