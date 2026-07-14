@@ -10,7 +10,7 @@ import { ExternalDataModule } from '@dua-upd/external-data';
 
 @Module({
   imports: [
-    CacheModule.register({ ttl: hours(12) }),
+    CacheModule.register({ ttl: hours(4) }),
     DbModule,
     FeedbackModule,
     FlowModule.register(),
