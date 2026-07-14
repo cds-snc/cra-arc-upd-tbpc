@@ -45,6 +45,7 @@ import type {
   OverallSearchTerm,
   PartialOverviewFeedback,
   ChunkedMostRelevantCommentsAndWords,
+  DateRange,
 } from '@dua-upd/types-common';
 import {
   $trunc,
@@ -210,7 +211,7 @@ export class OverallService {
     };
 
     const lastQuarterTopTaskIds =
-      await this.db.views.tasks.getTop50TaskIds(lastQuarterDateRange);
+      await this.getTop50TaskIds(lastQuarterDateRange);
 
     const improvedKpiTopSuccessRate = getImprovedKpiTopSuccessRates(
       lastQuarterTopTaskIds,
@@ -282,6 +283,26 @@ export class OverallService {
     );
 
     return results;
+  }
+
+  async getTop50TaskIds(dateRange: DateRange<Date>): Promise<string[]> {
+    const dateRangeStart = dateRange.start.toISOString().slice(0, 10);
+    const dateRangeEnd = dateRange.end.toISOString().slice(0, 10);
+    const top50CacheKey = `OverviewTop50TaskIds-${dateRangeStart}/${dateRangeEnd}`;
+
+    const cachedTop50 = await this.cacheManager.get<string[] | null>(
+      top50CacheKey,
+    );
+
+    if (cachedTop50 || cachedTop50 === null) {
+      return cachedTop50;
+    }
+
+    const top50TaskIds = await this.db.views.tasks.getTop50TaskIds(dateRange);
+
+    await this.cacheManager.set(top50CacheKey, top50TaskIds);
+
+    return top50TaskIds;
   }
 
   @AsyncLogTiming
