@@ -390,7 +390,7 @@ export class ProjectsService {
     console.time('uxTests');
     const uxTests = populatedProjectDoc.ux_tests.map((uxTest) => {
       if (!('tasks' in uxTest) || !uxTest.tasks.length) {
-        return { ...uxTest, tasks: '' };
+        return { ...uxTest, tasks: '', taskLinks: [] };
       }
 
       const tasks =
@@ -398,7 +398,12 @@ export class ProjectsService {
           ? uxTest.tasks.map((task) => task.title).join('; ')
           : uxTest.tasks[0].title;
 
-      return { ...uxTest, tasks };
+      const taskLinks = uxTest.tasks.map((task) => ({
+        _id: task._id,
+        title: task.title,
+      }));
+
+      return { ...uxTest, tasks, taskLinks };
     });
     console.timeEnd('uxTests');
 

@@ -1135,6 +1135,178 @@ export class ProjectsDetailsFacade {
     }),
   );
 
+  scenariosTestedData$ = combineLatest([
+    this.projectsDetailsData$,
+    this.currentLang$,
+  ]).pipe(
+    map(([data, lang]) => {
+      const uxTests = data?.taskSuccessByUxTest;
+
+      if (!uxTests?.length) {
+        return [];
+      }
+
+      const getGroupKey = (uxTest: {
+        scenario_id?: string | null;
+        airtable_id?: string | null;
+      }): string =>
+        uxTest.scenario_id
+          ? `sid:${uxTest.scenario_id}`
+          : `aid:${uxTest.airtable_id ?? ''}`;
+
+      const groupKeys: string[] = [];
+      const seenGroupKeys = new Set<string>();
+      for (const uxTest of uxTests) {
+        const groupKey = getGroupKey(uxTest);
+        if (!seenGroupKeys.has(groupKey)) {
+          seenGroupKeys.add(groupKey);
+          groupKeys.push(groupKey);
+        }
+      }
+
+      const typeOrder: Record<string, number> = {
+        Baseline: 0,
+        Validation: 1,
+        Exploratory: 2,
+        'Spot Check': 3,
+      };
+
+      const scenarios = groupKeys.map((groupKey) => {
+        const relevantTests = uxTests.filter(
+          (uxTest) => getGroupKey(uxTest) === groupKey,
+        );
+
+        const testsByType: Record<string, { rates: number[] }> = {};
+        for (const test of relevantTests) {
+          const type = normalizeTestType(test.test_type || 'Unknown');
+          if (!testsByType[type]) {
+            testsByType[type] = { rates: [] };
+          }
+          if (test.success_rate != null) {
+            testsByType[type].rates.push(test.success_rate);
+          }
+        }
+
+        const tests = Object.entries(testsByType)
+          .map(([type, { rates }]) => ({
+            testType: type,
+            testTypeLabel: this.i18n.service.translate(type, lang),
+            successRate: rates.length ? avg(rates) : null,
+            successRatePercent:
+              rates.length && avg(rates) != null
+                ? round(avg(rates)! * 100, 0)
+                : null,
+          }))
+          .sort((a, b) => {
+            const order: Record<string, number> = {
+              Baseline: 0,
+              Validation: 1,
+              Exploratory: 2,
+              'Spot Check': 3,
+            };
+            return (order[a.testType] ?? 99) - (order[b.testType] ?? 99);
+          });
+
+        const baselineRate = tests.find(
+          (t) => t.testType === 'Baseline',
+        )?.successRate;
+        const validationRate = tests.find(
+          (t) => t.testType === 'Validation',
+        )?.successRate;
+
+        let avgTaskSuccessChange: number | null = null;
+        if (baselineRate != null && validationRate != null) {
+          avgTaskSuccessChange =
+            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+        }
+
+        const descByKey = new Map<
+          string,
+          { types: string[]; text: string; html: string | null; order: number }
+        >();
+        for (const test of relevantTests) {
+          if (!test.scenario) continue;
+          const type = normalizeTestType(test.test_type || 'Unknown');
+          const key = test.scenario
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+          const order = typeOrder[type] ?? 99;
+          const existing = descByKey.get(key);
+          if (existing) {
+            if (!existing.types.includes(type)) {
+              existing.types.push(type);
+            }
+            if (order < existing.order) {
+              existing.text = test.scenario;
+              existing.html = test.scenario_html ?? null;
+              existing.order = order;
+            }
+          } else {
+            descByKey.set(key, {
+              types: [type],
+              text: test.scenario,
+              html: test.scenario_html ?? null,
+              order,
+            });
+          }
+        }
+
+        const scenarioDescriptions = [...descByKey.values()]
+          .sort((a, b) => a.order - b.order)
+          .map((desc) => ({
+            label: [...desc.types]
+              .sort((x, y) => (typeOrder[x] ?? 99) - (typeOrder[y] ?? 99))
+              .map((type) => this.i18n.service.translate(type, lang))
+              .join(' / '),
+            text: desc.text,
+            html: desc.html,
+          }));
+
+        const connectedTasks: { title: string; id: string }[] = [];
+        const seenTaskIds = new Set<string>();
+        for (const test of relevantTests) {
+          for (const task of test.taskLinks) {
+            if (!task._id || seenTaskIds.has(task._id)) continue;
+            seenTaskIds.add(task._id);
+            connectedTasks.push({
+              title: this.i18n.service.translate(task.title, lang),
+              id: task._id,
+            });
+          }
+        }
+
+        return {
+          groupKey,
+          scenarioDescriptions,
+          connectedTasks,
+          tests,
+          avgTaskSuccessChange,
+        };
+      });
+
+      scenarios.sort((a, b) => {
+        const aHasScenarioId = a.groupKey.startsWith('sid:');
+        const bHasScenarioId = b.groupKey.startsWith('sid:');
+        if (aHasScenarioId !== bHasScenarioId) {
+          return aHasScenarioId ? -1 : 1;
+        }
+        return a.groupKey.localeCompare(b.groupKey, undefined, {
+          numeric: true,
+        });
+      });
+
+      return scenarios.map((scenario, index) => ({
+        scenarioNumber: index + 1,
+        scenarioDescriptions: scenario.scenarioDescriptions,
+        connectedTasks: scenario.connectedTasks,
+        tests: scenario.tests,
+        avgTaskSuccessChange: scenario.avgTaskSuccessChange,
+      }));
+    }),
+  );
+
   tasksTestedSummary$ = combineLatest([
     this.projectsDetailsData$,
     this.tasksTestedData$,

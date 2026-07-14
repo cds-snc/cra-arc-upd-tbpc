@@ -30,42 +30,35 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       <div class="col">
-        <upd-card [title]="'tasks-tested'">
-          @for (task of tasksTestedData(); track task.taskNumber) {
+        <upd-card [title]="'task-scenarios-tested'">
+          @for (scenario of scenariosTestedData(); track scenario.scenarioNumber) {
             <div class="mb-3 p-3 border rounded">
               <div class="row">
                 <div [class]="hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'">
-                  <h6 class="mb-3">
-                    {{ task.taskNumber }}.
-                    @if (task.taskId) {
-                      <a [routerLink]="['/', langLink(), 'tasks', task.taskId]">
-                        {{ task.taskTitle }}
-                      </a>
-                    } @else {
-                      {{ task.taskTitle }}
-                    }
+                  <h6 class="mb-2">
+                    {{ 'task-scenario' | translate }} {{ scenario.scenarioNumber }}
                   </h6>
 
-                  <div class="row mb-2">
-                    <div class="col-lg-3 col-sm-12">
-                      <small class="fw-bold text-muted">{{ 'test' | translate }}</small>
-                    </div>
-                    <div class="col-lg-9 col-sm-12">
-                      <small class="fw-bold text-muted">{{ 'task-success' | translate }}</small>
-                    </div>
-                  </div>
+                  @for (desc of scenario.scenarioDescriptions; track desc.text) {
+                    @if (scenario.scenarioDescriptions.length > 1) {
+                      <div class="small text-muted mb-1">{{ desc.label }}</div>
+                    }
+                    @if (desc.html) {
+                      <upd-markdown-renderer [html]="desc.html" class="small d-block mb-2"></upd-markdown-renderer>
+                    } @else if (desc.text) {
+                      <p class="small mb-2">{{ desc.text }}</p>
+                    }
+                  }
 
-                  @for (test of task.tests; track test.testType) {
-                    <div class="row align-items-center mt-2 mb-2">
-                      <div class="col-lg-3 col-sm-12">
-                        <span class="fw-bold">{{ test.testTypeLabel }}</span>
-                      </div>
-                      <div class="col-lg-9 col-sm-12">
-                        <div class="d-flex align-items-center gap-2 w-100">
-                          @if (test.successRatePercent !== null) {
+                  @for (test of scenario.tests; track test.testType) {
+                    @if (test.successRatePercent !== null) {
+                      <div class="row align-items-center mt-2 mb-2">
+                        <div class="col-lg-3 col-sm-12">
+                          <span class="fw-bold">{{ test.testTypeLabel }}</span>
+                        </div>
+                        <div class="col-lg-9 col-sm-12">
+                          <div class="d-flex align-items-center gap-2 w-100">
                             <ng-template #barTooltip>
-                              <strong>{{ task.taskTitle }}</strong>
-                              <hr class="my-1" />
                               <span class="legend_color rounded-circle" [style.background]="testTypeBarColors[test.testType]"></span>
                               {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
                             </ng-template>
@@ -83,39 +76,31 @@
                               container="body"
                             ></div>
                             <span class="fw-bold text-nowrap">{{ test.successRatePercent }}%</span>
-                          } @else {
-                            <span class="fw-bold">-</span>
-                          }
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    @if (task.scenariosByTestType[test.testType]; as scenarios) {
-                      @if (scenarios.length) {
-                        <upd-accordion
-                          [title]="'view-task-scenario'"
-                          [expanded]="true"
-                          [headerClass]="'small'"
-                          [styleClass]="'scenario-accordion'">
-                          @for (scenario of scenarios; track scenario.text; let i = $index) {
-                            <div class="small text-muted" [class.mb-3]="i < scenarios.length - 1">
-                              @if (scenario.html) {
-                                <upd-markdown-renderer [html]="scenario.html"></upd-markdown-renderer>
-                              } @else {
-                                {{ scenario.text }}
-                              }
-                            </div>
-                          }
-                        </upd-accordion>
-                      }
                     }
+                  }
+
+                  @if (scenario.connectedTasks.length) {
+                    <p class="small text-muted mt-3 mb-0">
+                      {{ 'connected-tasks' | translate }}:&nbsp;
+                      @for (task of scenario.connectedTasks; track task.title; let last = $last) {
+                        @if (task.id) {
+                          <a [routerLink]="['/', langLink(), 'tasks', task.id]">{{ task.title }}</a>
+                        } @else {
+                          {{ task.title }}
+                        }@if (!last) {<span>,&nbsp;</span>}
+                      }
+                    </p>
                   }
                 </div>
 
                 @if (hasBaseline() && hasValidation()) {
                   <div class="col-lg-2 d-flex flex-column">
                     <div class="text-muted small mb-1">{{ 'change' | translate }}</div>
-                    <span class="h1 mb-0" [class]="getChangeIndicator(task.avgTaskSuccessChange).cssClass">
-                      {{ getChangeIndicator(task.avgTaskSuccessChange).text }}
+                    <span class="h1 mb-0" [class]="getChangeIndicator(scenario.avgTaskSuccessChange).cssClass">
+                      {{ getChangeIndicator(scenario.avgTaskSuccessChange).text }}
                     </span>
                   </div>
                 }
