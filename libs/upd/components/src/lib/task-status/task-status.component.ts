@@ -65,34 +65,35 @@ export class TaskStatusComponent {
 
     return this.i18n.service.instant(key);
   }
+
   readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
     {
       key: 'poor',
       name: this.translate('task-status-range-poor'),
       from: 0,
       to: 35,
-      color: '#b42318',
+      color: '#d93025',
     },
     {
       key: 'low',
       name: this.translate('task-status-range-low'),
       from: 36,
       to: 49,
-      color: '#f2b632',
+      color: '#f2a93b',
     },
     {
       key: 'good',
       name: this.translate('task-status-range-good'),
       from: 50,
       to: 64,
-      color: '#6bdd51',
+      color: '#75c962',
     },
     {
       key: 'great',
       name: this.translate('task-status-range-great'),
       from: 65,
       to: 100,
-      color: '#2f7d4d',
+      color: '#1f9d55',
     },
   ]);
 

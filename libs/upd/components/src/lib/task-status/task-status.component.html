@@ -110,8 +110,15 @@
 
                   <div class="score-subtitle">
                     {{ 'task-status-current-period-comparison' | translate }}
-                    ·
+                  </div>
+                </div>
 
+                <div class="score-value-block">
+                  <div class="score-value">
+                    {{ ps() | localePercent: '1.0-0' }}
+                  </div>
+
+                  <div class="score-change-row">
                     <span
                       class="change-value"
                       [ngClass]="getChangeClass(rpsChange())"
@@ -127,10 +134,6 @@
                       {{ 'task-status-points-abbreviation' | translate }}
                     </span>
                   </div>
-                </div>
-
-                <div class="score-value">
-                  {{ ps() | localePercent: '1.0-0' }}
                 </div>
               </div>
 
@@ -239,12 +242,12 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="score-chart score-chart--compact">
                   <upd-apex-score
                     [title]="'task-status-historical-average' | translate"
-                    [score]="historicalVariance()!"
-                    [ranges]="historicalRanges()"
+                    [score]="ha()!"
+                    [ranges]="relativeRanges()"
                   ></upd-apex-score>
                 </div>
               </div>
@@ -298,8 +301,8 @@
                       [title]="
                         'task-status-seasonal-historic-average' | translate
                       "
-                      [score]="shaVariance()!"
-                      [ranges]="historicalRanges()"
+                      [score]="sha()!"
+                      [ranges]="relativeRanges()"
                     ></upd-apex-score>
                   </div>
                 </div>

@@ -56,47 +56,51 @@
 </ng-template>
 
 <ng-template #topPreviousTooltip>
-  <p
-    *ngIf="previousPages().length === 0 && previousOptions().length > 0"
-    [innerHTML]="
-      'flow-tooltip-top-prev-nopages'
-        | translate: { focuspage: focusPage().title || focusPage().url }
-    "
-  ></p>
-  <p
-    *ngIf="previousPages().length > 0"
-    [innerHTML]="
-      'flow-tooltip-top-prev'
-        | translate
-          : {
-              page: selectedFlow()[0].title || selectedFlow()[0].url,
-              focuspage: focusPage().title || focusPage().url,
-            }
-    "
-  ></p>
+  @if (previousPages().length === 0 && previousOptions().length > 0) {
+    <p
+      [innerHTML]="
+        'flow-tooltip-top-prev-nopages'
+          | translate: { focuspage: focusPage().title || focusPage().url }
+      "
+    ></p>
+  }
+  @if (previousPages().length > 0) {
+    <p
+      [innerHTML]="
+        'flow-tooltip-top-prev'
+          | translate
+            : {
+                page: selectedFlow()[0].title || selectedFlow()[0].url,
+                focuspage: focusPage().title || focusPage().url,
+              }
+      "
+    ></p>
+  }
 </ng-template>
 
 <ng-template #topNextTooltip>
-  <p
-    *ngIf="nextPages().length === 0 && nextOptions().length > 0"
-    [innerHTML]="
-      'flow-tooltip-top-next-nopages'
-        | translate: { focuspage: focusPage().title || focusPage().url }
-    "
-  ></p>
-  <p
-    *ngIf="nextPages().length > 0"
-    [innerHTML]="
-      'flow-tooltip-top-next'
-        | translate
-          : {
-              page:
-                selectedFlow()[selectedFlow().length - 1].title ||
-                selectedFlow()[selectedFlow().length - 1].url,
-              focuspage: focusPage().title || focusPage().url,
-            }
-    "
-  ></p>
+  @if (nextPages().length === 0 && nextOptions().length > 0) {
+    <p
+      [innerHTML]="
+        'flow-tooltip-top-next-nopages'
+          | translate: { focuspage: focusPage().title || focusPage().url }
+      "
+    ></p>
+  }
+  @if (nextPages().length > 0) {
+    <p
+      [innerHTML]="
+        'flow-tooltip-top-next'
+          | translate
+            : {
+                page:
+                  selectedFlow()[selectedFlow().length - 1].title ||
+                  selectedFlow()[selectedFlow().length - 1].url,
+                focuspage: focusPage().title || focusPage().url,
+              }
+      "
+    ></p>
+  }
 </ng-template>
 
 <div class="container-fluid my-4 gx-0">
@@ -180,38 +184,40 @@
                   }})
                 </span>
                 @if (page !== focusPage()) {
-                  <span
-                    *ngIf="
-                      previousPages().length &&
-                      previousPages()[previousPages().length - 1] === page
-                    "
-                    class="my-1 d-block"
-                    [innerHTML]="
-                      'flow-tooltip-flow-prev-beforefocus'
-                        | translate
-                          : {
-                              visits: page.visits | localeNumber,
-                              page: page?.title || page.url,
-                            }
-                    "
-                  >
-                  </span>
-                  <span
-                    *ngIf="
-                      previousPages().length > 1 &&
-                      previousPages()[previousPages().length - 1] !== page
-                    "
-                    class="my-1 d-block"
-                    [innerHTML]="
-                      'flow-tooltip-flow-prev'
-                        | translate
-                          : {
-                              visits: page.visits | localeNumber,
-                              page: page?.title || page.url,
-                            }
-                    "
-                  >
-                  </span>
+                  @if (
+                    previousPages().length &&
+                    previousPages()[previousPages().length - 1] === page
+                  ) {
+                    <span
+                      class="my-1 d-block"
+                      [innerHTML]="
+                        'flow-tooltip-flow-prev-beforefocus'
+                          | translate
+                            : {
+                                visits: page.visits | localeNumber,
+                                page: page?.title || page.url,
+                              }
+                      "
+                    >
+                    </span>
+                  }
+                  @if (
+                    previousPages().length > 1 &&
+                    previousPages()[previousPages().length - 1] !== page
+                  ) {
+                    <span
+                      class="my-1 d-block"
+                      [innerHTML]="
+                        'flow-tooltip-flow-prev'
+                          | translate
+                            : {
+                                visits: page.visits | localeNumber,
+                                page: page?.title || page.url,
+                              }
+                      "
+                    >
+                    </span>
+                  }
                 }
               }
               @if (page.exits) {
@@ -222,32 +228,34 @@
                   }})
                 </span>
                 @if (page !== focusPage()) {
-                  <span
-                    *ngIf="nextPages().length && nextPages()[0] === page"
-                    class="my-1 d-block"
-                    [innerHTML]="
-                      'flow-tooltip-flow-next-afterfocus'
-                        | translate
-                          : {
-                              visits: page.visits | localeNumber,
-                              page: page?.title || page.url,
-                            }
-                    "
-                  >
-                  </span>
-                  <span
-                    *ngIf="nextPages().length > 1 && nextPages()[0] !== page"
-                    class="my-1 d-block"
-                    [innerHTML]="
-                      'flow-tooltip-flow-next'
-                        | translate
-                          : {
-                              visits: page.visits | localeNumber,
-                              page: page?.title || page.url,
-                            }
-                    "
-                  >
-                  </span>
+                  @if (nextPages().length && nextPages()[0] === page) {
+                    <span
+                      class="my-1 d-block"
+                      [innerHTML]="
+                        'flow-tooltip-flow-next-afterfocus'
+                          | translate
+                            : {
+                                visits: page.visits | localeNumber,
+                                page: page?.title || page.url,
+                              }
+                      "
+                    >
+                    </span>
+                  }
+                  @if (nextPages().length > 1 && nextPages()[0] !== page) {
+                    <span
+                      class="my-1 d-block"
+                      [innerHTML]="
+                        'flow-tooltip-flow-next'
+                          | translate
+                            : {
+                                visits: page.visits | localeNumber,
+                                page: page?.title || page.url,
+                              }
+                      "
+                    >
+                    </span>
+                  }
                 }
               }
             </ng-template>
@@ -351,9 +359,9 @@
                       <span class="badge bg-warning text-dark me-2">{{
                         $index + 1
                       }}</span>
-                      <span *ngIf="!isLoadingPrevious">{{
-                        page?.title || page.url
-                      }}</span>
+                      @if (!isLoadingPrevious) {
+                        <span>{{ page?.title || page.url }}</span>
+                      }
                     </div>
 
                     <!-- Right section (Visits and Percentage) -->
@@ -383,9 +391,9 @@
                       <span class="badge bg-warning text-dark me-2">{{
                         $index + 1
                       }}</span>
-                      <span *ngIf="!isLoadingPrevious">{{
-                        page?.title || page.url
-                      }}</span>
+                      @if (!isLoadingPrevious) {
+                        <span>{{ page?.title || page.url }}</span>
+                      }
                     </div>
 
                     <!-- Right section (Visits and Percentage) -->
@@ -400,20 +408,25 @@
                 }
               }
             </div>
-            <div
-              class="flow-item flow-item-selectable pointer"
-              *ngIf="!(previousOptions().length % 5)"
-              (click)="pageClick('previous', previousOptions().length + 5)"
-              (keydown)="
-                handleKeyDown($event, 'previous', previousOptions().length + 5)
-              "
-              tabindex="0"
-              aria-label="Load more previous pages"
-            >
-              <div class="d-flex align-items-center">
-                {{ 'flow-load-more' | translate }}
+            @if (!(previousOptions().length % 5)) {
+              <div
+                class="flow-item flow-item-selectable pointer"
+                (click)="pageClick('previous', previousOptions().length + 5)"
+                (keydown)="
+                  handleKeyDown(
+                    $event,
+                    'previous',
+                    previousOptions().length + 5
+                  )
+                "
+                tabindex="0"
+                aria-label="Load more previous pages"
+              >
+                <div class="d-flex align-items-center">
+                  {{ 'flow-load-more' | translate }}
+                </div>
               </div>
-            </div>
+            }
           } @else {
             @if (!isLoadingPrevious && previousPages().length === 0) {
               <div
@@ -497,9 +510,9 @@
                         [style]="'background: #1976D2'"
                         >{{ $index + 1 }}</span
                       >
-                      <span *ngIf="!isLoadingNext">{{
-                        page?.title || page.url
-                      }}</span>
+                      @if (!isLoadingNext) {
+                        <span>{{ page?.title || page.url }}</span>
+                      }
                     </div>
 
                     <!-- Right section (Visits and Percentage) -->
@@ -531,9 +544,9 @@
                         [style]="'background: #1976D2'"
                         >{{ $index + 1 }}</span
                       >
-                      <span *ngIf="!isLoadingNext">{{
-                        page?.title || page.url
-                      }}</span>
+                      @if (!isLoadingNext) {
+                        <span>{{ page?.title || page.url }}</span>
+                      }
                     </div>
 
                     <!-- Right section (Visits and Percentage) -->
@@ -548,20 +561,21 @@
                 }
               }
             </div>
-            <div
-              class="flow-item flow-item-selectable pointer"
-              *ngIf="!(nextOptions().length % 5)"
-              (click)="pageClick('next', nextOptions().length + 5)"
-              (keydown)="
-                handleKeyDown($event, 'next', nextOptions().length + 5)
-              "
-              tabindex="0"
-              aria-label="Load more next pages"
-            >
-              <div class="d-flex align-items-center">
-                {{ 'flow-load-more' | translate }}
+            @if (!(nextOptions().length % 5)) {
+              <div
+                class="flow-item flow-item-selectable pointer"
+                (click)="pageClick('next', nextOptions().length + 5)"
+                (keydown)="
+                  handleKeyDown($event, 'next', nextOptions().length + 5)
+                "
+                tabindex="0"
+                aria-label="Load more next pages"
+              >
+                <div class="d-flex align-items-center">
+                  {{ 'flow-load-more' | translate }}
+                </div>
               </div>
-            </div>
+            }
           } @else {
             @if (!isLoadingNext && nextPages().length === 0) {
               <div
