@@ -6,7 +6,7 @@ import { ReportsService } from './reports.service';
 import { hours } from '@dua-upd/utils-common';
 
 @Module({
-  imports: [CacheModule.register({ ttl: hours(12) }), DbModule],
+  imports: [CacheModule.register({ ttl: hours(4) }), DbModule],
   controllers: [ReportsController],
   providers: [ReportsService],
 })

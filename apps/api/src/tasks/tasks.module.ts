@@ -7,7 +7,7 @@ import { hours } from '@dua-upd/utils-common';
 import { FeedbackModule } from '@dua-upd/api/feedback';
 
 @Module({
-  imports: [CacheModule.register({ ttl: hours(12) }), DbModule, FeedbackModule],
+  imports: [CacheModule.register({ ttl: hours(4) }), DbModule, FeedbackModule],
   controllers: [TasksController],
   providers: [TasksService],
 })

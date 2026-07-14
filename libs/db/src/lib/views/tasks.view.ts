@@ -902,7 +902,7 @@ export class TasksViewService extends DbViewNew<
     comparisonDateRange: DateRange<Date>,
   ) {
     type ProjectedTask = {
-      _id: Types.ObjectId;
+      _id: string;
       title: string;
       tmf_ranking_index: number;
       performance_score: number | null;
