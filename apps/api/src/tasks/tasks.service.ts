@@ -12,54 +12,51 @@ import type {
 } from '@dua-upd/types-common';
 import {
   dateRangeSplit,
-  getAvgSuccessFromLatestTests,
   getLatestTaskSuccessRate,
   getSelectedPercentChange,
   parseDateRangeString,
   percentChange,
-  addTmfScoresToTasks,
+  type UnwrapPromise,
 } from '@dua-upd/utils-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { omit } from 'rambdax';
-import { compressString, decompressString } from '@dua-upd/node-utils';
 
 const DOCUMENTS_URL = () => process.env.DOCUMENTS_URL || '';
 
-type CachedTaskTmfRanking = {
-  taskId: string;
-  visits_score: number;
-  calls_score: number;
-  dyf_total_score: number;
-  survey_score: number;
-  overall_score: number;
-  tmf_rank: number;
+type ViewTaskType = UnwrapPromise<
+  ReturnType<DbService['views']['tasks']['getAllWithComparisons']>
+>[number];
+
+type TmfCacheValue = {
   tmf_total_tasks: number;
-  performance_score: number | null;
-  perf_rank: number | null;
   perf_total_tasks: number;
+  tmfTaskMap: Map<
+    string,
+    {
+      visits_score: number;
+      calls_score: number;
+      dyf_total_score: number;
+      survey_score: number;
+      overall_score: number;
+      tmf_rank: number;
+      performance_score: number | null;
+      perf_rank: number | null;
+    }
+  >;
 };
 
-type TmfRankedTaskLike = {
-  _id?: unknown;
-  task?: {
-    _id?: unknown;
-  };
-  visits_score?: number;
-  calls_score?: number;
-  dyf_total_score?: number;
-  survey_score?: number;
-  overall_score?: number;
-  tmf_rank?: number;
-  performance_score?: number | null;
-};
+const tasksHomeCacheKey = (
+  dateRangeString: string,
+  comparisonDateRangeString: string,
+) => `getTasksHomeData-${dateRangeString}-${comparisonDateRangeString}`;
+
+const tmfCacheKey = (
+  dateRangeString: string,
+  comparisonDateRangeString: string,
+) => `tmf-${dateRangeString}-${comparisonDateRangeString}`;
 
 @Injectable()
 export class TasksService {
-  private readonly tmfRankingCache = new Map<
-    string,
-    Map<string, CachedTaskTmfRanking>
-  >();
-
   constructor(
     private db: DbService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -67,38 +64,22 @@ export class TasksService {
   ) {}
 
   async getTasksHomeData(
-    dateRange: string,
-    comparisonDateRange: string,
+    dateRangeString: string,
+    comparisonDateRangeString: string,
   ): Promise<TasksHomeData> {
-    const cacheKey = this.getTasksHomeDataCacheKey(
-      dateRange,
-      comparisonDateRange,
+    const cacheKey = tasksHomeCacheKey(
+      dateRangeString,
+      comparisonDateRangeString,
     );
 
-    const cachedData = await this.cacheManager.get<string>(cacheKey).then(
-      async (cachedData) =>
-        cachedData &&
-        // it's actually still a string here, but we want to avoid deserializing it
-        // and then reserializing it to send over http while still keeping our types intact
-        ((await decompressString(cachedData)) as unknown as TasksHomeData),
-    );
+    const cachedData = await this.cacheManager.get<TasksHomeData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
     }
 
-    const { start, end, comparisonStart, comparisonEnd } =
-      this.parseTasksHomeDateRanges(dateRange, comparisonDateRange);
-
-    const queryDateRange = {
-      start,
-      end,
-    };
-
-    const queryComparisonDateRange = {
-      start: comparisonStart,
-      end: comparisonEnd,
-    };
+    const dateRange = parseDateRangeString(dateRangeString);
+    const comparisonDateRange = parseDateRangeString(comparisonDateRangeString);
 
     const {
       totalCalls,
@@ -106,37 +87,20 @@ export class TasksService {
       totalVisits,
       totalVisitsPercentChange,
     } = await this.getTotalMetricsWithComparison(
-      queryDateRange,
-      queryComparisonDateRange,
-    );
-
-    console.time('tasks');
-
-    const tasksWithTmf = await this.getTasksWithTmfAndPrimeCache(
       dateRange,
       comparisonDateRange,
     );
 
-    const tasks = tasksWithTmf.map((task) => {
-      const { avgTestSuccess, percentChange: latest_success_rate } =
-        getAvgSuccessFromLatestTests(task.ux_tests);
+    console.time('tasks');
 
-      const latest_success_rate_percent_change = percentChange(
-        avgTestSuccess,
-        avgTestSuccess - latest_success_rate,
-      );
-
-      const latest_success_rate_difference = latest_success_rate * 100;
-
-      return {
-        ...task,
-        latest_ux_success: avgTestSuccess,
-        latest_success_rate_difference,
-        latest_success_rate_percent_change,
-      };
-    });
+    const tasks = await this.db.views.tasks.getAllWithComparisons(
+      dateRange,
+      comparisonDateRange,
+    );
 
     console.timeEnd('tasks');
+
+    await this.setTmfCache(dateRangeString, comparisonDateRangeString, tasks);
 
     const documentsUrl = DOCUMENTS_URL();
 
@@ -166,7 +130,7 @@ export class TasksService {
       )) as IReports[];
 
     const results = {
-      dateRange,
+      dateRange: dateRangeString,
       dateRangeData: tasks.map(omit(['ux_tests'])),
       totalVisits,
       percentChange: totalVisitsPercentChange,
@@ -175,220 +139,96 @@ export class TasksService {
       reports,
     };
 
-    await this.cacheManager.set(
-      cacheKey,
-      await compressString(JSON.stringify(results)),
-    );
+    await this.cacheManager.set(cacheKey, results);
 
     return results;
   }
 
-  private async getTasksWithTmfAndPrimeCache(
-    dateRange: string,
-    comparisonDateRange: string,
+  private async setTmfCache(
+    dateRangeString: string,
+    comparisonDateRangeString: string,
+    tasks: ViewTaskType[],
   ) {
-    const { start, end, comparisonStart, comparisonEnd } =
-      this.parseTasksHomeDateRanges(dateRange, comparisonDateRange);
+    const total_tasks = tasks.length;
+    const perf_total_tasks = tasks.filter(
+      (task) => !!task.performance_score,
+    ).length;
+    const tmfTaskMap = new Map(
+      tasks
+        .toSorted((a, b) => {
+          const scoreDiff =
+            (b.performance_score ?? 0) - (a.performance_score ?? 0);
 
-    const tasks = await this.db.views.tasks.getAllWithComparisons(
-      { start, end },
-      { start: comparisonStart, end: comparisonEnd },
+          if (scoreDiff !== 0) {
+            return scoreDiff;
+          }
+
+          return a.tmf_rank - b.tmf_rank;
+        })
+        .map((task, index) => [
+          task._id,
+          {
+            visits_score: task.visits_score,
+            calls_score: task.calls_score,
+            dyf_total_score: task.dyf_total_score,
+            survey_score: task.survey_score,
+            overall_score: task.overall_score,
+            tmf_rank: task.tmf_rank,
+            performance_score: task.performance_score || null,
+            perf_rank: task.performance_score ? index + 1 : null,
+          },
+        ]),
     );
 
-    const tasksWithTmf = addTmfScoresToTasks(tasks);
+    const cacheKey = tmfCacheKey(dateRangeString, comparisonDateRangeString);
 
-    this.setTmfRankingsCache(
-      dateRange,
-      comparisonDateRange,
-      tasksWithTmf as TmfRankedTaskLike[],
-    );
-
-    return tasksWithTmf;
+    await this.cacheManager.set(cacheKey, {
+      tmf_total_tasks: total_tasks,
+      perf_total_tasks,
+      tmfTaskMap,
+    });
   }
 
-  private async primeTmfRankingCache(
-    dateRange: string,
-    comparisonDateRange: string,
-  ): Promise<void> {
-    if (this.hasTmfRankingCache(dateRange, comparisonDateRange)) {
-      return;
-    }
-
-    const cachedHomeData = await this.getParsedCachedTasksHomeData(
-      dateRange,
-      comparisonDateRange,
-    );
-
-    if (cachedHomeData) {
-      this.setTmfRankingsCache(
-        dateRange,
-        comparisonDateRange,
-        cachedHomeData.dateRangeData as TmfRankedTaskLike[],
-      );
-
-      if (this.hasTmfRankingCache(dateRange, comparisonDateRange)) {
-        return;
-      }
-    }
-
-    await this.getTasksWithTmfAndPrimeCache(dateRange, comparisonDateRange);
-  }
-
-  private getTmfRankingFromCache(
-    dateRange: string,
-    comparisonDateRange: string,
+  private async getCachedTmfData(
     taskId: string,
-  ): CachedTaskTmfRanking | undefined {
-    return this.tmfRankingCache
-      .get(this.getTmfRankingCacheKey(dateRange, comparisonDateRange))
-      ?.get(taskId);
-  }
-
-  private hasTmfRankingCache(
-    dateRange: string,
-    comparisonDateRange: string,
-  ): boolean {
-    return this.tmfRankingCache.has(
-      this.getTmfRankingCacheKey(dateRange, comparisonDateRange),
-    );
-  }
-
-  private setTmfRankingsCache(
-    dateRange: string,
-    comparisonDateRange: string,
-    tasks: TmfRankedTaskLike[],
-  ): void {
-    const tmfTotalTasks = tasks.length;
-    const performanceRankByTaskId = this.getPerformanceRankByTaskId(tasks);
-    const perfTotalTasks = performanceRankByTaskId.size;
-
-    const rankings = tasks
-      .map((task) => {
-        const taskId = this.getTaskIdForTmfCache(task);
-
-        return this.toCachedTmfRanking(
-          task,
-          tmfTotalTasks,
-          taskId ? (performanceRankByTaskId.get(taskId) ?? null) : null,
-          perfTotalTasks,
-        );
-      })
-      .filter((ranking): ranking is CachedTaskTmfRanking => Boolean(ranking));
-
-    if (rankings.length === 0 && tasks.length > 0) {
-      return;
-    }
-
-    this.tmfRankingCache.set(
-      this.getTmfRankingCacheKey(dateRange, comparisonDateRange),
-      new Map(rankings.map((ranking) => [ranking.taskId, ranking])),
-    );
-  }
-
-  private toCachedTmfRanking(
-    task: TmfRankedTaskLike,
-    tmfTotalTasks: number,
-    perfRank: number | null,
-    perfTotalTasks: number,
-  ): CachedTaskTmfRanking | null {
-    const taskId = this.getTaskIdForTmfCache(task);
-
-    if (!taskId) {
-      return null;
-    }
-
-    const {
-      visits_score,
-      calls_score,
-      dyf_total_score,
-      survey_score,
-      overall_score,
-      tmf_rank,
-    } = task;
-
-    if (
-      typeof visits_score !== 'number' ||
-      typeof calls_score !== 'number' ||
-      typeof dyf_total_score !== 'number' ||
-      typeof survey_score !== 'number' ||
-      typeof overall_score !== 'number' ||
-      typeof tmf_rank !== 'number'
-    ) {
-      return null;
-    }
-
-    return {
-      taskId,
-      visits_score,
-      calls_score,
-      dyf_total_score,
-      survey_score,
-      overall_score,
-      tmf_rank,
-      tmf_total_tasks: tmfTotalTasks,
-      performance_score: this.getPerformanceScore(task),
-      perf_rank: perfRank,
-      perf_total_tasks: perfTotalTasks,
-    };
-  }
-
-  private getTaskIdForTmfCache(task: TmfRankedTaskLike): string | null {
-    const taskId = task.task?._id ?? task._id;
-
-    return taskId ? String(taskId) : null;
-  }
-
-  private getTmfRankingCacheKey(
-    dateRange: string,
-    comparisonDateRange: string,
-  ): string {
-    return `taskTmfRanking-${dateRange}-${comparisonDateRange}`;
-  }
-
-  private getTasksHomeDataCacheKey(
-    dateRange: string,
-    comparisonDateRange: string,
-  ): string {
-    return `getTasksHomeData-${dateRange}-${comparisonDateRange}`;
-  }
-
-  private async getParsedCachedTasksHomeData(
-    dateRange: string,
-    comparisonDateRange: string,
-  ): Promise<TasksHomeData | null> {
-    const cacheKey = this.getTasksHomeDataCacheKey(
-      dateRange,
-      comparisonDateRange,
-    );
-
-    const cachedData = await this.cacheManager.get<string>(cacheKey);
-
-    if (!cachedData) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(await decompressString(cachedData)) as TasksHomeData;
-    } catch {
-      return null;
-    }
-  }
-
-  private parseTasksHomeDateRanges(
-    dateRange: string,
-    comparisonDateRange: string,
+    dateRangeString: string,
+    comparisonDateRangeString: string,
   ) {
-    const [start, end] = dateRange.split('/').map((d) => new Date(d));
+    if (
+      !(await this.cacheManager.stores[0].has(
+        tasksHomeCacheKey(dateRangeString, comparisonDateRangeString),
+      ))
+    ) {
+      console.log(
+        `Cache miss for tasks home data for date range ${dateRangeString} and comparison date range ${comparisonDateRangeString}. Fetching and caching data...`,
+      );
+      await this.getTasksHomeData(dateRangeString, comparisonDateRangeString);
+    }
 
-    const [comparisonStart, comparisonEnd] = comparisonDateRange
-      .split('/')
-      .map((d) => new Date(d));
+    const cachedDateRangeData = await this.cacheManager.get<TmfCacheValue>(
+      tmfCacheKey(dateRangeString, comparisonDateRangeString),
+    );
+
+    // in theory, this should never actually happen
+    if (!cachedDateRangeData) {
+      throw new Error(
+        `No cached TMF data found for date range ${dateRangeString} and comparison date range ${comparisonDateRangeString}`,
+      );
+    }
+
+    const taskData = cachedDateRangeData.tmfTaskMap.get(taskId);
+
+    // this shouldn't happen either, unless the task id isn't valid, in which case an error should already be thrown
+    if (!taskData) {
+      throw new Error(
+        `No cached TMF data found for task id ${taskId} in date range ${dateRangeString} and comparison date range ${comparisonDateRangeString}`,
+      );
+    }
 
     return {
-      start,
-      end,
-      comparisonStart,
-      comparisonEnd,
+      ...taskData,
+      tmf_total_tasks: cachedDateRangeData.tmf_total_tasks,
+      perf_total_tasks: cachedDateRangeData.perf_total_tasks,
     };
   }
 
@@ -465,15 +305,20 @@ export class TasksService {
   }
 
   async getTaskDetails(params: ApiParams): Promise<TaskDetailsData> {
-    if (!params.id) {
+    if (!params || !params.id) {
       throw Error(
         'Attempted to get Task details from API but no id was provided.',
       );
     }
 
+    if (!params.comparisonDateRange) {
+      throw Error(
+        'Attempted to get Task details from API but no comparisonDateRange was provided.',
+      );
+    }
+
     const cacheKey = `getTaskDetails-${params.id}-${params.dateRange}-${params.comparisonDateRange}`;
-    const cachedData =
-      await this.cacheManager.get<TaskDetailsData>(cacheKey);
+    const cachedData = await this.cacheManager.get<TaskDetailsData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
@@ -491,18 +336,11 @@ export class TasksService {
       { start: prevStart, end: prevEnd },
     );
 
-    await this.primeTmfRankingCache(
-      params.dateRange,
-      params.comparisonDateRange,
-    );
-
-    const tmfRanking = this.getTmfRankingFromCache(
-      params.dateRange,
-      params.comparisonDateRange,
+    const tmfData = await this.getCachedTmfData(
       params.id,
+      params.dateRange,
+      params.comparisonDateRange,
     );
-
-    const { taskId: _taskTmfId, ...tmfScoresAndRank } = tmfRanking ?? {};
 
     const commentsAndWords = await this.feedbackService.getCommentsAndWords({
       dateRange: parseDateRangeString(params.dateRange),
@@ -529,7 +367,7 @@ export class TasksService {
         : null;
 
     const uxTests = taskData.ux_tests
-      .map((uxTest) => ({
+      ?.map((uxTest) => ({
         _id: uxTest._id,
         _project_id: uxTest.project,
         title: uxTest.title,
@@ -541,23 +379,24 @@ export class TasksService {
         scenario_html: uxTest.scenario_html,
       }))
       .sort((a, b) => {
-        if (a.date < b.date) return 1;
-        if (a.date > b.date) return -1;
+        // send null dates to the end of the list
+        if ((a.date || Infinity) < (b.date || Infinity)) return 1;
+        if ((a.date || Infinity) > (b.date || Infinity)) return -1;
         return 0;
       });
 
-    const taskSuccessByUxTest = uxTests;
+    const taskSuccessByUxTest = uxTests || [];
 
     const {
       avgTestSuccess: avgTaskSuccessFromLastTest,
       latestDate: dateFromLastTest,
       percentChange: avgSuccessPercentChange,
       valueChange: avgSuccessValueChange,
-    } = getLatestTaskSuccessRate(uxTests);
+    } = getLatestTaskSuccessRate(uxTests || []);
 
     const returnData = {
       ...omit(['ux_tests'], taskData),
-      ...tmfScoresAndRank,
+      ...tmfData,
       dateRange: params.dateRange,
       comparisonDateRange: params.comparisonDateRange,
       taskSuccessByUxTest,
@@ -568,53 +407,10 @@ export class TasksService {
       commentsAndWords,
       numComments,
       numCommentsPercentChange,
-    };
+    } satisfies TaskDetailsData;
 
-    // await this.cacheManager.set(cacheKey, returnData);
+    await this.cacheManager.set(cacheKey, returnData);
 
     return returnData;
-  }
-
-  private getPerformanceRankByTaskId(
-    tasks: TmfRankedTaskLike[],
-  ): Map<string, number> {
-    const rankedPerformanceTasks = tasks
-      .map((task) => ({
-        taskId: this.getTaskIdForTmfCache(task),
-        performanceScore: this.getPerformanceScore(task),
-        tmfRank:
-          typeof task.tmf_rank === 'number'
-            ? task.tmf_rank
-            : Number.POSITIVE_INFINITY,
-      }))
-      .filter(
-        (
-          task,
-        ): task is {
-          taskId: string;
-          performanceScore: number;
-          tmfRank: number;
-        } => !!task.taskId && task.performanceScore !== null,
-      )
-      .sort((a, b) => {
-        const scoreDiff = b.performanceScore - a.performanceScore;
-
-        if (scoreDiff !== 0) {
-          return scoreDiff;
-        }
-
-        return a.tmfRank - b.tmfRank;
-      });
-
-    return new Map(
-      rankedPerformanceTasks.map((task, index) => [task.taskId, index + 1]),
-    );
-  }
-
-  private getPerformanceScore(task: TmfRankedTaskLike): number | null {
-    return typeof task.performance_score === 'number' &&
-      Number.isFinite(task.performance_score)
-      ? task.performance_score
-      : null;
   }
 }
