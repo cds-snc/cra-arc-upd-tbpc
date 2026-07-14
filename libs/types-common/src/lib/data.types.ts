@@ -363,15 +363,15 @@ export interface TasksHomeAggregatedData {
   calls: number;
   dyf_no: number;
   dyf_yes: number;
-  latest_ux_success: number;
+  latest_ux_success: number | null;
   survey: number;
   survey_percent_change: number | null;
   survey_difference: number | null;
-  survey_completed: number;
+  survey_completed: number | null;
   survey_completed_percent_change: number | null;
   survey_completed_difference: number | null;
-  calls_per_100_visits: number;
-  dyf_no_per_1000_visits: number;
+  calls_per_100_visits: number | null;
+  dyf_no_per_1000_visits: number | null;
   calls_per_100_visits_difference: number | null;
   dyf_no_per_1000_visits_difference: number | null;
   calls_percent_change: number | null;
@@ -399,16 +399,16 @@ export interface TasksHomeAggregatedData {
 
 export type TasksHomeData = ViewData<TasksHomeAggregatedData[]> & {
   totalVisits: number;
-  percentChange: number;
+  percentChange: number | null;
   totalCalls: number;
-  percentChangeCalls: number;
+  percentChangeCalls: number | null;
   reports: IReports[];
 };
 
 export interface TaskDetailsMetrics {
   calldriversEnquiry: { enquiry_line: string; calls: number }[];
-  callsPer100VisitsByDay: { date: string; calls: number }[];
-  dyfNoPer1000VisitsByDay: { date: string; dyfNo: number }[];
+  callsPer100VisitsByDay: { date: string; calls: number | null }[];
+  dyfNoPer1000VisitsByDay: { date: string; dyfNo: number | null }[];
   dyfYes: number;
   dyfNo: number;
   individualHistory?: {
@@ -452,18 +452,18 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   gscTotalCtrPercentChange?: number | null;
   gscTotalPosition?: number;
   gscTotalPositionPercentChange?: number | null;
-  avgTaskSuccessFromLastTest: number;
-  avgSuccessPercentChange: number;
-  avgSuccessValueChange: number;
-  dateFromLastTest: Date;
+  avgTaskSuccessFromLastTest: number | null;
+  avgSuccessPercentChange: number | null;
+  avgSuccessValueChange: number | null;
+  dateFromLastTest: Date | null;
   taskSuccessByUxTest: {
     title: string;
-    date: Date;
-    test_type: string;
-    success_rate: number | null;
-    total_users: number;
-    scenario: string;
-    scenario_html: string;
+    date?: Date | undefined;
+    test_type?: string | undefined;
+    success_rate?: number | undefined;
+    total_users?: number | undefined;
+    scenario?: string | undefined;
+    scenario_html?: string | undefined;
   }[];
   projects: {
     _id: string;
@@ -493,8 +493,8 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
     gscTotalImpressions: number;
     gscTotalCtr: number;
     gscTotalPosition: number;
-    owners: string;
-    sections: string;
+    owners: string | undefined;
+    sections: string | undefined;
     numComments: number;
     numCommentsPercentChange: number | null;
   }[];
