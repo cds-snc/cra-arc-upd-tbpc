@@ -53,7 +53,6 @@ import {
   avg,
   chunkMap,
   dateRangeSplit,
-  getAvgSuccessFromLatestTests,
   getImprovedKpiSuccessRates,
   getWosImprovedKpiSuccessRates,
   getImprovedKpiTopSuccessRates,
@@ -61,7 +60,6 @@ import {
   getStructuredDateRangesWithComparison,
   parseDateRangeString,
   percentChange,
-  addTmfScoresToTasks,
 } from '@dua-upd/utils-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
@@ -227,30 +225,7 @@ export class OverallService {
         parseDateRangeString(params.dateRange),
         parseDateRangeString(params.comparisonDateRange),
       )
-      .then((tasks) =>
-        addTmfScoresToTasks(tasks)
-          .slice(0, 50)
-          .map((taskData) => {
-            const { avgTestSuccess, percentChange: avgSuccessPercentChange } =
-              getAvgSuccessFromLatestTests(taskData.ux_tests);
-
-            const latest_success_rate_percent_change = percentChange(
-              avgTestSuccess,
-              avgTestSuccess - avgSuccessPercentChange,
-            );
-
-            const latest_success_rate_difference =
-              avgSuccessPercentChange * 100;
-
-            return {
-              ...taskData,
-              _id: taskData._id.toString(),
-              latest_ux_success: avgTestSuccess,
-              latest_success_rate_difference,
-              latest_success_rate_percent_change,
-            };
-          }),
-      );
+      .then((tasks) => tasks.filter(({ top_task }) => top_task));
     console.timeEnd('tasks');
 
     const results = {
