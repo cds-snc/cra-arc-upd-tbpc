@@ -641,6 +641,7 @@ export interface ProjectsDetailsData
   dateFromLastTest: Date;
   taskSuccessByUxTest: (Omit<IUxTest, 'project' | 'tasks' | 'pages'> & {
     tasks: string;
+    taskLinks: { _id: string; title: string }[];
   })[];
   taskMetrics: {
     _id: string;

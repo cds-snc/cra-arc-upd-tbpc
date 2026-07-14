@@ -221,44 +221,39 @@
 
 <!-- Indicator -->
 @if (config.indicator && data[config.field]) {
-  @if (config.secondaryField; as secondaryField) {
-    @if (data[secondaryField.field]) {
+  @if (!config.secondaryField || data[config.secondaryField.field]) {
+    <span
+      [ngClass]="
+        comparisonClassMap(
+          config.field,
+          config.upGoodDownBad,
+          config.showTextColours
+        )
+      "
+    >
       <span
-        [ngClass]="
-          comparisonClassMap(
-            config.field,
-            config.upGoodDownBad,
-            config.showTextColours
-          )
-        "
+        [ngClass]="{
+          'material-icons': config.useArrows,
+        }"
       >
-        <span
-          [ngClass]="{
-            'material-icons': config.useArrows,
-          }"
-        >
-          {{ getIndicator(config.field, config.useArrows) }}
-        </span>
-
-        <span>
-          {{
-            getValueIndicator(
-              config.field,
-              config.pipe,
-              config.pipeParam,
-              false
-            )
-          }}
-        </span>
+        {{ getIndicator(config.field, config.useArrows) }}
       </span>
 
-      ({{
-        getValueIndicator(
-          secondaryField.field,
-          secondaryField.pipe,
-          secondaryField.pipeParam
-        )
-      }})
+      <span>
+        {{ getValueIndicator(config.field, config.pipe, config.pipeParam, false) }}
+      </span>
+    </span>
+
+    @if (config.secondaryField; as secondaryField) {
+      @if (data[secondaryField.field]) {
+        ({{
+          getValueIndicator(
+            secondaryField.field,
+            secondaryField.pipe,
+            secondaryField.pipeParam
+          )
+        }})
+      }
     }
   }
 }

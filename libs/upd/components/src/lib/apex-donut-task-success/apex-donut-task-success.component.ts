@@ -7,7 +7,7 @@ import {
   input,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import type { ApexNonAxisChartSeries } from 'ng-apexcharts';
+import type { ApexNonAxisChartSeries, ApexTooltip } from 'ng-apexcharts';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
 
@@ -30,6 +30,7 @@ export class ApexDonutTaskSuccessComponent {
   readonly change = input<number | null | undefined>(null);
   readonly showChange = input(false);
   readonly colours = input<string[]>();
+  readonly noDataMessage = input('nodata-available');
 
   readonly vm = toSignal(this.apexStore.vm$);
 
@@ -39,9 +40,22 @@ export class ApexDonutTaskSuccessComponent {
     return [success, Math.round((100 - success) * 100) / 100];
   });
 
-  readonly centerLabel = computed(() => {
+  readonly successPercent = computed(() => {
     const rate = this.successRate();
-    return rate != null ? `${Math.round(rate * 100)}%` : '';
+    return rate != null ? Math.round(rate * 100) : null;
+  });
+
+  readonly centerLabel = computed(() => {
+    const percent = this.successPercent();
+    return percent != null ? `${percent}%` : '';
+  });
+
+  readonly tooltip = computed<ApexTooltip>(() => {
+    const percent = this.successPercent() ?? 0;
+    return {
+      enabledOnSeries: [0],
+      y: { formatter: () => `${percent}%` },
+    };
   });
 
   constructor() {

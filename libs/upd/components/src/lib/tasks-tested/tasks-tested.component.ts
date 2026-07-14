@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { globalColours } from '@dua-upd/utils-common';
 
-export interface TaskTestedData {
-  taskNumber: number;
-  taskTitle: string;
-  taskId: string;
-  scenariosByTestType: Record<string, { text: string; html?: string | null }[]>;
+export interface ScenarioTestedData {
+  scenarioNumber: number;
+  scenarioDescriptions: {
+    label: string;
+    text: string;
+    html?: string | null;
+  }[];
+  connectedTasks: { title: string; id: string }[];
   tests: {
     testType: string;
     testTypeLabel: string;
@@ -28,37 +31,37 @@ export interface TasksTestedSummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TasksTestedComponent {
-  tasksTestedData = input<TaskTestedData[] | null>(null);
+  scenariosTestedData = input<ScenarioTestedData[] | null>(null);
   tasksTestedSummary = input<TasksTestedSummary | null>(null);
   totalParticipants = input<number | null>(null);
   langLink = input('en');
 
   hasData = computed(() => {
-    const data = this.tasksTestedData();
+    const data = this.scenariosTestedData();
     return data && data.length > 0;
   });
 
   hasBaseline = computed(() =>
-    (this.tasksTestedData() ?? []).some((task) =>
-      task.tests.some((t) => t.testType === 'Baseline'),
+    (this.scenariosTestedData() ?? []).some((scenario) =>
+      scenario.tests.some((t) => t.testType === 'Baseline'),
     ),
   );
 
   hasValidation = computed(() =>
-    (this.tasksTestedData() ?? []).some((task) =>
-      task.tests.some((t) => t.testType === 'Validation'),
+    (this.scenariosTestedData() ?? []).some((scenario) =>
+      scenario.tests.some((t) => t.testType === 'Validation'),
     ),
   );
 
   hasExploratory = computed(() =>
-    (this.tasksTestedData() ?? []).some((task) =>
-      task.tests.some((t) => t.testType === 'Exploratory'),
+    (this.scenariosTestedData() ?? []).some((scenario) =>
+      scenario.tests.some((t) => t.testType === 'Exploratory'),
     ),
   );
 
   hasSpotCheck = computed(() =>
-    (this.tasksTestedData() ?? []).some((task) =>
-      task.tests.some((t) => t.testType === 'Spot Check'),
+    (this.scenariosTestedData() ?? []).some((scenario) =>
+      scenario.tests.some((t) => t.testType === 'Spot Check'),
     ),
   );
 

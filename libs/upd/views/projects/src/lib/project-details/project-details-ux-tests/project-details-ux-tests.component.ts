@@ -39,7 +39,7 @@ export class ProjectDetailsUxTestsComponent {
 
   totalParticipants$ = this.projectsDetailsService.totalParticipants$;
 
-  tasksTestedData$ = this.projectsDetailsService.tasksTestedData$;
+  scenariosTestedData$ = this.projectsDetailsService.scenariosTestedData$;
   tasksTestedSummary$ = this.projectsDetailsService.tasksTestedSummary$;
 
   documentsCols = computed<ColumnConfig<DocumentsColTypes>[]>(() => [

@@ -7,7 +7,6 @@ import type {
   ApexNonAxisChartSeries,
   ApexPlotOptions,
   ApexStroke,
-  ApexTooltip,
 } from 'ng-apexcharts';
 import fr from 'apexcharts/dist/locales/fr.json';
 import en from 'apexcharts/dist/locales/en.json';
@@ -23,7 +22,6 @@ export interface ChartOptions {
   dataLabels: ApexDataLabels;
   legend: ApexLegend;
   stroke: ApexStroke;
-  tooltip: ApexTooltip;
 }
 
 @Injectable()
@@ -52,7 +50,6 @@ export class ApexStore extends ComponentStore<ChartOptions> {
       dataLabels: { enabled: false },
       legend: { show: false },
       stroke: { width: 0 },
-      tooltip: { enabledOnSeries: [0] },
     });
   }
 
