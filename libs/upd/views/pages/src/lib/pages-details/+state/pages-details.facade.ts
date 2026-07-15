@@ -146,7 +146,7 @@ export class PagesDetailsFacade {
   );
 
   archiveStatus$ = this.pagesDetailsData$.pipe(
-    map((data)  => (data?.isArchive ? 'Archived' : 'Not archived'),
+    map((data)  => (data?.isArchive ? 'Archived' : null),
     ),
   );
 
