@@ -2064,7 +2064,7 @@
 
   "task-status-title-great-higher": "Obtient un rendement <span class=\"title-highlight\">nettement supérieur aux points de référence</span> et <span class=\"title-highlight\">supérieur à sa propre moyenne</span> — cette tâche est en excellente posture.",
   "task-status-title-great-normal": "Obtient un rendement <span class=\"title-highlight\">nettement supérieur aux points de référence</span> et <span class=\"title-highlight\">se situe près de sa propre moyenne tout en demeurant stable</span> — cette tâche est en excellente posture.",
-  "task-status-title-great-lower": "Af'task-status-badge-watchfiche actuellement <span class=\"title-highlight\">un bon rendement</span>, mais un rendement <span class=\"title-highlight\">inférieur aux attentes selon sa moyenne</span> — cette tâche est à surveiller.",
+  "task-status-title-great-lower": "Affiche actuellement <span class=\"title-highlight\">un bon rendement</span>, mais un rendement <span class=\"title-highlight\">inférieur aux attentes selon sa moyenne</span> — cette tâche est à surveiller.",
   "task-status-title-good-higher": "Affiche <span class=\"title-highlight\">un rendement solide</span> et <span class=\"title-highlight\">supérieur aux attentes pour cette tâche selon sa moyenne</span> — cette tâche est en bonne posture.",
   "task-status-title-good-normal": "Affiche <span class=\"title-highlight\">un rendement solide</span> et <span class=\"title-highlight\">demeure stable</span> — cette tâche est en bonne posture.",
   "task-status-title-good-lower": "Affiche généralement <span class=\"title-highlight\">un bon rendement</span>, mais un rendement <span class=\"title-highlight\">inférieur aux attentes selon sa moyenne</span> — cette tâche doit être surveillée de près.",
