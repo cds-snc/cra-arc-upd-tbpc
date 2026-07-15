@@ -211,7 +211,7 @@ export class PageVisitsView
         $toBool: '$is_404',
       } as unknown as boolean, // force cast to boolean for mongoose projection typing
       is_archive: {
-        $toBool: '$is_404',
+        $toBool: '$is_archive',
       } as unknown as boolean,
       redirect: 1,
       is_redirect: {
@@ -233,8 +233,9 @@ export class PageVisitsView
       archiveStatus: {
         branches: [
           { case: { $eq: ['$is_archive', true]}, then: 'Archived'},
+          { case: { $eq: ['$is_archive', false]}, then: 'Not archived'},
         ],
-        default: 'Not Archived',
+        default: null,
       }
     };
 
