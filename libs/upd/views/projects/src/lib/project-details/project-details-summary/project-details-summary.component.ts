@@ -7,9 +7,20 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, shareReplay } from 'rxjs';
+import {
+  callVolumeObjectiveCriteria,
+  feedbackKpiObjectiveCriteria,
+} from '@dua-upd/upd-components';
+import { EN_CA } from '@dua-upd/upd/i18n';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
+import type { GetTableProps } from '@dua-upd/utils-common';
 import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
+
+type ParticipantTasksColTypes = GetTableProps<
+  ProjectDetailsSummaryComponent,
+  'participantTasks$'
+>;
 
 @Component({
     selector: 'upd-project-details-summary',
@@ -23,8 +34,70 @@ export class ProjectDetailsSummaryComponent implements OnInit {
   private readonly projectsDetailsService = inject(ProjectsDetailsFacade);
 
   currentLang = this.i18n.currentLang;
+  langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
   description$ = this.projectsDetailsService.description$;
+
+  apexCallDrivers$ = this.projectsDetailsService.apexCallDrivers$;
+  callPerVisits$ = this.projectsDetailsService.callPerVisits$;
+  apexCallPercentChange$ = this.projectsDetailsService.apexCallPercentChange$;
+  apexCallDifference$ = this.projectsDetailsService.apexCallDifference$;
+
+  apexKpiFeedback$ = this.projectsDetailsService.apexKpiFeedback$;
+  currentKpiFeedback$ = this.projectsDetailsService.currentKpiFeedback$;
+  kpiFeedbackPercentChange$ =
+    this.projectsDetailsService.kpiFeedbackPercentChange$;
+  kpiFeedbackDifference$ = this.projectsDetailsService.kpiFeedbackDifference$;
+  feedbackKpiObjectiveCriteria = feedbackKpiObjectiveCriteria;
+
+  visits$ = this.projectsDetailsService.visits$;
+  visitsPercentChange$ = this.projectsDetailsService.visitsPercentChange$;
+
+  totalCalldriver$ = this.projectsDetailsService.totalCalldriver$;
+  totalCalldriverPercentChange$ =
+    this.projectsDetailsService.totalCalldriverPercentChange$;
+  callVolumeObjectiveCriteria = callVolumeObjectiveCriteria;
+  callVolumeKpiConfig = {
+    pass: { message: 'kpi-met-volume' },
+    fail: { message: 'kpi-not-met-volume' },
+  };
+
+  participantTasks$ = this.projectsDetailsService.projectTasks$;
+
+  participantTasksCols = computed<ColumnConfig<ParticipantTasksColTypes>[]>(
+    () => [
+      {
+        field: 'title',
+        header: 'Task list',
+        translate: true,
+        type: 'link',
+        typeParams: { preLink: '/' + this.langLink() + '/tasks', link: '_id' },
+      },
+      {
+        field: 'callsPer100Visits',
+        header: 'kpi-calls-per-100-title',
+        pipe: 'number',
+        pipeParam: '1.0-2',
+      },
+      {
+        field: 'dyfNoPer1000Visits',
+        header: 'kpi-feedback-per-1000-title',
+        pipe: 'number',
+        pipeParam: '1.0-2',
+      },
+      {
+        field: 'uxTestInLastTwoYears',
+        header: 'UX Test in Past 2 Years?',
+        translate: true,
+      },
+      {
+        field: 'latestSuccessRate',
+        header: 'Latest success rate',
+        pipe: 'percent',
+        tooltip: 'tooltip-latest-success-rate-projectsection',
+      },
+    ],
+  );
 
   baselineTestData$ = this.projectsDetailsService.baselineTestData$;
   validationTestData$ = this.projectsDetailsService.validationTestData$;
