@@ -72,7 +72,6 @@ export class PagesHomeComponent implements OnInit {
                   { name: 'Redirected', value: 'Redirected' },
                   { name: 'Live', value: 'Live' },
                   { name: 'Archived', value: 'Archived' },
-                  { name: 'Not archived', value: 'Not archived' },
                 ],
                 matchMode: 'arrayContains'
             },
