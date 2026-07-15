@@ -45,6 +45,62 @@
   </div>
 </div>
 
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-card [title]="'Key Performance Indicators'">
+        <div class="row">
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <upd-apex-spark-line
+              [title]="'kpi-calls-per-100-title'"
+              [titleTooltip]="'kpi-calls-per-100-tooltip-project'"
+              [series]="(apexCallDrivers$ | async) || []"
+              [current]="(callPerVisits$ | async) || 0"
+              [comparison]="(apexCallPercentChange$ | async) || 0"
+              [keyword]="'calls'"
+              [scale]="100"
+              [difference]="(apexCallDifference$ | async) || 0"
+              modal=" {{ 'kpi-calls-per-100-guidance-project' | translate }}"
+            ></upd-apex-spark-line>
+          </div>
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <upd-apex-spark-line
+              [title]="'kpi-feedback-per-1000-title'"
+              [titleTooltip]="'kpi-feedback-per-1000-tooltip-project'"
+              [series]="(apexKpiFeedback$ | async) || []"
+              [current]="(currentKpiFeedback$ | async) || 0"
+              [comparison]="(kpiFeedbackPercentChange$ | async) || 0"
+              [scale]="1000"
+              [kpiObjectiveCriteria]="feedbackKpiObjectiveCriteria"
+              [difference]="(kpiFeedbackDifference$ | async) || 0"
+              modal=" {{ 'kpi-feedback-per-1000-guidance-project' | translate }} "
+              [keyword]="'feedback'"
+            ></upd-apex-spark-line>
+          </div>
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <upd-data-card
+              [current]="visits$ | async"
+              [comparison]="visitsPercentChange$ | async"
+              [title]="'Total visits from all pages'"
+            ></upd-data-card>
+          </div>
+          <div class="col-lg-3 col-md-6 col-sm-12">
+            <upd-data-card
+              [current]="totalCalldriver$ | async"
+              [comparison]="totalCalldriverPercentChange$ | async"
+              [title]="'Call volume'"
+              [displayKpis]="false"
+              [kpiObjectiveCriteria]="callVolumeObjectiveCriteria"
+              [kpiStylesConfig]="callVolumeKpiConfig"
+              [comparisonMode]="'upBadDownGood'"
+            ></upd-data-card>
+          </div>
+        </div>
+      </upd-card>
+    </div>
+  </div>
+</div>
+
 @if (tasksTestedTableData$ | async; as tasksTestedData) {
   @if (tasksTestedData.length) {
     <div class="container-fluid my-4 gx-0">
@@ -59,7 +115,6 @@
             [expandable]="true"
             [expandableRowTemplate]="scenarioTemplate"
             expandAfterField="taskTitle"
-            [expandAll]="true"
             [title]="'tasks-tested'"
             sortField="taskNumber"
           >
@@ -69,6 +124,23 @@
     </div>
   }
 }
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-data-table-card
+        [data]="(participantTasks$ | async) || []"
+        [cols]="participantTasksCols()"
+        [sort]="true"
+        [pagination]="false"
+        [filter]="false"
+        [title]="'Task monitoring'"
+        sortField="title"
+      >
+      </upd-data-table-card>
+    </div>
+  </div>
+</div>
 
 <ng-template #scenarioTemplate let-rowData>
   <div>
