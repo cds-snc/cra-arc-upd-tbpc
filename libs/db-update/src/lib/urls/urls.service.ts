@@ -157,6 +157,7 @@ export class UrlsService {
               },
               {
                 is_404: true,
+                is_archive: false;
                 last_checked: { $lt: fourDaysAgo },
               },
             ],
