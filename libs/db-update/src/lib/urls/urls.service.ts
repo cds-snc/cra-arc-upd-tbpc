@@ -1633,7 +1633,7 @@ export const processHtml = (html: string): ProcessedHtml | null => {
   $('script, meta[property="fb:pages"]').remove();
 
   /* Check for archived class banner */
-  const archived = $('.gc-archv') ? true:false;
+  const archived = !!$('.gc-archv').length;
 
   /* DEBUG */
   logJson("Archived page?? ");
