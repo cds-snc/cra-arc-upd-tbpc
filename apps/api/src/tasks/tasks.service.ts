@@ -12,11 +12,13 @@ import type {
 } from '@dua-upd/types-common';
 import {
   dateRangeSplit,
+  getHighDemandMetricStats,
   getLatestTaskSuccessRate,
   getSelectedPercentChange,
   parseDateRangeString,
   percentChange,
   type UnwrapPromise,
+  type HighDemandMetric,
 } from '@dua-upd/utils-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { omit } from 'rambdax';
@@ -30,6 +32,7 @@ type ViewTaskType = UnwrapPromise<
 type TmfCacheValue = {
   tmf_total_tasks: number;
   perf_total_tasks: number;
+  highDemandThresholds: Record<HighDemandMetric, number | null>;
   tmfTaskMap: Map<
     string,
     {
@@ -41,9 +44,14 @@ type TmfCacheValue = {
       tmf_rank: number;
       performance_score: number | null;
       perf_rank: number | null;
+
+      is_high_demand: boolean;
+      high_demand_metrics: HighDemandMetric[];
     }
   >;
 };
+
+type HighDemandThresholds = Record<HighDemandMetric, number | null>;
 
 const tasksHomeCacheKey = (
   dateRangeString: string,
@@ -153,6 +161,19 @@ export class TasksService {
     const perf_total_tasks = tasks.filter(
       (task) => !!task.performance_score,
     ).length;
+
+    const highDemandStats = getHighDemandMetricStats(tasks);
+
+    const highDemandThresholds: HighDemandThresholds = {
+      visits: highDemandStats.visits.p99,
+      calls: highDemandStats.calls.p99,
+      dyf_no: highDemandStats.dyf_no.p99,
+    };
+
+    const isAboveThreshold = (value: number, threshold: number) => {
+      return value > threshold;
+    };
+
     const tmfTaskMap = new Map(
       tasks
         .toSorted((a, b) => {
@@ -165,19 +186,38 @@ export class TasksService {
 
           return a.tmf_rank - b.tmf_rank;
         })
-        .map((task, index) => [
-          task._id,
-          {
-            visits_score: task.visits_score,
-            calls_score: task.calls_score,
-            dyf_total_score: task.dyf_total_score,
-            survey_score: task.survey_score,
-            overall_score: task.overall_score,
-            tmf_rank: task.tmf_rank,
-            performance_score: task.performance_score || null,
-            perf_rank: task.performance_score ? index + 1 : null,
-          },
-        ]),
+        .map((task, index) => {
+          const high_demand_metrics: HighDemandMetric[] = [];
+
+          if (isAboveThreshold(task.visits, highDemandThresholds.visits)) {
+            high_demand_metrics.push('visits');
+          }
+
+          if (isAboveThreshold(task.calls, highDemandThresholds.calls)) {
+            high_demand_metrics.push('calls');
+          }
+
+          if (isAboveThreshold(task.dyf_no, highDemandThresholds.dyf_no)) {
+            high_demand_metrics.push('dyf_no');
+          }
+
+          return [
+            task._id,
+            {
+              visits_score: task.visits_score,
+              calls_score: task.calls_score,
+              dyf_total_score: task.dyf_total_score,
+              survey_score: task.survey_score,
+              overall_score: task.overall_score,
+              tmf_rank: task.tmf_rank,
+              performance_score: task.performance_score || null,
+              perf_rank: task.performance_score ? index + 1 : null,
+
+              is_high_demand: high_demand_metrics.length > 0,
+              high_demand_metrics,
+            },
+          ];
+        }),
     );
 
     const cacheKey = tmfCacheKey(dateRangeString, comparisonDateRangeString);
@@ -185,8 +225,9 @@ export class TasksService {
     await this.cacheManager.set(cacheKey, {
       tmf_total_tasks: total_tasks,
       perf_total_tasks,
+      highDemandThresholds,
       tmfTaskMap,
-    });
+    } satisfies TmfCacheValue);
   }
 
   private async getCachedTmfData(
@@ -229,6 +270,7 @@ export class TasksService {
       ...taskData,
       tmf_total_tasks: cachedDateRangeData.tmf_total_tasks,
       perf_total_tasks: cachedDateRangeData.perf_total_tasks,
+      highDemandThresholds: cachedDateRangeData.highDemandThresholds,
     };
   }
 

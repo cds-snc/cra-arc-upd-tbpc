@@ -6,18 +6,24 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { globalColours, getOptimalTextcolour } from '@dua-upd/utils-common';
 
+type HighDemandMetric = 'visits' | 'calls' | 'dyf_no';
+
+type RankMetric = {
+  key: HighDemandMetric;
+  label: string;
+  value: number;
+  highDemand: boolean;
+};
+
 @Component({
   selector: 'upd-task-details',
   templateUrl: './task-details.component.html',
-  styleUrls: ['./task-details.component.css'],
+  styleUrls: ['./task-details.component.scss'],
   standalone: false,
 })
 export class TaskDetailsComponent implements OnInit {
   private i18n = inject(I18nFacade);
   private readonly taskDetailsService = inject(TasksDetailsFacade);
-
-  currentLang$ = this.i18n.currentLang$;
-  langLink = 'en';
 
   title$ = this.taskDetailsService.titleHeader$;
   error$ = this.taskDetailsService.error$;
@@ -25,10 +31,10 @@ export class TaskDetailsComponent implements OnInit {
 
   currentRoute$ = this.taskDetailsService.currentRoute$;
 
-  navTabs: { href: string; title: string }[] = [];
-
   projects$ = this.taskDetailsService.projects$;
-  projectsCol: ColumnConfig = { field: '', header: '' };
+    
+  currentLang = this.i18n.currentLang;
+  langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
   colours = globalColours;
   getOptimalTextColour = getOptimalTextcolour;
@@ -45,52 +51,87 @@ export class TaskDetailsComponent implements OnInit {
   tmfRank = toSignal(this.taskDetailsService.tmfRank$);
   tmfTotalTasks = toSignal(this.taskDetailsService.tmfTotalTasks$);
 
+  callsVolume = toSignal(this.taskDetailsService.currentCallVolume$);
+  feedbackVolume = toSignal(this.taskDetailsService.dyfNo$);
+  visitsVolume = toSignal(this.taskDetailsService.visits$);
+
+  isHighDemand = toSignal(this.taskDetailsService.isHighDemand$);
+  highDemandMetrics = toSignal(this.taskDetailsService.highDemandMetrics$);
+
+  readonly rankMetrics = computed<RankMetric[]>(() => {
+    const highDemandMetrics = new Set(this.highDemandMetrics());
+
+    return [
+      {
+        key: 'visits',
+        label: 'Visits',
+        value: this.visitsVolume() ?? 0,
+        highDemand: highDemandMetrics.has('visits'),
+      },
+      {
+        key: 'calls',
+        label: 'calls',
+        value: this.callsVolume() ?? 0,
+        highDemand: highDemandMetrics.has('calls'),
+      },
+      {
+        key: 'dyf_no',
+        label: 'Negative feedback',
+        value: this.feedbackVolume() ?? 0,
+        highDemand: highDemandMetrics.has('dyf_no'),
+      },
+    ];
+  });
+
+  navTabs = computed<{ href: string; title: string }[]>(() => {
+    const lang = this.currentLang();
+
+    const translate = (key: string) => this.i18n.service.translate(key, lang);
+
+    return [
+      {
+        href: 'summary',
+        title: translate('tab-summary'),
+      },
+      {
+        href: 'webtraffic',
+        title: translate('tab-webtraffic'),
+      },
+      {
+        href: 'searchanalytics',
+        title: translate('tab-searchanalytics'),
+      },
+      {
+        href: 'pagefeedback',
+        title: translate('tab-pagefeedback'),
+      },
+      {
+        href: 'calldrivers',
+        title: translate('tab-calldrivers'),
+      },
+      {
+        href: 'uxtests',
+        title: translate('tab-uxtests'),
+      },
+      {
+        href: 'details',
+        title: translate('tab-details'),
+      },
+    ];
+  });
+
+  projectsCol = computed<ColumnConfig>(() => ({
+    field: 'title',
+    header: 'project',
+    type: 'link',
+    translate: true,
+    typeParams: {
+      preLink: `/${this.langLink()}/projects`,
+      link: '_id',
+    },
+  }));
+
   ngOnInit() {
     this.taskDetailsService.init();
-
-    this.currentLang$.subscribe((lang) => {
-      this.langLink = lang === EN_CA ? 'en' : 'fr';
-      this.navTabs = [
-        {
-          href: 'summary',
-          title: this.i18n.service.translate('tab-summary', lang),
-        },
-        {
-          href: 'webtraffic',
-          title: this.i18n.service.translate('tab-webtraffic', lang),
-        },
-        {
-          href: 'searchanalytics',
-          title: this.i18n.service.translate('tab-searchanalytics', lang),
-        },
-        {
-          href: 'pagefeedback',
-          title: this.i18n.service.translate('tab-pagefeedback', lang),
-        },
-        {
-          href: 'calldrivers',
-          title: this.i18n.service.translate('tab-calldrivers', lang),
-        },
-        {
-          href: 'uxtests',
-          title: this.i18n.service.translate('tab-uxtests', lang),
-        },
-        {
-          href: 'details',
-          title: this.i18n.service.translate('tab-details', lang),
-        },
-      ];
-
-      this.projectsCol = {
-        field: 'title',
-        header: 'project',
-        type: 'link',
-        translate: true,
-        typeParams: {
-          preLink: '/' + this.langLink + '/projects',
-          link: '_id',
-        },
-      } as ColumnConfig;
-    });
   }
 }

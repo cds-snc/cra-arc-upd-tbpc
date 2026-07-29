@@ -1,4 +1,44 @@
-<upd-card [status]="healthTier()">
+<ng-template #highDemandTooltip>
+  <div class="high-demand-tooltip__metrics">
+    @for (metric of highDemandTooltipMetrics(); track metric.key) {
+      <div class="high-demand-tooltip__metric">
+        <span class="high-demand-tooltip__label">
+          <span class="high-demand-tooltip__label-text">
+            {{ metric.label }}
+          </span>
+
+          @if (metric.highDemand) {
+            <span
+              class="material-icons high-demand-tooltip__flame"
+              aria-hidden="true"
+            >
+              local_fire_department
+            </span>
+          }
+        </span>
+
+        <strong>
+          {{ metric.value | localeNumber: '1.0-0' }}
+        </strong>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<upd-card [status]="healthTier()" [title]="'tab-taskperformance'">
+  <ng-template #cardTitleAction>
+    <upd-modal
+      [modalTitle]="'task-status-how-health-calculated'"
+      modalSize="xl"
+    >
+      <upd-zone-map
+        [relative]="performanceBand()"
+        [historical]="trendBand()"
+        [relativeRanges]="relativeRanges()"
+        [historicalRanges]="historicalRanges()"
+      ></upd-zone-map>
+    </upd-modal>
+  </ng-template>
   @if (hasData()) {
     <div class="task-health">
       <div class="task-health-header">
@@ -6,18 +46,6 @@
           <span class="health-dot"></span>
 
           {{ healthBadge() }}
-
-          <upd-modal
-            [modalTitle]="'task-status-how-health-calculated' | translate"
-            modalSize="xl"
-          >
-            <upd-zone-map
-              [relative]="performanceBand()"
-              [historical]="trendBand()"
-              [relativeRanges]="relativeRanges()"
-              [historicalRanges]="historicalRanges()"
-            ></upd-zone-map>
-          </upd-modal>
         </div>
 
         <div class="unscored-header-divider" aria-hidden="true"></div>
@@ -25,74 +53,96 @@
         <div class="health-action-pill" [ngClass]="healthTier()">
           {{ healthNote() }}
         </div>
+
+        @if (hasHighDemand()) {
+          <div class="unscored-header-divider" aria-hidden="true"></div>
+          <div class="health-demand">
+            <span
+              class="health-demand__pill"
+              tabindex="0"
+              role="note"
+              [ngbTooltip]="highDemandTooltip"
+              placement="bottom"
+              triggers="mouseenter:mouseleave focusin:focusout"
+              container="body"
+              tooltipClass="high-demand-tooltip"
+              [openDelay]="100"
+              [closeDelay]="100"
+            >
+              <span
+                class="material-icons health-demand__icon"
+                aria-hidden="true"
+              >
+                local_fire_department
+              </span>
+
+              {{ 'task-status-high-demand-label' | translate }}
+            </span>
+          </div>
+        }
       </div>
 
       <div class="row g-4 align-items-start">
         <div class="col-lg-7">
-          <div
+          <p
             class="health-title"
             [ngClass]="healthTier()"
             [innerHTML]="healthTitle()"
-          ></div>
+          ></p>
 
-          <upd-accordion
-            [title]="'task-status-why-confident' | translate"
-            [expanded]="true"
-          >
-            <div class="confidence-row">
-              <div>
-                <span class="confidence-badge">{{ 'PS' | translate }}</span>
+          @if (highImpactTitle(); as highImpact) {
+            <p [innerHTML]="highImpact"></p>
+          }
 
-                <strong [innerHTML]="psConfidenceTitle()"></strong>
+          <div class="confidence-section-title">
+            {{ 'what-this-means' | translate }}
+          </div>
+          <div class="confidence-row">
+            <div class="confidence-content">
+              <strong [innerHTML]="psConfidenceTitle()"></strong>
 
-                <div class="confidence-subtitle">
-                  {{ 'task-status-based-all-tasks' | translate }}
-                </div>
+              <div class="confidence-subtitle">
+                {{ 'task-status-based-all-tasks' | translate }}
               </div>
             </div>
+          </div>
 
-            <div class="confidence-row">
-              <div>
-                <span class="confidence-badge">{{ 'HA' | translate }}</span>
+          <div class="confidence-row">
+            <div class="confidence-content">
+              <strong [innerHTML]="haConfidenceTitle()"></strong>
 
-                <strong [innerHTML]="haConfidenceTitle()"></strong>
-
-                <div class="confidence-subtitle">
-                  {{ 'task-status-based-24-month-history' | translate }}
-                </div>
+              <div class="confidence-subtitle">
+                {{ 'task-status-based-24-month-history' | translate }}
               </div>
             </div>
+          </div>
 
-            @if (sha() !== null) {
-              <div class="confidence-row">
-                <div>
-                  <span class="confidence-badge">{{ 'SHA' | translate }}</span>
+          @if (sha() !== null) {
+            <div class="confidence-row">
+              <div class="confidence-content">
+                <strong [innerHTML]="shaConfidenceTitle()"></strong>
 
-                  <strong [innerHTML]="shaConfidenceTitle()"></strong>
-
-                  <div class="confidence-subtitle">
-                    <span
-                      class="change-value"
-                      [ngClass]="getChangeClass(shaVariance()!)"
-                    >
-                      <span class="change-icon material-icons">
-                        {{ getArrow(shaVariance()!) }}
-                      </span>
-
-                      {{
-                        getAbsChange(shaVariance()!) * 100
-                          | localeNumber: '1.0-1'
-                      }}
-
-                      {{ 'task-status-points-abbreviation' | translate }}
+                <div class="confidence-subtitle">
+                  <span
+                    class="change-value"
+                    [ngClass]="getChangeClass(shaVariance()!)"
+                  >
+                    <span class="change-icon material-icons">
+                      {{ getArrow(shaVariance()!) }}
                     </span>
 
-                    {{ 'task-status-vs-seasonal-baseline' | translate }}
-                  </div>
+                    {{
+                      getAbsChange(shaVariance()!) * 100 | localeNumber: '1.0-1'
+                    }}
+
+                    {{ 'task-status-points-abbreviation' | translate }}
+                  </span>
+
+                  {{ 'task-status-vs-seasonal-baseline' | translate }}
                 </div>
               </div>
-            }
-          </upd-accordion>
+            </div>
+          }
         </div>
 
         <div class="col-lg-5">
@@ -104,8 +154,6 @@
                     <span class="score-title">
                       {{ 'task-status-performance-score' | translate }}
                     </span>
-
-                    <span class="score-badge">{{ 'PS' | translate }}</span>
                   </div>
 
                   <div class="score-subtitle">
@@ -150,7 +198,8 @@
                   {{ 'task-status-in-this-score' | translate }}
                 </div>
 
-                <div class="score-metric-list">
+                <!--
+                                <div class="score-metric-list">
                   @for (metric of scoreMetrics(); track metric.label) {
                     <div
                       class="score-metric-item"
@@ -169,21 +218,123 @@
                       <span>{{ metric.label }}</span>
                     </div>
                   }
+                </div>-->
+
+                <div class="score-metric-list">
+                  @for (metric of scoreMetrics(); track metric.key) {
+                    <div
+                      class="score-metric-item"
+                      [ngClass]="{
+                        'score-metric-item--included': metric.included,
+                        'score-metric-item--excluded': !metric.included,
+                      }"
+                    >
+                      <span
+                        class="score-metric-icon material-icons"
+                        aria-hidden="true"
+                      >
+                        {{ metric.included ? 'check' : 'close' }}
+                      </span>
+
+                      <div class="score-metric-content">
+                        <div class="score-metric-header">
+                          <div class="score-metric-label">
+                            {{ metric.label }}
+
+                            <!-- @if (
+                              metric.key === 'survey' &&
+                              metric.value !== null &&
+                              !metric.included
+                            ) {
+                              <em>(not scored — below response threshold)</em>
+                            } -->
+                          </div>
+
+                          <strong class="score-metric-value">
+                            @switch (metric.key) {
+                              @case ('calls') {
+                                {{ metric.value | localeNumber: '1.0-1' }}
+                              }
+
+                              @case ('feedback') {
+                                {{ metric.value | localeNumber: '1.0-1' }}
+                              }
+
+                              @case ('survey') {
+                                @if (metric.value !== null) {
+                                  {{ metric.value | localePercent: '1.0-0' }}
+                                }
+                              }
+                            }
+                          </strong>
+                        </div>
+
+                        <div class="score-metric-detail">
+                          @switch (metric.key) {
+                            @case ('calls') {
+                              {{
+                                'task-status-calls-visits-detail'
+                                  | translate
+                                    : {
+                                        calls:
+                                          callsVolume() | localeNumber: '1.0-0',
+                                        visits:
+                                          visitsVolume()
+                                          | localeNumber: '1.0-0',
+                                      }
+                              }}
+                            }
+
+                            @case ('feedback') {
+                              {{
+                                'task-status-negative-feedback-visits-detail'
+                                  | translate
+                                    : {
+                                        feedback:
+                                          feedbackVolume()
+                                          | localeNumber: '1.0-0',
+                                        visits:
+                                          visitsVolume()
+                                          | localeNumber: '1.0-0',
+                                      }
+                              }}
+                            }
+
+                            @case ('survey') {
+                              @if (surveyTotal() > 0) {
+                                {{
+                                  'task-status-survey-total'
+                                    | translate
+                                      : {
+                                          completed:
+                                            surveyCompleted()
+                                            | localeNumber: '1.0-0',
+                                          total:
+                                            surveyTotal()
+                                            | localeNumber: '1.0-0',
+                                        }
+                                }}
+                              }
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               </div>
 
               @if (tmfRank() && tmfTotalTasks()) {
                 <div class="score-rank-row">
                   <span>
-                    {{ 'task-status-ranks' | translate }}
-
-                    <strong>{{ tmfRank() }}</strong>
-
-                    {{ 'task-status-of' | translate }}
-
-                    <strong>{{ tmfTotalTasks() }}</strong>
-
-                    {{ 'task-status-scored-tasks' | translate }}
+                    {{
+                      'task-status-rank'
+                        | translate
+                          : {
+                              rank: tmfRank() | ordinal: currentLang(),
+                              total: tmfTotalTasks(),
+                            }
+                    }}
                   </span>
 
                   @if (tmfTopPercent() < 26) {
@@ -209,13 +360,11 @@
                       <span class="score-title">
                         {{ 'task-status-historical-average' | translate }}
                       </span>
-
-                      <span class="score-badge">{{ 'HA' | translate }}</span>
                     </div>
 
-                    <div class="score-subtitle">
+                    <!-- <div class="score-subtitle">
                       {{ 'task-status-24-month-average' | translate }}
-                    </div>
+                    </div> -->
                   </div>
 
                   <div class="score-value-block">
@@ -243,13 +392,13 @@
                   </div>
                 </div>
 
-                <div class="score-chart score-chart--compact">
+                <!-- <div class="score-chart score-chart--compact">
                   <upd-apex-score
                     [title]="'task-status-historical-average' | translate"
                     [score]="ha()!"
                     [ranges]="relativeRanges()"
                   ></upd-apex-score>
-                </div>
+                </div> -->
               </div>
 
               @if (sha() !== null) {
@@ -262,13 +411,11 @@
                             'task-status-seasonal-historic-average' | translate
                           }}
                         </span>
-
-                        <span class="score-badge">{{ 'SHA' | translate }}</span>
                       </div>
 
-                      <div class="score-subtitle">
+                      <!-- <div class="score-subtitle">
                         {{ 'task-status-same-period-prior-years' | translate }}
-                      </div>
+                      </div> -->
                     </div>
 
                     <div class="score-value-block">
@@ -296,7 +443,7 @@
                     </div>
                   </div>
 
-                  <div class="score-chart score-chart--compact">
+                  <!-- <div class="score-chart score-chart--compact">
                     <upd-apex-score
                       [title]="
                         'task-status-seasonal-historic-average' | translate
@@ -304,7 +451,7 @@
                       [score]="sha()!"
                       [ranges]="relativeRanges()"
                     ></upd-apex-score>
-                  </div>
+                  </div> -->
                 </div>
               }
             </div>
@@ -319,18 +466,6 @@
           <span class="health-dot"></span>
 
           {{ 'task-status-badge-unscored' | translate }}
-
-          <upd-modal
-            [modalTitle]="'task-status-how-health-calculated' | translate"
-            modalSize="xl"
-          >
-            <upd-zone-map
-              [relative]="performanceBand()"
-              [historical]="trendBand()"
-              [relativeRanges]="relativeRanges()"
-              [historicalRanges]="historicalRanges()"
-            ></upd-zone-map>
-          </upd-modal>
         </div>
 
         <div class="unscored-header-divider" aria-hidden="true"></div>

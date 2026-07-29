@@ -75,7 +75,7 @@ export class DataTableExportsComponent<T> {
 
     const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected'];
 
-    const taskStatusKeys: TaskStatus[] = ['Healthy', 'Watch', 'Improving', 'Needs action'];
+    const taskStatusKeys: TaskStatus[] = ['Healthy', 'Watch', 'Needs action', 'Unscored'];
 
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,

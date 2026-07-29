@@ -1,16 +1,11 @@
-import {
-  ChangeDetectorRef,
-  inject,
-  NgModule,
-  Pipe,
-  PipeTransform,
-} from '@angular/core';
+import { inject, NgModule, Pipe, PipeTransform } from '@angular/core';
 import { formatNumber, formatDate, formatPercent } from '@angular/common';
 import { I18nModule, I18nService, type LocaleId } from '@dua-upd/upd/i18n';
 
 @Pipe({
-    name: 'localeNumber', pure: false,
-    standalone: false
+  name: 'localeNumber',
+  pure: false,
+  standalone: false,
 })
 export class LocaleNumberPipe implements PipeTransform {
   private i18n = inject(I18nService);
@@ -23,8 +18,9 @@ export class LocaleNumberPipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'localeDate', pure: false,
-    standalone: false
+  name: 'localeDate',
+  pure: false,
+  standalone: false,
 })
 export class LocaleDatePipe implements PipeTransform {
   private i18n = inject(I18nService);
@@ -41,8 +37,9 @@ export class LocaleDatePipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'localePercent', pure: false,
-    standalone: false
+  name: 'localePercent',
+  pure: false,
+  standalone: false,
 })
 export class LocalePercentPipe implements PipeTransform {
   private i18n = inject(I18nService);
@@ -55,8 +52,9 @@ export class LocalePercentPipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'localeTemplate', pure: false,
-    standalone: false
+  name: 'localeTemplate',
+  pure: false,
+  standalone: false,
 })
 export class LocaleTemplatePipe implements PipeTransform {
   private i18n = inject(I18nService);
@@ -95,8 +93,9 @@ export class LocaleTemplatePipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'translateArray', pure: true,
-    standalone: false
+  name: 'translateArray',
+  pure: true,
+  standalone: false,
 })
 export class TranslateArrayPipe implements PipeTransform {
   private i18n = inject(I18nService);
@@ -109,8 +108,9 @@ export class TranslateArrayPipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'arrayToText', pure: true,
-    standalone: false
+  name: 'arrayToText',
+  pure: true,
+  standalone: false,
 })
 export class ArrayToTextPipe implements PipeTransform {
   transform(values: string[]): string {
@@ -119,8 +119,9 @@ export class ArrayToTextPipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'truncate', pure: true,
-    standalone: false
+  name: 'truncate',
+  pure: true,
+  standalone: false,
 })
 export class TruncatePipe implements PipeTransform {
   transform(value: string, limit = 160): string {
@@ -132,8 +133,9 @@ export class TruncatePipe implements PipeTransform {
 }
 
 @Pipe({
-    name: 'secondsToMinutes', pure: true,
-    standalone: false
+  name: 'secondsToMinutes',
+  pure: true,
+  standalone: false,
 })
 export class SecondsToMinutesPipe implements PipeTransform {
   transform(value?: number | null): string | number | null | undefined {
@@ -149,6 +151,41 @@ export class SecondsToMinutesPipe implements PipeTransform {
   }
 }
 
+@Pipe({
+  name: 'ordinal',
+  pure: true,
+  standalone: false,
+})
+export class OrdinalPipe implements PipeTransform {
+  transform(value?: number | null, lang?: LocaleId): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return '';
+    }
+
+    const number = Math.trunc(value);
+    const absoluteNumber = Math.abs(number);
+
+    if (lang === 'fr-CA') {
+      return `${number}${absoluteNumber === 1 ? 'er' : 'e'}`;
+    }
+
+    const lastTwoDigits = absoluteNumber % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+      return `${number}th`;
+    }
+
+    const suffix =
+      {
+        1: 'st',
+        2: 'nd',
+        3: 'rd',
+      }[absoluteNumber % 10] ?? 'th';
+
+    return `${number}${suffix}`;
+  }
+}
+
 @NgModule({
   imports: [I18nModule],
   declarations: [
@@ -160,6 +197,7 @@ export class SecondsToMinutesPipe implements PipeTransform {
     ArrayToTextPipe,
     TruncatePipe,
     SecondsToMinutesPipe,
+    OrdinalPipe,
   ],
   providers: [
     LocaleNumberPipe,
@@ -170,6 +208,7 @@ export class SecondsToMinutesPipe implements PipeTransform {
     ArrayToTextPipe,
     TruncatePipe,
     SecondsToMinutesPipe,
+    OrdinalPipe,
   ],
   exports: [
     LocaleNumberPipe,
@@ -180,6 +219,7 @@ export class SecondsToMinutesPipe implements PipeTransform {
     ArrayToTextPipe,
     TruncatePipe,
     SecondsToMinutesPipe,
+    OrdinalPipe,
   ],
 })
 export class PipesModule {}
