@@ -1,6 +1,7 @@
 <div class="back_link">
   <span class="material-icons align-top">west</span>
-  <a [routerLink]="['/', langLink, 'tasks']" [translate]="'menu-tasks'"></a>
+
+  <a [routerLink]="['/', langLink(), 'tasks']" [translate]="'menu-tasks'"></a>
 </div>
 
 @if (loading$ | async) {
@@ -9,10 +10,11 @@
   @if ((error$ | async) === '' || (title$ | async) === '') {
     <upd-page-404></upd-page-404>
   } @else {
-    <div class="row align-items-start g-2 pt-2 pb-2">
+    <div class="row align-items-start g-3 pt-2 pb-2">
       <div class="col">
         <h2 class="h3 mb-0" data-i18n="task-title">
-          <span [translate]="'task'"></span>: {{ title$ | async }}
+          <span [translate]="'task'"></span>:
+          {{ title$ | async }}
         </h2>
 
         @if (audience().length > 0) {
@@ -30,43 +32,92 @@
             }
           </div>
         }
+
+        <div class="task-project-details">
+          <upd-project-header
+            [data]="(projects$ | async) || []"
+            [config]="projectsCol()"
+            [service]="service() || []"
+          ></upd-project-header>
+        </div>
       </div>
 
       @if (tmfRank(); as rank) {
         @if (tmfTotalTasks(); as total) {
           <div class="col-auto">
-            <span class="task-rank-card flex-shrink-0">
-              <span class="task-rank-card__label">{{
-                'task-status-rank-title' | translate
-              }}</span>
+            <div class="task-rank-card flex-shrink-0">
+              <div class="task-rank-card__label">
+                {{ 'task-status-rank-title' | translate }}
+              </div>
 
-              <span class="task-rank-card__rank">
-                {{ 'task-status-rank-position' | translate: { rank, total } }}
-              </span>
+              <div class="task-rank-card__rank">
+                {{
+                  'task-status-rank-position'
+                    | translate
+                      : {
+                          rank,
+                          total,
+                        }
+                }}
+              </div>
 
-              <span class="task-rank-card__label">
-                @if (rank <= 50) {
+              @if (rank <= 50) {
+                <div class="task-rank-card__top-task">
                   <span
                     class="material-icons task-rank-card__icon"
                     aria-hidden="true"
                   >
                     star
                   </span>
+
                   {{ 'task-status-rank-top-task' | translate }}
+                </div>
+              }
+
+              @if (isHighDemand()) {
+                <div class="task-rank-card__demand">
+                  <span
+                    class="material-icons task-rank-card__demand-icon"
+                    aria-hidden="true"
+                  >
+                    local_fire_department
+                  </span>
+
+                  {{ 'high-demand' | translate }}
+                </div>
+              }
+
+              <div class="task-rank-card__divider" aria-hidden="true"></div>
+
+              <div class="task-rank-card__metrics">
+                @for (metric of rankMetrics(); track metric.key) {
+                  <div class="task-rank-card__metric">
+                    <span class="task-rank-card__metric-label">
+                      {{ metric.label | translate: undefined: currentLang() }}
+
+                      @if (metric.highDemand) {
+                        <span
+                          class="material-icons task-rank-card__metric-demand"
+                        >
+                          local_fire_department
+                        </span>
+                      }
+                    </span>
+
+                    <strong>
+                      {{ metric.value | localeNumber: '1.0-0' }}
+                    </strong>
+                  </div>
                 }
-              </span>
-            </span>
+              </div>
+            </div>
           </div>
         }
       }
     </div>
 
-    <upd-project-header
-      [data]="(projects$ | async) || []"
-      [config]="projectsCol"
-      [service]="service() || []"
-    ></upd-project-header>
-    <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
+    <upd-nav-tabs [tabs]="navTabs()"></upd-nav-tabs>
+
     @if (
       !(
         ((currentRoute$ | async) || '').endsWith('uxtests') ||
@@ -75,6 +126,7 @@
     ) {
       <upd-date-selector></upd-date-selector>
     }
+
     <router-outlet></router-outlet>
   }
 }

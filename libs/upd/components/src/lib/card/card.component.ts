@@ -1,4 +1,10 @@
-import { Component, inject, Input } from '@angular/core';
+import {
+  Component,
+  ContentChild,
+  inject,
+  Input,
+  TemplateRef,
+} from '@angular/core';
 import { NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
@@ -30,14 +36,19 @@ import type { ColumnConfig } from '@dua-upd/types-common';
                   >
                 }
               </span>
-              @if (modal) {
+              @if (cardTitleAction) {
+                <span class="modal-icon-by-title">
+                  <ng-container
+                    [ngTemplateOutlet]="cardTitleAction"
+                  ></ng-container>
+                </span>
+              } @else if (modal) {
                 <span class="modal-icon-by-title">
                   <upd-modal
                     [modalTitle]="title"
                     [modalContent]="modal"
                     [modalSize]="modalSize"
-                  >
-                  </upd-modal>
+                  ></upd-modal>
                 </span>
               }
             </h3>
@@ -60,6 +71,8 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 })
 export class CardComponent {
   private popoverConfig: NgbPopoverConfig;
+  @ContentChild('cardTitleAction', { read: TemplateRef })
+  cardTitleAction?: TemplateRef<unknown>;
 
   @Input() title = '';
   @Input() titleSuffix = '';

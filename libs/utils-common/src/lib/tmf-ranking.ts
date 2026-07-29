@@ -1,20 +1,27 @@
 import { isNullish } from './utils-common';
-export type TaskStatus = 'Healthy' | 'Watch' | 'Improving' | 'Needs action' | '';
+export type TaskStatus = 'Healthy' | 'Watch' | 'Needs action' | 'Unscored';
 
 const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
+export const HIGH_DEMAND_METRIC_KEYS = ['visits', 'calls', 'dyf_no'] as const;
+
+export type HighDemandMetric = (typeof HIGH_DEMAND_METRIC_KEYS)[number];
 
 type Metric = (typeof METRIC_KEYS)[number];
 
-type DistributionStats = {
+export type DistributionStats = {
   min: number;
   max: number;
   p5: number;
+  p90: number;
   p95: number;
+  p99: number;
 };
 
-type StatsByMetric = {
+export type StatsByMetric = {
   [key in Metric]: DistributionStats;
 };
+
+export type HighDemandStats = Record<HighDemandMetric, DistributionStats>;
 
 type MetricWeights = {
   [key in Metric]: number;
@@ -24,6 +31,7 @@ export type TaskRankingParams = {
   visits: number;
   calls: number;
   dyf_total: number;
+  dyf_no?: number | null;
   survey: number;
   status?: string; // For excluding inactive tasks from global stats/ranking
 };
@@ -50,20 +58,31 @@ const calculatePercentile = (
 };
 
 const computeDistributionStats = (arr: number[]): DistributionStats => {
-  const data = arr.filter((v) => typeof v === 'number' && Number.isFinite(v));
+  const data = arr.filter(
+    (value) => typeof value === 'number' && Number.isFinite(value),
+  );
 
   if (data.length === 0) {
-    return { min: NaN, max: NaN, p5: NaN, p95: NaN };
+    return {
+      min: Number.NaN,
+      max: Number.NaN,
+      p5: Number.NaN,
+      p90: Number.NaN,
+      p95: Number.NaN,
+      p99: Number.NaN,
+    };
   }
 
   const sorted = data.toSorted((a, b) => a - b);
 
-  const min = sorted[0];
-  const max = sorted[sorted.length - 1];
-  const p5 = calculatePercentile(sorted, 0.05);
-  const p95 = calculatePercentile(sorted, 0.95);
-
-  return { min, max, p5, p95 };
+  return {
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+    p5: calculatePercentile(sorted, 0.05),
+    p90: calculatePercentile(sorted, 0.9),
+    p95: calculatePercentile(sorted, 0.95),
+    p99: calculatePercentile(sorted, 0.99),
+  };
 };
 
 const normalizeWithinPercentileRange = (
@@ -166,6 +185,36 @@ export function getGlobalMetricStats(
   };
 }
 
+export function getHighDemandMetricStats(
+  tasks: readonly TaskRankingParams[],
+): HighDemandStats {
+  const valuesByMetric: Record<HighDemandMetric, number[]> = {
+    visits: [],
+    calls: [],
+    dyf_no: [],
+  };
+
+  for (const task of tasks ?? []) {
+    if (task.status === 'Inactive') {
+      continue;
+    }
+
+    for (const metric of HIGH_DEMAND_METRIC_KEYS) {
+      const value = task[metric];
+
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        valuesByMetric[metric].push(value);
+      }
+    }
+  }
+
+  return {
+    visits: computeDistributionStats(valuesByMetric.visits),
+    calls: computeDistributionStats(valuesByMetric.calls),
+    dyf_no: computeDistributionStats(valuesByMetric.dyf_no),
+  };
+}
+
 type TmfScoresAndRank = {
   [key in `${Metric}_score`]: number;
 } & {
@@ -230,7 +279,7 @@ export function getTaskStatus(
     Number.isNaN(rps) ||
     Number.isNaN(hps)
   ) {
-    return '';
+    return 'Unscored';
   }
 
   const variance = rps - hps;
@@ -244,7 +293,7 @@ export function getTaskStatus(
   }
 
   if (rps >= 0.36 && variance > 0.05) {
-    return 'Improving';
+    return 'Watch';
   }
 
   if (rps >= 0.36 && variance >= -0.05) {
@@ -252,7 +301,7 @@ export function getTaskStatus(
   }
 
   if (rps < 0.36 && variance > 0.05) {
-    return 'Improving';
+    return 'Watch';
   }
 
   return 'Needs action';

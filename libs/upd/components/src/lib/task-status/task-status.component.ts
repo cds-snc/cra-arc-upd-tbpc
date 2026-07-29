@@ -6,6 +6,7 @@ import {
   input,
 } from '@angular/core';
 import { I18nFacade } from '@dua-upd/upd/state';
+import { HighDemandMetric } from '@dua-upd/utils-common';
 
 type ScoreRange<T extends string = string> = {
   key: T;
@@ -15,9 +16,17 @@ type ScoreRange<T extends string = string> = {
   color: string;
 };
 
+type HighDemandTooltipMetric = {
+  key: HighDemandMetric;
+  label: string;
+  value: number;
+  highDemand: boolean;
+};
+
 type PerformanceBand = 'poor' | 'low' | 'good' | 'great';
 type TrendBand = 'higher' | 'normal' | 'lower';
 type Tier = 'green' | 'yellow' | 'blue' | 'red' | 'grey';
+type ScoreMetricKey = 'calls' | 'feedback' | 'survey';
 
 type StatusView = {
   tier: Tier;
@@ -25,6 +34,13 @@ type StatusView = {
   situation: string;
   title: string;
   note: string;
+};
+
+type ScoreMetric = {
+  key: ScoreMetricKey;
+  label: string;
+  included: boolean;
+  value: number | null;
 };
 
 @Component({
@@ -45,7 +61,13 @@ export class TaskStatusComponent {
   tmfTotalTasks = input(0);
   calls = input(0);
   feedback = input(0);
-  survey = input(0);
+  survey = input<number | null>(null);
+  surveyCompleted = input(0);
+  surveyTotal = input(0);
+  visitsVolume = input(0);
+  callsVolume = input(0);
+  feedbackVolume = input(0);
+  highDemandMetrics = input<HighDemandMetric[]>([]);
 
   hasData = computed(() => {
     return !!(
@@ -60,11 +82,65 @@ export class TaskStatusComponent {
 
   private readonly historicalVarianceThreshold = 0.05;
 
-  private translate(key: string): string {
+  private translate(key: string, params?: Record<string, unknown>): string {
     this.currentLang();
 
-    return this.i18n.service.instant(key);
+    return this.i18n.service.instant(key, params);
   }
+
+  private readonly highDemandMetricLabels = computed<
+    Record<HighDemandMetric, string>
+  >(() => ({
+    visits: this.translate('task-status-high-demand-metric-visits'),
+    calls: this.translate('task-status-high-demand-metric-calls'),
+    dyf_no: this.translate('task-status-high-demand-metric-negative-feedback'),
+  }));
+
+  readonly hasHighDemand = computed(() => this.highDemandMetrics().length > 0);
+
+  readonly highDemandTooltipMetrics = computed<
+    readonly HighDemandTooltipMetric[]
+  >(() => {
+    const labels = this.highDemandMetricLabels();
+    const highDemandMetrics = new Set(this.highDemandMetrics());
+
+    return [
+      {
+        key: 'visits',
+        label: labels.visits,
+        value: this.visitsVolume(),
+        highDemand: highDemandMetrics.has('visits'),
+      },
+      {
+        key: 'calls',
+        label: labels.calls,
+        value: this.callsVolume(),
+        highDemand: highDemandMetrics.has('calls'),
+      },
+      {
+        key: 'dyf_no',
+        label: labels.dyf_no,
+        value: this.feedbackVolume(),
+        highDemand: highDemandMetrics.has('dyf_no'),
+      },
+    ];
+  });
+
+  private readonly conjunctionListFormatter = computed(
+    () =>
+      new Intl.ListFormat(this.currentLang(), {
+        style: 'long',
+        type: 'conjunction',
+      }),
+  );
+
+  readonly highDemandMetricList = computed(() => {
+    const metrics = this.highDemandTooltipMetrics()
+      .filter(({ highDemand }) => highDemand)
+      .map(({ label }) => label.toLocaleLowerCase(this.currentLang()));
+
+    return this.conjunctionListFormatter().format(metrics);
+  });
 
   readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
     {
@@ -171,11 +247,11 @@ export class TaskStatusComponent {
     },
 
     'low-higher': {
-      tier: 'blue',
-      badge: this.translate('task-status-badge-improving'),
+      tier: 'yellow',
+      badge: this.translate('task-status-badge-watch'),
       situation: this.translate('task-status-situation-low-higher'),
       title: this.translate('task-status-title-low-higher'),
-      note: this.translate('task-status-note-progress'),
+      note: this.translate('task-status-note-monitor'),
     },
 
     'low-normal': {
@@ -195,11 +271,11 @@ export class TaskStatusComponent {
     },
 
     'poor-higher': {
-      tier: 'blue',
-      badge: this.translate('task-status-badge-improving'),
+      tier: 'yellow',
+      badge: this.translate('task-status-badge-watch'),
       situation: this.translate('task-status-situation-poor-higher'),
       title: this.translate('task-status-title-poor-higher'),
-      note: this.translate('task-status-note-progress'),
+      note: this.translate('task-status-note-monitor'),
     },
 
     'poor-normal': {
@@ -275,6 +351,16 @@ export class TaskStatusComponent {
   });
 
   readonly healthTitle = computed(() => this.status().title);
+
+  readonly highImpactTitle = computed<string | null>(() => {
+    if (!this.hasHighDemand()) {
+      return null;
+    }
+
+    return this.translate(`task-status-title-${this.statusKey()}-high-impact`, {
+      metrics: this.highDemandMetricList(),
+    });
+  });
 
   readonly healthNote = computed(() => this.status().note);
 
@@ -377,28 +463,55 @@ export class TaskStatusComponent {
     }
   });
 
-  readonly scoreMetrics = computed(() => [
-    {
-      label: this.translate('task-status-metric-calls'),
-      included: this.calls(),
-    },
-    {
-      label: this.translate('task-status-metric-negative-feedback'),
-      included: this.feedback(),
-    },
-    {
-      label: this.translate('task-status-metric-survey'),
-      included: this.survey(),
-    },
-  ]);
+  readonly successfulSurveyParticipants = computed<number | null>(() => {
+    const score = this.survey();
+    const total = this.surveyTotal();
+
+    if (
+      score === null ||
+      !Number.isFinite(score) ||
+      !Number.isFinite(total) ||
+      total <= 0
+    ) {
+      return null;
+    }
+
+    return Math.round(score * total);
+  });
+
+  readonly scoreMetrics = computed<ScoreMetric[]>(() => {
+    const survey = this.survey();
+    const hasSurvey = survey !== null && Number.isFinite(survey);
+
+    return [
+      {
+        key: 'calls',
+        label: this.translate('task-status-metric-calls'),
+        included: Boolean(this.calls()),
+        value: this.calls(),
+      },
+      {
+        key: 'feedback',
+        label: this.translate('task-status-metric-negative-feedback'),
+        included: Boolean(this.feedback()),
+        value: this.feedback(),
+      },
+      {
+        key: 'survey',
+        label: this.translate('task-status-metric-survey'),
+        included: hasSurvey,
+        value: survey,
+      },
+    ];
+  });
 
   availableMetricCount = computed(
     () => this.scoreMetrics().filter((metric) => metric.included).length,
   );
 
   getChangeClass(change: number): string {
-    if (change > this.historicalVarianceThreshold) return 'change-good';
-    if (change < -this.historicalVarianceThreshold) return 'change-bad';
+    if (change > 0) return 'change-good';
+    if (change < 0) return 'change-bad';
 
     return 'change-neutral';
   }

@@ -184,7 +184,10 @@ export class TasksDetailsFacade {
 
       return [
         {
-          name: this.i18n.service.translate(`task-status-historical-performance-series`, lang),
+          name: this.i18n.service.translate(
+            `task-status-historical-performance-series`,
+            lang,
+          ),
           data: current.map((item) => item.individual_score),
         },
       ] as ApexAxisChartSeries;
@@ -225,7 +228,13 @@ export class TasksDetailsFacade {
   );
 
   currentSurvey$ = this.tasksDetailsData$.pipe(
-    map((data) => ((data?.survey || 0) / (data?.survey_completed || 0)) * 100),
+    map((data) => (data?.survey_completed || 0) / (data?.survey || 0) || null),
+  );
+
+  survey$ = this.tasksDetailsData$.pipe(map((data) => data?.survey || 0));
+
+  surveyCompleted$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.survey_completed || 0),
   );
 
   visits$ = this.tasksDetailsData$.pipe(map((data) => data?.visits || 0));
@@ -284,6 +293,18 @@ export class TasksDetailsFacade {
 
   apexCallDifference$ = this.tasksDetailsData$.pipe(
     map((data) => data?.callsPer100VisitsDifference),
+  );
+
+  dyfNo$ = this.tasksDetailsData$.pipe(
+    map((data) => data.dateRangeData?.dyfNo || 0),
+  );
+
+  isHighDemand$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.is_high_demand),
+  );
+
+  highDemandMetrics$ = this.tasksDetailsData$.pipe(
+    map((data) => data?.high_demand_metrics),
   );
 
   currentKpiFeedback$ = this.tasksDetailsData$.pipe(
@@ -751,8 +772,9 @@ export class TasksDetailsFacade {
         date: d.date,
         total_users: totalSum,
         // Use rich text HTML if available, otherwise wrap plain text scenario in a paragraph tag as fallback
-        scenario_html: d.scenario_html || (d.scenario ? `<p>${d.scenario}</p>` : null),
-      }))      
+        scenario_html:
+          d.scenario_html || (d.scenario ? `<p>${d.scenario}</p>` : null),
+      }));
       return [...(taskSuccessByUxTest || [])];
     }),
   );
