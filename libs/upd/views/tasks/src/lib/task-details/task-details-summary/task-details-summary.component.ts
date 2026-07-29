@@ -33,9 +33,14 @@ export class TaskDetailsSummaryComponent implements OnInit {
   avgSuccessPercentChange$ = this.taskDetailsService.avgSuccessPercentChange$;
   avgSuccessValueChange$ = this.taskDetailsService.avgSuccessValueChange$;
   dateFromLastTest$ = this.taskDetailsService.dateFromLastTest$;
+  totalParticipants$ = this.taskDetailsService.totalParticipants$;
 
   visits$ = this.taskDetailsService.visits$;
   visitsPercentChange$ = this.taskDetailsService.visitsPercentChange$;
+
+  dyfNo$ = this.taskDetailsService.dyfNo$;
+
+  highDemandMetrics$ = this.taskDetailsService.highDemandMetrics$;
 
   feedbackKpiObjectiveCriteria = feedbackKpiObjectiveCriteria;
 
@@ -54,6 +59,8 @@ export class TaskDetailsSummaryComponent implements OnInit {
   callPercentChange$ = this.taskDetailsService.callPercentChange$;
 
   currentSurvey$ = this.taskDetailsService.currentSurvey$;
+  survey$ = this.taskDetailsService.survey$;
+  surveyCompleted$ = this.taskDetailsService.surveyCompleted$;
 
   visitsByPage$ = this.taskDetailsService.visitsByPage$;
 

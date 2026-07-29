@@ -521,6 +521,8 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   tmf_total_tasks?: number | null;
   perf_rank?: number | null;
   perf_total_tasks?: number | null;
+  is_high_demand?: boolean | null;
+  high_demand_metrics?: ('visits' | 'calls' | 'dyf_no')[] | null;
 }
 
 export type ProjectStatus =
@@ -538,7 +540,7 @@ export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
-export type TaskStatus = 'Healthy' | 'Watch' | "Improving" | 'Needs action';
+export type TaskStatus = 'Healthy' | 'Watch' | 'Needs action' | 'Unscored';
 
 export interface searchAssessmentColTypes {
   query: string;

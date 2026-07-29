@@ -18,7 +18,6 @@ export type ZoneRange<T extends string = string> = {
 type ZoneStatusClass =
   | 'healthy'
   | 'watch'
-  | 'improving'
   | 'needs-action';
 
 type ZoneStatus = {
@@ -68,11 +67,6 @@ export class ZoneMapComponent {
       noteKey: 'task-status-note-monitor',
     },
     {
-      labelKey: 'zone-map-status-improving',
-      className: 'improving',
-      noteKey: 'task-status-note-progress',
-    },
-    {
       labelKey: 'zone-map-status-needs-action',
       className: 'needs-action',
       noteKey: 'task-status-note-prioritize',
@@ -88,13 +82,13 @@ export class ZoneMapComponent {
     'good-normal': this.legend[0],
     'good-lower': this.legend[1],
 
-    'low-higher': this.legend[2],
+    'low-higher': this.legend[1],
     'low-normal': this.legend[1],
-    'low-lower': this.legend[3],
+    'low-lower': this.legend[2],
 
-    'poor-higher': this.legend[2],
-    'poor-normal': this.legend[3],
-    'poor-lower': this.legend[3],
+    'poor-higher': this.legend[1],
+    'poor-normal': this.legend[2],
+    'poor-lower': this.legend[2],
   };
 
   get rows(): PerformanceBand[] {
