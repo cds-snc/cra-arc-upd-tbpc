@@ -556,7 +556,9 @@ export interface ProjectsHomeProject {
   startDate?: Date;
   launchDate?: Date;
   avgSuccessRate?: number;
-  lastAvgSuccessRate?: number;
+  lastAvgSuccessRate: number;
+  avgSuccessValueChange: number;
+  avgSuccessPercentChange: number;
   status: ProjectStatus;
   uxTests?: {
     title: string;
