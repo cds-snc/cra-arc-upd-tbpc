@@ -139,6 +139,52 @@ export class ProjectsDetailsFacade {
     }),
   );
 
+  spotCheckTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const spotCheckTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          normalizeTestType(t.test_type || '') === 'Spot Check' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!spotCheckTests?.length) return null;
+      const avgSuccessRate =
+        spotCheckTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        spotCheckTests.length;
+
+      console.log(spotCheckTests.length);
+      const latest = spotCheckTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
+  exploratoryTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => {
+      const exploratoryTests = data?.taskSuccessByUxTest?.filter(
+        (t) =>
+          normalizeTestType(t.test_type || '') === 'Exploratory' &&
+          t.date &&
+          (t.success_rate || t.success_rate === 0),
+      );
+      if (!exploratoryTests?.length) return null;
+      const avgSuccessRate =
+        exploratoryTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
+        exploratoryTests.length;
+      const latest = exploratoryTests.sort(
+        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+      )[0];
+      return {
+        successRate: avgSuccessRate,
+        launchDate: latest?.date ?? null,
+      };
+    }),
+  );
+
   taskSuccessChange$ = this.projectsDetailsData$.pipe(
     map((data) => {
       const pctChange = data?.avgSuccessPercentChange;
@@ -611,7 +657,7 @@ export class ProjectsDetailsFacade {
   taskSuccessByUxTest$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
-    this.projectTasks$
+    this.projectTasks$,
   ]).pipe(
     map(([data, lang, projectTasks]) => {
       const uxTests = data?.taskSuccessByUxTest;
@@ -636,12 +682,11 @@ export class ProjectsDetailsFacade {
       );
 
       return uxTests.map((uxTest) => {
-      
         const taskTitles = (uxTest.tasks ?? '')
           .split('; ')
           .map((t) => t.trim())
           .filter(Boolean);
-  
+
         const tasksLinks = taskTitles
           .map((title) => {
             const id = taskIdByTitle.get((title || '').trim().toLowerCase());
@@ -652,7 +697,7 @@ export class ProjectsDetailsFacade {
             };
           })
           .filter((t) => !!t._id); // keep only linkable tasks
- 
+
         return {
           ...uxTest,
           date: uxTest.date
@@ -667,7 +712,7 @@ export class ProjectsDetailsFacade {
               task ? this.i18n.service.translate(task, lang) : task,
             )
             .join('; '),
-          tasksLinks: tasksLinks,  
+          tasksLinks: tasksLinks,
           total_users: maxTotalUsers,
         };
       });
@@ -1022,10 +1067,7 @@ export class ProjectsDetailsFacade {
           ? `sid:${uxTest.scenario_id}`
           : `aid:${uxTest.airtable_id ?? ''}`;
 
-      const pairs = new Map<
-        string,
-        { taskTitle: string; groupKey: string }
-      >();
+      const pairs = new Map<string, { taskTitle: string; groupKey: string }>();
       for (const uxTest of uxTests) {
         const groupKey = getGroupKey(uxTest);
         for (const title of uxTest.tasks.split('; ')) {
@@ -1039,9 +1081,7 @@ export class ProjectsDetailsFacade {
 
       const sortedPairs = [...pairs.values()].sort((a, b) => {
         const titleCmp = a.taskTitle.localeCompare(b.taskTitle);
-        return titleCmp !== 0
-          ? titleCmp
-          : a.groupKey.localeCompare(b.groupKey);
+        return titleCmp !== 0 ? titleCmp : a.groupKey.localeCompare(b.groupKey);
       });
 
       return sortedPairs.map(({ taskTitle, groupKey }, index) => {
@@ -1090,11 +1130,18 @@ export class ProjectsDetailsFacade {
           (t) => t.testType === 'Validation',
         )?.successRate;
 
-        let avgTaskSuccessChange: number | null = null;
+        let avgTaskSuccessPointChange: number | null = null;
+        let avgTaskSuccessPercentChange: number | null = null;
 
         if (baselineRate != null && validationRate != null) {
-          avgTaskSuccessChange =
-            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+          const difference = validationRate - baselineRate;
+
+          avgTaskSuccessPointChange = round(difference * 100, 2);
+
+          avgTaskSuccessPercentChange =
+            baselineRate !== 0
+              ? round((difference / baselineRate) * 100, 2)
+              : null;
         }
 
         const scenariosByTestType: Record<
@@ -1129,7 +1176,8 @@ export class ProjectsDetailsFacade {
           taskId,
           scenariosByTestType,
           tests,
-          avgTaskSuccessChange,
+          avgTaskSuccessPointChange,
+          avgTaskSuccessPercentChange,
         };
       });
     }),
@@ -1214,10 +1262,18 @@ export class ProjectsDetailsFacade {
           (t) => t.testType === 'Validation',
         )?.successRate;
 
-        let avgTaskSuccessChange: number | null = null;
+        let avgTaskSuccessPointChange: number | null = null;
+        let avgTaskSuccessPercentChange: number | null = null;
+
         if (baselineRate != null && validationRate != null) {
-          avgTaskSuccessChange =
-            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+          const difference = validationRate - baselineRate;
+
+          avgTaskSuccessPointChange = round(difference * 100, 2);
+
+          avgTaskSuccessPercentChange =
+            baselineRate !== 0
+              ? round((difference / baselineRate) * 100, 2)
+              : null;
         }
 
         const descByKey = new Map<
@@ -1282,7 +1338,8 @@ export class ProjectsDetailsFacade {
           scenarioDescriptions,
           connectedTasks,
           tests,
-          avgTaskSuccessChange,
+          avgTaskSuccessPointChange,
+          avgTaskSuccessPercentChange,
         };
       });
 
@@ -1302,7 +1359,8 @@ export class ProjectsDetailsFacade {
         scenarioDescriptions: scenario.scenarioDescriptions,
         connectedTasks: scenario.connectedTasks,
         tests: scenario.tests,
-        avgTaskSuccessChange: scenario.avgTaskSuccessChange,
+        avgTaskSuccessPointChange: scenario.avgTaskSuccessPointChange,
+        avgTaskSuccessPercentChange: scenario.avgTaskSuccessPercentChange,
       }));
     }),
   );
