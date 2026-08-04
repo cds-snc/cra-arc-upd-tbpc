@@ -1,8 +1,10 @@
 <ng-template #highDemandTooltip>
-  <div class="high-demand-tooltip__metrics">
+  <div class="high-demand-tooltip__metrics d-flex flex-column">
     @for (metric of highDemandTooltipMetrics(); track metric.key) {
-      <div class="high-demand-tooltip__metric">
-        <span class="high-demand-tooltip__label">
+      <div class="high-demand-tooltip__metric d-grid align-items-start">
+        <span
+          class="high-demand-tooltip__label d-inline-flex align-items-start"
+        >
           <span class="high-demand-tooltip__label-text">
             {{ metric.label }}
           </span>
@@ -25,7 +27,11 @@
   </div>
 </ng-template>
 
-<upd-card [status]="healthTier()" [title]="'tab-taskperformance'" [titleSize]="'h5'">
+<upd-card
+  [status]="healthTier()"
+  [title]="'tab-taskperformance'"
+  [titleSize]="'h5'"
+>
   <ng-template #cardTitleAction>
     <upd-modal
       [modalTitle]="'task-status-how-health-calculated'"
@@ -40,25 +46,36 @@
     </upd-modal>
   </ng-template>
   @if (hasData()) {
-    <div class="task-health">
-      <div class="task-health-header">
-        <div class="health-label" [ngClass]="healthTier()">
+    <div class="task-health py-1">
+      <div
+        class="task-health-header d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 mb-4"
+      >
+        <div
+          class="health-label d-flex align-items-center gap-2"
+          [ngClass]="healthTier()"
+        >
           <span class="health-dot"></span>
 
           {{ healthBadge() }}
         </div>
 
-        <div class="unscored-header-divider" aria-hidden="true"></div>
+        <div
+          class="unscored-header-divider d-none d-lg-block"
+          aria-hidden="true"
+        ></div>
 
-        <div class="health-action-pill" [ngClass]="healthTier()">
+        <div
+          class="health-action-pill px-3 py-1 rounded-1 text-white"
+          [ngClass]="healthTier()"
+        >
           {{ healthNote() }}
         </div>
 
         @if (hasHighDemand()) {
           <div class="unscored-header-divider" aria-hidden="true"></div>
-          <div class="health-demand">
+          <div class="health-demand d-inline-flex align-items-center">
             <span
-              class="health-demand__pill"
+              class="health-demand__pill d-inline-flex align-items-center justify-content-center border rounded-pill"
               tabindex="0"
               role="note"
               [ngbTooltip]="highDemandTooltip"
@@ -70,7 +87,7 @@
               [closeDelay]="100"
             >
               <span
-                class="material-icons health-demand__icon"
+                class="material-icons health-demand__icon flex-shrink-0"
                 aria-hidden="true"
               >
                 local_fire_department
@@ -97,7 +114,7 @@
           <div class="confidence-section-title">
             {{ 'what-this-means' | translate }}
           </div>
-          <div class="confidence-row">
+          <div class="confidence-row py-3 border-bottom">
             <div class="confidence-content">
               <strong [innerHTML]="psConfidenceTitle()"></strong>
 
@@ -107,7 +124,7 @@
             </div>
           </div>
 
-          <div class="confidence-row">
+          <div class="confidence-row py-3 border-bottom">
             <div class="confidence-content">
               <strong [innerHTML]="haConfidenceTitle()"></strong>
 
@@ -118,7 +135,7 @@
           </div>
 
           @if (sha() !== null) {
-            <div class="confidence-row">
+            <div class="confidence-row py-3 border-bottom">
               <div class="confidence-content">
                 <strong [innerHTML]="shaConfidenceTitle()"></strong>
 
@@ -146,9 +163,11 @@
         </div>
 
         <div class="col-lg-5">
-          <div class="overview-scores">
-            <div class="score-card score-card--performance">
-              <div class="score-card-main">
+          <div class="overview-scores d-flex flex-column gap-3">
+            <div
+              class="score-card score-card--performance border rounded-3 overflow-hidden"
+            >
+              <div class="score-card-main d-grid align-items-start">
                 <div class="score-copy">
                   <div>
                     <span class="score-title">
@@ -161,12 +180,14 @@
                   </div>
                 </div>
 
-                <div class="score-value-block">
+                <div
+                  class="score-value-block d-flex flex-column align-items-end"
+                >
                   <div class="score-value">
                     {{ ps() | localePercent: '1.0-0' }}
                   </div>
 
-                  <div class="score-change-row">
+                  <div class="score-change-row d-flex justify-content-end">
                     <span
                       class="change-value"
                       [ngClass]="getChangeClass(rpsChange())"
@@ -193,44 +214,21 @@
                 ></upd-apex-score>
               </div>
 
-              <div class="score-detail-block">
+              <div class="score-detail-block border-top">
                 <div class="score-detail-title">
                   {{ 'task-status-in-this-score' | translate }}
                 </div>
-
-                <!--
-                                <div class="score-metric-list">
-                  @for (metric of scoreMetrics(); track metric.label) {
-                    <div
-                      class="score-metric-item"
-                      [ngClass]="{
-                        'score-metric-item--included': metric.included,
-                        'score-metric-item--excluded': !metric.included,
-                      }"
-                    >
-                      <span
-                        class="score-metric-icon material-icons"
-                        aria-hidden="true"
-                      >
-                        {{ metric.included ? 'check_circle' : 'cancel' }}
-                      </span>
-
-                      <span>{{ metric.label }}</span>
-                    </div>
-                  }
-                </div>-->
-
-                <div class="score-metric-list">
+                <div class="score-metric-list d-flex flex-column gap-3">
                   @for (metric of scoreMetrics(); track metric.key) {
                     <div
-                      class="score-metric-item"
+                      class="score-metric-item d-grid align-items-start"
                       [ngClass]="{
                         'score-metric-item--included': metric.included,
                         'score-metric-item--excluded': !metric.included,
                       }"
                     >
                       <span
-                        class="score-metric-icon material-icons"
+                        class="score-metric-icon material-icons rounded-circle"
                         aria-hidden="true"
                       >
                         {{ metric.included ? 'check' : 'close' }}
@@ -240,14 +238,6 @@
                         <div class="score-metric-header">
                           <div class="score-metric-label">
                             {{ metric.label }}
-
-                            <!-- @if (
-                              metric.key === 'survey' &&
-                              metric.value !== null &&
-                              !metric.included
-                            ) {
-                              <em>(not scored — below response threshold)</em>
-                            } -->
                           </div>
 
                           <strong class="score-metric-value">
@@ -325,7 +315,9 @@
               </div>
 
               @if (tmfRank() && tmfTotalTasks()) {
-                <div class="score-rank-row">
+                <div
+                  class="score-rank-row border-top d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 gap-lg-3"
+                >
                   <span>
                     {{
                       'task-status-rank'
@@ -353,26 +345,26 @@
             </div>
 
             <div class="score-card score-card--stacked">
-              <div class="score-stacked-row">
-                <div class="score-stacked-header">
+              <div class="score-stacked-row d-flex flex-column bg-white border">
+                <div
+                  class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
+                >
                   <div class="score-copy">
                     <div>
                       <span class="score-title">
                         {{ 'task-status-historical-average' | translate }}
                       </span>
                     </div>
-
-                    <!-- <div class="score-subtitle">
-                      {{ 'task-status-24-month-average' | translate }}
-                    </div> -->
                   </div>
 
-                  <div class="score-value-block">
+                  <div
+                    class="score-value-block d-flex flex-column align-items-end"
+                  >
                     <div class="score-value score-value--small">
                       {{ ha() | localePercent: '1.0-0' }}
                     </div>
 
-                    <div class="score-change-row">
+                    <div class="score-change-row d-flex justify-content-end">
                       <span
                         class="change-value"
                         [ngClass]="getChangeClass(historicalVariance())"
@@ -391,19 +383,15 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- <div class="score-chart score-chart--compact">
-                  <upd-apex-score
-                    [title]="'task-status-historical-average' | translate"
-                    [score]="ha()!"
-                    [ranges]="relativeRanges()"
-                  ></upd-apex-score>
-                </div> -->
               </div>
 
               @if (sha() !== null) {
-                <div class="score-stacked-row">
-                  <div class="score-stacked-header">
+                <div
+                  class="score-stacked-row d-flex flex-column bg-white border"
+                >
+                  <div
+                    class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
+                  >
                     <div class="score-copy">
                       <div>
                         <span class="score-title">
@@ -412,18 +400,16 @@
                           }}
                         </span>
                       </div>
-
-                      <!-- <div class="score-subtitle">
-                        {{ 'task-status-same-period-prior-years' | translate }}
-                      </div> -->
                     </div>
 
-                    <div class="score-value-block">
+                    <div
+                      class="score-value-block d-flex flex-column align-items-end"
+                    >
                       <div class="score-value score-value--small">
                         {{ sha()! | localePercent: '1.0-0' }}
                       </div>
 
-                      <div class="score-change-row">
+                      <div class="score-change-row d-flex justify-content-end">
                         <span
                           class="change-value"
                           [ngClass]="getChangeClass(shaVariance()!)"
@@ -442,16 +428,6 @@
                       </div>
                     </div>
                   </div>
-
-                  <!-- <div class="score-chart score-chart--compact">
-                    <upd-apex-score
-                      [title]="
-                        'task-status-seasonal-historic-average' | translate
-                      "
-                      [score]="sha()!"
-                      [ranges]="relativeRanges()"
-                    ></upd-apex-score>
-                  </div> -->
                 </div>
               }
             </div>
@@ -460,17 +436,24 @@
       </div>
     </div>
   } @else {
-    <div class="task-health task-health--unscored">
-      <div class="task-health-header">
-        <div class="health-label grey">
+    <div class="task-health task-health--unscored py-1">
+      <div
+        class="task-health-header d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 mb-4"
+      >
+        <div class="health-label grey d-flex align-items-center gap-2">
           <span class="health-dot"></span>
 
           {{ 'task-status-badge-unscored' | translate }}
         </div>
 
-        <div class="unscored-header-divider" aria-hidden="true"></div>
+        <div
+          class="unscored-header-divider d-none d-lg-block"
+          aria-hidden="true"
+        ></div>
 
-        <div class="health-action-pill health-action-pill--unscored">
+        <div
+          class="health-action-pill health-action-pill--unscored d-inline-flex align-items-center bg-white border rounded-1"
+        >
           {{ 'task-status-no-score-insufficient-data' | translate }}
         </div>
       </div>
@@ -501,17 +484,17 @@
               {{ 'task-status-data-sources' | translate }}
             </div>
 
-            <div class="score-metric-list">
+            <div class="score-metric-list d-flex flex-column gap-3">
               @for (metric of scoreMetrics(); track metric.label) {
                 <div
-                  class="score-metric-item"
+                  class="score-metric-item d-grid align-items-start"
                   [ngClass]="{
                     'score-metric-item--included': metric.included,
                     'score-metric-item--excluded': !metric.included,
                   }"
                 >
                   <span
-                    class="score-metric-icon material-icons"
+                    class="score-metric-icon material-icons rounded-circle"
                     aria-hidden="true"
                   >
                     {{ metric.included ? 'check_circle' : 'cancel' }}
