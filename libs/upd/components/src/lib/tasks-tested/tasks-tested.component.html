@@ -163,7 +163,7 @@
 
                       {{ indicator.text }}
 
-                      @if (scenario.avgTaskSuccessPointChange != null) {
+                      @if (scenario.avgTaskSuccessPointChange !== null) {
                         ({{ scenario.avgTaskSuccessPointChange | localeNumber: '1.0-2'}})
                       }
                     </span>
