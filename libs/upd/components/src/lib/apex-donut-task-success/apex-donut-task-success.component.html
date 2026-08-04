@@ -30,7 +30,14 @@
               [class.text-success]="change()! > 0"
               [class.text-danger]="change()! < 0"
             >
-              {{ change()! > 0 ? '↑' : '↓' }}{{ change()! > 0 ? change()! : -change()! }}%
+              <span class="change__icon material-icons" aria-hidden="true">
+                {{ getArrow(change()!) }}
+              </span>
+
+              <span class="change__value">
+                {{ getAbsChange(change()!) / 100 | localePercent }}
+                ({{ pointChange()! * 100 | localeNumber }})
+              </span>
             </span>
           }
         </div>
@@ -41,7 +48,7 @@
       }
     </div>
     @if (launchDate()) {
-      <p class="launch-date text-muted text-center mt-2">
+      <p class="text-muted text-center mt-2">
         {{ 'date-tested' | translate }} {{ launchDate() | localeDate }}
       </p>
     }

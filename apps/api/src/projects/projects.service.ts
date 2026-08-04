@@ -164,8 +164,7 @@ export class ProjectsService {
 
   async getProjectsHomeData(): Promise<ProjectsHomeData> {
     const cacheKey = `getProjectsHomeData`;
-    const cachedData =
-      await this.cacheManager.get<ProjectsHomeData>(cacheKey);
+    const cachedData = await this.cacheManager.get<ProjectsHomeData>(cacheKey);
 
     if (cachedData) {
       return cachedData;
@@ -291,16 +290,27 @@ export class ProjectsService {
       (data) => data.cops && data.status === 'Complete',
     ).length;
 
-    for (const data of projectsData) {
-      const { avgTestSuccess } = getLatestTestData(data.uxTests);
+    const projects = projectsData.map((project) => {
+      const { percentChange: avgSuccessValueChange, avgTestSuccess } =
+        getLatestTestData(project.uxTests);
 
-      data.lastAvgSuccessRate = avgTestSuccess;
-    }
+      const previousAvgSuccessRate = avgTestSuccess - avgSuccessValueChange;
+
+      return {
+        ...project,
+        lastAvgSuccessRate: avgTestSuccess,
+        avgSuccessValueChange,
+        avgSuccessPercentChange: percentChange(
+          avgTestSuccess,
+          previousAvgSuccessRate,
+        ),
+      };
+    });
 
     const results = {
       ...aggregatedData,
       completedCOPS: completedCOPS,
-      projects: projectsData,
+      projects,
     };
 
     await this.cacheManager.set(cacheKey, results);
