@@ -8,10 +8,10 @@ import { FR_CA } from '@dua-upd/upd/i18n';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
 
 @Component({
-    selector: 'upd-projects-home',
-    templateUrl: './projects-home.component.html',
-    styleUrls: ['./projects-home.component.css'],
-    standalone: false
+  selector: 'upd-projects-home',
+  templateUrl: './projects-home.component.html',
+  styleUrls: ['./projects-home.component.css'],
+  standalone: false,
 })
 export class ProjectsHomeComponent implements OnInit {
   private i18n = inject(I18nFacade);
@@ -38,6 +38,7 @@ export class ProjectsHomeComponent implements OnInit {
 
     combineLatest([this.tableData$, this.i18n.currentLang$]).subscribe(
       ([data, lang]) => {
+
         this.columns = [
           {
             field: 'title',
@@ -85,10 +86,16 @@ export class ProjectsHomeComponent implements OnInit {
             filterConfig: {
               type: 'category',
               categories: [
-                { name: this.i18n.service.translate('COPS', lang), value: 'COPS' },
-                { name: this.i18n.service.translate('WOS_COPS', lang), value: 'WOS_COPS' }
+                {
+                  name: this.i18n.service.translate('COPS', lang),
+                  value: 'COPS',
+                },
+                {
+                  name: this.i18n.service.translate('WOS_COPS', lang),
+                  value: 'WOS_COPS',
+                },
               ],
-              matchMode: 'arrayContains'
+              matchMode: 'arrayContains',
             },
           },
           {
@@ -121,7 +128,22 @@ export class ProjectsHomeComponent implements OnInit {
             field: 'lastAvgSuccessRate',
             header: this.i18n.service.translate('Average success rate', lang),
             pipe: 'percent',
-            tooltip: 'tooltip-avg_success_last_uxtest'
+            tooltip: 'tooltip-avg_success_last_uxtest',
+          },
+          {
+            field: 'avgSuccessPercentChange',
+            header: this.i18n.service.translate('Change in average success rate', lang),
+            pipe: 'percent',
+            pipeParam: '1.0',
+            upGoodDownBad: true,
+            indicator: true,
+            useArrows: true,
+            showTextColours: true,
+            secondaryField: {
+              field: 'avgSuccessValueChange',
+              pipe: 'number',
+              pipeParam: '1.0',
+            },
           },
         ];
       },

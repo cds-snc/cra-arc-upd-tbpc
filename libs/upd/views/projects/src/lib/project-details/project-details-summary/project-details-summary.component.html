@@ -9,41 +9,72 @@
   </div>
 </div>
 
-<div class="container-fluid my-4 gx-0">
-  <div class="row">
-    <div class="col">
-      <upd-card [title]="'Average Task Success'">
-        <div class="row">
-          <div class="col-6">
-            <upd-apex-donut-task-success
-              [title]="'Baseline'"
-              [titleTooltip]="'tooltip-baseline-task-success'"
-              [successRate]="(baselineTestData$ | async)?.successRate"
-              [launchDate]="(baselineTestData$ | async)?.launchDate"
-              [noDataMessage]="'no-baseline-ux-tests'"
-            ></upd-apex-donut-task-success>
+@if (hasAnyTests()) {
+  <div class="container-fluid my-4 gx-0">
+    <div class="row">
+      <div class="col">
+        <upd-card [title]="'Average Task Success'">
+          <div class="row">
+            @if (hasBaseline()) {
+              <div class="col-6">
+                <upd-apex-donut-task-success
+                  [title]="'Baseline'"
+                  [titleTooltip]="'tooltip-baseline-task-success'"
+                  [successRate]="(baselineTestData$ | async)?.successRate"
+                  [launchDate]="(baselineTestData$ | async)?.launchDate"
+                  [noDataMessage]="'no-baseline-ux-tests'"
+                ></upd-apex-donut-task-success>
+              </div>
+            }
+            @if (hasValidation()) {
+              <div class="col-6">
+                <upd-apex-donut-task-success
+                  [title]="'Validation'"
+                  [titleTooltip]="'tooltip-validation-task-success'"
+                  [successRate]="(validationTestData$ | async)?.successRate"
+                  [launchDate]="(validationTestData$ | async)?.launchDate"
+                  [change]="taskSuccessChange$ | async"
+                  [pointChange]="avgSuccessValueChange$ | async"
+                  [showChange]="true"
+                  [noDataMessage]="'no-validation-ux-tests'"
+                ></upd-apex-donut-task-success>
+              </div>
+            }
+            @if (hasExploratory()) {
+              <div class="col-6">
+                <upd-apex-donut-task-success
+                  [title]="'Exploratory'"
+                  [titleTooltip]="'tooltip-exploratory-task-success'"
+                  [successRate]="(exploratoryTestData$ | async)?.successRate"
+                  [launchDate]="(exploratoryTestData$ | async)?.launchDate"
+                  [showChange]="true"
+                  [noDataMessage]="'no-exploratory-ux-tests'"
+                ></upd-apex-donut-task-success>
+              </div>
+            }
+            @if (hasSpotCheck()) {
+              <div class="col-6">
+                <upd-apex-donut-task-success
+                  [title]="'Spot Check'"
+                  [titleTooltip]="'tooltip-spot-check-task-success'"
+                  [successRate]="(spotCheckTestData$ | async)?.successRate"
+                  [launchDate]="(spotCheckTestData$ | async)?.launchDate"
+                  [showChange]="true"
+                  [noDataMessage]="'no-spot-check-ux-tests'"
+                ></upd-apex-donut-task-success>
+              </div>
+            }
           </div>
-          <div class="col-6">
-            <upd-apex-donut-task-success
-              [title]="'Validation'"
-              [titleTooltip]="'tooltip-validation-task-success'"
-              [successRate]="(validationTestData$ | async)?.successRate"
-              [launchDate]="(validationTestData$ | async)?.launchDate"
-              [change]="taskSuccessChange$ | async"
-              [showChange]="true"
-              [noDataMessage]="'no-validation-ux-tests'"
-            ></upd-apex-donut-task-success>
-          </div>
-        </div>
-        @if ((baselineTestData$ | async) || (validationTestData$ | async)) {
-          <upd-task-success-objective-status
-            [status]="taskSuccessObjectiveStatus$ | async"
-          ></upd-task-success-objective-status>
-        }
-      </upd-card>
+          @if ((baselineTestData$ | async) || (validationTestData$ | async)) {
+            <upd-task-success-objective-status
+              [status]="taskSuccessObjectiveStatus$ | async"
+            ></upd-task-success-objective-status>
+          }
+        </upd-card>
+      </div>
     </div>
   </div>
-</div>
+}
 
 <div class="container-fluid my-4 gx-0">
   <div class="row">
@@ -73,7 +104,9 @@
               [scale]="1000"
               [kpiObjectiveCriteria]="feedbackKpiObjectiveCriteria"
               [difference]="(kpiFeedbackDifference$ | async) || 0"
-              modal=" {{ 'kpi-feedback-per-1000-guidance-project' | translate }} "
+              modal=" {{
+                'kpi-feedback-per-1000-guidance-project' | translate
+              }} "
               [keyword]="'feedback'"
             ></upd-apex-spark-line>
           </div>
@@ -148,13 +181,18 @@
       <div [class.mb-2]="!$last">
         <strong class="small text-muted">{{ desc.heading }}:</strong>
         @if (desc.html) {
-          <upd-markdown-renderer [html]="desc.html" class="small d-block mb-1"></upd-markdown-renderer>
+          <upd-markdown-renderer
+            [html]="desc.html"
+            class="small d-block mb-1"
+          ></upd-markdown-renderer>
         } @else {
           <p class="small mb-1">{{ desc.text }}</p>
         }
       </div>
     } @empty {
-      <p class="small text-muted mb-0">{{ 'no-scenarios-available' | translate }}</p>
+      <p class="small text-muted mb-0">
+        {{ 'no-scenarios-available' | translate }}
+      </p>
     }
   </div>
 </ng-template>
