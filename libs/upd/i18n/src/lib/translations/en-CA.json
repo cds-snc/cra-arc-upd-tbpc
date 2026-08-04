@@ -1795,6 +1795,9 @@
   "zone-map-seasonal-change-description": "A task’s performance can change based on the season, so a spike or drop may be normal for that task at this time of year.",
   "zone-map-seasonal-average-description": "Refer to the <strong>Seasonal Average</strong> to understand what is typically normal for this task during the same time period in prior years.",
 
+  "zone-map-high-impact": "High Impact",
+  "zone-map-high-impact-description": "We tag tasks as High Impact when their visits, calls, or negative feedback exceed the 99th percentile (P99), meaning they rank within the highest 1% of all tasks for that metric. A task may meet this threshold for one or multiple metrics, or not at all.",
+
   "zone-map-additional-tips": "Additional Tips",
   "zone-map-tip-other-tasks-title": "How is this task performing compared to other tasks?",
   "zone-map-tip-other-tasks-text": "Sort the list of all tasks by Performance Score and see where this task falls in the list.",
