@@ -6,7 +6,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, shareReplay } from 'rxjs';
+import { combineLatest, map, shareReplay } from 'rxjs';
 import {
   callVolumeObjectiveCriteria,
   feedbackKpiObjectiveCriteria,
@@ -163,24 +163,53 @@ export class ProjectDetailsSummaryComponent implements OnInit {
 
   private testTypesPresent = toSignal(this.testTypesPresent$);
 
+  private testTypesFromProjectData$ = combineLatest([
+    this.baselineTestData$,
+    this.validationTestData$,
+    this.exploratoryTestData$,
+    this.spotCheckTestData$,
+  ]).pipe(
+    map(([baseline, validation, exploratory, spotCheck]) => ({
+      hasBaseline: !!baseline,
+      hasValidation: !!validation,
+      hasExploratory: !!exploratory,
+      hasSpotCheck: !!spotCheck,
+    })),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private testTypesFromProjectData = toSignal(this.testTypesFromProjectData$);
+
   hasBaseline() {
-    return this.testTypesPresent()?.hasBaseline
+    return (
+      this.testTypesFromProjectData()?.hasBaseline ||
+      this.testTypesPresent()?.hasBaseline
+    );
   }
 
   hasValidation() {
-    return this.testTypesPresent()?.hasValidation
+    return (
+      this.testTypesFromProjectData()?.hasValidation ||
+      this.testTypesPresent()?.hasValidation
+    );
   }
 
   hasExploratory() {
-    return this.testTypesPresent()?.hasExploratory
+    return (
+      this.testTypesFromProjectData()?.hasExploratory ||
+      this.testTypesPresent()?.hasExploratory
+    );
   }
 
   hasSpotCheck() {
-    return this.testTypesPresent()?.hasSpotCheck
+    return (
+      this.testTypesFromProjectData()?.hasSpotCheck ||
+      this.testTypesPresent()?.hasSpotCheck
+    );
   }
 
   hasAnyTests() {
-    const present = this.testTypesPresent();
+    const present = this.testTypesFromProjectData();
     return (
       present?.hasBaseline ||
       present?.hasValidation ||

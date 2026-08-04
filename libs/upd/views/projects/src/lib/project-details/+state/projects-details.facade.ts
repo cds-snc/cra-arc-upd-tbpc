@@ -50,6 +50,33 @@ function normalizeTestType(type: string): string {
   return type;
 }
 
+function mapUxTestDataByType(
+  data: ProjectsDetailsData | undefined,
+  testType: 'Baseline' | 'Validation' | 'Exploratory' | 'Spot Check',
+) {
+  const tests = data?.taskSuccessByUxTest?.filter(
+    (t) =>
+      normalizeTestType(t.test_type || '') === testType &&
+      t.date &&
+      (t.success_rate || t.success_rate === 0),
+  );
+
+  if (!tests?.length) {
+    return null;
+  }
+
+  const avgSuccessRate =
+    tests.reduce((sum, t) => sum + (t.success_rate || 0), 0) / tests.length;
+
+  const latest = tests.sort(
+    (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+  )[0];
+  return {
+    successRate: avgSuccessRate,
+    launchDate: latest?.date ?? null,
+  };
+}
+
 @Injectable()
 export class ProjectsDetailsFacade {
   private i18n = inject(I18nFacade);
@@ -96,93 +123,19 @@ export class ProjectsDetailsFacade {
   );
 
   baselineTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const baselineTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Baseline' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!baselineTests?.length) return null;
-      const avgSuccessRate =
-        baselineTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        baselineTests.length;
-      const latest = baselineTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Baseline')),
   );
 
   validationTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const validationTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Validation' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!validationTests?.length) return null;
-      const avgSuccessRate =
-        validationTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        validationTests.length;
-      const latest = validationTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Validation')),
   );
 
   spotCheckTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const spotCheckTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Spot Check' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!spotCheckTests?.length) return null;
-      const avgSuccessRate =
-        spotCheckTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        spotCheckTests.length;
-
-      console.log(spotCheckTests.length);
-      const latest = spotCheckTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Spot Check')),
   );
 
   exploratoryTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const exploratoryTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Exploratory' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!exploratoryTests?.length) return null;
-      const avgSuccessRate =
-        exploratoryTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        exploratoryTests.length;
-      const latest = exploratoryTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Exploratory')),
   );
 
   taskSuccessChange$ = this.projectsDetailsData$.pipe(
