@@ -26,10 +26,29 @@
 }
 
 .change {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.25rem;
+
   font-size: 1.25rem;
   font-weight: 600;
-  display: block;
-  margin-top: 0.25rem;
+  line-height: 1;
+  white-space: nowrap;
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  &__value {
+    line-height: 1;
+  }
 }
 
 .launch-date {

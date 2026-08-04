@@ -7,8 +7,8 @@ import { TasksHomeFacade } from './+state/tasks-home.facade';
 const taskStatusCategories = [
   'Healthy',
   'Watch',
-  'Improving',
   'Needs action',
+  'Unscored',
 ] as const;
 
 @Component({
@@ -181,7 +181,7 @@ export class TasksHomeComponent implements OnInit {
       type: 'label',
       typeParam: 'taskStatus',
       filterConfig: {
-        type: 'taskStatus',
+        type: 'category',
         categories: taskStatusCategories.map((status) => ({
           name: status,
           value: status,

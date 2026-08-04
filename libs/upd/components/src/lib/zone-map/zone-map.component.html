@@ -6,11 +6,7 @@
           {{ 'task-status-performance-score' | translate }}
         </h6>
 
-        <p
-          [innerHTML]="
-            'zone-map-performance-description' | translate
-          "
-        ></p>
+        <p [innerHTML]="'zone-map-performance-description' | translate"></p>
 
         <p class="mb-2">
           {{ 'zone-map-performance-calculated-using' | translate }}
@@ -28,10 +24,7 @@
 
           <li>
             <strong>
-              {{
-                'zone-map-negative-feedback-per-1000-visits'
-                  | translate
-              }}
+              {{ 'zone-map-negative-feedback-per-1000-visits' | translate }}
             </strong>
             <span>
               {{ 'zone-map-feedback-target' | translate }}
@@ -86,16 +79,11 @@
 
       <div class="zone-explainer-section">
         <h6>
-          {{
-            'zone-map-historical-and-seasonal-average'
-              | translate
-          }}
+          {{ 'zone-map-historical-and-seasonal-average' | translate }}
         </h6>
 
         <p
-          [innerHTML]="
-            'zone-map-historical-average-description' | translate
-          "
+          [innerHTML]="'zone-map-historical-average-description' | translate"
         ></p>
 
         <p>
@@ -107,15 +95,21 @@
         </p>
 
         <p
-          [innerHTML]="
-            'zone-map-seasonal-average-description' | translate
-          "
+          [innerHTML]="'zone-map-seasonal-average-description' | translate"
         ></p>
       </div>
 
-      <upd-accordion
-        [title]="'zone-map-additional-tips' | translate"
-      >
+      <div class="zone-explainer-section">
+        <h6>
+          {{ 'zone-map-high-impact' | translate }}
+        </h6>
+
+        <p
+          [innerHTML]="'zone-map-high-impact-description' | translate"
+        ></p>
+      </div>
+
+      <upd-accordion [title]="'zone-map-additional-tips' | translate">
         <div class="zone-tip">
           <strong>
             {{ 'zone-map-tip-other-tasks-title' | translate }}
@@ -131,11 +125,7 @@
             {{ 'zone-map-tip-period-title' | translate }}
           </strong>
 
-          <p
-            [innerHTML]="
-              'zone-map-tip-period-text' | translate
-            "
-          ></p>
+          <p [innerHTML]="'zone-map-tip-period-text' | translate"></p>
         </div>
 
         <div class="zone-tip">
@@ -143,23 +133,14 @@
             {{ 'zone-map-tip-normal-title' | translate }}
           </strong>
 
-          <p
-            [innerHTML]="
-              'zone-map-tip-normal-text' | translate
-            "
-          ></p>
+          <p [innerHTML]="'zone-map-tip-normal-text' | translate"></p>
         </div>
       </upd-accordion>
     </div>
 
-    <upd-accordion
-      [title]="'zone-map-task-health-matrix' | translate"
-    >
+    <upd-accordion [title]="'zone-map-task-health-matrix' | translate">
       <div class="zone-map-title fw-bold mb-1">
-        {{
-          'zone-map-current-vs-historical-average'
-            | translate
-        }}
+        {{ 'zone-map-current-vs-historical-average' | translate }}
       </div>
 
       <p class="zone-map-subtitle mb-3">
@@ -169,9 +150,7 @@
       <div
         class="zone-bootstrap-grid"
         role="grid"
-        [attr.aria-label]="
-          'zone-map-grid-aria-label' | translate
-        "
+        [attr.aria-label]="'zone-map-grid-aria-label' | translate"
       >
         <div aria-hidden="true"></div>
         <div aria-hidden="true"></div>
@@ -222,9 +201,7 @@
                         column: getHistoricalName(column),
                       }
               "
-              [attr.aria-current]="
-                isActive(row, column) ? 'true' : null
-              "
+              [attr.aria-current]="isActive(row, column) ? 'true' : null"
               [attr.aria-label]="
                 'zone-map-cell-aria-label'
                   | translate
@@ -232,14 +209,10 @@
                         row: getRelativeName(row),
                         rowRange: getRelativeRangeLabel(row),
                         column: getHistoricalName(column),
-                        columnRange:
-                          getHistoricalRangeLabel(column),
-                        status:
-                          (getStatus(row, column).labelKey
-                            | translate),
+                        columnRange: getHistoricalRangeLabel(column),
+                        status: (getStatus(row, column).labelKey | translate),
                         current: isActive(row, column)
-                          ? ('zone-map-current-task-status'
-                            | translate)
+                          ? ('zone-map-current-task-status' | translate)
                           : '',
                       }
               "
@@ -252,10 +225,7 @@
                 {{ getStatus(row, column).labelKey | translate }}
               </div>
 
-              <div
-                class="zone-cell-subtitle mt-2"
-                aria-hidden="true"
-              >
+              <div class="zone-cell-subtitle mt-2" aria-hidden="true">
                 {{ getRelativeName(row) }} +
                 {{ getHistoricalName(column) }}
               </div>
@@ -276,9 +246,7 @@
           class="d-flex flex-wrap align-items-center justify-content-center gap-3"
         >
           @for (item of legend; track item.labelKey) {
-            <div
-              class="zone-legend-item d-flex align-items-center gap-2"
-            >
+            <div class="zone-legend-item d-flex align-items-center gap-2">
               <div
                 class="zone-legend-pill text-center fw-bold flex-shrink-0"
                 [ngClass]="item.className"

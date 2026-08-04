@@ -50,6 +50,33 @@ function normalizeTestType(type: string): string {
   return type;
 }
 
+function mapUxTestDataByType(
+  data: ProjectsDetailsData | undefined,
+  testType: 'Baseline' | 'Validation' | 'Exploratory' | 'Spot Check',
+) {
+  const tests = data?.taskSuccessByUxTest?.filter(
+    (t) =>
+      normalizeTestType(t.test_type || '') === testType &&
+      t.date &&
+      (t.success_rate || t.success_rate === 0),
+  );
+
+  if (!tests?.length) {
+    return null;
+  }
+
+  const avgSuccessRate =
+    tests.reduce((sum, t) => sum + (t.success_rate || 0), 0) / tests.length;
+
+  const latest = tests.sort(
+    (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
+  )[0];
+  return {
+    successRate: avgSuccessRate,
+    launchDate: latest?.date ?? null,
+  };
+}
+
 @Injectable()
 export class ProjectsDetailsFacade {
   private i18n = inject(I18nFacade);
@@ -96,47 +123,19 @@ export class ProjectsDetailsFacade {
   );
 
   baselineTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const baselineTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Baseline' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!baselineTests?.length) return null;
-      const avgSuccessRate =
-        baselineTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        baselineTests.length;
-      const latest = baselineTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Baseline')),
   );
 
   validationTestData$ = this.projectsDetailsData$.pipe(
-    map((data) => {
-      const validationTests = data?.taskSuccessByUxTest?.filter(
-        (t) =>
-          normalizeTestType(t.test_type || '') === 'Validation' &&
-          t.date &&
-          (t.success_rate || t.success_rate === 0),
-      );
-      if (!validationTests?.length) return null;
-      const avgSuccessRate =
-        validationTests.reduce((sum, t) => sum + (t.success_rate || 0), 0) /
-        validationTests.length;
-      const latest = validationTests.sort(
-        (a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime(),
-      )[0];
-      return {
-        successRate: avgSuccessRate,
-        launchDate: latest?.date ?? null,
-      };
-    }),
+    map((data) => mapUxTestDataByType(data, 'Validation')),
+  );
+
+  spotCheckTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => mapUxTestDataByType(data, 'Spot Check')),
+  );
+
+  exploratoryTestData$ = this.projectsDetailsData$.pipe(
+    map((data) => mapUxTestDataByType(data, 'Exploratory')),
   );
 
   taskSuccessChange$ = this.projectsDetailsData$.pipe(
@@ -611,7 +610,7 @@ export class ProjectsDetailsFacade {
   taskSuccessByUxTest$ = combineLatest([
     this.projectsDetailsData$,
     this.currentLang$,
-    this.projectTasks$
+    this.projectTasks$,
   ]).pipe(
     map(([data, lang, projectTasks]) => {
       const uxTests = data?.taskSuccessByUxTest;
@@ -636,12 +635,11 @@ export class ProjectsDetailsFacade {
       );
 
       return uxTests.map((uxTest) => {
-      
         const taskTitles = (uxTest.tasks ?? '')
           .split('; ')
           .map((t) => t.trim())
           .filter(Boolean);
-  
+
         const tasksLinks = taskTitles
           .map((title) => {
             const id = taskIdByTitle.get((title || '').trim().toLowerCase());
@@ -652,7 +650,7 @@ export class ProjectsDetailsFacade {
             };
           })
           .filter((t) => !!t._id); // keep only linkable tasks
- 
+
         return {
           ...uxTest,
           date: uxTest.date
@@ -667,7 +665,7 @@ export class ProjectsDetailsFacade {
               task ? this.i18n.service.translate(task, lang) : task,
             )
             .join('; '),
-          tasksLinks: tasksLinks,  
+          tasksLinks: tasksLinks,
           total_users: maxTotalUsers,
         };
       });
@@ -1022,10 +1020,7 @@ export class ProjectsDetailsFacade {
           ? `sid:${uxTest.scenario_id}`
           : `aid:${uxTest.airtable_id ?? ''}`;
 
-      const pairs = new Map<
-        string,
-        { taskTitle: string; groupKey: string }
-      >();
+      const pairs = new Map<string, { taskTitle: string; groupKey: string }>();
       for (const uxTest of uxTests) {
         const groupKey = getGroupKey(uxTest);
         for (const title of uxTest.tasks.split('; ')) {
@@ -1039,9 +1034,7 @@ export class ProjectsDetailsFacade {
 
       const sortedPairs = [...pairs.values()].sort((a, b) => {
         const titleCmp = a.taskTitle.localeCompare(b.taskTitle);
-        return titleCmp !== 0
-          ? titleCmp
-          : a.groupKey.localeCompare(b.groupKey);
+        return titleCmp !== 0 ? titleCmp : a.groupKey.localeCompare(b.groupKey);
       });
 
       return sortedPairs.map(({ taskTitle, groupKey }, index) => {
@@ -1090,11 +1083,18 @@ export class ProjectsDetailsFacade {
           (t) => t.testType === 'Validation',
         )?.successRate;
 
-        let avgTaskSuccessChange: number | null = null;
+        let avgTaskSuccessPointChange: number | null = null;
+        let avgTaskSuccessPercentChange: number | null = null;
 
         if (baselineRate != null && validationRate != null) {
-          avgTaskSuccessChange =
-            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+          const difference = validationRate - baselineRate;
+
+          avgTaskSuccessPointChange = round(difference * 100, 2);
+
+          avgTaskSuccessPercentChange =
+            baselineRate !== 0
+              ? round((difference / baselineRate) * 100, 2)
+              : null;
         }
 
         const scenariosByTestType: Record<
@@ -1129,7 +1129,8 @@ export class ProjectsDetailsFacade {
           taskId,
           scenariosByTestType,
           tests,
-          avgTaskSuccessChange,
+          avgTaskSuccessPointChange,
+          avgTaskSuccessPercentChange,
         };
       });
     }),
@@ -1214,10 +1215,18 @@ export class ProjectsDetailsFacade {
           (t) => t.testType === 'Validation',
         )?.successRate;
 
-        let avgTaskSuccessChange: number | null = null;
+        let avgTaskSuccessPointChange: number | null = null;
+        let avgTaskSuccessPercentChange: number | null = null;
+
         if (baselineRate != null && validationRate != null) {
-          avgTaskSuccessChange =
-            (round(validationRate, 2) - round(baselineRate, 2)) * 100;
+          const difference = validationRate - baselineRate;
+
+          avgTaskSuccessPointChange = round(difference * 100, 2);
+
+          avgTaskSuccessPercentChange =
+            baselineRate !== 0
+              ? round((difference / baselineRate) * 100, 2)
+              : null;
         }
 
         const descByKey = new Map<
@@ -1282,7 +1291,8 @@ export class ProjectsDetailsFacade {
           scenarioDescriptions,
           connectedTasks,
           tests,
-          avgTaskSuccessChange,
+          avgTaskSuccessPointChange,
+          avgTaskSuccessPercentChange,
         };
       });
 
@@ -1302,7 +1312,8 @@ export class ProjectsDetailsFacade {
         scenarioDescriptions: scenario.scenarioDescriptions,
         connectedTasks: scenario.connectedTasks,
         tests: scenario.tests,
-        avgTaskSuccessChange: scenario.avgTaskSuccessChange,
+        avgTaskSuccessPointChange: scenario.avgTaskSuccessPointChange,
+        avgTaskSuccessPercentChange: scenario.avgTaskSuccessPercentChange,
       }));
     }),
   );

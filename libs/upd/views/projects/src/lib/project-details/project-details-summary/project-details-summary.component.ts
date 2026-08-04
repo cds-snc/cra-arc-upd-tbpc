@@ -6,7 +6,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, shareReplay } from 'rxjs';
+import { combineLatest, map, shareReplay } from 'rxjs';
 import {
   callVolumeObjectiveCriteria,
   feedbackKpiObjectiveCriteria,
@@ -23,11 +23,11 @@ type ParticipantTasksColTypes = GetTableProps<
 >;
 
 @Component({
-    selector: 'upd-project-details-summary',
-    templateUrl: './project-details-summary.component.html',
-    styleUrls: ['./project-details-summary.component.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'upd-project-details-summary',
+  templateUrl: './project-details-summary.component.html',
+  styleUrls: ['./project-details-summary.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false,
 })
 export class ProjectDetailsSummaryComponent implements OnInit {
   private i18n = inject(I18nFacade);
@@ -101,16 +101,22 @@ export class ProjectDetailsSummaryComponent implements OnInit {
 
   baselineTestData$ = this.projectsDetailsService.baselineTestData$;
   validationTestData$ = this.projectsDetailsService.validationTestData$;
+  exploratoryTestData$ = this.projectsDetailsService.exploratoryTestData$;
+  spotCheckTestData$ = this.projectsDetailsService.spotCheckTestData$;
   taskSuccessChange$ = this.projectsDetailsService.taskSuccessChange$;
+  avgSuccessValueChange$ = this.projectsDetailsService.avgSuccessValueChange$;
 
-  taskSuccessObjectiveStatus$ = this.projectsDetailsService.taskSuccessObjectiveStatus$;
+  taskSuccessObjectiveStatus$ =
+    this.projectsDetailsService.taskSuccessObjectiveStatus$;
 
   private tasksTestedView$ = this.projectsDetailsService.tasksTestedData$.pipe(
     map((tasks) => {
       const tableData = tasks.map((task) => {
         const baseline = task.tests.find((t) => t.testType === 'Baseline');
         const validation = task.tests.find((t) => t.testType === 'Validation');
-        const exploratory = task.tests.find((t) => t.testType === 'Exploratory');
+        const exploratory = task.tests.find(
+          (t) => t.testType === 'Exploratory',
+        );
         const spotCheck = task.tests.find((t) => t.testType === 'Spot Check');
         return {
           _id: task.taskNumber.toString(),
@@ -120,9 +126,14 @@ export class ProjectDetailsSummaryComponent implements OnInit {
           validation: validation?.successRate ?? null,
           exploratory: exploratory?.successRate ?? null,
           spotCheck: spotCheck?.successRate ?? null,
-          change: task.avgTaskSuccessChange != null
-            ? task.avgTaskSuccessChange / 100
-            : null,
+          avgTaskSuccessPointChange:
+            task.avgTaskSuccessPointChange != null
+              ? task.avgTaskSuccessPointChange
+              : null,
+          avgTaskSuccessPercentChange:
+            task.avgTaskSuccessPercentChange != null
+              ? task.avgTaskSuccessPercentChange / 100
+              : null,
           scenariosByTestType: task.scenariosByTestType,
         };
       });
@@ -152,6 +163,61 @@ export class ProjectDetailsSummaryComponent implements OnInit {
 
   private testTypesPresent = toSignal(this.testTypesPresent$);
 
+  private testTypesFromProjectData$ = combineLatest([
+    this.baselineTestData$,
+    this.validationTestData$,
+    this.exploratoryTestData$,
+    this.spotCheckTestData$,
+  ]).pipe(
+    map(([baseline, validation, exploratory, spotCheck]) => ({
+      hasBaseline: !!baseline,
+      hasValidation: !!validation,
+      hasExploratory: !!exploratory,
+      hasSpotCheck: !!spotCheck,
+    })),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
+
+  private testTypesFromProjectData = toSignal(this.testTypesFromProjectData$);
+
+  hasBaseline() {
+    return (
+      this.testTypesFromProjectData()?.hasBaseline ||
+      this.testTypesPresent()?.hasBaseline
+    );
+  }
+
+  hasValidation() {
+    return (
+      this.testTypesFromProjectData()?.hasValidation ||
+      this.testTypesPresent()?.hasValidation
+    );
+  }
+
+  hasExploratory() {
+    return (
+      this.testTypesFromProjectData()?.hasExploratory ||
+      this.testTypesPresent()?.hasExploratory
+    );
+  }
+
+  hasSpotCheck() {
+    return (
+      this.testTypesFromProjectData()?.hasSpotCheck ||
+      this.testTypesPresent()?.hasSpotCheck
+    );
+  }
+
+  hasAnyTests() {
+    const present = this.testTypesFromProjectData();
+    return (
+      present?.hasBaseline ||
+      present?.hasValidation ||
+      present?.hasExploratory ||
+      present?.hasSpotCheck
+    );
+  }
+
   tasksTestedCols = computed<ColumnConfig[]>(() => {
     const lang = this.currentLang();
     const present = this.testTypesPresent();
@@ -159,7 +225,7 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     const tasksTestedCols: ColumnConfig[] = [
       {
         field: 'taskNumber',
-        header: this.i18n.service.translate('task-num', lang),
+        header: this.i18n.service.translate('test-num', lang),
         width: '80px',
       },
       {
@@ -202,14 +268,19 @@ export class ProjectDetailsSummaryComponent implements OnInit {
 
     if (present?.hasBaseline && present?.hasValidation) {
       tasksTestedCols.push({
-        field: 'change',
+        field: 'avgTaskSuccessPercentChange',
         header: this.i18n.service.translate('change', lang),
         pipe: 'percent',
-        pipeParam: '1.0-0',
-        indicator: true,
+        pipeParam: '1.0',
         upGoodDownBad: true,
+        indicator: true,
         useArrows: true,
         showTextColours: true,
+        secondaryField: {
+          field: 'avgTaskSuccessPointChange',
+          pipe: 'number',
+          pipeParam: '1.0',
+        },
       });
     }
 

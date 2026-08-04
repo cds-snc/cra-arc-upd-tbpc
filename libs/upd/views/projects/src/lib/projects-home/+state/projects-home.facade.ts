@@ -48,6 +48,7 @@ export class ProjectsHomeFacade {
           ...(d.wos_cops ? ['WOS_COPS'] : []),
         ],            
         startDate: d.startDate || '',
+        avgSuccessValueChange: d.avgSuccessValueChange * 100
       }));
 
       return [...(projectsHome || [])];

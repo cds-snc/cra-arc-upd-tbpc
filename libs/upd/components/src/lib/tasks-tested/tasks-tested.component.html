@@ -2,16 +2,27 @@
   <div class="container-fluid my-4 gx-0">
     <div class="row">
       @if (tasksTestedSummary(); as summary) {
-        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
-          <upd-data-card
-            [title]="'tasks'"
-            [current]="summary.tasksCount">
+        <div
+          [class]="
+            totalParticipants() !== null
+              ? 'col-lg-4 col-sm-12'
+              : 'col-lg-6 col-sm-12'
+          "
+        >
+          <upd-data-card [title]="'tasks'" [current]="summary.tasksCount">
           </upd-data-card>
         </div>
-        <div [class]="totalParticipants() !== null ? 'col-lg-4 col-sm-12' : 'col-lg-6 col-sm-12'">
+        <div
+          [class]="
+            totalParticipants() !== null
+              ? 'col-lg-4 col-sm-12'
+              : 'col-lg-6 col-sm-12'
+          "
+        >
           <upd-data-card
             [title]="'scenarios'"
-            [current]="summary.scenariosCount">
+            [current]="summary.scenariosCount"
+          >
           </upd-data-card>
         </div>
         @if (totalParticipants() !== null) {
@@ -19,7 +30,8 @@
             <upd-data-card
               [title]="'Total participants from all tests'"
               [current]="totalParticipants()"
-              [emptyMessage]="'project-tasks-not-tested'">
+              [emptyMessage]="'project-tasks-not-tested'"
+            >
             </upd-data-card>
           </div>
         }
@@ -31,20 +43,34 @@
     <div class="row">
       <div class="col">
         <upd-card [title]="'task-scenarios-tested'">
-          @for (scenario of scenariosTestedData(); track scenario.scenarioNumber) {
+          @for (
+            scenario of scenariosTestedData();
+            track scenario.scenarioNumber
+          ) {
             <div class="mb-3 p-3 border rounded">
               <div class="row">
-                <div [class]="hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'">
+                <div
+                  [class]="
+                    hasBaseline() && hasValidation() ? 'col-lg-10' : 'col-lg-12'
+                  "
+                >
                   <h6 class="mb-2">
-                    {{ 'task-scenario' | translate }} {{ scenario.scenarioNumber }}
+                    {{ 'task-scenario' | translate }}
+                    {{ scenario.scenarioNumber }}
                   </h6>
 
-                  @for (desc of scenario.scenarioDescriptions; track desc.text) {
+                  @for (
+                    desc of scenario.scenarioDescriptions;
+                    track desc.text
+                  ) {
                     @if (scenario.scenarioDescriptions.length > 1) {
                       <div class="small text-muted mb-1">{{ desc.label }}</div>
                     }
                     @if (desc.html) {
-                      <upd-markdown-renderer [html]="desc.html" class="small d-block mb-2"></upd-markdown-renderer>
+                      <upd-markdown-renderer
+                        [html]="desc.html"
+                        class="small d-block mb-2"
+                      ></upd-markdown-renderer>
                     } @else if (desc.text) {
                       <p class="small mb-2">{{ desc.text }}</p>
                     }
@@ -59,8 +85,14 @@
                         <div class="col-lg-9 col-sm-12">
                           <div class="d-flex align-items-center gap-2 w-100">
                             <ng-template #barTooltip>
-                              <span class="legend_color rounded-circle" [style.background]="testTypeBarColors[test.testType]"></span>
-                              {{ test.testTypeLabel }}: {{ test.successRatePercent }}%
+                              <span
+                                class="legend_color rounded-circle"
+                                [style.background]="
+                                  testTypeBarColors[test.testType]
+                                "
+                              ></span>
+                              {{ test.testTypeLabel }}:
+                              {{ test.successRatePercent }}%
                             </ng-template>
                             <div
                               class="rounded-1 task-success-bar"
@@ -70,12 +102,16 @@
                               [attr.aria-valuenow]="test.successRatePercent"
                               [attr.aria-label]="test.testTypeLabel"
                               [style.width.%]="test.successRatePercent"
-                              [style.background-color]="testTypeBarColors[test.testType]"
+                              [style.background-color]="
+                                testTypeBarColors[test.testType]
+                              "
                               [ngbTooltip]="barTooltip"
                               [tooltipClass]="'chart-tooltip'"
                               container="body"
                             ></div>
-                            <span class="fw-bold text-nowrap">{{ test.successRatePercent }}%</span>
+                            <span class="fw-bold text-nowrap"
+                              >{{ test.successRatePercent }}%</span
+                            >
                           </div>
                         </div>
                       </div>
@@ -85,12 +121,22 @@
                   @if (scenario.connectedTasks.length) {
                     <p class="small text-muted mt-3 mb-0">
                       {{ 'connected-tasks' | translate }}:&nbsp;
-                      @for (task of scenario.connectedTasks; track task.title; let last = $last) {
+                      @for (
+                        task of scenario.connectedTasks;
+                        track task.title;
+                        let last = $last
+                      ) {
                         @if (task.id) {
-                          <a [routerLink]="['/', langLink(), 'tasks', task.id]">{{ task.title }}</a>
+                          <a
+                            [routerLink]="['/', langLink(), 'tasks', task.id]"
+                            >{{ task.title }}</a
+                          >
                         } @else {
                           {{ task.title }}
-                        }@if (!last) {<span>,&nbsp;</span>}
+                        }
+                        @if (!last) {
+                          <span>,&nbsp;</span>
+                        }
                       }
                     </p>
                   }
@@ -98,9 +144,28 @@
 
                 @if (hasBaseline() && hasValidation()) {
                   <div class="col-lg-2 d-flex flex-column">
-                    <div class="text-muted small mb-1">{{ 'change' | translate }}</div>
-                    <span class="h1 mb-0" [class]="getChangeIndicator(scenario.avgTaskSuccessChange).cssClass">
-                      {{ getChangeIndicator(scenario.avgTaskSuccessChange).text }}
+                    <div class="text-muted small mb-1">
+                      <strong>{{ 'change' | translate }}</strong>
+                    </div>
+
+                    @let indicator =
+                      getChangeIndicator(scenario.avgTaskSuccessPercentChange, currentLang());
+
+                    <span
+                      class="h2 mb-0 d-inline-flex align-items-center gap-1 text-nowrap"
+                      [ngClass]="indicator.cssClass"
+                    >
+                      @if (indicator.arrow) {
+                        <span class="arrow material-icons" aria-hidden="true">
+                          {{ indicator.arrow }}
+                        </span>
+                      }
+
+                      {{ indicator.text }}
+
+                      @if (scenario.avgTaskSuccessPointChange !== null) {
+                        ({{ scenario.avgTaskSuccessPointChange | localeNumber: '1.0-2'}})
+                      }
                     </span>
                   </div>
                 }
@@ -110,22 +175,38 @@
           <div class="legend mt-3 d-flex flex-row align-items-center gap-3">
             @if (hasBaseline()) {
               <p class="legend_field">
-                <span class="legend_color" [style.background]="testTypeBarColors['Baseline']"></span>{{ 'Baseline' | translate }}
+                <span
+                  class="legend_color"
+                  [style.background]="testTypeBarColors['Baseline']"
+                ></span
+                >{{ 'Baseline' | translate }}
               </p>
             }
             @if (hasValidation()) {
               <p class="legend_field">
-                <span class="legend_color" [style.background]="testTypeBarColors['Validation']"></span>{{ 'Validation' | translate }}
+                <span
+                  class="legend_color"
+                  [style.background]="testTypeBarColors['Validation']"
+                ></span
+                >{{ 'Validation' | translate }}
               </p>
             }
             @if (hasExploratory()) {
               <p class="legend_field">
-                <span class="legend_color" [style.background]="testTypeBarColors['Exploratory']"></span>{{ 'Exploratory' | translate }}
+                <span
+                  class="legend_color"
+                  [style.background]="testTypeBarColors['Exploratory']"
+                ></span
+                >{{ 'Exploratory' | translate }}
               </p>
             }
             @if (hasSpotCheck()) {
               <p class="legend_field">
-                <span class="legend_color" [style.background]="testTypeBarColors['Spot Check']"></span>{{ 'Spot Check' | translate }}
+                <span
+                  class="legend_color"
+                  [style.background]="testTypeBarColors['Spot Check']"
+                ></span
+                >{{ 'Spot Check' | translate }}
               </p>
             }
           </div>

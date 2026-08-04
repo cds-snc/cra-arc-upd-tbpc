@@ -9,7 +9,13 @@
     [tmfTotalTasks]="(perfTotalTasks$ | async) || 0"
     [calls]="(callPerVisits$ | async) || 0"
     [feedback]="(currentKpiFeedback$ | async) || 0"
-    [survey]="(currentSurvey$ | async) || 0"
+    [survey]="(currentSurvey$ | async)"
+    [surveyCompleted]="(surveyCompleted$ | async) || 0"
+    [surveyTotal]="(survey$ | async) || 0"
+    [visitsVolume]="(visits$ | async) || 0"
+    [callsVolume]="(currentCallVolume$ | async) || 0"
+    [feedbackVolume]="(dyfNo$ | async) || 0"
+    [highDemandMetrics]="(highDemandMetrics$ | async) || []"
   ></upd-task-status>
 </div>
 

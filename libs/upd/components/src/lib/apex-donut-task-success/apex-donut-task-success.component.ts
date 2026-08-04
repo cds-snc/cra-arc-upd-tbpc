@@ -10,6 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import type { ApexNonAxisChartSeries, ApexTooltip } from 'ng-apexcharts';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { ApexStore } from './apex.store';
+import { formatPercent } from '@angular/common';
 
 @Component({
   selector: 'upd-apex-donut-task-success',
@@ -28,6 +29,7 @@ export class ApexDonutTaskSuccessComponent {
   readonly successRate = input<number | null | undefined>(null);
   readonly launchDate = input<Date | string | null | undefined>(null);
   readonly change = input<number | null | undefined>(null);
+  readonly pointChange = input<number | null | undefined>(null);
   readonly showChange = input(false);
   readonly colours = input<string[]>();
   readonly noDataMessage = input('nodata-available');
@@ -47,16 +49,35 @@ export class ApexDonutTaskSuccessComponent {
 
   readonly centerLabel = computed(() => {
     const percent = this.successPercent();
-    return percent != null ? `${percent}%` : '';
+    return percent != null
+      ? `${formatPercent(percent / 100, this.i18n.currentLang())}`
+      : '';
   });
 
   readonly tooltip = computed<ApexTooltip>(() => {
     const percent = this.successPercent() ?? 0;
     return {
       enabledOnSeries: [0],
-      y: { formatter: () => `${percent}%` },
+      y: {
+        formatter: () =>
+          `${formatPercent(percent / 100, this.i18n.currentLang())}`,
+      },
     };
   });
+
+  getArrow(value: number) {
+    if (value < 0) {
+      return 'arrow_downward';
+    } else if (value > 0) {
+      return 'arrow_upward';
+    }
+
+    return '';
+  }
+
+  getAbsChange(value: number): number {
+    return Math.abs(value);
+  }
 
   constructor() {
     effect(() => {

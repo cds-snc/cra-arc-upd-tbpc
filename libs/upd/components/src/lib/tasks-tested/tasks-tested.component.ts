@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { formatPercent } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
+import { I18nFacade } from '@dua-upd/upd/state';
 import { globalColours } from '@dua-upd/utils-common';
 
 export interface ScenarioTestedData {
@@ -15,12 +23,19 @@ export interface ScenarioTestedData {
     successRate: number | null;
     successRatePercent: number | null;
   }[];
-  avgTaskSuccessChange: number | null;
+  avgTaskSuccessPointChange: number | null;
+  avgTaskSuccessPercentChange: number | null;
 }
 
 export interface TasksTestedSummary {
   tasksCount: number;
   scenariosCount: number;
+}
+
+interface ChangeIndicator {
+  text: string;
+  cssClass: 'text-success' | 'text-danger' | 'text-muted';
+  arrow: 'arrow_upward' | 'arrow_downward' | '';
 }
 
 @Component({
@@ -31,10 +46,12 @@ export interface TasksTestedSummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TasksTestedComponent {
+  private i18n = inject(I18nFacade);
   scenariosTestedData = input<ScenarioTestedData[] | null>(null);
   tasksTestedSummary = input<TasksTestedSummary | null>(null);
   totalParticipants = input<number | null>(null);
   langLink = input('en');
+  readonly currentLang = this.i18n.currentLang;
 
   hasData = computed(() => {
     const data = this.scenariosTestedData();
@@ -72,16 +89,20 @@ export class TasksTestedComponent {
     'Spot Check': globalColours[3],
   };
 
-  getChangeIndicator(value: number | null): { text: string; cssClass: string } {
-    if (value == null) {
-      return { text: '-', cssClass: 'text-muted' };
+  getChangeIndicator(value: number | null, locale: string): ChangeIndicator {
+    if (value == null || !Number.isFinite(value)) {
+      return {
+        text: '-',
+        cssClass: 'text-muted',
+        arrow: '',
+      };
     }
-    if (value > 0) {
-      return { text: `↑${Math.abs(Math.round(value))}%`, cssClass: 'text-success' };
-    }
-    if (value < 0) {
-      return { text: `↓${Math.abs(Math.round(value))}%`, cssClass: 'text-danger' };
-    }
-    return { text: '0%', cssClass: 'text-muted' };
+
+    return {
+      text: formatPercent(Math.abs(value) / 100, locale, '1.0-0'),
+      cssClass:
+        value > 0 ? 'text-success' : value < 0 ? 'text-danger' : 'text-muted',
+      arrow: value > 0 ? 'arrow_upward' : value < 0 ? 'arrow_downward' : '',
+    };
   }
 }

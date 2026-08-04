@@ -15,22 +15,21 @@ td.validation-kpi-not-met + td.bg-green {
 }
 
 .task-performance-group {
-  background: #dff3e8 !important;
-  color: #006b3f;
+  background: #DCEEFF !important;
     border-top-left-radius: 0.5rem;
   border-top-right-radius: 0.5rem;
 }
 
 th.task-performance-col {
-  background: #dff3e8 !important;
+  background: #DCEEFF !important;
 }
 
 td.task-performance-col {
-  background: #eaf8ef !important;
+  background: #EAF4FF !important;
 }
 
 tr.task-row-odd td.task-performance-col {
-  background: #f4fbf7 !important;
+  background: #F4F9FF !important;
 }
 
 
