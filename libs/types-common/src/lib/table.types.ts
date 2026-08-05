@@ -15,6 +15,7 @@ export type ColumnConfigPipe =
 export interface ColumnConfig<T = any> {
   field: OptionalKeyOf<T>;
   header: string;
+  secondaryHeader?: string;
   group?: string;
   type?: 'link' | 'comparison' | 'label' | 'text' | 'markdown';
   typeParam?: string;

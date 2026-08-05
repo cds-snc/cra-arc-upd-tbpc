@@ -1,118 +1,26 @@
-$card-border: #d8dee6;
-$divider: #d9dde3;
-$text-main: #101828;
-$text-muted: #667085;
-
-.task-rank-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 200px;
-  padding: 0.9rem 1rem 0.8rem;
-  background: #fff;
-  border: 1px solid $card-border;
-  border-radius: 0.45rem;
-  color: $text-main;
-  line-height: 1.2;
-  text-align: center;
-}
-
-.task-rank-card__label {
-  color: $text-main;
-  font-size: 0.75rem;
-  font-weight: 400;
-}
-
-.task-rank-card__rank {
-  margin-top: 0.35rem;
-  font-size: 1.2rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.task-rank-card__top-task {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  margin-top: 0.5rem;
-  color: #b26b00;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.task-rank-card__icon {
-  width: 0.9rem;
-  height: 0.9rem;
-  font-size: 0.9rem;
-  line-height: 0.9rem;
-}
-
-.task-rank-card__demand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  margin-top: 0.45rem;
-  padding: 0.2rem 0.55rem;
-  background: #fce7ef;
-  border-radius: 999px;
-  color: #c1154a;
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-
-.task-rank-card__demand-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-  color: #f04438;
-  font-size: 0.75rem;
-  line-height: 0.75rem;
-}
-
-.task-rank-card__divider {
-  width: 100%;
-  margin: 0.75rem 0 0.65rem;
-  border-top: 1px solid $divider;
-}
-
-.task-rank-card__metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  width: 100%;
-}
-
-.task-rank-card__metric {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 0.75rem;
-  align-items: baseline;
-  width: 100%;
-  color: $text-muted;
-  font-size: 0.75rem;
-  text-align: left;
-
-  strong {
-    color: $text-main;
-    font-weight: 800;
-    text-align: right;
-    white-space: nowrap;
+.task-rank-strip {
+  &__top {
+    background: #fff3e0;
+    color: #9a5b00;
   }
-}
 
-.task-rank-card__metric-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  min-width: 0;
-}
+  &__demand {
+    background: #fce7ef;
+    color: #c1154a;
+  }
 
-.task-rank-card__metric-demand {
-  width: 0.8rem;
-  height: 0.8rem;
-  color: #f04438;
-  font-size: 0.8rem;
-  line-height: 0.8rem;
-  flex-shrink: 0;
+  &__icon,
+  &__metric-demand {
+    width: 0.8rem;
+    height: 0.8rem;
+    font-size: 1rem;
+    line-height: 0.8rem;
+  }
+
+  &__metric-demand {
+    display: inline-block;
+    margin-inline-start: 0.1rem;
+    color: #f04438;
+    vertical-align: -0.08em;
+  }
 }
