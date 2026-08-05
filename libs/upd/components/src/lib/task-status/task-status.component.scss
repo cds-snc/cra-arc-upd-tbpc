@@ -11,43 +11,24 @@ $card-border: #d8dee6;
 $divider: #d9dde3;
 
 $tiers: (
-  green: (
-    $good,
-    rgba($good, 0.45),
-    #dff3e8,
-  ),
-  yellow: (
-    $neutral,
-    rgba(#b26b00, 0.45),
-    #fff0cf,
-  ),
-  blue: (
-    $improving,
-    rgba($improving, 0.4),
-    #d6f3f5,
-  ),
-  red: (
-    $bad,
-    rgba($bad, 0.45),
-    #fde2df,
-  ),
-  grey: (
-    $grey,
-    rgba($grey, 0.35),
-    #f2f4f7,
-  ),
+  ('green', $good, rgba($good, 0.45), #dff3e8),
+  ('yellow', $neutral, rgba(#b26b00, 0.45), #fff0cf),
+  ('blue', $improving, rgba($improving, 0.4), #d6f3f5),
+  ('red', $bad, rgba($bad, 0.45), #fde2df),
+  ('grey', $grey, rgba($grey, 0.35), #f2f4f7)
 );
 
-@each $tier, $values in $tiers {
+@each $tier, $color, $glow, $ring in $tiers {
   .health-label.#{$tier},
   .health-title.#{$tier},
   .health-action-pill.#{$tier} {
-    --tier-color: #{nth($values, 1)};
-    --tier-glow: #{nth($values, 2)};
-    --tier-ring: #{nth($values, 3)};
+    --tier-color: #{$color};
+    --tier-glow: #{$glow};
+    --tier-ring: #{$ring};
   }
+
   .health-label.#{$tier} {
-    color: nth($values, 1);
+    color: $color;
   }
 }
 

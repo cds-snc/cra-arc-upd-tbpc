@@ -10,7 +10,7 @@
   @if ((error$ | async) === '' || (title$ | async) === '') {
     <upd-page-404></upd-page-404>
   } @else {
-    <div class="row align-items-start g-3 pt-2 pb-2">
+    <div class="row align-items-start gx-3 gy-0 pt-2 pb-2">
       <div class="col">
         <h2 class="h3 mb-0" data-i18n="task-title">
           <span [translate]="'task'"></span>:
@@ -44,67 +44,76 @@
 
       @if (tmfRank(); as rank) {
         @if (tmfTotalTasks(); as total) {
-          <div class="col-auto">
-            <div class="task-rank-card flex-shrink-0">
-              <div class="task-rank-card__label">
-                {{ 'task-status-rank-title' | translate }}
-              </div>
+          <div class="col-12">
+            <div
+              class="d-flex flex-wrap align-items-center gap-2 bg-white border rounded-3 px-3 py-2"
+            >
+              <div class="d-inline-flex align-items-center gap-1 text-nowrap">
+                <span class="fw-semibold">
+                  {{ 'task-status-rank-title' | translate }}
+                </span>
 
-              <div class="task-rank-card__rank">
-                {{
-                  'task-status-rank-position'
-                    | translate
-                      : {
-                          rank,
-                          total,
-                        }
-                }}
+                <strong>
+                  {{
+                    'task-status-rank-position'
+                      | translate
+                        : {
+                            rank,
+                            total,
+                          }
+                  }}
+                </strong>
               </div>
 
               @if (rank <= 50) {
-                <div class="task-rank-card__top-task">
+                <span
+                  class="badge rounded-pill d-inline-flex align-items-center gap-1 px-2 py-1 fw-semibold task-rank-strip__top"
+                >
                   <span
-                    class="material-icons task-rank-card__icon"
+                    class="material-icons task-rank-strip__icon"
                     aria-hidden="true"
                   >
                     star
                   </span>
 
                   {{ 'task-status-rank-top-task' | translate }}
-                </div>
+                </span>
               }
 
               @if (isHighDemand()) {
-                <div class="task-rank-card__demand">
+                <span
+                  class="badge rounded-pill d-inline-flex align-items-center gap-1 px-2 py-1 fw-semibold task-rank-strip__demand"
+                >
                   <span
-                    class="material-icons task-rank-card__demand-icon"
+                    class="material-icons task-rank-strip__icon"
                     aria-hidden="true"
                   >
                     local_fire_department
                   </span>
 
                   {{ 'high-demand' | translate }}
-                </div>
+                </span>
               }
 
-              <div class="task-rank-card__divider" aria-hidden="true"></div>
-
-              <div class="task-rank-card__metrics">
+              <div class="d-flex flex-wrap align-items-center gap-2">
                 @for (metric of rankMetrics(); track metric.key) {
-                  <div class="task-rank-card__metric">
-                    <span class="task-rank-card__metric-label">
-                      {{ metric.label | translate: undefined: currentLang() }}
+                  <div
+                    class="d-inline-flex align-items-center gap-1 border-start ps-3 ms-1 text-nowrap"
+                  >
+                    <span class="small text-secondary">
+                      {{ metric.label | translate: undefined : currentLang() }}
 
                       @if (metric.highDemand) {
                         <span
-                          class="material-icons task-rank-card__metric-demand"
+                          class="material-icons task-rank-strip__metric-demand"
+                          aria-hidden="true"
                         >
                           local_fire_department
                         </span>
                       }
                     </span>
 
-                    <strong>
+                    <strong class="small">
                       {{ metric.value | localeNumber: '1.0-0' }}
                     </strong>
                   </div>

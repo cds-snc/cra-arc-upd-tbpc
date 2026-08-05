@@ -76,9 +76,9 @@ export class ProjectStatusLabelComponent {
   };
 
   taskStatusClassMap: Record<TaskStatus, string> = {
-    Healthy: 'bg-healthy',
+    Stable: 'bg-healthy',
     Watch: 'bg-watch',
-    'Needs action': 'bg-needs-action',
+    'Action required': 'bg-needs-action',
     "Unscored": 'bg-unscored',
   };
 }

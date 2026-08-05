@@ -52,7 +52,7 @@ export class FilterTableStore<T extends object> extends ComponentStore<
         ) {
           continue;
         }
-        const header = column.header || key;
+        const header = column.secondaryHeader || column.header || key;
         const children = [];
         for (const v of values) {
           if (v !== '') {
