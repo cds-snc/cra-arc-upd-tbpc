@@ -1,5 +1,5 @@
 import { isNullish } from './utils-common';
-export type TaskStatus = 'Healthy' | 'Watch' | 'Needs action' | 'Unscored';
+export type TaskStatus = 'Stable' | 'Watch' | 'Action required' | 'Unscored';
 
 const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
 export const HIGH_DEMAND_METRIC_KEYS = ['visits', 'calls', 'dyf_no'] as const;
@@ -285,7 +285,7 @@ export function getTaskStatus(
   const variance = rps - hps;
 
   if (rps >= 0.5 && variance >= -0.05) {
-    return 'Healthy';
+    return 'Stable';
   }
 
   if (rps >= 0.5) {
@@ -304,5 +304,5 @@ export function getTaskStatus(
     return 'Watch';
   }
 
-  return 'Needs action';
+  return 'Action required';
 }
