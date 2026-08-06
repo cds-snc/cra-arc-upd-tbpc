@@ -1,27 +1,37 @@
 <ng-template #highDemandTooltip>
-  <div class="high-demand-tooltip__metrics d-flex flex-column">
+  <div class="high-demand-tooltip__metrics d-flex flex-column gap-2">
     @for (metric of highDemandTooltipMetrics(); track metric.key) {
-      <div class="high-demand-tooltip__metric d-grid align-items-start">
-        <span
-          class="high-demand-tooltip__label d-inline-flex align-items-start"
-        >
-          <span class="high-demand-tooltip__label-text">
-            {{ metric.label }}
-          </span>
-
-          @if (metric.highDemand) {
-            <span
-              class="material-icons high-demand-tooltip__flame"
-              aria-hidden="true"
-            >
-              local_fire_department
+      <div class="high-demand-tooltip__metric row gx-3 align-items-start m-0">
+        <div class="col-7 px-0">
+          <span
+            class="high-demand-tooltip__label"
+            [class.high-demand-tooltip__label--wrapped]="
+              metric.key === 'dyf_no'
+            "
+          >
+            <span class="high-demand-tooltip__label-text">
+              {{ metric.label }}
             </span>
-          }
-        </span>
 
-        <strong>
-          {{ metric.value | localeNumber: '1.0-0' }}
-        </strong>
+            @if (metric.highDemand) {
+              <span
+                class="material-icons high-demand-tooltip__flame"
+                aria-hidden="true"
+              >
+                local_fire_department
+              </span>
+            }
+          </span>
+        </div>
+
+        <div
+          class="col-5 px-0 text-end"
+          [class.align-self-center]="metric.key === 'dyf_no'"
+        >
+          <strong class="d-block text-nowrap">
+            {{ metric.value | localeNumber: '1.0-0' }}
+          </strong>
+        </div>
       </div>
     }
   </div>
@@ -65,7 +75,7 @@
         ></div>
 
         <div
-          class="health-action-pill px-3 py-1 rounded-1 text-white"
+          class="health-action-pill d-inline-flex align-items-center justify-content-center px-3 rounded-3 text-white"
           [ngClass]="healthTier()"
         >
           {{ healthNote() }}
