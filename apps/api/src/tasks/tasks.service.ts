@@ -158,8 +158,9 @@ export class TasksService {
     tasks: ViewTaskType[],
   ) {
     const total_tasks = tasks.length;
+
     const perf_total_tasks = tasks.filter(
-      (task) => !!task.performance_score,
+      ({ performance_score, historical_average }) => performance_score >= 0 && historical_average >= 0,
     ).length;
 
     const highDemandStats = getHighDemandMetricStats(tasks);
@@ -177,12 +178,19 @@ export class TasksService {
     const tmfTaskMap = new Map(
       tasks
         .toSorted((a, b) => {
-          const scoreDiff =
-            (b.performance_score ?? 0) - (a.performance_score ?? 0);
+          const aScored =
+            a.performance_score != null && a.historical_average != null;
+          const bScored =
+            b.performance_score != null && b.historical_average != null;
 
-          if (scoreDiff !== 0) {
-            return scoreDiff;
-          }
+          // unscored tasks always sort after scored tasks
+          if (aScored !== bScored) return aScored ? -1 : 1;
+
+          if (!aScored) return a.tmf_rank - b.tmf_rank;
+
+          const scoreDiff = b.performance_score - a.performance_score;
+
+          if (scoreDiff !== 0) return scoreDiff;
 
           return a.tmf_rank - b.tmf_rank;
         })
@@ -210,9 +218,11 @@ export class TasksService {
               survey_score: task.survey_score,
               overall_score: task.overall_score,
               tmf_rank: task.tmf_rank,
-              performance_score: task.performance_score || null,
-              perf_rank: task.performance_score ? index + 1 : null,
-
+              performance_score: task.performance_score ?? null,
+              perf_rank:
+                task.performance_score !== null
+                  ? index + 1
+                  : null,
               is_high_demand: high_demand_metrics.length > 0,
               high_demand_metrics,
             },

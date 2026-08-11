@@ -10,7 +10,7 @@ import type {
 } from 'ng-apexcharts';
 import { mergeDeepRight } from 'rambdax';
 import { EN_CA } from '@dua-upd/upd/i18n';
-import { round, sum } from '@dua-upd/utils-common';
+import { round } from '@dua-upd/utils-common';
 import { createBaseConfig } from '../apex-base/apex.config.base';
 import { getTooltipHtml } from '../apex-bar-line/apex.store';
 
@@ -49,19 +49,42 @@ export class ApexStore extends ComponentStore<ChartOptions> {
     }),
   );
 
+  private getSeriesVisuals(series: ApexAxisChartSeries, isHorizontal: boolean) {
+    const maxSeriesLength = Math.max(
+      0,
+      ...series.map((item) => item.data?.length ?? 0),
+    );
+
+    const shouldUseLine = !isHorizontal && maxSeriesLength >= 23;
+
+    return {
+      chartType: shouldUseLine ? ('line' as const) : ('bar' as const),
+
+      stroke: shouldUseLine
+        ? {
+            show: true,
+            width: [3, 3, 3, 3],
+            curve: 'smooth' as const,
+          }
+        : undefined,
+
+      fill: {
+        opacity: shouldUseLine ? [1, 0.8] : 1,
+      },
+    };
+  }
+
   readonly setSeries = this.updater(
     (state, value: ApexAxisChartSeries): ChartOptions => {
-      const maxSeriesLength = Math.max(
-        ...(value ?? []).map((series) => series.data?.length ?? 0),
-      );
+      const series = value ?? [];
+      const isHorizontal = state.added?.isHorizontal ?? false;
 
-      const shouldUseLine = maxSeriesLength >= 23;
+      const visuals = this.getSeriesVisuals(series, isHorizontal);
+
       const showStatsAnnotations = state.added?.showStatsAnnotations ?? false;
-      0;
-      const isPercent = state.added?.isPercent ?? false;
 
       const statsAnnotations = this.getStatsAnnotations(
-        value ?? [],
+        series,
         state.xaxis?.categories as string[] | string[][],
       );
 
@@ -69,15 +92,11 @@ export class ApexStore extends ComponentStore<ChartOptions> {
         ...state,
         chart: {
           ...state.chart,
-          type: shouldUseLine ? 'line' : 'bar',
+          type: visuals.chartType,
         },
-        series: value ?? [],
-        stroke: shouldUseLine
-          ? { width: [3, 3, 3, 3], curve: 'smooth' }
-          : undefined,
-        fill: {
-          opacity: shouldUseLine ? [1, 0.8] : 1,
-        },
+        series,
+        stroke: visuals.stroke,
+        fill: visuals.fill,
         annotations: {
           ...state.annotations,
           points: showStatsAnnotations ? statsAnnotations.points : [],
@@ -90,20 +109,34 @@ export class ApexStore extends ComponentStore<ChartOptions> {
   readonly setHorizontal = this.updater(
     (
       state,
-      value: { isHorizontal: boolean; colorDistributed: boolean },
+      value: {
+        isHorizontal: boolean;
+        colorDistributed: boolean;
+      },
     ): ChartOptions => {
+      const isHorizontal = value?.isHorizontal ?? false;
+      const series = (state.series ?? []) as ApexAxisChartSeries;
+
+      const visuals = this.getSeriesVisuals(series, isHorizontal);
+
       return {
         ...state,
         added: {
           ...state.added,
-          isHorizontal: value?.isHorizontal,
+          isHorizontal,
         },
+        chart: {
+          ...state.chart,
+          type: visuals.chartType,
+        },
+        stroke: visuals.stroke,
+        fill: visuals.fill,
         plotOptions: {
           ...state.plotOptions,
           bar: {
             ...state.plotOptions?.bar,
             distributed: value?.colorDistributed,
-            horizontal: value?.isHorizontal,
+            horizontal: isHorizontal,
           },
         },
       };
@@ -448,28 +481,28 @@ export class ApexStore extends ComponentStore<ChartOptions> {
 
   readonly vm$ = this.select(this.state$, (state) => state);
 
-  readonly hasData$ = this.select(
-    this.vm$,
-    (state) =>
-      sum(
-        (
-          state?.series
-            ?.flat()
-            .filter(
-              (series) =>
-                typeof series === 'object' &&
-                'data' in series &&
-                series.data.length,
-            ) as { data: number[] }[] | { data: { y: number }[] }[]
-        ).flatMap((series) => {
-          if (typeof series.data[0] === 'number' || series.data[0] === null) {
-            return series.data as number[];
-          }
+  readonly hasData$ = this.select(this.vm$, (state) => {
+    const values = ((
+      state?.series
+        ?.flat()
+        .filter(
+          (series) =>
+            typeof series === 'object' &&
+            'data' in series &&
+            series.data.length,
+        ) as { data: number[] }[] | { data: { y: number }[] }[]
+    ).flatMap((series) => {
+      if (typeof series.data[0] === 'number' || series.data[0] === null) {
+        return series.data as number[];
+      }
 
-          return (series.data as { y: number }[]).map((data) => data.y);
-        }),
-      ) > 0,
-  );
+      return (series.data as { y: number }[]).map((data) => data.y);
+    }) ?? []) as Array<number | null | undefined>;
+
+    return values.some(
+      (value) => typeof value === 'number' && Number.isFinite(value),
+    );
+  });
 
   readonly getStatsAnnotations = (
     series: ApexAxisChartSeries,
