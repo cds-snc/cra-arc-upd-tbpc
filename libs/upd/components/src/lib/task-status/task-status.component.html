@@ -219,7 +219,7 @@
               <div class="score-chart">
                 <upd-apex-score
                   [title]="'task-status-performance-score' | translate"
-                  [score]="ps()"
+                  [score]="ps()!"
                   [ranges]="relativeRanges()"
                 ></upd-apex-score>
               </div>
@@ -471,15 +471,12 @@
       <div class="row g-4 align-items-start">
         <div class="col-lg-8">
           <div class="unscored-title">
-            {{ 'task-status-performance-score-unavailable' | translate }}
+            {{ unscoredTitleKey() | translate }}
           </div>
 
           <p class="unscored-message">
             {{
-              (availableMetricCount() === 1
-                ? 'task-status-unscored-message-singular'
-                : 'task-status-unscored-message-plural'
-              )
+              unscoredMessageKey()
                 | translate
                   : {
                       count: availableMetricCount(),
@@ -507,7 +504,7 @@
                     class="score-metric-icon material-icons rounded-circle"
                     aria-hidden="true"
                   >
-                    {{ metric.included ? 'check_circle' : 'cancel' }}
+                    {{ metric.included ? 'check' : 'close' }}
                   </span>
 
                   <span>{{ metric.label }}</span>

@@ -144,7 +144,7 @@ export class TasksDetailsFacade {
   );
 
   individualScore$ = this.tasksDetailsData$.pipe(
-    map((data) => data?.historical_average || 0),
+    map((data) => data?.historical_average),
   );
 
   individualScoreDifference$ = this.tasksDetailsData$.pipe(
@@ -152,7 +152,7 @@ export class TasksDetailsFacade {
   );
 
   performanceScore$ = this.tasksDetailsData$.pipe(
-    map((data) => data?.performance_score || 0),
+    map((data) => data?.performance_score),
   );
 
   performanceScoreDifference$ = this.tasksDetailsData$.pipe(

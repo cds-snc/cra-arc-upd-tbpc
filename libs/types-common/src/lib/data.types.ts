@@ -392,7 +392,7 @@ export interface TasksHomeAggregatedData {
   seasonal_average_percent_change?: number | null;
   seasonal_average_difference?: number | null;
 
-  performance_score?: number | null;
+  performance_score?: number;
   performance_score_percent_change?: number | null;
   performance_score_difference?: number | null;
 }

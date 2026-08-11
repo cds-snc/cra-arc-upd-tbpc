@@ -274,8 +274,6 @@ export function getTaskStatus(
   if (
     rps == null ||
     hps == null ||
-    rps === 0 ||
-    hps === 0 ||
     Number.isNaN(rps) ||
     Number.isNaN(hps)
   ) {
