@@ -51,8 +51,8 @@ type ScoreMetric = {
   standalone: false,
 })
 export class TaskStatusComponent {
-  ps = input(0);
-  ha = input(0);
+  ps = input<number | null>(null);
+  ha = input<number | null>(null);
   sha = input(0);
   rpsChange = input(0);
   hpsChange = input(0);
@@ -70,11 +70,7 @@ export class TaskStatusComponent {
   highDemandMetrics = input<HighDemandMetric[]>([]);
 
   hasData = computed(() => {
-    return !!(
-      this.hasPerformanceScore() &&
-      this.ha() !== null &&
-      this.ha() !== 0
-    );
+    return !!(this.hasPerformanceScore() && this.hasHistoricalAverage());
   });
 
   private i18n = inject(I18nFacade);
@@ -296,7 +292,7 @@ export class TaskStatusComponent {
   }));
 
   performanceBand = computed<PerformanceBand>(() => {
-    const score = this.ps();
+    const score = this.ps()!;
 
     if (score >= 0.65) return 'great';
     if (score >= 0.5) return 'good';
@@ -306,7 +302,7 @@ export class TaskStatusComponent {
   });
 
   trendBand = computed<TrendBand>(() => {
-    const variance = this.ps() - this.ha();
+    const variance = this.ps()! - this.ha()!;
 
     if (variance > this.historicalVarianceThreshold) return 'higher';
     if (variance < -this.historicalVarianceThreshold) return 'lower';
@@ -321,10 +317,10 @@ export class TaskStatusComponent {
       return null;
     }
 
-    return this.ps() - sha;
+    return this.ps()! - sha;
   });
 
-  historicalVariance = computed(() => this.ps() - this.ha());
+  historicalVariance = computed(() => this.ps()! - this.ha()!);
 
   statusKey = computed(() => `${this.performanceBand()}-${this.trendBand()}`);
 
@@ -335,7 +331,7 @@ export class TaskStatusComponent {
   readonly healthLabel = computed(() => this.healthBadge());
 
   readonly healthTier = computed<Tier>(() => {
-    if (!this.hasPerformanceScore()) {
+    if (!this.hasData()) {
       return 'grey';
     }
 
@@ -417,11 +413,16 @@ export class TaskStatusComponent {
   hasPerformanceScore = computed(() => {
     const score = this.ps();
 
+    return typeof score === 'number' && Number.isFinite(score);
+  });
+
+  hasHistoricalAverage = computed(() => {
+    const historicalAverage = this.ha();
+
     return (
-      score !== null &&
-      typeof score === 'number' &&
-      Number.isFinite(score) &&
-      score !== 0
+      typeof historicalAverage === 'number' &&
+      Number.isFinite(historicalAverage) &&
+      historicalAverage >= 0
     );
   });
 
@@ -508,6 +509,30 @@ export class TaskStatusComponent {
   availableMetricCount = computed(
     () => this.scoreMetrics().filter((metric) => metric.included).length,
   );
+
+  readonly unscoredTitleKey = computed(() => {
+    if (this.hasHistoricalAverage() && this.availableMetricCount() < 2) {
+      return 'task-status-performance-score-unavailable';
+    }
+
+    return 'task-status-performance-score-pending';
+  });
+
+  readonly unscoredMessageKey = computed(() => {
+    const count = this.availableMetricCount();
+
+    if (count === 0) {
+      return 'task-status-unscored-message-zero';
+    }
+
+    if (!this.hasHistoricalAverage()) {
+      return 'task-status-unscored-message-no-historical-average';
+    }
+
+    return count === 1
+      ? 'task-status-unscored-message-singular'
+      : 'task-status-unscored-message-plural';
+  });
 
   getChangeClass(change: number): string {
     if (change > 0) return 'change-good';

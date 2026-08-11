@@ -921,9 +921,9 @@ export class TasksViewService extends DbViewNew<
       _id: string;
       title: string;
       tmf_ranking_index: number;
-      performance_score: number | null;
-      historical_average: number | null;
-      seasonal_average: number | null;
+      performance_score: number;
+      historical_average: number;
+      seasonal_average: number;
       individual_status: string;
       cops: boolean;
       wos_cops: boolean;
