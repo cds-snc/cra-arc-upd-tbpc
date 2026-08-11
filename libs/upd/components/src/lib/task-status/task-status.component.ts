@@ -511,27 +511,29 @@ export class TaskStatusComponent {
   );
 
   readonly unscoredTitleKey = computed(() => {
-    if (this.hasHistoricalAverage() && this.availableMetricCount() < 2) {
+    if (this.availableMetricCount() < 2) {
       return 'task-status-performance-score-unavailable';
     }
 
-    return 'task-status-performance-score-pending';
+    if (!this.hasHistoricalAverage()) {
+      return 'task-status-performance-score-pending';
+    }
+
+    return 'task-status-performance-score-unavailable';
   });
 
   readonly unscoredMessageKey = computed(() => {
     const count = this.availableMetricCount();
 
-    if (count === 0) {
-      return 'task-status-unscored-message-zero';
+    if (count < 2) {
+      return 'task-status-unscored-message-insufficient-sources';
     }
 
     if (!this.hasHistoricalAverage()) {
       return 'task-status-unscored-message-no-historical-average';
     }
 
-    return count === 1
-      ? 'task-status-unscored-message-singular'
-      : 'task-status-unscored-message-plural';
+    return 'task-status-unscored-message-insufficient-sources';
   });
 
   getChangeClass(change: number): string {
