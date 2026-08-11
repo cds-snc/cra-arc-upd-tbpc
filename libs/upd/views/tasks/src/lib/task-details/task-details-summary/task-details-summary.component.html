@@ -1,7 +1,7 @@
 <div class="container-fluid my-4 gx-0">
   <upd-task-status
-    [ps]="(performanceScore$ | async) || 0"
-    [ha]="(individualScore$ | async) || 0"
+    [ps]="(performanceScore$ | async) ?? null"
+    [ha]="(individualScore$ | async) ?? null"
     [sha]="(seasonalHistoricAverage$ | async) || 0"
     [rpsChange]="(performanceScoreDifference$ | async) || 0"
     [hpsChange]="(individualScoreDifference$ | async) || 0"

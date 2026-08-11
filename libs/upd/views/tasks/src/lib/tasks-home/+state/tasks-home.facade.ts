@@ -24,6 +24,7 @@ export class TasksHomeFacade {
         topic: row.topic || '',
         tasks_subtopic: row.subtopic || '',
         program: row.program || '',
+        performance_score: row.historical_average! >= 0 ? row.performance_score : null,
         user_type:
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
