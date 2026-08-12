@@ -51,38 +51,21 @@ export class TasksDetailsFacade {
 
   taskHeader$ = this.store.select(selectTasksDetailsDataWithI18n).pipe(
     map(([data, lang]) => {
-      const translateAndSortAudience = (
-        values?: string | string[],
-      ): { text: string; index: number }[] => {
-        if (!values) return [];
-        if (!Array.isArray(values))
-          return [
-            { text: this.i18n.service.translate(values, lang), index: 0 },
-          ];
-
-        return values
-          .map((val, i) => ({
-            text: this.i18n.service.translate(val, lang),
-            index: i,
-          }))
-          .sort((a, b) => a.text.localeCompare(b.text));
-      };
-
-      const translateAndSortService = (
-        values?: string | string[],
-      ): string[] => {
-        if (!values) return [];
-        if (!Array.isArray(values))
-          return [this.i18n.service.translate(values, lang)];
-
-        return values
-          .map((val) => this.i18n.service.translate(val, lang))
+      const translateAndSort = (values?: string | string[]) =>
+        (Array.isArray(values) ? values : values ? [values] : [])
+          .map((value) => this.i18n.service.translate(value, lang))
           .sort((a, b) => a.localeCompare(b));
-      };
+
+      const projects =
+        data?.projects?.map(({ _id, title }) => ({
+          _id,
+          title: this.i18n.service.translate(title, lang),
+        })) ?? [];
 
       return {
-        audience: translateAndSortAudience(data?.user_type),
-        service: translateAndSortService(data?.service),
+        audience: translateAndSort(data?.user_type),
+        service: translateAndSort(data?.service),
+        projects,
       };
     }),
   );
