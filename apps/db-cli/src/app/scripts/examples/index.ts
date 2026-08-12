@@ -20,7 +20,7 @@
  */
 
 import { UrlsService } from '@dua-upd/db-update';
-import { DbService } from '@dua-upd/db';
+import { DbService, Url } from '@dua-upd/db';
 import { logJson } from '@dua-upd/utils-common';
 import { RunScriptCommand } from '../../run-script.command';
 import { outputChart, outputTable } from '../utils/output';
@@ -40,6 +40,8 @@ import {
   AdobeAnalyticsClient as AdobeAnalyticsClientNew,
   createQuery,
 } from '@dua-upd/adobe-analytics';
+import { $Command } from '@aws-sdk/client-s3';
+import { setFlagsFromString } from 'v8';
 
 /*
  * Simplest example, finds one document in pages_metrics and logs it
@@ -483,4 +485,85 @@ export async function testAAClientNew() {
   );
 
   logJson(results);
+}
+
+// check all urls for archive
+export async function updateArchivedFieldForAllUrls() {
+  const db = (<RunScriptCommand>this).inject<DbService>(DbService);
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
+    UrlsService,
+  );
+
+  const overallStart = Date.now();
+
+  const myUrls = 
+    await db.collections.urls
+      .find({})
+    ;
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(myUrls);
+
+  const elapsedMs = Date.now() - overallStart;
+  const elapsedMinutes = Math.floor(elapsedMs / 60000);
+  const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
+
+  logJson({
+    status: 'completed',
+    totualUrls: myUrls.length,
+    elapsed: `${elapsedMinutes} m ${elapsedSeconds} s `,
+  });
+}
+
+// test one url to see if the "is_archive" field is being set correctly in urls and pages collections after processing the html and syncing data between the two collections
+export async function testUrlsArchived() {
+  const db = (<RunScriptCommand>this).inject<DbService>(DbService);
+  const urlsService = (<RunScriptCommand>this).inject<UrlsService>(
+    UrlsService,
+  );
+
+  const urlTest = "www.canada.ca/en/revenue-agency/services/tax/businesses/topics/business-registration/maintain-business/receivership-bankruptcy/bankruptcy.html"
+  const urlTest2 = "www.canada.ca/en/revenue-agency/services/forms-publications/forms/rc722.html"
+  const urlTest3 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2022/5000-g/new-brunswick-residents.html"
+  const urlTest4 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2017/non-residents/5013-g/general-guide-non-residents-step-5-federal-tax-provincial-territorial-credits.html"
+  const urlTest5 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2024.html"
+  const urlTest6 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2017/non-residents/5013-g/general-guide-non-residents-step-5-federal-tax-provincial-territorial-credits.html"
+  const urlTest7 = "www.canada.ca/en/revenue-agency/services/forms-publications/tax-packages-years/archived-general-income-tax-benefit-package-2023/yukon/5011-r.html"
+  const urlTest8 = "www.canada.ca/fr/agence-revenu/services/formulaires-publications/publications/it81r.html"
+  
+
+  const urlDb = await db.collections.urls
+    .find({
+      url: urlTest,
+    })
+    .exec();
+
+  logJson
+  logJson(urlDb);
+
+  const processHtml = await urlsService.checkAndUpdateUrlData(urlDb);
+
+  const urlsDb = await db.collections.urls.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("urlsDb: ");
+  logJson(urlsDb);
+
+  const pagesDb = await db.collections.pages.aggregate()
+    .match({
+      url: urlTest,
+    })
+    .project({
+      is_archive: 1,
+    })
+    .exec();
+
+  logJson("pagesDb: ");
+  logJson(pagesDb);
+
 }
