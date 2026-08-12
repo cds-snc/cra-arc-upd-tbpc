@@ -32,22 +32,16 @@ export class TaskDetailsComponent implements OnInit {
   currentRoute$ = this.taskDetailsService.currentRoute$;
 
   projects$ = this.taskDetailsService.projects$;
-    
+
   currentLang = this.i18n.currentLang;
   langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
   colours = globalColours;
   getOptimalTextColour = getOptimalTextcolour;
 
-  taskHeader = toSignal(this.taskDetailsService.taskHeader$);
-
-  audience = computed(() => {
-    return this.taskHeader()?.audience ?? [];
+  taskHeader = toSignal(this.taskDetailsService.taskHeader$, {
+    initialValue: null
   });
-  service = computed(() => {
-    return this.taskHeader()?.service ?? [];
-  });
-
   tmfRank = toSignal(this.taskDetailsService.tmfRank$);
   tmfTotalTasks = toSignal(this.taskDetailsService.tmfTotalTasks$);
 

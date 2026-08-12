@@ -166,9 +166,9 @@ export class TasksService {
     const highDemandStats = getHighDemandMetricStats(tasks);
 
     const highDemandThresholds: HighDemandThresholds = {
-      visits: highDemandStats.visits.p99,
-      calls: highDemandStats.calls.p99,
-      dyf_no: highDemandStats.dyf_no.p99,
+      visits: highDemandStats.visits.p90,
+      calls: highDemandStats.calls.p90,
+      dyf_no: highDemandStats.dyf_no.p90,
     };
 
     const isAboveThreshold = (value: number, threshold: number) => {
