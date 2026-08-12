@@ -446,10 +446,6 @@ margin: 0px 20px 0px 20px;
   margin-left: 30px;
 }
 
-.page_header span {
-  cursor: pointer !important;
-}
-
 .flow-tooltip .tooltip-inner {
   min-width: 300px;
   text-align: left;
