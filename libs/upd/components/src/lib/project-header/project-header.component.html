@@ -1,44 +1,70 @@
-@if (data.length > 0 || service().length > 0) {
-  <div class="page_header mt-2">
-    @if (data.length > 0) {
-      <span id="page_project">
-        <!-- <span class="material-icons align-top px-1">folder</span> -->
-        <span class="align-top px-1">
-          <strong>
-            {{ (data.length > 1 ? 'Projects' : 'Project') | translate }}:
-          </strong>
+@if (data(); as header) {
+  @if (
+    header.projects.length > 0 ||
+    header.service.length > 0 ||
+    header.audience.length > 0
+  ) {
+    <div class="page_header mt-2">
+      @if (header.service.length > 0) {
+        <span class="d-block m-0 p-0">
+          <span class="align-top px-1">
+            <strong>
+              {{
+                (header.service.length > 1 ? 'Services' : 'Service')
+                  | translate
+              }}:
+            </strong>
+          </span>
+
+          {{ header.service.join(', ') }}
         </span>
-        @for (d of data; track d; let i = $index) {
-          @if (config.typeParams) {
-            <a
-              [routerLink]="[
-                config.typeParams.preLink,
-                d[config.typeParams.link],
-              ]"
-              [queryParamsHandling]="'merge'"
-              >{{ d[config.field] }}</a
-            >
-          }
-          @if (!(i === data.length - 1)) {
-            ,&NonBreakingSpace;
-          }
-        }
-      </span>
-    }
-    @if (service().length > 0) {
-      <span id="page_project" class="d-block m-0 p-0">
-        <span class="align-top px-1">
-          <strong>
-            {{ (service().length > 1 ? 'Services' : 'Service') | translate }}:
-          </strong>
+      }
+
+      @if (header.audience.length > 0) {
+        <span class="d-block m-0 p-0">
+          <span class="align-top px-1">
+            <strong>
+              {{
+                (header.audience.length > 1 ? 'Audiences' : 'Audience')
+                  | translate
+              }}:
+            </strong>
+          </span>
+
+          {{ header.audience.join(', ') }}
         </span>
-        @for (s of service(); track s; let i = $index) {
-          {{ s }}
-          @if (!(i === service().length - 1)) {
-            ,&NonBreakingSpace;
+      }
+
+      @if (header.projects.length > 0) {
+        <span class="d-block m-0 mb-3 p-0">
+          <span class="align-top px-1">
+            <strong>
+              {{
+                (header.projects.length > 1 ? 'Projects' : 'Project')
+                  | translate
+              }}:
+            </strong>
+          </span>
+
+          @for (project of header.projects; track project['_id']; let last = $last) {
+            @if (config().typeParams; as params) {
+              <a
+                [routerLink]="[
+                  params.preLink,
+                  project[params.link],
+                ]"
+                queryParamsHandling="merge"
+              >
+                {{ project[config().field] }}
+              </a>
+            }
+
+            @if (!last) {
+              ,&NonBreakingSpace;
+            }
           }
-        }
-      </span>
-    }
-  </div>
+        </span>
+      }
+    </div>
+  }
 }

@@ -81,7 +81,7 @@
     <div class="col">
       <upd-card [title]="'Key Performance Indicators'">
         <div class="row">
-          <div class="col-lg-3 col-md-6 col-sm-12">
+          <div class="col-lg-4 col-md-6 col-sm-12">
             <upd-apex-spark-line
               [title]="'kpi-calls-per-100-title'"
               [titleTooltip]="'kpi-calls-per-100-tooltip-project'"
@@ -94,7 +94,8 @@
               modal=" {{ 'kpi-calls-per-100-guidance-project' | translate }}"
             ></upd-apex-spark-line>
           </div>
-          <div class="col-lg-3 col-md-6 col-sm-12">
+
+          <div class="col-lg-4 col-md-6 col-sm-12">
             <upd-apex-spark-line
               [title]="'kpi-feedback-per-1000-title'"
               [titleTooltip]="'kpi-feedback-per-1000-tooltip-project'"
@@ -110,23 +111,29 @@
               [keyword]="'feedback'"
             ></upd-apex-spark-line>
           </div>
-          <div class="col-lg-3 col-md-6 col-sm-12">
-            <upd-data-card
-              [current]="visits$ | async"
-              [comparison]="visitsPercentChange$ | async"
-              [title]="'Total visits from all pages'"
-            ></upd-data-card>
-          </div>
-          <div class="col-lg-3 col-md-6 col-sm-12">
-            <upd-data-card
-              [current]="totalCalldriver$ | async"
-              [comparison]="totalCalldriverPercentChange$ | async"
-              [title]="'Call volume'"
-              [displayKpis]="false"
-              [kpiObjectiveCriteria]="callVolumeObjectiveCriteria"
-              [kpiStylesConfig]="callVolumeKpiConfig"
-              [comparisonMode]="'upBadDownGood'"
-            ></upd-data-card>
+
+          <div class="col-lg-4 col-md-12 col-sm-12">
+            <div class="row">
+              <div class="col-12">
+                <upd-data-card
+                  [current]="visits$ | async"
+                  [comparison]="visitsPercentChange$ | async"
+                  [title]="'Total visits from all pages'"
+                ></upd-data-card>
+              </div>
+
+              <div class="col-12 mt-3">
+                <upd-data-card
+                  [current]="totalCalldriver$ | async"
+                  [comparison]="totalCalldriverPercentChange$ | async"
+                  [title]="'Call volume'"
+                  [displayKpis]="false"
+                  [kpiObjectiveCriteria]="callVolumeObjectiveCriteria"
+                  [kpiStylesConfig]="callVolumeKpiConfig"
+                  [comparisonMode]="'upBadDownGood'"
+                ></upd-data-card>
+              </div>
+            </div>
           </div>
         </div>
       </upd-card>

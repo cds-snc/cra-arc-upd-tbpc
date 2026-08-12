@@ -1,4 +1,7 @@
 .task-rank-strip {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.75rem;
+
   &__top {
     background: #fff3e0;
     color: #9a5b00;
@@ -19,7 +22,7 @@
 
   &__metric-demand {
     display: inline-block;
-    margin-inline-start: -0.10rem;
+    margin-inline-start: -0.1rem;
     color: #f04438;
     vertical-align: -0.16em;
     font-size: 0.9rem;
