@@ -2182,7 +2182,7 @@
   "zone-map-seasonal-average-description": "Consultez la <strong>moyenne saisonnière</strong> pour comprendre ce qui est habituellement normal pour cette tâche pendant la même période des années précédentes.",
 
   "zone-map-high-impact": "Tâche à fort impact",
-  "zone-map-high-impact-description": "Nous désignons les tâches comme étant à incidence élevée lorsque leur nombre de visites, d’appels ou de commentaires négatifs dépasse le 99e percentile (P99), ce qui signifie qu’elles se classent parmi les 1 % de tâches les plus élevées pour cette mesure. Une tâche peut atteindre ce seuil pour une ou plusieurs mesures, ou ne pas l’atteindre du tout.",
+  "zone-map-high-impact-description": "Nous désignons les tâches comme étant à incidence élevée lorsque leur nombre de visites, d’appels ou de commentaires négatifs dépasse le 90e percentile (P90), ce qui signifie qu’elles se classent parmi les 10 % de tâches les plus élevées pour cette mesure. Une tâche peut atteindre ce seuil pour une ou plusieurs mesures, ou ne pas l’atteindre du tout.",
 
   "zone-map-additional-tips": "Conseils supplémentaires",
   "zone-map-tip-other-tasks-title": "Quel est le rendement de cette tâche comparativement aux autres tâches?",
