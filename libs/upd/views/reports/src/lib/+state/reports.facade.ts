@@ -77,8 +77,8 @@ export class ReportsFacade {
           cops: !!project.cops,
           wos_cops: !!project.wos_cops,
           projectTypeLabel: [
-            ...(project.cops ? ['COPS'] : []),
-            ...(project.wos_cops ? ['WOS_COPS'] : []),
+            ...(project.cops ? ['COPS'] as const : []),
+            ...(project.wos_cops ? ['WOS_COPS'] as const : []),
           ],    
           filename: attachment.filename,
           url: attachment.storage_url,
@@ -102,24 +102,6 @@ export class ReportsFacade {
           type: 'link',
           typeParams: { link: 'url', external: true },
         },
-        // {
-        //   field: 'cops',
-        //   header: this.i18n.service.translate('type', lang),
-        //   type: 'label',
-        //   typeParam: 'cops',
-        //   filterConfig: {
-        //     type: 'boolean',
-        //   },
-        // },
-        // {
-        //   field: 'wos_cops',
-        //   header: this.i18n.service.translate('type', lang),
-        //   type: 'label',
-        //   typeParam: 'wos_cops',
-        //   filterConfig: {
-        //     type: 'boolean',
-        //   },
-        // },
         {
           field: 'projectTypeLabel',
           header: this.i18n.service.translate('type', lang),
