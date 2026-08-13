@@ -7,7 +7,7 @@ import * as FileSaver from 'file-saver';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { DropdownOption } from '../dropdown/dropdown.component';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { PageStatus, ArchiveStatus, ProjectStatus, TaskStatus, PageArchiveStatus } from '@dua-upd/types-common';
+import { PageStatus, ArchivedStatus, ProjectStatus, TaskStatus } from '@dua-upd/types-common';
 
 @Component({
     selector: 'upd-data-table-exports',
@@ -58,48 +58,6 @@ export class DataTableExportsComponent<T> {
 
   async getFormattedExportData(replaceKeysWithHeaders = false) {
     const currentLang = this.i18n.service.currentLang;
-    const cops = this.i18n.service.translate('COPS', currentLang);
-    const wos_cops = this.i18n.service.translate('WOS_COPS', currentLang);
-
-    const projectStatusKeys: ProjectStatus[] = [
-      'Unknown',
-      'Complete',
-      'Delayed',
-      'Paused',
-      'Exploratory',
-      'Monitoring',
-      'In Progress',
-      'Needs review',
-      'Planning',
-    ];
-
-    const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected'];
-
-    const taskStatusKeys: TaskStatus[] = ['Stable', 'Watch', 'Action required', 'Unscored'];
-
-    const archiveStatusKeys: ArchiveStatus[] = ['Archived', 'Not archived'];
-
-    const pageArchiveStatusKeys: PageArchiveStatus[] = [...pageStatusKeys, ...archiveStatusKeys];
-
-    const projectStatuses = (await this.i18n.service.get(
-      projectStatusKeys,
-    )) as Record<string, string>;
-
-    const pageStatuses = (await this.i18n.service.get(
-      pageStatusKeys,
-    )) as Record<string, string>;
-
-    const taskStatuses = (await this.i18n.service.get(
-      taskStatusKeys,
-    )) as Record<string, string>;
-
-    const archiveStatuses = (await this.i18n.service.get (
-      archiveStatusKeys,
-    )) as Record<string, string>;
-
-    const pageArchiveStatuses = (await this.i18n.service.get (
-      pageArchiveStatusKeys,
-    )) as Record<string, string>;
 
     return this.data.map((row) =>
       this.cols.reduce(
@@ -138,21 +96,13 @@ export class DataTableExportsComponent<T> {
               currentLang,
               'UTC',
             );
-          } else if (col.typeParam === 'cops') {
-            formattedRow[colKey] = cellValue ? cops : '';
-          } else if (col.typeParam === 'wos_cops') {
-            formattedRow[colKey] = cellValue ? wos_cops : ''; 
-          } else if (col.filterConfig?.type === 'pageStatus') {
-            formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
-          } else if (col.filterConfig?.type === 'taskStatus') {
-            formattedRow[colKey] = taskStatuses[(<unknown>cellValue) as string];
-          } else if (col.filterConfig?.type === 'archiveStatus') {
-            formattedRow[colKey] = archiveStatuses[(<unknown>cellValue) as string];
-          } else if (col.filterConfig?.type === 'pageArchiveStatus') {
-            formattedRow[colKey] = pageArchiveStatuses[(<unknown>cellValue) as string];
-          } else if (col.type === 'label') {
+          } else if (col.type === 'label' && Array.isArray(cellValue)) {
             formattedRow[colKey] =
-              projectStatuses[(<unknown>cellValue) as string];
+              cellValue
+                .map((value) => this.i18n.service.translate(value, currentLang))
+                .join(', ') || '';
+          } else if (col.type === 'label') {
+            formattedRow[colKey] = this.i18n.service.translate(cellValue as string, currentLang);
           } else {
             formattedRow[colKey] = (<unknown>cellValue) as string;
           }

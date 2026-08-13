@@ -5,12 +5,12 @@
 <upd-card [title]="'List of all pages'" titleSize="h5" [ngClass]="'pages-home'">
   <upd-data-table
     id="pages-home-"
-    [data]="(pagesHomeData$ | async) || []"
-    [cols]="(columns | async) || []"
+    [data]="pagesHomeData() || []"
+    [cols]="columns() || []"
     [displayRows]="25"
-    [loading]="(loading$ | async) || false"
+    [loading]="loading() || false"
     placeholderText="dt_search_keyword_url"
-    [searchFields]="(searchFields | async) || []"
+    [searchFields]="searchFields() || []"
   >
   </upd-data-table>
 </upd-card> 

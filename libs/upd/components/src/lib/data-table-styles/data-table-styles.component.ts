@@ -1,9 +1,8 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
-import type { ColumnConfig, TaskStatus } from '@dua-upd/types-common';
+import { Component, computed, inject, input } from '@angular/core';
 import { formatPercent, formatNumber, formatDate } from '@angular/common';
-import { PageStatus, ProjectStatus, ArchiveStatus, PageArchiveStatus } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
+import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Component({
   selector: 'upd-data-table-styles',
@@ -11,72 +10,36 @@ import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
   styleUrls: ['./data-table-styles.component.scss'],
   standalone: false,
 })
-export class DataTableStylesComponent implements OnInit {
-[x: string]: any;
+export class DataTableStylesComponent<
+  T extends Record<string, unknown>,
+  ColName extends keyof T,
+  ColT extends T[ColName] = T[ColName],
+> {
   private secondsToMinutesPipe = inject(SecondsToMinutesPipe);
   public i18n = inject(I18nFacade);
 
-  @Input() config: ColumnConfig = { field: '', header: '' };
-  @Input() data: Record<string, number | string> = {};
+  colConfig = input.required<ColumnConfig<T>>({ alias: 'config' });
+  data = input.required<T>();
+  fieldData = computed(() => this.data()[this.colConfig().field]);
 
-  array: string[] = [];
-  labelType?: 'project' | 'page' | 'task' | 'archive' | 'pageArchive';
-  numberVal: number | string = 0;
+  numberVal = computed<number | string>(() => {
+    const data = this.fieldData();
 
-  ngOnInit() {
-    const data = this.data[this.config.field] as number;
-
-    if (!data) return;
-
-    if (this.config.pipe) {
-      this.numberVal = this.applyPipe(data);
+    if (this.colConfig().pipe && typeof data === 'number') {
+      return this.applyPipe(data);
     }
 
-    if (this.config.type === 'label') {
-      if (this.config.typeParam === 'status') {
-        this.labelType = 'project';
-      } else if (this.config.typeParam === 'pageStatus') {
-        this.labelType = 'page';
-      } else if (this.config.typeParam === 'archiveStatus') {
-        this.labelType = 'archive';
-      } else if (this.config.typeParam == 'pageArchiveStatus') {
-        this.labelType = 'pageArchive';
-      }
-    }
-  }
+    return data;
+  });
 
-  isArray<T>(obj: T) {
-    if (Array.isArray(obj)) {
-      this.array = obj;
-      return true;
-    }
-    return false;
-  }
-
-  get projectStatus(): ProjectStatus {
-    return this.data[this.config.field] as ProjectStatus;
-  }
-
-  get pageStatus(): PageStatus {
-    return this.data[this.config.field] as PageStatus;
-  }
-
-  get taskStatus(): TaskStatus {
-    return this.data[this.config.field] as TaskStatus;
-  }
-
-  get archiveStatus(): ArchiveStatus {
-    return this.data[this.config.field] as ArchiveStatus;
-  }
-
-  get pageArchiveStatus(): PageArchiveStatus[] {
-    return this.data[this.config.field] as unknown as PageArchiveStatus[];
+  isArray<T>(obj: T): obj is T & string[] {
+    return Array.isArray(obj);
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {
     if (!showColour) return;
 
-    const value = this.data[field] as number;
+    const value = this.data()[field] as number;
 
     if (upGoodDownBad) {
       return {
@@ -92,7 +55,7 @@ export class DataTableStylesComponent implements OnInit {
   }
 
   getIndicator(field: string, arrows = true) {
-    const value = this.data[field] as number;
+    const value = this.data()[field] as number;
     if (arrows) return this.getArrow(value);
     return this.getSignedNumbers(value);
   }
@@ -123,7 +86,7 @@ export class DataTableStylesComponent implements OnInit {
     pipeParam = '',
     abs = true,
   ): string {
-    const value = this.data[field] as number;
+    const value = this.data()[field] as number;
     const sign = abs && value !== 0 ? (value < 0 ? '-' : '+') : '';
     const absValue = Math.abs(value);
     const formattedValue = this.applyPipe(absValue, pipe, pipeParam);
@@ -131,8 +94,8 @@ export class DataTableStylesComponent implements OnInit {
   }
 
   applyPipe(data: number, pipe = '', pipeParam = ''): string | number {
-    const effectivePipe = pipe || this.config.pipe;
-    const effectivePipeParam = pipeParam || this.config.pipeParam;
+    const effectivePipe = pipe || this.colConfig().pipe;
+    const effectivePipeParam = pipeParam || this.colConfig().pipeParam;
     switch (effectivePipe) {
       case 'number':
         return formatNumber(data, this.currentLang, effectivePipeParam) || '';
@@ -158,7 +121,11 @@ export class DataTableStylesComponent implements OnInit {
     return this.i18n.service.currentLang;
   }
 
-  ensureLinkFormat(link: string | number) {
+  ensureLinkFormat(link: string | number | string[]) {
+    if (Array.isArray(link)) {
+      throw new Error('Link should not be an array');
+    }
+
     if (
       typeof link !== 'string' ||
       link.startsWith('https://') ||
@@ -168,9 +135,5 @@ export class DataTableStylesComponent implements OnInit {
     }
 
     return link.replace(/^(?!https:\/\/)/, 'https://');
-  }
-
-  trackByLinkId(index: number, item: { _id: string }): string {
-    return item._id || index.toString();
   }
 }

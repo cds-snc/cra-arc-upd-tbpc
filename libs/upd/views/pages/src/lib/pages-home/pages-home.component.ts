@@ -1,98 +1,76 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { map } from 'rxjs';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { PagesHomeAggregatedData } from '@dua-upd/types-common';
-import { createCategoryConfig } from '@dua-upd/upd/utils';
+import { createCategoryConfig, type UnwrapSignal } from '@dua-upd/upd/utils';
 import { PagesHomeFacade } from './+state/pages-home.facade';
 
 @Component({
-    selector: 'upd-pages-home',
-    templateUrl: './pages-home.component.html',
-    styleUrls: ['./pages-home.component.css'],
-    standalone: false
+  selector: 'upd-pages-home',
+  templateUrl: './pages-home.component.html',
+  styleUrls: ['./pages-home.component.css'],
+  standalone: false,
 })
 export class PagesHomeComponent implements OnInit {
   private pagesHomeService = inject(PagesHomeFacade);
   private i18n = inject(I18nFacade);
 
-  pagesHomeData$ = this.pagesHomeService.pagesHomeTableData$;
-  loading$ = this.pagesHomeService.loading$;
+  pagesHomeData = this.pagesHomeService.pagesHomeTableData;
+  loading = this.pagesHomeService.loading;
 
-  currentLang$ = this.i18n.currentLang$;
+  columns = computed<ColumnConfig<UnwrapSignal<typeof this.pagesHomeData>>[]>(
+    () => {
+      this.i18n.currentLang(); // trigger re-evaluation when language changes
 
-  columns = this.pagesHomeData$.pipe(
-    map(
-      (data) =>
-        [
-          {
-            field: 'title',
-            header: 'Title',
-            type: 'link',
-            typeParam: '_id',
+      return [
+        {
+          field: 'title',
+          header: 'Title',
+          type: 'link',
+          typeParam: '_id',
+        },
+        {
+          field: 'pageArchiveStatusLabel',
+          header: 'Current page status',
+          type: 'label',
+          typeParam: 'pageArchive',
+          filterConfig: {
+            type: 'category',
+            categories: [
+              { name: '404', value: '404' },
+              {
+                name: this.i18n.service.instant('Redirected'),
+                value: 'Redirected',
+              },
+              { name: this.i18n.service.instant('Live'), value: 'Live' },
+              {
+                name: this.i18n.service.instant('Archived'),
+                value: 'Archived',
+              },
+            ],
+            matchMode: 'arrayContains',
           },
-          // {
-          //   field: 'pageStatus',
-          //   header: 'Current status',
-          //   type: 'label',
-          //   typeParam: 'pageStatus',
-          //   filterConfig: {
-          //     type: 'pageStatus',
-          //     categories: createCategoryConfig({
-          //       i18n: this.i18n.service,
-          //       data,
-          //       field: 'pageStatus',
-          //     }),
-          //   },
-          // },
-          // {
-          //   field: 'archiveStatus',
-          //   header: 'Archive status',
-          //   type: 'label',
-          //   typeParam: 'archiveStatus',
-          //   filterConfig: {
-          //     type: 'archiveStatus',
-          //     categories: createCategoryConfig({
-          //       i18n: this.i18n.service,
-          //       data,
-          //       field: 'archiveStatus',
-          //     }),
-          //   },
-          // },
-          {
-            field: 'pageArchiveStatusLabel',
-            header: 'Current page status',
-            type: 'label',
-            typeParam: 'pageArchive',
-            filterConfig: {
-              type: 'pageArchiveStatus',
-              categories: 
-                [
-                  { name: '404', value: '404' },
-                  { name: 'Redirected', value: 'Redirected' },
-                  { name: 'Live', value: 'Live' },
-                  { name: 'Archived', value: 'Archived' },
-                ],
-                matchMode: 'arrayContains'
-            },
-          },
-          {
-            field: 'url',
-            header: 'URL',
-            type: 'link',
-            typeParams: { link: 'url', external: true },
-          },
-          {
-            field: 'visits',
-            header: 'visits',
-            pipe: 'number',
-          },
-        ] as ColumnConfig<PagesHomeAggregatedData>[],
-    ),
+        },
+        {
+          field: 'url',
+          header: 'URL',
+          type: 'link',
+          typeParams: { link: 'url', external: true },
+        },
+        {
+          field: 'visits',
+          header: 'visits',
+          pipe: 'number',
+        },
+      ];
+    },
   );
 
-  searchFields = this.columns.pipe(
-    map((columns) => columns.map((col) => col.field)),
+  searchFields = computed(() =>
+    this.columns()
+      .map((col) => col.field)
+      .filter((field) => field !== 'visits'),
   );
 
   ngOnInit() {

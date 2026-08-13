@@ -1,3 +1,5 @@
+@let config = colConfig();
+
 <!-- Utility Template for Displaying Data -->
 <ng-template #displayData let-item="item">
   @if (config.center) {
@@ -16,87 +18,33 @@
       <ng-container
         [ngTemplateOutlet]="displayData"
         [ngTemplateOutletContext]="{
-          item: data[config.field],
+          item: fieldData(),
         }"
       ></ng-container>
     </a>
   }
 
   <!-- Status Labels -->
-  @if (labelType === 'project') {
-    <upd-project-status-label
-      [projectStatus]="projectStatus"
-    ></upd-project-status-label>
-  }
+  @if (config.type === 'label') {
+    @let colData = fieldData();
+    @let labels =
+      typeof colData === 'object' && 'length' in colData ? colData : [colData];
 
-  @if (labelType === 'page') {
-    <upd-project-status-label
-      [pageStatus]="pageStatus"
-    ></upd-project-status-label>
-  }
-  <upd-project-status-label
-    *ngIf="
-      labelType === 'archive'"
-    [archiveStatus]="archiveStatus"
-  ></upd-project-status-label>
+    @for (
+      label of labels;
+      track label;
+      let length = $count;
+      let first = $first
+    ) {
+      @if (label !== 'Not archived') {
+        @let marginClass = first ? '' : 'me-1';
 
-  <!-- COPS Type -->
-  @if (
-    config.type === 'label' && config.typeParam === 'cops' && data[config.field]
-  ) {
-    <upd-project-status-label
-      projectType="COPS"
-      class="d-inline-flex"
-    ></upd-project-status-label>
-  }
-
-  <!-- WOS COPS Type -->
-  @if (
-    config.type === 'label' &&
-    config.typeParam === 'wos_cops' &&
-    data[config.field]
-  ) {
-    <upd-project-status-label
-      projectType="WOS_COPS"
-      class="d-inline-flex"
-    ></upd-project-status-label>
-  }
-
-  <!-- Combined WOS/COPS Type -->
-  @if (config.type === 'label' && config.typeParam === 'projectType') {
-    @if (data['cops']) {
-      <upd-project-status-label
-        projectType="COPS"
-        class="d-inline-flex me-1"
-      ></upd-project-status-label>
-    }
-
-    @if (data['wos_cops']) {
-      <upd-project-status-label
-        projectType="WOS_COPS"
-        class="d-inline-flex"
-      ></upd-project-status-label>
-    }
-  }
-
-  <!-- Task Status -->
-  @if (config.type === 'label' && config.typeParam === 'taskStatus') {
-    <upd-project-status-label
-      [taskStatus]="taskStatus"
-    ></upd-project-status-label>
-  }
-
-  <!-- COMBINED PageStatus ArchiveStatus Type -->
-   @if (config.type === 'label' && config.typeParam === 'pageArchive') {
-    @for (status of pageArchiveStatus; track status) {
-      @if (status === 'Redirected' || status === '404' || status === 'Live' || status === 'Archived') {
         <upd-project-status-label
-          [pageArchiveStatus]="status"
-          class="d-inline-flex me-1"
-        >
-        </upd-project-status-label>
+          [labelValue]="labels"
+          [labelType]="config.typeParam"
+          class="d-inline-flex {{ marginClass }}"
+        ></upd-project-status-label>
       }
-      
     }
   }
 
@@ -104,20 +52,20 @@
   @if (
     config.type === 'text' &&
     config.typeParam === 'passFail' &&
-    data[config.field]
+    fieldData()
   ) {
     <span
       class="badge"
       [ngClass]="{
-        'bg-completed': data[config.field] === 'Pass',
-        'bg-delayed': data[config.field] === 'Fail',
+        'bg-completed': fieldData() === 'Pass',
+        'bg-delayed': fieldData() === 'Fail',
       }"
       translate
     >
       <ng-container
         [ngTemplateOutlet]="displayData"
         [ngTemplateOutletContext]="{
-          item: data[config.field],
+          item: fieldData(),
         }"
       ></ng-container>
     </span>
@@ -128,7 +76,7 @@
   <!-- External Links -->
   @switch (config.typeParams.external) {
     @case (true) {
-      @if (data[config.field]) {
+      @if (fieldData()) {
         <span class="material-icons material-icon-wysiwyg"> wysiwyg </span>
 
         <a
@@ -139,7 +87,7 @@
           <ng-container
             [ngTemplateOutlet]="displayData"
             [ngTemplateOutletContext]="{
-              item: data[config.field],
+              item: fieldData(),
             }"
           ></ng-container>
         </a>
@@ -160,13 +108,13 @@
         >
           @if (config.pipe === 'number') {
             {{
-              data[config.field] | number: config.pipeParam : i18n.currentLang()
+              fieldData() | number: config.pipeParam : i18n.currentLang()
             }}
           } @else {
             <ng-container
               [ngTemplateOutlet]="displayData"
               [ngTemplateOutletContext]="{
-                item: data[config.field],
+                item: fieldData(),
               }"
             ></ng-container>
           }
@@ -181,7 +129,7 @@
           <ng-container
             [ngTemplateOutlet]="displayData"
             [ngTemplateOutletContext]="{
-              item: data[config.field],
+              item: fieldData(),
             }"
           ></ng-container>
         </a>
@@ -193,7 +141,7 @@
 <!-- Comparison with Pipe -->
 @if (config.pipe && config.type === 'comparison') {
   <span [ngClass]="comparisonClassMap(config.field)">
-    {{ numberVal }}
+    {{ numberVal() }}
   </span>
 }
 
@@ -201,16 +149,16 @@
 @if (!config.type && !config.indicator) {
   @if (config.pipe === 'date') {
     {{
-      data[config.field] | date: config.pipeParam : 'UTC' : i18n.currentLang()
+      fieldData() | date: config.pipeParam : 'UTC' : i18n.currentLang()
     }}
   }
 
   @if (config.pipe === 'percent') {
-    {{ data[config.field] | percent: config.pipeParam : i18n.currentLang() }}
+    {{ fieldData() | percent: config.pipeParam : i18n.currentLang() }}
   }
 
   @if (config.pipe === 'number') {
-    {{ data[config.field] | number: config.pipeParam : i18n.currentLang() }}
+    {{ fieldData() | number: config.pipeParam : i18n.currentLang() }}
   }
 
   @if (
@@ -219,28 +167,28 @@
     config.pipe !== 'date' &&
     config.pipe !== 'percent'
   ) {
-    {{ numberVal }}
+    {{ numberVal() }}
   }
 }
 
 <!-- Array Data -->
-@if (isArray(data[config.field]) && config.typeParam !== 'projectType' && config.typeParam !== 'pageArchive') {
-  {{ array | translateArray | arrayToText }}
+@if (isArray(fieldData()) && config.type !== 'label') {
+  {{ fieldData() | translateArray | arrayToText }}
 }
 
 <!-- Default Data Display -->
-@if (!config.type && !config.pipe && !isArray(data[config.field])) {
+@if (!config.type && !config.pipe && !isArray(fieldData())) {
   <ng-container
     [ngTemplateOutlet]="displayData"
     [ngTemplateOutletContext]="{
-      item: data[config.field],
+      item: fieldData(),
     }"
   ></ng-container>
 }
 
 <!-- Indicator -->
-@if (config.indicator && data[config.field]) {
-  @if (!config.secondaryField || data[config.secondaryField.field]) {
+@if (config.indicator && fieldData()) {
+  @if (!config.secondaryField || data()[config.secondaryField.field]) {
     <span
       [ngClass]="
         comparisonClassMap(
@@ -259,7 +207,9 @@
       </span>
 
       <span>
-        {{ getValueIndicator(config.field, config.pipe, config.pipeParam, false) }}
+        {{
+          getValueIndicator(config.field, config.pipe, config.pipeParam, false)
+        }}
       </span>
     </span>
 
@@ -280,6 +230,6 @@
 <!-- Markdown Type -->
 @if (config.type === 'markdown') {
   <upd-markdown-renderer
-    [html]="$any(data[config.field])"
+    [html]="$any(fieldData())"
   ></upd-markdown-renderer>
 }

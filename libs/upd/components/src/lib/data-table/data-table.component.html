@@ -280,10 +280,7 @@
 
             <!-- Category/multiselect filtering -->
             @if (
-              col.filterConfig.type === 'category' ||
-              col.filterConfig.type === 'pageStatus'||
-              col.filterConfig.type === 'archiveStatus' ||
-              col.filterConfig.type === 'pageArchiveStatus'
+              col.filterConfig.type === 'category'
             ) {
               <p-columnFilter
                 [field]="col.field"

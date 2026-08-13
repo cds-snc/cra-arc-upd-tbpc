@@ -1,78 +1,62 @@
-import { Component, Input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import {
   ProjectStatus,
   PageStatus,
   ProjectType,
   TaskStatus,
-  ArchiveStatus,
-  PageArchiveStatus,
+  ArchivedStatus,
+  PassFailStatus,
+  LabelClassMapKey,
+  LabelType,
 } from '@dua-upd/types-common';
+import type { UnwrapSignal } from '@dua-upd/upd/utils';
+
+export type LabelClassMap<T extends LabelType> = {
+  [K in LabelClassMapKey<T>]: string;
+};
 
 @Component({
   selector: 'upd-project-status-label',
   template: `
-    @if (projectStatus) {
-      <span
-        class="badge {{ styleClass }}  {{
-          projectStatusClassMap[projectStatus]
-        }} d-block"
-        >{{ projectStatus | translate }}</span
-      >
-    }
-    @if (pageStatus) {
-      <span
-        class="badge w-100 {{ styleClass }}  {{
-          pageStatusClassMap[pageStatus]
-        }} d-block"
-        >{{ pageStatus | translate }}</span
-      >
-    }
-    @if (projectType) {
-      <span
-        class="badge {{ styleClass }} {{
-          projectTypeClassMap[projectType]
-        }} d-block"
-        >{{ projectType | translate }}</span
-      >
-    }
-    @if (taskStatus) {
-      <span
-        class="badge {{ styleClass }} {{
-          taskStatusClassMap[taskStatus]
-        }} d-block"
-        >{{ taskStatus | translate }}</span
-      >
-    }
-    @if (archiveStatus) {
-      <span
-        class="badge {{ styleClass }} {{
-          archiveStatusClassMap[archiveStatus]
-        }} d-block"
-        >{{ archiveStatus | translate }}</span
-      >
-    }
-    @if (pageArchiveStatus) {
-      <span
-        class="badge {{ styleClass }} {{
-          pageArchiveStatusClassMap[pageArchiveStatus]
-        }} d-block"
-        >{{ pageArchiveStatus | translate }}</span
-      >
-    }
+    <span
+      [class.w-100]="labelType() === 'pageStatus'"
+      class="badge {{ styleClass() }} {{
+        labelClass() || 'bg-unknown'
+      }} d-block"
+      >{{ labelValue() | translate }}</span
+    >
   `,
   styleUrls: ['./project-status-label.component.scss'],
   standalone: false,
 })
-export class ProjectStatusLabelComponent {
-  @Input() projectStatus: ProjectStatus | null = null;
-  @Input() pageStatus: PageStatus | null = null;
-  @Input() projectType: ProjectType | null = null;
-  @Input() taskStatus: TaskStatus | null = null;
-  @Input() archiveStatus: ArchiveStatus | null = null;
-  @Input() styleClass: string | null = null;
-  @Input() pageArchiveStatus: PageArchiveStatus | null = null;
+export class ProjectStatusLabelComponent<const T extends LabelType> {
+  labelType = input.required<T>();
+  labelValue = input.required<LabelClassMapKey<T>>();
 
-  projectStatusClassMap: Record<ProjectStatus, string> = {
+  styleClass = input<string | null>(null);
+
+  classMap = computed<LabelClassMap<T>>(() => {
+    switch (this.labelType()) {
+      case 'projectStatus':
+        return this.projectStatusClassMap as LabelClassMap<T>;
+      case 'pageStatus':
+        return this.pageStatusClassMap as LabelClassMap<T>;
+      case 'projectType':
+        return this.projectTypeClassMap as LabelClassMap<T>;
+      case 'taskStatus':
+        return this.taskStatusClassMap as LabelClassMap<T>;
+      case 'archivedStatus':
+        return this.archiveStatusClassMap as LabelClassMap<T>;
+      case 'passFail':
+        return this.passFailClassMap as LabelClassMap<T>;
+      default:
+        throw new Error(`Invalid labelType: ${this.labelType()}`);
+    }
+  });
+
+  labelClass = computed(() => this.classMap()[this.labelValue()]);
+
+  projectStatusClassMap: LabelClassMap<'projectStatus'> = {
     Unknown: 'bg-unknown',
     Planning: 'bg-planning',
     'In Progress': 'bg-in-progress',
@@ -84,34 +68,51 @@ export class ProjectStatusLabelComponent {
     Paused: 'bg-paused',
   };
 
-  pageStatusClassMap: Record<PageStatus, string> = {
+  pageStatusClassMap: LabelClassMap<'pageStatus'> = {
     Live: 'bg-complete',
     '404': 'bg-404',
     Redirected: 'bg-redirect',
   };
 
-  projectTypeClassMap: Record<ProjectType, string> = {
+  projectTypeClassMap: LabelClassMap<'projectType'> = {
     COPS: 'bg-primary',
     WOS_COPS: 'bg-info',
   };
 
-  taskStatusClassMap: Record<TaskStatus, string> = {
+  taskStatusClassMap: LabelClassMap<'taskStatus'> = {
     Stable: 'bg-healthy',
     Watch: 'bg-watch',
     'Action required': 'bg-needs-action',
-    "Unscored": 'bg-unscored',
+    Unscored: 'bg-unscored',
   };
 
-  archiveStatusClassMap: Record<ArchiveStatus, string> = {
+  archiveStatusClassMap: LabelClassMap<'archivedStatus'> = {
     Archived: 'bg-archive',
     'Not archived': 'bg-primary',
   };
 
-  pageArchiveStatusClassMap: Record<PageArchiveStatus, string> = {
-    Live: 'bg-complete',
-    '404': 'bg-404',
-    Redirected: 'bg-redirect',
-    Archived: 'bg-archive',
-    'Not archived': 'bg-primary',
+  passFailClassMap: LabelClassMap<'passFail'> = {
+    Pass: 'bg-completed',
+    Fail: 'bg-delayed',
   };
+}
+
+class LabelConfig<T extends LabelType> {
+  constructor(
+    public config: {
+      labelType: T;
+      labelValue: LabelClassMapKey<T>;
+      styleClass?: string | null;
+    },
+  ) {}
+}
+
+export type { LabelConfig };
+
+export function labelConfig<T extends LabelType>(config: {
+  labelType: T;
+  labelValue: LabelClassMapKey<T>;
+  styleClass?: string | null;
+}): LabelConfig<T> {
+  return new LabelConfig(config);
 }

@@ -192,7 +192,7 @@ export interface IPage {
   altLangHref?: string;
   redirect?: string;
   is_404?: boolean;
-  is_archive?: boolean;
+  is_archived?: boolean;
   lastChecked?: Date;
   lastModified?: Date;
   owners?: string;
@@ -362,7 +362,6 @@ export interface IUxTest {
   test_type?: string;
   session_type?: string;
   scenario?: string;
-  scenario_id?: string;
   scenario_html?: string;
   scenario_id?: string;
   vendor?: string;
