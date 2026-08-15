@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.4.0](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.7...v4.4.0) (2026-08-15)
+
+
+### Features
+
+* add KPI and task monitoring cards to project summary ([2498969](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/24989697f01f9785278e9ad42fd4ba9e145c53ba))
+* Project Details revamp (V2) ([#183](https://github.com/cds-snc/cra-arc-upd-tbpc/issues/183)) ([645e10b](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/645e10b064a84cd869b7adf098ed2a06c265b276))
+* TMF performance scores ([f3071c6](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f3071c6a65b68527fcb6bcbe7f67d299c3b7a753))
+
+
+### Bug Fixes
+
+* improve TMF performance score handling and unscored state messaging ([b65be27](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b65be27bd4e2158045c0764aed2051f1731f12d5))
+* Issue with unscored text ([2e20445](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/2e20445fb96c4dffcf0a099685db3fce57cfed72))
+* reduce cache TTL from 12 hours to 4 hours across modules ([c31b5f5](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c31b5f530ff6e248dbd32dd818996e20808263dc))
+* sentence-case Connected tasks label ([240c974](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/240c974b8d1553b98e641d2fbd7e7cd4eca4077c))
+* TMF performance ranking details reorg ([cc996fe](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/cc996feba800cfb69e7fe7b69e3d4529d16419ec))
+* translation copy/paste error ([d38a714](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/d38a71470701307cfae4bb6f53d46fb774caa9bd))
+* Use proper task ranking for overview top 50 tasks ([d0b008e](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/d0b008e87ea3bf0380cfca7bf9416d2ea1eda18f))
+
 ## [4.3.7](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.6...v4.3.7) (2026-06-17)
 
 
