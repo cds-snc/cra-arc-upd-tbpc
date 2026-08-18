@@ -941,7 +941,7 @@ export class UrlsService {
     await htmlTable.insertLocal(snapshots, { batchSize: 500 });
 
     await htmlTable.appendLocalToRemote({
-      rowGroupSize: 10000,
+      rowGroupSize: 5000,
       compressionLevel: 7,
     });
 
@@ -1138,7 +1138,7 @@ export class UrlsService {
 
     console.time('Remote DuckDB append time');
     await htmlTable.appendLocalToRemote({
-      rowGroupSize: 10000,
+      rowGroupSize: 5000,
       compressionLevel: 7,
     });
     console.timeEnd('Remote DuckDB append time');
