@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.0...v4.4.1) (2026-08-18)
+
+
+### Bug Fixes
+
+* Set row group size to 5000 from 10000 for html snapshot parquet ([e8b3070](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/e8b30702c04ac6738c8360df708b5ef5c18b5a7f))
+
 ## [4.4.0](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.3.7...v4.4.0) (2026-08-15)
 
 
