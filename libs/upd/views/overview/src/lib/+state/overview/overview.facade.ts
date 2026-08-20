@@ -13,6 +13,7 @@ import type {
   ColumnConfig,
   OverviewAggregatedData,
   OverviewData,
+  PassFailStatus,
 } from '@dua-upd/types-common';
 import {
   avg,
@@ -636,7 +637,7 @@ export class OverviewFacade {
         .map((d) => {
           const isEnglish = d.lang === 'en';
           const rank = isFinite(d.position) ? Math.round(d.position) : NaN;
-          const pass = rank <= 3 && rank > 0 ? 'Pass' : 'Fail';
+          const pass: PassFailStatus = rank <= 3 && rank > 0 ? 'Pass' : 'Fail';
           const url = d.expected_result?.replace(/^https:\/\//i, '');
           return {
             lang: isEnglish
@@ -681,7 +682,7 @@ export class OverviewFacade {
         .map((d) => {
           const isEnglish = d.lang === 'en';
           const rank = isFinite(d.position) ? Math.round(d.position) : NaN;
-          const pass = rank <= 3 && rank > 0 ? 'Pass' : 'Fail';
+          const pass: PassFailStatus = rank <= 3 && rank > 0 ? 'Pass' : 'Fail';
           const url = d.expected_result?.replace(/^https:\/\//i, '');
           return {
             lang: isEnglish
@@ -943,7 +944,9 @@ export class OverviewFacade {
     ),
   );
 
-  gcTasksTableConfig$ = createColConfigWithI18n(this.i18n.service, [
+  gcTasksTableConfig$ = createColConfigWithI18n<
+    UnwrapObservable<typeof this.gcTasksTableWithComparison$>
+  >(this.i18n.service, [
     { field: 'gc_task', header: 'gc_task', translate: true, frozen: true },
     { field: 'theme', header: 'theme', translate: true, frozen: true },
     { field: 'total_entries', header: 'total-entries', pipe: 'number', frozen: true },
@@ -955,10 +958,9 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'able_to_complete_difference',
         pipe: 'number',
@@ -974,10 +976,9 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'ease_difference',
         pipe: 'number',
@@ -992,10 +993,9 @@ export class OverviewFacade {
       translate: true,
       pipe: 'percent',
       pipeParam: '1.0-1',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'satisfaction_difference',
         pipe: 'number',
@@ -1018,7 +1018,9 @@ export class OverviewFacade {
     map((data) => data?.dateRangeData?.gcTasksComments || []),
   );
 
-  gcTasksCommentsTableConfig$ = createColConfigWithI18n(this.i18n.service, [
+  gcTasksCommentsTableConfig$ = createColConfigWithI18n<
+    UnwrapObservable<typeof this.gcTasksCommentsTable$>
+  >(this.i18n.service, [
     { field: 'date', header: 'Date', pipe: 'date' },
     { field: 'gc_task', header: 'gc_task', translate: true },
     {
@@ -1097,10 +1099,9 @@ export class OverviewFacade {
         header: 'change',
         pipe: 'percent',
         pipeParam: '1.0-2',
-        upGoodDownBad: true,
-        indicator: true,
-        useArrows: true,
-        showTextColours: true,
+        type: 'change',
+        indicator: 'arrow',
+        colour: 'up-good',
         secondaryField: {
           field: 'difference',
           pipe: 'number',
@@ -1141,10 +1142,9 @@ export class OverviewFacade {
         header: 'change',
         pipe: 'percent',
         pipeParam: '1.0-2',
-        upGoodDownBad: true,
-        indicator: true,
-        useArrows: true,
-        showTextColours: true,
+        type: 'change',
+        indicator: 'arrow',
+        colour: 'up-good',
         secondaryField: {
           field: 'difference',
           pipe: 'number',

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import type { ColumnConfig, LinkColumnConfig } from '@dua-upd/types-common';
 
 interface TaskHeader {
   audience: string[];
@@ -16,4 +16,13 @@ interface TaskHeader {
 export class ProjectHeaderComponent {
   config = input<ColumnConfig>({ field: '', header: '' });
   data = input<TaskHeader | null>(null);
+
+  routerLink(
+    config: LinkColumnConfig,
+    project: Record<string, string | number>,
+  ) {
+    return [config.preLink, project[config.link], config.postLink].filter(
+      (segment) => segment !== undefined && segment !== '',
+    );
+  }
 }

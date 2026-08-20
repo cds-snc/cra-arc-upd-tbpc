@@ -5,6 +5,7 @@ import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { combineLatest } from 'rxjs';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
     selector: 'upd-task-details-webtraffic',
@@ -23,7 +24,9 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
   visits$ = this.taskDetailsService.visits$;
   visitsPercentChange$ = this.taskDetailsService.visitsPercentChange$;
 
-  visitsByPageCols: ColumnConfig[] = [];
+  visitsByPageCols: ColumnConfig<
+    GetTableProps<TaskDetailsWebtrafficComponent, 'visitsByPage$'>
+  >[] = [];
 
   ngOnInit(): void {
     combineLatest([this.visitsByPage$, this.i18n.currentLang$]).subscribe(
@@ -34,10 +37,8 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
             field: 'title',
             header: this.i18n.service.translate('page-title', lang),
             type: 'link',
-            typeParams: {
-              preLink: '/' + this.langLink + '/pages',
-              link: '_id',
-            },
+            preLink: '/' + this.langLink + '/pages',
+            link: '_id',
           },
           {
             field: 'language',
@@ -57,7 +58,7 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
             field: 'pageStatus',
             header: 'Page status',
             type: 'label',
-            typeParam: 'pageStatus',
+            labelTypes: ['pageStatus'],
             filterConfig: {
               type: 'category',
               categories: data
@@ -73,7 +74,8 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
             field: 'url',
             header: this.i18n.service.translate('URL', lang),
             type: 'link',
-            typeParams: { link: 'url', external: true },
+            link: 'url',
+            external: true,
           },
           {
             field: 'visits',
@@ -84,7 +86,7 @@ export class TaskDetailsWebtrafficComponent implements OnInit {
             field: 'visitsPercentChange',
             header: this.i18n.service.translate('change', lang),
             pipe: 'percent',
-            type: 'comparison',
+            type: 'change',
           },
         ];
       },

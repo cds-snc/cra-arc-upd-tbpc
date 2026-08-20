@@ -19,7 +19,9 @@ import { ApexStore } from './apex.store';
   providers: [ApexStore],
   standalone: false,
 })
-export class ApexBarComponent implements OnInit {
+export class ApexBarComponent<ColumnRow extends object, T extends object>
+  implements OnInit
+{
   private i18n = inject(I18nFacade);
   private readonly apexStore = inject(ApexStore);
 
@@ -28,8 +30,8 @@ export class ApexBarComponent implements OnInit {
   @Input() secondaryTitleData: Record<string, number | string>[] = [];
   @Input() title = '';
   @Input() titleTooltip = '';
-  @Input() table: any;
-  @Input() tableCols: ColumnConfig[] = [];
+  @Input() table: T[] | null | undefined = [];
+  @Input() tableCols: ColumnConfig<ColumnRow>[] = [];
   @Input() tableExport = true;
   @Input() allowHeaderWrap = false;
   @Input() emptyMessage = 'nodata-available';

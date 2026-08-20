@@ -38,9 +38,8 @@ import {
 
 dayjs.extend(utc);
 
-type CallsByTopicTableType = GetTableProps<
-  ProjectsDetailsFacade,
-  'callsByTopic$'
+type CallsByTopicTableType = NonNullable<
+  GetTableProps<ProjectsDetailsFacade, 'callsByTopic$'>
 >;
 
 function normalizeTestType(type: string): string {
@@ -507,17 +506,16 @@ export class ProjectsDetailsFacade {
         header: 'change',
         pipe: 'percent',
         pipeParam: '1.0-2',
-        upGoodDownBad: false,
-        indicator: true,
-        useArrows: true,
-        showTextColours: true,
+        type: 'change',
+        indicator: 'arrow',
+        colour: 'down-good',
         secondaryField: {
           field: 'difference',
           pipe: 'number',
         },
         width: '160px',
       },
-    ] as ColumnConfig<UnwrapObservable<typeof this.callsByTopic$>>[],
+    ] as ColumnConfig<CallsByTopicTableType>[],
   );
 
   dyfDataApex$ = combineLatest([

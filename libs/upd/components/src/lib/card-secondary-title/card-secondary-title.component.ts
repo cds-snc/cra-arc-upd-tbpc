@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import type { ColumnConfig, LinkColumnConfig } from '@dua-upd/types-common';
 
 @Component({
     selector: 'upd-card-secondary-title',
@@ -12,4 +12,13 @@ export class CardSecondaryTitleComponent {
   @Input() data: Record<string, number | string>[] = [];
   @Input() type = 'list';
   @Input() modal = '';
+
+  routerLink(
+    config: LinkColumnConfig,
+    row: Record<string, number | string>,
+  ) {
+    return [config.preLink, row[config.link], config.postLink].filter(
+      (segment) => segment !== undefined && segment !== '',
+    );
+  }
 }

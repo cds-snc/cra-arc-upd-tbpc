@@ -32,7 +32,7 @@ export class PagesDetailsFeedbackComponent {
   dyfChartApex = toSignal(this.pageDetailsService.dyfDataApex$);
 
   feedbackByDay = toSignal(this.pageDetailsService.feedbackByDay$);
-  feedbackByDayCols: ColumnConfig[] = [
+  feedbackByDayCols: ColumnConfig<{ date: string; sum: number }>[] = [
     {
       field: 'date',
       header: 'date',
@@ -69,7 +69,7 @@ export class PagesDetailsFeedbackComponent {
       this.feedbackCommentsAndWords()[this.pageLang() as 'en' | 'fr'].words,
   );
 
-  commentsColumns: ColumnConfig<FeedbackBase>[] = [
+  commentsColumns: ColumnConfig<Omit<FeedbackBase, 'words'>>[] = [
     {
       field: 'date',
       header: 'Date',

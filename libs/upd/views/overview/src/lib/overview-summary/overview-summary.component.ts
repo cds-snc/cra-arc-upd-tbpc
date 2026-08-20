@@ -135,12 +135,12 @@ export class OverviewSummaryComponent implements OnInit {
 
   barTableCols: ColumnConfig<{
     date: string;
-    visits: string;
-    calls: string;
+    visits: number;
+    calls: number;
     annotations: string;
     prevDate: string;
-    prevVisits: string;
-    prevCalls: string;
+    prevVisits: number;
+    prevCalls: number;
   }>[] = [];
 
   getTrendIconAndColor(diff: number): { iconName: string; color: string } {
@@ -240,10 +240,8 @@ export class OverviewSummaryComponent implements OnInit {
         field: 'text',
         header: 'secondaryTitle',
         type: 'link',
-        typeParams: {
-          preLink: '/' + this.langLink + '/overview/',
-          link: 'link',
-        },
+        preLink: '/' + this.langLink + '/overview/',
+        link: 'link',
       } as ColumnConfig;
 
       this.chartData = [
@@ -264,10 +262,8 @@ export class OverviewSummaryComponent implements OnInit {
         field: 'text',
         header: 'secondaryTitle',
         type: 'link',
-        typeParams: {
-          preLink: '/' + this.langLink + '/overview/',
-          link: 'link',
-        },
+        preLink: '/' + this.langLink + '/overview/',
+        link: 'link',
       } as ColumnConfig;
 
       this.donutChartData = [
@@ -292,10 +288,8 @@ export class OverviewSummaryComponent implements OnInit {
           field: 'title',
           header: 'task',
           type: 'link',
-          typeParams: { 
-            preLink: '/' + this.langLink + '/tasks', 
-            link: '_id' 
-          },
+          preLink: '/' + this.langLink + '/tasks',
+          link: '_id',
           translate: true,
         },
         {
@@ -324,10 +318,6 @@ export class OverviewSummaryComponent implements OnInit {
         //   header: 'kpi-calls-per-100-title-change',
         //   pipe: 'percent',
         //   pipeParam: '1.0-2',
-        //   upGoodDownBad: false,
-        //   indicator: true,
-        //   useArrows: true,
-        //   showTextColours: true,
         //   secondaryField: {
         //     field: 'calls_per_100_visits_difference',
         //     pipe: 'number',
@@ -340,10 +330,6 @@ export class OverviewSummaryComponent implements OnInit {
         //   header: 'kpi-feedback-per-1000-title-change',
         //   pipe: 'percent',
         //   pipeParam: '1.0-2',
-        //   upGoodDownBad: false,
-        //   indicator: true,
-        //   useArrows: true,
-        //   showTextColours: true,
         //   secondaryField: {
         //     field: 'dyf_no_per_1000_visits_difference',
         //     pipe: 'number',
@@ -370,10 +356,9 @@ export class OverviewSummaryComponent implements OnInit {
           header: 'Task success change',
           pipe: 'percent',
           pipeParam: '1.0-2',
-          upGoodDownBad: true,
-          indicator: true,
-          useArrows: true,
-          showTextColours: true,
+          type: 'change',
+          indicator: 'arrow',
+          colour: 'up-good',
           secondaryField: {
             field: 'latest_success_rate_difference',
             pipe: 'number',

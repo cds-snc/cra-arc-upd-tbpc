@@ -55,9 +55,11 @@ export interface EntityDetailsData<T> extends ViewData<T> {
   title: string;
 }
 
-export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title' | 'is_archived'> & {
+export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
+  archiveStatus?: ArchiveStatus;
+  pageArchiveStatusLabel?: (PageStatus | ArchiveStatus)[];
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -539,7 +541,9 @@ export type ProjectStatus =
 
 export type PageStatus = 'Live' | '404' | 'Redirected';
 
-export type ArchivedStatus = 'Archived' | 'Not archived';
+export type ArchiveStatus = 'Archived' | 'Not archived';
+
+export type PageArchiveStatus = PageStatus | ArchiveStatus;
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
@@ -551,7 +555,7 @@ export interface searchAssessmentColTypes {
   query: string;
   url: string;
   position: string | number;
-  pass: string;
+  pass: PassFailStatus;
 }
 export interface ProjectsHomeProject {
   _id: string;
@@ -615,7 +619,7 @@ export interface VisitsByPage {
   isArchive?: boolean;
   redirect?: string;
   pageStatus?: PageStatus;
-  archiveStatus?: ArchivedStatus;
+  archiveStatus?: ArchiveStatus;
   owners?: string;
   sections?: string;
 }

@@ -136,7 +136,8 @@ export class OverviewFeedbackComponent {
       field: 'url',
       header: 'page',
       type: 'link',
-      typeParams: { link: 'url', external: true },
+      link: 'url',
+      external: true,
       frozen: true,
     },
     {
@@ -154,11 +155,9 @@ export class OverviewFeedbackComponent {
       header: '# of comments',
       pipe: 'number',
       type: 'link',
-      typeParams: {
-        preLink: `/${this.i18n.currentLang().slice(0, 2)}/pages`,
-        link: '_id',
-        postLink: 'pagefeedback',
-      },
+      preLink: `/${this.i18n.currentLang().slice(0, 2)}/pages`,
+      link: '_id',
+      postLink: 'pagefeedback',
       frozen: true,
     },
     {
@@ -168,7 +167,7 @@ export class OverviewFeedbackComponent {
     },
   ]);
 
-  commentsColumns: ColumnConfig<FeedbackWithScores>[] = [
+  commentsColumns: ColumnConfig<Omit<FeedbackWithScores, 'words'>>[] = [
     {
       field: 'date',
       header: 'Date',

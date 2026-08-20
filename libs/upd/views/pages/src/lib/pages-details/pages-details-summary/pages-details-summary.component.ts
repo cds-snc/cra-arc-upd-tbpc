@@ -3,11 +3,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { feedbackKpiObjectiveCriteria } from '@dua-upd/upd-components';
 import { I18nFacade } from '@dua-upd/upd/state';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import type { ColumnConfig, GscSearchTermMetrics } from '@dua-upd/types-common';
 import type { GetTableProps } from '@dua-upd/utils-common';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 
-type TasksTableColTypes = GetTableProps<PagesDetailsSummaryComponent, 'tasks$'>;
+type TasksTableColTypes = Exclude<
+  GetTableProps<PagesDetailsSummaryComponent, 'tasks$'>,
+  number
+>;
 type BarTableColTypes = GetTableProps<
   PagesDetailsSummaryComponent,
   'barTable$'
@@ -78,7 +81,9 @@ export class PagesDetailsSummaryComponent implements OnInit {
   visitsByDeviceTypeTable$ = this.pageDetailsService.visitsByDeviceTypeTable$;
   langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
 
-  topSearchTermsCols: ColumnConfig[] = [
+  topSearchTermsCols: ColumnConfig<
+    GscSearchTermMetrics & { change: number }
+  >[] = [
     {
       field: 'term',
       header: 'search-term',
@@ -156,10 +161,8 @@ export class PagesDetailsSummaryComponent implements OnInit {
       header: this.i18n.service.translate('Task', this.currentLang()),
       type: 'link',
       translate: true,
-      typeParams: {
-        preLink: '/' + this.langLink() + '/tasks',
-        link: '_id',
-      },
+      preLink: '/' + this.langLink() + '/tasks',
+      link: '_id',
     },
   ]);
 

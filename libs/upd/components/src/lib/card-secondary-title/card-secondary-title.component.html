@@ -1,9 +1,9 @@
 @if (data.length > 0 && type === 'list') {
   <div>
     @for (d of data; track d; let i = $index) {
-      @if (config.typeParams) {
+      @if (config.type === 'link') {
         <a
-          [routerLink]="[config.typeParams.preLink, d[config.typeParams.link]]"
+          [routerLink]="routerLink(config, d)"
           [queryParamsHandling]="'merge'"
           >{{ d[config.field] }}</a
         >

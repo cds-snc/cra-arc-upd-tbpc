@@ -6,7 +6,7 @@ import type { TreeNode } from 'primeng/api';
 import type { ColumnConfig } from '@dua-upd/types-common';
 
 @Injectable()
-export class FilterTableStore<T extends object> extends ComponentStore<
+export class FilterTableStore<ColumnRow extends object, T extends object> extends ComponentStore<
   TreeNode[]
 > {
   private i18n = inject(I18nFacade);
@@ -16,7 +16,10 @@ export class FilterTableStore<T extends object> extends ComponentStore<
   }
 
   readonly setData = this.updater(
-    (state: TreeNode[], [data, cols]: [T[], ColumnConfig<T>[]]): TreeNode[] => {
+    (
+      state: TreeNode[],
+      [data, cols]: [T[], ColumnConfig<ColumnRow>[]],
+    ): TreeNode[] => {
       const map = new Map();
 
       for (const item of data) {

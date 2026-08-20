@@ -16,6 +16,7 @@ import { EN_CA } from '@dua-upd/upd/i18n';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { combineLatest, map } from 'rxjs';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
   selector: 'upd-task-details-summary',
@@ -67,7 +68,11 @@ export class TaskDetailsSummaryComponent implements OnInit {
   dyfChart$ = this.taskDetailsService.dyfData$;
 
   taskSuccessByUxTest$ = this.taskDetailsService.taskSuccessByUxTest$;
-  taskSuccessByUxTestCols: ColumnConfig[] = [];
+  taskSuccessByUxTestCols: ColumnConfig<
+    GetTableProps<TaskDetailsSummaryComponent, 'taskSuccessByUxTest$'> & {
+      _project_id: string;
+    }
+  >[] = [];
 
   callVolumeObjectiveCriteria = callVolumeObjectiveCriteria;
   callVolumeKpiConfig = {
@@ -83,7 +88,9 @@ export class TaskDetailsSummaryComponent implements OnInit {
   individualHistory$ = this.taskDetailsService.individualHistory$;
   individualHistoryXAxis$ = this.taskDetailsService.individualHistoryXAxis$;
   individualHistoryChart$ = this.taskDetailsService.individualHistoryChart$;
-  individualHistoryTableCols: ColumnConfig[] = [];
+  individualHistoryTableCols: ColumnConfig<
+    GetTableProps<TaskDetailsSummaryComponent, 'individualHistoryChart$'>
+  >[] = [];
   performanceScore$ = this.taskDetailsService.performanceScore$;
   performanceScoreDifference$ =
     this.taskDetailsService.performanceScoreDifference$;
@@ -99,7 +106,9 @@ export class TaskDetailsSummaryComponent implements OnInit {
   fullComparisonDateRangeLabel$ =
     this.taskDetailsService.fullComparisonDateRangeLabel$;
 
-  visitsByPageCols: ColumnConfig[] = [];
+  visitsByPageCols: ColumnConfig<
+    GetTableProps<TaskDetailsSummaryComponent, 'visitsByPage$'>
+  >[] = [];
   dyfTableCols: ColumnConfig<{
     name: string;
     currValue: number;
@@ -144,10 +153,8 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'title',
           header: this.i18n.service.translate('page-title', lang),
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
         },
         {
           field: 'language',
@@ -167,7 +174,7 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'pageStatus',
           header: 'Page status',
           type: 'label',
-          typeParam: 'pageStatus',
+          labelTypes: ['pageStatus'],
           filterConfig: {
             type: 'category',
             categories: data
@@ -183,7 +190,8 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'url',
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
-          typeParams: { link: 'url', external: true },
+          link: 'url',
+          external: true,
         },
         {
           field: 'visits',
@@ -194,7 +202,7 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'visitsPercentChange',
           header: this.i18n.service.translate('change', lang),
           pipe: 'percent',
-          type: 'comparison',
+          type: 'change',
         },
       ];
 
@@ -203,10 +211,8 @@ export class TaskDetailsSummaryComponent implements OnInit {
           field: 'title',
           header: this.i18n.service.translate('ux-test', lang),
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/projects',
-            link: '_project_id',
-          },
+          preLink: '/' + this.langLink + '/projects',
+          link: '_project_id',
         },
         {
           field: 'date',

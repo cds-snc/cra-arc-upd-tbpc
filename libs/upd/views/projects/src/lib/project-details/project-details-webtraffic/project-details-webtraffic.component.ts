@@ -5,6 +5,7 @@ import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
 import { combineLatest } from 'rxjs';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
     selector: 'upd-project-details-webtraffic',
@@ -22,7 +23,9 @@ export class ProjectDetailsWebtrafficComponent implements OnInit {
   visitsPercentChange$ = this.projectsDetailsService.visitsPercentChange$;
 
   visitsByPage$ = this.projectsDetailsService.visitsByPageWithPercentChange$;
-  visitsByPageCols: ColumnConfig[] = [];
+  visitsByPageCols: ColumnConfig<
+    GetTableProps<ProjectDetailsWebtrafficComponent, 'visitsByPage$'>
+  >[] = [];
 
   ngOnInit() {
     combineLatest([this.visitsByPage$, this.i18n.currentLang$]).subscribe(
@@ -33,10 +36,8 @@ export class ProjectDetailsWebtrafficComponent implements OnInit {
             field: 'title',
             header: this.i18n.service.translate('page-title', lang),
             type: 'link',
-            typeParams: {
-              preLink: '/' + this.langLink + '/pages',
-              link: '_id',
-            },
+            preLink: '/' + this.langLink + '/pages',
+            link: '_id',
           },
           {
             field: 'language',
@@ -54,7 +55,7 @@ export class ProjectDetailsWebtrafficComponent implements OnInit {
             field: 'pageStatus',
             header: 'Page status',
             type: 'label',
-            typeParam: 'pageStatus',
+            labelTypes: ['pageStatus'],
             filterConfig: {
               type: 'category',
               categories: createCategoryConfig({
@@ -68,7 +69,8 @@ export class ProjectDetailsWebtrafficComponent implements OnInit {
             field: 'url',
             header: this.i18n.service.translate('URL', lang),
             type: 'link',
-            typeParams: { link: 'url', external: true },
+            link: 'url',
+            external: true,
           },
           {
             field: 'visits',
@@ -78,7 +80,7 @@ export class ProjectDetailsWebtrafficComponent implements OnInit {
           {
             field: 'percentChange',
             header: this.i18n.service.translate('change', lang),
-            type: 'comparison',
+            type: 'change',
             pipe: 'percent',
           },
         ];

@@ -161,7 +161,8 @@ export class ProjectDetailsUxTestsComponent {
       field: 'filename',
       header: this.i18n.service.translate('File link', this.currentLang()),
       type: 'link',
-      typeParams: { link: 'url', external: true },
+      link: 'url',
+      external: true,
     },
   ]);
 }

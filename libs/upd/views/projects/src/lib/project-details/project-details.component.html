@@ -21,21 +21,21 @@
         @if (status$ | async; as status) {
           <upd-project-status-label
             class="d-inline-block"
-            [projectStatus]="status || 'Unknown'"
+            [labelValue]="status || 'Unknown'"
           >
           </upd-project-status-label>
         }
         @if (cops$ | async; as cops) {
           <upd-project-status-label
             class="d-inline-block ms-2"
-            [projectType]="'COPS'"
+            [labelValue]="'COPS'"
           >
           </upd-project-status-label>
         }
         @if (wos_cops$ | async; as wos_cops) {
           <upd-project-status-label
             class="d-inline-block ms-2"
-            [projectType]="'WOS_COPS'"
+            [labelValue]="'WOS_COPS'"
           >
           </upd-project-status-label>
         }

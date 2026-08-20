@@ -3,6 +3,7 @@ import { combineLatest, map } from 'rxjs';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
     selector: 'upd-task-details-calldrivers',
@@ -17,7 +18,9 @@ export class TaskDetailsCalldriversComponent implements OnInit {
   currentLang$ = this.i18n.currentLang$;
 
   calldriversTable$ = this.taskDetailsService.calldriversTable$;
-  calldriversCols: ColumnConfig[] = [];
+  calldriversCols: ColumnConfig<
+    GetTableProps<TaskDetailsCalldriversComponent, 'calldriversTable$'>
+  >[] = [];
 
   callsByTopic$ = this.taskDetailsService.callsByTopic$;
   callsByTopicConfig$ = this.taskDetailsService.callsByTopicConfig$;

@@ -38,9 +38,9 @@ export class I18nFacade {
    * @param data The table data to translate
    * @param config The column config
    */
-  toTranslatedTable<T>(
+  toTranslatedTable<T extends object, ColumnRow extends object>(
     data: Signal<T[] | null>,
-    config: Signal<ColumnConfig<T>[]>,
+    config: Signal<ColumnConfig<ColumnRow>[]>,
   ) {
     const colsToTranslate = computed(() =>
       config()
@@ -66,7 +66,7 @@ export class I18nFacade {
         translatedCols[FR_CA][i] = {};
 
         for (const col of colKeys) {
-          const colValue = row[col as keyof T];
+          const colValue = (row as Record<string, unknown>)[col];
 
           if (!colValue) {
             translatedCols[EN_CA][i][col] = colValue;

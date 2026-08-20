@@ -8,6 +8,7 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
 import { combineLatest } from 'rxjs';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
     selector: 'upd-task-details-feedback',
@@ -27,7 +28,9 @@ export class TaskDetailsFeedbackComponent implements OnInit {
     this.taskDetailsService.fullComparisonDateRangeLabel$;
 
   visitsByPage$ = this.taskDetailsService.visitsByPage$;
-  visitsByPageCols: ColumnConfig[] = [];
+  visitsByPageCols: ColumnConfig<
+    GetTableProps<TaskDetailsFeedbackComponent, 'visitsByPage$'>
+  >[] = [];
 
   dyfChart$ = this.taskDetailsService.dyfData$;
 
@@ -43,7 +46,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
     this.taskDetailsService.feedbackTotalCommentsPercentChange$;
 
   feedbackByDay$ = this.taskDetailsService.feedbackByDay$;
-  feedbackByDayCols: ColumnConfig[] = [
+  feedbackByDayCols: ColumnConfig<{ date: string; sum: number }>[] = [
     {
       field: 'date',
       header: 'date',
@@ -77,7 +80,7 @@ export class TaskDetailsFeedbackComponent implements OnInit {
   );
   wordsFr = computed(() => this.feedbackCommentsAndWords()?.fr.words);
 
-  commentsColumns: ColumnConfig<FeedbackBase>[] = [
+  commentsColumns: ColumnConfig<Omit<FeedbackBase, 'words'>>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -135,7 +138,8 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           field: 'url',
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
-          typeParams: { preLink: `/${this.langLink}/pages`, link: '_id' },
+          preLink: `/${this.langLink}/pages`,
+          link: '_id',
           frozen: true,
         },
         {
@@ -155,11 +159,9 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           header: this.i18n.service.translate('yes', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'pagefeedback',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'pagefeedback',
           frozen: true,
         },
         {
@@ -167,11 +169,9 @@ export class TaskDetailsFeedbackComponent implements OnInit {
           header: this.i18n.service.translate('no', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'pagefeedback',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'pagefeedback',
           frozen: true,
         },
         {

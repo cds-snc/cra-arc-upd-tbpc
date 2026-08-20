@@ -10,9 +10,11 @@ import { I18nFacade, selectDatePeriodSelection, selectUrl } from '@dua-upd/upd/s
 import { percentChange } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import type {
+  ArchiveStatus,
   GscSearchTermMetrics,
   PageAggregatedData,
   PageDetailsData,
+  PageStatus,
 } from '@dua-upd/types-common';
 import * as PagesDetailsActions from './pages-details.actions';
 import * as PagesDetailsSelectors from './pages-details.selectors';
@@ -132,7 +134,9 @@ export class PagesDetailsFacade {
   altPageId$ = this.pagesDetailsData$.pipe(map((data) => data?.alternatePageId || 0));
 
   pageStatus$ = this.pagesDetailsData$.pipe(
-    map((data) => {
+    map((data): PageStatus | undefined => {
+      if (!data) return undefined;
+
       if (data?.isRedirect) {
         return 'Redirected';
       }
@@ -146,11 +150,10 @@ export class PagesDetailsFacade {
   );
 
   archiveStatus$ = this.pagesDetailsData$.pipe(
-    map((data)  => (data?.isArchive ? 'Archived' : null),
+    map((data): ArchiveStatus | undefined =>
+      data?.isArchive ? 'Archived' : undefined,
     ),
   );
-
-  pageArchiveStatus$ = this.pageStatus$ || this. archiveStatus$;
 
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),

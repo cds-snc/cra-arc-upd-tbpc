@@ -26,7 +26,6 @@ export class PagesDetailsComponent {
   url = toSignal(this.pageDetailsService.pageUrl$);
   pageStatus$ = this.pageDetailsService.pageStatus$;
   archiveStatus$ = this.pageDetailsService.archiveStatus$;
-  pageArchiveStatus$ = this.pageDetailsService.pageArchiveStatus$;
   loading$ = this.pageDetailsService.loading$;
   showUrl = true;
   showAlert = false;
@@ -109,10 +108,8 @@ export class PagesDetailsComponent {
       field: 'title',
       header: 'project',
       type: 'link',
-      typeParams: {
-        preLink: '/' + this.langLink() + '/projects',
-        link: 'id',
-      },
+      preLink: '/' + this.langLink() + '/projects',
+      link: 'id',
       translate: true,
     } as ColumnConfig;
   });
