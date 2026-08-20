@@ -119,10 +119,8 @@ export class TaskDetailsComponent implements OnInit {
     header: 'project',
     type: 'link',
     translate: true,
-    typeParams: {
-      preLink: `/${this.langLink()}/projects`,
-      link: '_id',
-    },
+    preLink: `/${this.langLink()}/projects`,
+    link: '_id',
   }));
 
   ngOnInit() {

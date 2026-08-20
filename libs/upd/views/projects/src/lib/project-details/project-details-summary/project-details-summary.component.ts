@@ -21,6 +21,10 @@ type ParticipantTasksColTypes = GetTableProps<
   ProjectDetailsSummaryComponent,
   'participantTasks$'
 >;
+type TasksTestedColTypes = GetTableProps<
+  ProjectDetailsSummaryComponent,
+  'tasksTestedTableData$'
+>;
 
 @Component({
   selector: 'upd-project-details-summary',
@@ -71,7 +75,8 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         header: 'Task list',
         translate: true,
         type: 'link',
-        typeParams: { preLink: '/' + this.langLink() + '/tasks', link: '_id' },
+        preLink: '/' + this.langLink() + '/tasks',
+        link: '_id',
       },
       {
         field: 'callsPer100Visits',
@@ -218,11 +223,11 @@ export class ProjectDetailsSummaryComponent implements OnInit {
     );
   }
 
-  tasksTestedCols = computed<ColumnConfig[]>(() => {
+  tasksTestedCols = computed<ColumnConfig<TasksTestedColTypes>[]>(() => {
     const lang = this.currentLang();
     const present = this.testTypesPresent();
 
-    const tasksTestedCols: ColumnConfig[] = [
+    const tasksTestedCols: ColumnConfig<TasksTestedColTypes>[] = [
       {
         field: 'taskNumber',
         header: this.i18n.service.translate('test-num', lang),
@@ -272,10 +277,9 @@ export class ProjectDetailsSummaryComponent implements OnInit {
         header: this.i18n.service.translate('change', lang),
         pipe: 'percent',
         pipeParam: '1.0',
-        upGoodDownBad: true,
-        indicator: true,
-        useArrows: true,
-        showTextColours: true,
+        type: 'change',
+        indicator: 'arrow',
+        colour: 'up-good',
         secondaryField: {
           field: 'avgTaskSuccessPointChange',
           pipe: 'number',

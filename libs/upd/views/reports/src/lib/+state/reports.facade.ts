@@ -5,9 +5,9 @@ import * as ReportsSelectors from './reports.selectors';
 import { combineLatest, map } from 'rxjs';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { EN_CA, FR_CA } from '@dua-upd/upd/i18n';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import { labelColumn, type ColumnConfig } from '@dua-upd/types-common';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
-import { any } from 'rambdax';
+import type { UnwrapObservable } from '@dua-upd/utils-common';
 
 @Injectable()
 export class ReportsFacade {
@@ -48,15 +48,17 @@ export class ReportsFacade {
           field: 'en_filename',
           header: this.i18n.service.translate('english-report', lang),
           type: 'link',
-          typeParams: { link: 'en_attachment', external: true },
+          link: 'en_attachment',
+          external: true,
         },
         {
           field: 'fr_filename',
           header: this.i18n.service.translate('french-report', lang),
           type: 'link',
-          typeParams: { link: 'fr_attachment', external: true },
+          link: 'fr_attachment',
+          external: true,
         },
-      ] as ColumnConfig[];
+      ] as ColumnConfig<UnwrapObservable<typeof this.tasksReports$>>[];
     }),
   );
 
@@ -79,13 +81,15 @@ export class ReportsFacade {
           projectTypeLabel: [
             ...(project.cops ? ['COPS'] as const : []),
             ...(project.wos_cops ? ['WOS_COPS'] as const : []),
-          ],    
+          ],
           filename: attachment.filename,
           url: attachment.storage_url,
         }));
       });
     }),
   );
+  private readonly projectLabelColumn =
+    labelColumn<UnwrapObservable<typeof this.projectsReports$>>();
   projectsReportsColumns$ = combineLatest([
     this.projectsReports$,
     this.i18n.currentLang$,
@@ -100,13 +104,14 @@ export class ReportsFacade {
           field: 'filename',
           header: this.i18n.service.translate('File link', lang),
           type: 'link',
-          typeParams: { link: 'url', external: true },
+          link: 'url',
+          external: true,
         },
-        {
+        this.projectLabelColumn({
           field: 'projectTypeLabel',
           header: this.i18n.service.translate('type', lang),
           type: 'label',
-          typeParam: 'projectType',
+          labelTypes: ['projectType'],
           filterConfig: {
             type: 'category',
             categories: [
@@ -115,12 +120,12 @@ export class ReportsFacade {
             ],
             matchMode: 'arrayContains'
           },
-        },
-        {
+        }),
+        this.projectLabelColumn({
           field: 'status',
           header: this.i18n.service.translate('Status', lang),
           type: 'label',
-          typeParam: 'status',
+          labelTypes: ['projectStatus'],
           filterConfig: {
             type: 'category',
             categories: createCategoryConfig({
@@ -129,7 +134,7 @@ export class ReportsFacade {
               field: 'status',
             }),
           },
-        },
+        }),
         {
           field: 'startDate',
           header: this.i18n.service.translate('Start date', lang),
@@ -141,7 +146,7 @@ export class ReportsFacade {
         //   header: this.i18n.service.translate('Average success rate', lang),
         //   pipe: 'percent',
         // },
-      ] as ColumnConfig[];
+      ] as ColumnConfig<UnwrapObservable<typeof this.projectsReports$>>[];
     }),
   );
 

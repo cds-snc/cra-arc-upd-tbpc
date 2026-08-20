@@ -1,9 +1,8 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { map } from 'rxjs';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import { labelColumn, type ColumnConfig } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import type { PagesHomeAggregatedData } from '@dua-upd/types-common';
-import { createCategoryConfig, type UnwrapSignal } from '@dua-upd/upd/utils';
 import { PagesHomeFacade } from './+state/pages-home.facade';
 
 @Component({
@@ -16,61 +15,60 @@ export class PagesHomeComponent implements OnInit {
   private pagesHomeService = inject(PagesHomeFacade);
   private i18n = inject(I18nFacade);
 
-  pagesHomeData = this.pagesHomeService.pagesHomeTableData;
-  loading = this.pagesHomeService.loading;
+  pagesHomeData$ = this.pagesHomeService.pagesHomeTableData$;
+  loading$ = this.pagesHomeService.loading$;
+  private readonly pageLabelColumn = labelColumn<PagesHomeAggregatedData>();
 
-  columns = computed<ColumnConfig<UnwrapSignal<typeof this.pagesHomeData>>[]>(
-    () => {
-      this.i18n.currentLang(); // trigger re-evaluation when language changes
-
-      return [
-        {
-          field: 'title',
-          header: 'Title',
-          type: 'link',
-          typeParam: '_id',
-        },
-        {
-          field: 'pageArchiveStatusLabel',
-          header: 'Current page status',
-          type: 'label',
-          typeParam: 'pageArchive',
-          filterConfig: {
-            type: 'category',
-            categories: [
-              { name: '404', value: '404' },
-              {
-                name: this.i18n.service.instant('Redirected'),
-                value: 'Redirected',
-              },
-              { name: this.i18n.service.instant('Live'), value: 'Live' },
-              {
-                name: this.i18n.service.instant('Archived'),
-                value: 'Archived',
-              },
-            ],
-            matchMode: 'arrayContains',
+  columns = this.pagesHomeData$.pipe(
+    map(
+      () =>
+        [
+          {
+            field: 'title',
+            header: 'Title',
+            type: 'link',
+            link: '_id',
           },
-        },
-        {
-          field: 'url',
-          header: 'URL',
-          type: 'link',
-          typeParams: { link: 'url', external: true },
-        },
-        {
-          field: 'visits',
-          header: 'visits',
-          pipe: 'number',
-        },
-      ];
-    },
+          this.pageLabelColumn({
+            field: 'pageArchiveStatusLabel',
+            header: 'Current page status',
+            type: 'label',
+            labelTypes: ['pageStatus', 'archiveStatus'],
+            filterConfig: {
+              type: 'category',
+              categories: [
+                { name: '404', value: '404' },
+                {
+                  name: this.i18n.service.instant('Redirected'),
+                  value: 'Redirected',
+                },
+                { name: this.i18n.service.instant('Live'), value: 'Live' },
+                {
+                  name: this.i18n.service.instant('Archived'),
+                  value: 'Archived',
+                },
+              ],
+              matchMode: 'arrayContains',
+            },
+          }),
+          {
+            field: 'url',
+            header: 'URL',
+            type: 'link',
+            link: 'url',
+            external: true,
+          },
+          {
+            field: 'visits',
+            header: 'visits',
+            pipe: 'number',
+          },
+        ] as ColumnConfig<PagesHomeAggregatedData>[],
+    ),
   );
 
-  searchFields = computed(() =>
-    this.columns()
-      .map((col) => col.field)
-      .filter((field) => field !== 'visits'),
+  searchFields = this.columns.pipe(
+    map((columns) => columns.map((col) => col.field)),
   );
 
   ngOnInit() {

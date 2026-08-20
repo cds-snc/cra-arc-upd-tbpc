@@ -3,6 +3,7 @@ import type { ColumnConfig } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { TasksDetailsFacade } from '../+state/tasks-details.facade';
 import { EN_CA } from '@dua-upd/upd/i18n';
+import type { GetTableProps } from '@dua-upd/utils-common';
 
 @Component({
     selector: 'upd-task-details-search-analytics',
@@ -29,7 +30,9 @@ export class TaskDetailsSearchAnalyticsComponent implements OnInit {
     this.taskDetailsService.gscTotalPositionPercentChange$;
 
   visitsByPage$ = this.taskDetailsService.visitsByPage$;
-  visitsByPageCols: ColumnConfig[] = [];
+  visitsByPageCols: ColumnConfig<
+    GetTableProps<TaskDetailsSearchAnalyticsComponent, 'visitsByPage$'>
+  >[] = [];
 
   topSearchTerms$ = this.taskDetailsService.topSearchTerms$;
 
@@ -43,35 +46,33 @@ export class TaskDetailsSearchAnalyticsComponent implements OnInit {
           field: 'title',
           header: this.i18n.service.translate('Title', lang),
           type: 'link',
-          typeParams: { preLink: '/' + this.langLink + '/pages', link: '_id' },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
         },
         {
           field: 'url',
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
-          typeParams: { preLink: '/' + this.langLink + '/pages', link: '_id' },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
         },
         {
           field: 'gscTotalClicks',
           header: this.i18n.service.translate('clicks', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'searchanalytics',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'searchanalytics',
         },
         {
           field: 'gscTotalImpressions',
           header: this.i18n.service.translate('impressions', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'searchanalytics',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'searchanalytics',
         },
         {
           field: 'gscTotalCtr',

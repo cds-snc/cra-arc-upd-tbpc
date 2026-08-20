@@ -11,15 +11,15 @@
       {{ title }}
     }
     <span class="h5 d-inline-block mb-0 align-top ms-1">
-      @if ((pageStatus$ | async) !== null) {
+      @if (pageStatus$ | async; as pageStatus) {
         <upd-project-status-label class="d-inline-block"
-          [pageStatus]="pageStatus$ | async"
+          [labelValue]="pageStatus"
         >
         </upd-project-status-label>
-      } 
-      @if ((archiveStatus$ | async) !== null) {
+      }
+      @if (archiveStatus$ | async; as archiveStatus) {
         <upd-project-status-label class="d-inline-block ms-2"
-          [archiveStatus]="archiveStatus$ | async"
+          [labelValue]="archiveStatus"
         >
         </upd-project-status-label>
       }

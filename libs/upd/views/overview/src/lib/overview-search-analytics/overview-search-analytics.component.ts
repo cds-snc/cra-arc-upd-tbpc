@@ -1,15 +1,19 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { combineLatest, map } from 'rxjs';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import {
+  labelColumn,
+  type ColumnConfig,
+  type PassFailStatus,
+} from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { OverviewFacade } from '../+state/overview/overview.facade';
 import type { GetTableProps } from '@dua-upd/utils-common';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
 
-type searchAssessmentColTypes = GetTableProps<
-  OverviewSearchAnalyticsComponent,
-  'searchAssessmentData$'
->;
+type searchAssessmentColTypes = Omit<
+  GetTableProps<OverviewSearchAnalyticsComponent, 'searchAssessmentData$'>,
+  'pass'
+> & { pass: PassFailStatus };
 
 @Component({
     selector: 'upd-overview-search-analytics',
@@ -38,6 +42,8 @@ export class OverviewSearchAnalyticsComponent implements OnInit {
 
   GSCSearchTermsCols: ColumnConfig<GscSearchTermsRow>[] = [];
   searchAssessmentCols: ColumnConfig<searchAssessmentColTypes>[] = [];
+  private readonly assessmentLabelColumn =
+    labelColumn<searchAssessmentColTypes>();
 
   satDateRangeLabel$ = this.overviewService.satDateRangeLabel$;
   satStart = '';
@@ -119,10 +125,8 @@ export class OverviewSearchAnalyticsComponent implements OnInit {
           field: 'url',
           header: this.i18n.service.translate('Target URL', lang),
           type: 'link',
-          typeParams: {
-            external: true,
-            link: 'url',
-          },
+          external: true,
+          link: 'url',
         },
         {
           field: 'total_searches',
@@ -138,12 +142,12 @@ export class OverviewSearchAnalyticsComponent implements OnInit {
           field: 'position',
           header: this.i18n.service.translate('avg-rank', lang),
         },
-        {
+        this.assessmentLabelColumn({
           field: 'pass',
           header: this.i18n.service.translate('Result', lang),
-          type: 'text',
-          typeParam: 'passFail',
-        },
+          type: 'label',
+          labelTypes: ['passFail'],
+        }),
       ];
     });
   }

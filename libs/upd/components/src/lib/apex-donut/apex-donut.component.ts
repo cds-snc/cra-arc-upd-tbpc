@@ -20,7 +20,9 @@ import { ApexStore } from './apex.store';
     providers: [ApexStore],
     standalone: false
 })
-export class ApexDonutComponent implements OnInit {
+export class ApexDonutComponent<ColumnRow extends object, T extends object>
+  implements OnInit
+{
   private i18n = inject(I18nFacade);
   private readonly apexStore = inject(ApexStore);
 
@@ -29,8 +31,8 @@ export class ApexDonutComponent implements OnInit {
   @Input() secondaryTitleData: Record<string, number | string>[] = [];
   @Input() title = '';
   @Input() titleTooltip = '';
-  @Input() table: any;
-  @Input() tableCols: ColumnConfig[] = [];
+  @Input() table: T[] | null | undefined = [];
+  @Input() tableCols: ColumnConfig<ColumnRow>[] = [];
 
   @Input() set colours(value: string[]) {
     this.apexStore.setColours(value);

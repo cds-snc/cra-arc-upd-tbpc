@@ -13,7 +13,7 @@ import { ProjectsDetailsFacade } from '../+state/projects-details.facade';
 type VisitsByPageColType = GetTableProps<
   ProjectDetailsFeedbackComponent,
   'visitsByPage$'
->;
+> & { feedbackToVisitsRatio: number | null };
 
 @Component({
     selector: 'upd-project-details-feedback',
@@ -61,7 +61,7 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
     this.projectsDetailsService.feedbackCommentsAndWords;
 
   feedbackByDay$ = this.projectsDetailsService.feedbackByDay$;
-  feedbackByDayCols: ColumnConfig[] = [
+  feedbackByDayCols: ColumnConfig<{ date: string; sum: number }>[] = [
     {
       field: 'date',
       header: 'date',
@@ -82,7 +82,7 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
   commentsFr = computed(() => this.feedbackCommentsAndWords().fr.comments);
   wordsFr = computed(() => this.feedbackCommentsAndWords().fr.words);
 
-  commentsColumns: ColumnConfig<FeedbackBase>[] = [
+  commentsColumns: ColumnConfig<Omit<FeedbackBase, 'words'>>[] = [
     {
       field: 'date',
       header: 'Date',
@@ -137,7 +137,8 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
           field: 'url',
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
-          typeParams: { preLink: '/' + this.langLink + '/pages', link: '_id' },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
           frozen: true,
         },
         {
@@ -155,11 +156,9 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
           header: this.i18n.service.translate('yes', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'pagefeedback',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'pagefeedback',
           frozen: true,
         },
         {
@@ -167,11 +166,9 @@ export class ProjectDetailsFeedbackComponent implements OnInit {
           header: this.i18n.service.translate('no', lang),
           pipe: 'number',
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/pages',
-            link: '_id',
-            postLink: 'pagefeedback',
-          },
+          preLink: '/' + this.langLink + '/pages',
+          link: '_id',
+          postLink: 'pagefeedback',
           frozen: true,
         },
         {

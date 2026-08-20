@@ -59,7 +59,7 @@ export class PageFlowComponent {
     () => this.previousPages().length + this.nextPages().length,
   );
 
-  currentFlowCols: ColumnConfig[] = [
+  currentFlowCols: ColumnConfig<PageFlowData>[] = [
     { field: 'sequence', header: 'Sequence' },
     { field: 'title', header: 'Title' },
     { field: 'url', header: 'URL' },

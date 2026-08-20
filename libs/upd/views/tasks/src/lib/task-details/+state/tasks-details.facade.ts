@@ -596,10 +596,9 @@ export class TasksDetailsFacade {
         header: 'change',
         pipe: 'percent',
         pipeParam: '1.0-2',
-        upGoodDownBad: false,
-        indicator: true,
-        useArrows: true,
-        showTextColours: true,
+        type: 'change',
+        indicator: 'arrow',
+        colour: 'down-good',
         secondaryField: {
           field: 'callsDifference',
           pipe: 'number',

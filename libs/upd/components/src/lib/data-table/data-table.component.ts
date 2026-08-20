@@ -33,7 +33,7 @@ type HeaderGroup<T> = {
   styleUrls: ['./data-table.component.css'],
   standalone: false,
 })
-export class DataTableComponent<T extends object> {
+export class DataTableComponent<ColumnRow extends object, T extends object> {
   @ViewChild('dt') table!: Table;
   @Input() displayRows = 10;
   @Input() sort = true;
@@ -62,23 +62,24 @@ export class DataTableComponent<T extends object> {
   filterService = inject(FilterService);
 
   data = input<T[] | null>(null);
-  // eslint-disable-next-line @angular-eslint/no-input-rename
-  initialCols = input<ColumnConfig<T>[]>([], { alias: 'cols' });
-  // eslint-disable-next-line @angular-eslint/no-input-rename
-  inputSearchFields = input<string[]>([], { alias: 'searchFields' });
+  cols = input<ColumnConfig<ColumnRow>[]>([]);
+  searchFields = input<string[]>([]);
   columnSelection = input(false);
   groupedColumnSelection = input(false);
   resizableColumns = input(false);
   expandAll = input(false);
 
-  cols = this.i18n.service.computedMap(this.initialCols, (col, translate) => ({
+  columns = this.i18n.service.computedMap(this.cols, (col, translate) => ({
     ...col,
     header: translate(col.header),
   }));
 
-  translatedData = this.i18n.toTranslatedTable<T>(this.data, this.cols);
+  translatedData = this.i18n.toTranslatedTable<T, ColumnRow>(
+    this.data,
+    this.columns,
+  );
 
-  selectedColumns: WritableSignal<ColumnConfig<T>[]> = signal(
+  selectedColumns: WritableSignal<ColumnConfig<ColumnRow>[]> = signal(
     JSON.parse(sessionStorage.getItem(`selectedColumns-${this.id}`) || '[]'),
   );
 
@@ -87,23 +88,23 @@ export class DataTableComponent<T extends object> {
       ({ field }) => field,
     );
 
-    return this.cols().filter((col) =>
+    return this.columns().filter((col) =>
       selectedColumnFields.includes(col.field),
     );
   });
 
-  searchFields = computed(() =>
-    this.inputSearchFields().length
-      ? this.inputSearchFields()
-      : this.cols().map((col) => col.field),
+  effectiveSearchFields = computed(() =>
+    this.searchFields().length
+      ? this.searchFields()
+      : this.columns().map((col) => col.field),
   );
 
   displayColumns = computed(() => {
     if (!this.selectedColumns()?.length || !this.columnSelection()) {
-      return this.cols().filter((col) => !col.hide);
+      return this.columns().filter((col) => !col.hide);
     }
 
-    return this.cols().filter(
+    return this.columns().filter(
       (col) =>
         col.frozen ||
         this.selectedColumns()
@@ -117,11 +118,9 @@ export class DataTableComponent<T extends object> {
   isSorted: boolean | null = null;
 
   selectableCols = computed(() => {
-    const cols = this.cols()
-      .filter((col: ColumnConfig) => !col.frozen)
-      .sort((a: ColumnConfig, b: ColumnConfig) =>
-        a.header.localeCompare(b.header),
-      );
+    const cols = this.columns()
+      .filter((col) => !col.frozen)
+      .sort((a, b) => a.header.localeCompare(b.header));
 
     if (this.groupedColumnSelection()) {
       return toGroupedColumnSelect(cols);
@@ -151,8 +150,8 @@ export class DataTableComponent<T extends object> {
     this.displayColumns().some((col) => !!col.group),
   );
 
-  columnGroups = computed<HeaderGroup<T>[]>(() => {
-    const groups: HeaderGroup<T>[] = [];
+  columnGroups = computed<HeaderGroup<ColumnRow>[]>(() => {
+    const groups: HeaderGroup<ColumnRow>[] = [];
 
     for (const col of this.displayColumns()) {
       const label = col.group ?? null;
@@ -198,10 +197,10 @@ export class DataTableComponent<T extends object> {
     effect(() => {
       const selectedColumns = this.selectedColumns();
 
-      const initialColumns: ColumnConfig<T>[] =
+      const initialColumns: ColumnConfig<ColumnRow>[] =
         JSON.parse(
           sessionStorage.getItem(`selectedColumns-${this.id}`) || '[]',
-        ) || this.cols().filter((col) => !col.hide && !col.frozen);
+        ) || this.columns().filter((col) => !col.hide && !col.frozen);
 
       if (!selectedColumns.length && initialColumns.length) {
         this.selectedColumns.set(initialColumns);
@@ -254,7 +253,7 @@ export class DataTableComponent<T extends object> {
     this.node = node;
   }
 
-  selectedColumnsChanged(selectedColumns: ColumnConfig[]) {
+  selectedColumnsChanged(selectedColumns: ColumnConfig<ColumnRow>[]) {
     sessionStorage.setItem(
       `selectedColumns-${this.id}`,
       JSON.stringify(selectedColumns),
@@ -291,7 +290,7 @@ export class DataTableComponent<T extends object> {
   ngOnInit() {
     this.filterService.register(
       'globalAndFilter',
-      (value: any, filters: string[]) => {
+      (value: unknown, filters: string[]) => {
         if (!filters?.length) return true;
         if (!value) return false;
         const val = String(value).toLowerCase();
@@ -299,10 +298,10 @@ export class DataTableComponent<T extends object> {
       },
     );
 
-    // Custom filter for COPS types filter so its not using 'in' but 'contains' for an array of values
+    // Match any selected category against an array-valued cell.
     this.filterService.register(
       'arrayContains',
-      (rowValue: any[], filterValue: string[]): boolean => {
+      (rowValue: unknown, filterValue: string[]): boolean => {
         if (!filterValue || filterValue.length === 0) return true;
         if (!Array.isArray(rowValue)) return false;
         return filterValue.some((fv) => rowValue.includes(fv));

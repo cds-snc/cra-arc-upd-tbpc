@@ -60,7 +60,8 @@ export class OverviewWebtrafficComponent implements OnInit {
           field: 'url',
           header: this.i18n.service.translate('URL', lang),
           type: 'link',
-          typeParams: { link: 'url', external: true },
+          link: 'url',
+          external: true,
         },
         {
           field: 'visits',

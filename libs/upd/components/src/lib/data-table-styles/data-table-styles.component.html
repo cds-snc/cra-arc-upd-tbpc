@@ -1,235 +1,84 @@
-@let config = colConfig();
+@let column = config();
+@let value = fieldData();
 
-<!-- Utility Template for Displaying Data -->
 <ng-template #displayData let-item="item">
-  @if (config.center) {
+  @if (column.center) {
     <span class="d-block text-center me-3">{{ item }}</span>
-  }
-
-  @if (config.center !== true) {
+  } @else {
     {{ item }}
   }
 </ng-template>
 
-@if (config.typeParam) {
-  <!-- Link Type -->
-  @if (config.type === 'link') {
-    <a [routerLink]="[data[config.typeParam]]" queryParamsHandling="merge">
-      <ng-container
-        [ngTemplateOutlet]="displayData"
-        [ngTemplateOutletContext]="{
-          item: fieldData(),
-        }"
-      ></ng-container>
-    </a>
-  }
-
-  <!-- Status Labels -->
-  @if (config.type === 'label') {
-    @let colData = fieldData();
-    @let labels =
-      typeof colData === 'object' && 'length' in colData ? colData : [colData];
-
-    @for (
-      label of labels;
-      track label;
-      let length = $count;
-      let first = $first
-    ) {
-      @if (label !== 'Not archived') {
-        @let marginClass = first ? '' : 'me-1';
-
-        <upd-project-status-label
-          [labelValue]="labels"
-          [labelType]="config.typeParam"
-          class="d-inline-flex {{ marginClass }}"
-        ></upd-project-status-label>
-      }
-    }
-  }
-
-  <!-- Pass/Fail Label -->
-  @if (
-    config.type === 'text' &&
-    config.typeParam === 'passFail' &&
-    fieldData()
-  ) {
-    <span
-      class="badge"
-      [ngClass]="{
-        'bg-completed': fieldData() === 'Pass',
-        'bg-delayed': fieldData() === 'Fail',
-      }"
-      translate
-    >
-      <ng-container
-        [ngTemplateOutlet]="displayData"
-        [ngTemplateOutletContext]="{
-          item: fieldData(),
-        }"
-      ></ng-container>
-    </span>
-  }
-}
-
-@if (config.type === 'link' && config.typeParams) {
-  <!-- External Links -->
-  @switch (config.typeParams.external) {
-    @case (true) {
-      @if (fieldData()) {
-        <span class="material-icons material-icon-wysiwyg"> wysiwyg </span>
-
+@switch (column.type) {
+  @case ('link') {
+    @if (value !== null && value !== undefined && value !== '') {
+      @if (column.external) {
+        <span class="material-icons material-icon-wysiwyg">wysiwyg</span>
         <a
-          [href]="ensureLinkFormat(data[config.typeParams.link])"
+          [href]="ensureLinkFormat(valueAt(column.link))"
           target="_blank"
           rel="noopener noreferrer"
         >
           <ng-container
             [ngTemplateOutlet]="displayData"
-            [ngTemplateOutletContext]="{
-              item: fieldData(),
-            }"
+            [ngTemplateOutletContext]="{ item: formattedValue(value) }"
           ></ng-container>
         </a>
       } @else {
-        <span>{{ 'n/a' | translate }}</span>
-      }
-    }
-
-    @default {
-      @if (config.typeParams.postLink) {
-        <a
-          [routerLink]="[
-            config.typeParams.preLink,
-            data[config.typeParams.link],
-            config.typeParams.postLink,
-          ]"
-          queryParamsHandling="merge"
-        >
-          @if (config.pipe === 'number') {
-            {{
-              fieldData() | number: config.pipeParam : i18n.currentLang()
-            }}
-          } @else {
-            <ng-container
-              [ngTemplateOutlet]="displayData"
-              [ngTemplateOutletContext]="{
-                item: fieldData(),
-              }"
-            ></ng-container>
-          }
-        </a>
-      } @else {
-        <a
-          [routerLink]="[
-            config.typeParams.preLink,
-            data[config.typeParams.link],
-          ]"
-        >
+        <a [routerLink]="routerLink(column)" queryParamsHandling="merge">
           <ng-container
             [ngTemplateOutlet]="displayData"
-            [ngTemplateOutletContext]="{
-              item: fieldData(),
-            }"
+            [ngTemplateOutletContext]="{ item: formattedValue(value) }"
           ></ng-container>
         </a>
       }
+    } @else {
+      <span>{{ 'n/a' | translate }}</span>
     }
   }
-}
 
-<!-- Comparison with Pipe -->
-@if (config.pipe && config.type === 'comparison') {
-  <span [ngClass]="comparisonClassMap(config.field)">
-    {{ numberVal() }}
-  </span>
-}
-
-<!-- Only Pipe -->
-@if (!config.type && !config.indicator) {
-  @if (config.pipe === 'date') {
-    {{
-      fieldData() | date: config.pipeParam : 'UTC' : i18n.currentLang()
-    }}
-  }
-
-  @if (config.pipe === 'percent') {
-    {{ fieldData() | percent: config.pipeParam : i18n.currentLang() }}
-  }
-
-  @if (config.pipe === 'number') {
-    {{ fieldData() | number: config.pipeParam : i18n.currentLang() }}
-  }
-
-  @if (
-    config.pipe &&
-    config.pipe !== 'number' &&
-    config.pipe !== 'date' &&
-    config.pipe !== 'percent'
-  ) {
-    {{ numberVal() }}
-  }
-}
-
-<!-- Array Data -->
-@if (isArray(fieldData()) && config.type !== 'label') {
-  {{ fieldData() | translateArray | arrayToText }}
-}
-
-<!-- Default Data Display -->
-@if (!config.type && !config.pipe && !isArray(fieldData())) {
-  <ng-container
-    [ngTemplateOutlet]="displayData"
-    [ngTemplateOutletContext]="{
-      item: fieldData(),
-    }"
-  ></ng-container>
-}
-
-<!-- Indicator -->
-@if (config.indicator && fieldData()) {
-  @if (!config.secondaryField || data()[config.secondaryField.field]) {
-    <span
-      [ngClass]="
-        comparisonClassMap(
-          config.field,
-          config.upGoodDownBad,
-          config.showTextColours
-        )
-      "
-    >
-      <span
-        [ngClass]="{
-          'material-icons': config.useArrows,
-        }"
-      >
-        {{ getIndicator(config.field, config.useArrows) }}
-      </span>
-
-      <span>
-        {{
-          getValueIndicator(config.field, config.pipe, config.pipeParam, false)
-        }}
-      </span>
-    </span>
-
-    @if (config.secondaryField; as secondaryField) {
-      @if (data[secondaryField.field]) {
-        ({{
-          getValueIndicator(
-            secondaryField.field,
-            secondaryField.pipe,
-            secondaryField.pipeParam
-          )
-        }})
+  @case ('label') {
+    @if (value !== null && value !== undefined) {
+      @for (label of labelValues(value); track $index) {
+        <upd-project-status-label
+          [labelValue]="label"
+          class="d-inline-flex"
+          [class.me-1]="!$first"
+        ></upd-project-status-label>
       }
     }
   }
-}
 
-<!-- Markdown Type -->
-@if (config.type === 'markdown') {
-  <upd-markdown-renderer
-    [html]="$any(fieldData())"
-  ></upd-markdown-renderer>
+  @case ('change') {
+    <span [ngClass]="changeClasses(column, value)">
+      @if (column.indicator) {
+        <span [class.material-icons]="column.indicator === 'arrow'">
+          {{ changeIndicator(column, value) }}
+        </span>
+      }
+      <span>{{ changeValue(column, value) }}</span>
+    </span>
+
+    @if (column.secondaryField) {
+      @let secondary = valueAt(column.secondaryField.field);
+      @if (secondary !== null && secondary !== undefined) {
+        ({{ secondaryValue(column) }})
+      }
+    }
+  }
+
+  @case ('markdown') {
+    <upd-markdown-renderer [html]="$any(value)"></upd-markdown-renderer>
+  }
+
+  @default {
+    @if (isArray(value)) {
+      {{ stringValues(value) | translateArray | arrayToText }}
+    } @else {
+      <ng-container
+        [ngTemplateOutlet]="displayData"
+        [ngTemplateOutletContext]="{ item: formattedValue(value) }"
+      ></ng-container>
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { map } from 'rxjs';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import { labelColumn, type ColumnConfig } from '@dua-upd/types-common';
 import type { UnwrapObservable } from '@dua-upd/utils-common';
 import { TasksHomeFacade } from './+state/tasks-home.facade';
 
@@ -28,6 +28,8 @@ export class TasksHomeComponent implements OnInit {
   totalVisitsChange$ = this.tasksHomeService.totalVisitsChange$;
   totalCalls$ = this.tasksHomeService.totalCalls$;
   totalCallsChange$ = this.tasksHomeService.totalCallsChange$;
+  private readonly taskLabelColumn =
+    labelColumn<UnwrapObservable<typeof this.tasksHomeData$>>();
 
   tasksHomeColumns = [
     {
@@ -41,7 +43,7 @@ export class TasksHomeComponent implements OnInit {
       field: 'task',
       header: 'task',
       type: 'link',
-      typeParam: '_id',
+      link: '_id',
       translate: true,
       frozen: true,
     },
@@ -109,7 +111,6 @@ export class TasksHomeComponent implements OnInit {
     //   field: 'cops',
     //   header: 'COPS',
     //   type: 'label',
-    //   typeParam: '??' // copy from projects
     // },
     // {
     //   field: 'pages_mapped',
@@ -161,10 +162,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'kpi-visits-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'visits_difference',
         pipe: 'number',
@@ -174,13 +174,13 @@ export class TasksHomeComponent implements OnInit {
       width: '120px',
       group: 'tab-webtraffic',
     },
-    {
+    this.taskLabelColumn({
       field: 'taskStatus',
       header: 'Status',
       secondaryHeader: 'Performance Status',
       group: 'tab-taskperformance',
       type: 'label',
-      typeParam: 'taskStatus',
+      labelTypes: ['taskStatus'],
       filterConfig: {
         type: 'category',
         categories: taskStatusCategories.map((status) => ({
@@ -189,7 +189,7 @@ export class TasksHomeComponent implements OnInit {
         })),
       },
       frozen: true,
-    },
+    }),
     {
       field: 'performance_score',
       header: 'rps',
@@ -203,10 +203,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'rps-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'performance_score_difference',
         pipe: 'number',
@@ -245,10 +244,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'Change in call volume',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: false,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'down-good',
       secondaryField: {
         field: 'calls_difference',
         pipe: 'number',
@@ -271,10 +269,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'kpi-calls-per-100-title-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: false,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'down-good',
       secondaryField: {
         field: 'calls_per_100_visits_difference',
         pipe: 'number',
@@ -296,10 +293,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'negative-feedback-noclicks-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: false,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'down-good',
       secondaryField: {
         field: 'dyf_no_difference',
         pipe: 'number',
@@ -322,10 +318,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'kpi-feedback-per-1000-title-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: false,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'down-good',
       secondaryField: {
         field: 'dyf_no_per_1000_visits_difference',
         pipe: 'number',
@@ -349,10 +344,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'survey-volume-change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'survey_difference',
         pipe: 'number',
@@ -375,10 +369,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'Self-reported task success change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'survey_completed_difference',
         pipe: 'number',
@@ -401,10 +394,9 @@ export class TasksHomeComponent implements OnInit {
       header: 'Task success change',
       pipe: 'percent',
       pipeParam: '1.0-2',
-      upGoodDownBad: true,
-      indicator: true,
-      useArrows: true,
-      showTextColours: true,
+      type: 'change',
+      indicator: 'arrow',
+      colour: 'up-good',
       secondaryField: {
         field: 'latest_success_rate_difference',
         pipe: 'number',

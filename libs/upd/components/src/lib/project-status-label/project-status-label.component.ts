@@ -1,118 +1,52 @@
 import { Component, computed, input } from '@angular/core';
-import {
-  ProjectStatus,
-  PageStatus,
-  ProjectType,
-  TaskStatus,
-  ArchivedStatus,
-  PassFailStatus,
-  LabelClassMapKey,
-  LabelType,
-} from '@dua-upd/types-common';
-import type { UnwrapSignal } from '@dua-upd/upd/utils';
+import type { LabelValue } from '@dua-upd/types-common';
 
-export type LabelClassMap<T extends LabelType> = {
-  [K in LabelClassMapKey<T>]: string;
-};
+interface LabelDefinition {
+  className: string;
+  fullWidth?: boolean;
+}
+
+const LABEL_DEFINITIONS = {
+  Unknown: { className: 'bg-unknown' },
+  Planning: { className: 'bg-planning' },
+  'In Progress': { className: 'bg-in-progress' },
+  Complete: { className: 'bg-complete' },
+  Delayed: { className: 'bg-delayed' },
+  Exploratory: { className: 'bg-exploratory' },
+  Monitoring: { className: 'bg-monitoring' },
+  'Needs review': { className: 'bg-needs-review' },
+  Paused: { className: 'bg-paused' },
+  COPS: { className: 'bg-primary' },
+  WOS_COPS: { className: 'bg-info' },
+  Live: { className: 'bg-complete', fullWidth: true },
+  '404': { className: 'bg-404', fullWidth: true },
+  Redirected: { className: 'bg-redirect', fullWidth: true },
+  Stable: { className: 'bg-healthy' },
+  Watch: { className: 'bg-watch' },
+  'Action required': { className: 'bg-needs-action' },
+  Unscored: { className: 'bg-unscored' },
+  Archived: { className: 'bg-archive' },
+  'Not archived': { className: 'bg-primary' },
+  Pass: { className: 'bg-completed' },
+  Fail: { className: 'bg-delayed' },
+} satisfies Record<LabelValue, LabelDefinition>;
 
 @Component({
   selector: 'upd-project-status-label',
   template: `
     <span
-      [class.w-100]="labelType() === 'pageStatus'"
-      class="badge {{ styleClass() }} {{
-        labelClass() || 'bg-unknown'
-      }} d-block"
+      class="badge d-block {{ definition().className }}"
+      [class.w-100]="definition().fullWidth"
       >{{ labelValue() | translate }}</span
     >
   `,
   styleUrls: ['./project-status-label.component.scss'],
   standalone: false,
 })
-export class ProjectStatusLabelComponent<const T extends LabelType> {
-  labelType = input.required<T>();
-  labelValue = input.required<LabelClassMapKey<T>>();
+export class ProjectStatusLabelComponent {
+  labelValue = input.required<LabelValue>();
 
-  styleClass = input<string | null>(null);
-
-  classMap = computed<LabelClassMap<T>>(() => {
-    switch (this.labelType()) {
-      case 'projectStatus':
-        return this.projectStatusClassMap as LabelClassMap<T>;
-      case 'pageStatus':
-        return this.pageStatusClassMap as LabelClassMap<T>;
-      case 'projectType':
-        return this.projectTypeClassMap as LabelClassMap<T>;
-      case 'taskStatus':
-        return this.taskStatusClassMap as LabelClassMap<T>;
-      case 'archivedStatus':
-        return this.archiveStatusClassMap as LabelClassMap<T>;
-      case 'passFail':
-        return this.passFailClassMap as LabelClassMap<T>;
-      default:
-        throw new Error(`Invalid labelType: ${this.labelType()}`);
-    }
-  });
-
-  labelClass = computed(() => this.classMap()[this.labelValue()]);
-
-  projectStatusClassMap: LabelClassMap<'projectStatus'> = {
-    Unknown: 'bg-unknown',
-    Planning: 'bg-planning',
-    'In Progress': 'bg-in-progress',
-    Complete: 'bg-complete',
-    Delayed: 'bg-delayed',
-    Exploratory: 'bg-exploratory',
-    Monitoring: 'bg-monitoring',
-    'Needs review': 'bg-needs-review',
-    Paused: 'bg-paused',
-  };
-
-  pageStatusClassMap: LabelClassMap<'pageStatus'> = {
-    Live: 'bg-complete',
-    '404': 'bg-404',
-    Redirected: 'bg-redirect',
-  };
-
-  projectTypeClassMap: LabelClassMap<'projectType'> = {
-    COPS: 'bg-primary',
-    WOS_COPS: 'bg-info',
-  };
-
-  taskStatusClassMap: LabelClassMap<'taskStatus'> = {
-    Stable: 'bg-healthy',
-    Watch: 'bg-watch',
-    'Action required': 'bg-needs-action',
-    Unscored: 'bg-unscored',
-  };
-
-  archiveStatusClassMap: LabelClassMap<'archivedStatus'> = {
-    Archived: 'bg-archive',
-    'Not archived': 'bg-primary',
-  };
-
-  passFailClassMap: LabelClassMap<'passFail'> = {
-    Pass: 'bg-completed',
-    Fail: 'bg-delayed',
-  };
-}
-
-class LabelConfig<T extends LabelType> {
-  constructor(
-    public config: {
-      labelType: T;
-      labelValue: LabelClassMapKey<T>;
-      styleClass?: string | null;
-    },
-  ) {}
-}
-
-export type { LabelConfig };
-
-export function labelConfig<T extends LabelType>(config: {
-  labelType: T;
-  labelValue: LabelClassMapKey<T>;
-  styleClass?: string | null;
-}): LabelConfig<T> {
-  return new LabelConfig(config);
+  definition = computed<LabelDefinition>(
+    () => LABEL_DEFINITIONS[this.labelValue()],
+  );
 }

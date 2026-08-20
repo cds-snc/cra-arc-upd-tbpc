@@ -122,10 +122,8 @@ export class OverviewUxTestsComponent implements OnInit {
           field: 'title',
           header: this.i18n.service.translate('ux_projects', lang),
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/projects',
-            link: '_id',
-          },
+          preLink: '/' + this.langLink + '/projects',
+          link: '_id',
         },
         {
           field: 'testType',

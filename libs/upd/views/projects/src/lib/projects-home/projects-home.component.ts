@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { UnwrapObservable } from '@dua-upd/utils-common';
 import { combineLatest, map } from 'rxjs';
 import { ProjectsHomeFacade } from './+state/projects-home.facade';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import { labelColumn, type ColumnConfig } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { FR_CA } from '@dua-upd/upd/i18n';
 import { createCategoryConfig } from '@dua-upd/upd/utils';
@@ -30,6 +30,8 @@ export class ProjectsHomeComponent implements OnInit {
   completedCOPS$ = this.projectsHomeService.completedCOPS$;
 
   columns: ColumnConfig<UnwrapObservable<typeof this.tableData$>>[] = [];
+  private readonly projectLabelColumn =
+    labelColumn<UnwrapObservable<typeof this.tableData$>>();
 
   searchFields = this.columns.map((col) => col.field);
 
@@ -44,13 +46,13 @@ export class ProjectsHomeComponent implements OnInit {
             field: 'title',
             header: this.i18n.service.translate('Name', lang),
             type: 'link',
-            typeParam: '_id',
+            link: '_id',
           },
-          {
+          this.projectLabelColumn({
             field: 'projectTypeLabel',
             header: this.i18n.service.translate('type', lang),
             type: 'label',
-            typeParam: 'projectType',
+            labelTypes: ['projectType'],
             filterConfig: {
               type: 'category',
               categories: [
@@ -65,12 +67,12 @@ export class ProjectsHomeComponent implements OnInit {
               ],
               matchMode: 'arrayContains',
             },
-          },
-          {
+          }),
+          this.projectLabelColumn({
             field: 'status',
             header: this.i18n.service.translate('Status', lang),
             type: 'label',
-            typeParam: 'status',
+            labelTypes: ['projectStatus'],
             filterConfig: {
               type: 'category',
               categories: createCategoryConfig({
@@ -79,7 +81,7 @@ export class ProjectsHomeComponent implements OnInit {
                 field: 'status',
               }),
             },
-          },
+          }),
           {
             field: 'startDate',
             header: this.i18n.service.translate('Start date', lang),
@@ -103,10 +105,9 @@ export class ProjectsHomeComponent implements OnInit {
             header: this.i18n.service.translate('Change in average success rate', lang),
             pipe: 'percent',
             pipeParam: '1.0',
-            upGoodDownBad: true,
-            indicator: true,
-            useArrows: true,
-            showTextColours: true,
+            type: 'change',
+            indicator: 'arrow',
+            colour: 'up-good',
             secondaryField: {
               field: 'avgSuccessValueChange',
               pipe: 'number',

@@ -37,17 +37,19 @@ interface SelectedItem {
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class FilterTableComponent<T extends object> implements OnInit {
+export class FilterTableComponent<ColumnRow extends object, T extends object>
+  implements OnInit
+{
   private i18n = inject(I18nFacade);
-  private readonly filterTableStore = inject(FilterTableStore<T>);
+  private readonly filterTableStore = inject(FilterTableStore<ColumnRow, T>);
   private filterService = inject(FilterService);
 
-  @Input() cols: ColumnConfig<T>[] = [];
+  @Input() cols: ColumnConfig<ColumnRow>[] = [];
   _data: T[] = [];
   @Input() set data(value: T[]) {
     this._data = value;
 
-    const d = [this._data, this.cols] as [T[], ColumnConfig<T>[]];
+    const d = [this._data, this.cols] as [T[], ColumnConfig<ColumnRow>[]];
     this.filterTableStore.setData(d);
     const lang = this.i18n.currentLang();
       this.filterTableStore.setLabels(lang);

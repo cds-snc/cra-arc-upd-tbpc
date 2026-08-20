@@ -46,13 +46,15 @@
             track project['_id'];
             let last = $last
           ) {
-            @if (config().typeParams; as params) {
-              <a
-                [routerLink]="[params.preLink, project[params.link]]"
-                queryParamsHandling="merge"
-              >
-                {{ project[config().field] }}
-              </a>
+            @if (config(); as projectConfig) {
+              @if (projectConfig.type === 'link') {
+                <a
+                  [routerLink]="routerLink(projectConfig, project)"
+                  queryParamsHandling="merge"
+                >
+                  {{ project[projectConfig.field] }}
+                </a>
+              }
             }
 
             @if (!last) {

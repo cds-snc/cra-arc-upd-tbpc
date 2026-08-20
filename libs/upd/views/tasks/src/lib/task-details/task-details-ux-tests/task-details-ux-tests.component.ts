@@ -40,8 +40,12 @@ export class TaskDetailsUxTestsComponent implements OnInit {
 
   langLink = 'en';
 
-  taskSuccessChartCols: ColumnConfig[] = [];
-  taskSuccessDataCols: ColumnConfig[] = [];
+  taskSuccessChartCols: ColumnConfig<{ name: string; value: number }>[] = [];
+  taskSuccessDataCols: ColumnConfig<
+    GetTableProps<TaskDetailsUxTestsComponent, 'taskSuccessData$'> & {
+      _project_id: string;
+    }
+  >[] = [];
 
   avgTaskSuccessKpiCriteria = (successRate: number) =>
     successRate >= 0.8 ? 'pass' : 'fail';
@@ -55,7 +59,8 @@ export class TaskDetailsUxTestsComponent implements OnInit {
           field: 'filename',
           header: this.i18n.service.translate('File link', lang),
           type: 'link',
-          typeParams: { link: 'url', external: true },
+          link: 'url',
+          external: true,
         },
       ];
       this.taskSuccessChartCols = [
@@ -71,10 +76,8 @@ export class TaskDetailsUxTestsComponent implements OnInit {
           field: 'title',
           header: this.i18n.service.translate('UX Test', lang),
           type: 'link',
-          typeParams: {
-            preLink: '/' + this.langLink + '/projects',
-            link: '_project_id',
-          },
+          preLink: '/' + this.langLink + '/projects',
+          link: '_project_id',
         },
         {
           field: 'test_type',

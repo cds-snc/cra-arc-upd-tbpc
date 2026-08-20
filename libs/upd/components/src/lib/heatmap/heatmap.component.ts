@@ -33,7 +33,7 @@ interface ColorThreshold {
     styleUrls: ['./heatmap.component.scss'],
     standalone: false
 })
-export class HeatmapComponent<T> {
+export class HeatmapComponent<ColumnRow extends object, T extends object> {
   private i18n = inject(I18nFacade);
   currentLang = this.i18n.currentLang;
   title = input('');
@@ -51,8 +51,8 @@ export class HeatmapComponent<T> {
     highest: { fill: '#D32F2F', border: '#B71C1C' },
   };
   weekDays = dayjs.weekdaysMin();
-  @Input() table: T[] = [];
-  @Input() tableCols: ColumnConfig[] = [];
+  @Input() table: T[] | null | undefined = [];
+  @Input() tableCols: ColumnConfig<ColumnRow>[] = [];
 
   constructor() {
     effect(() => {

@@ -4,10 +4,10 @@ import { NgbPopoverConfig } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs';
 import type { RowInput } from 'jspdf-autotable';
 import * as FileSaver from 'file-saver';
-import type { ColumnConfig } from '@dua-upd/types-common';
+import type { ColumnConfig, ColumnConfigPipe } from '@dua-upd/types-common';
 import { DropdownOption } from '../dropdown/dropdown.component';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { PageStatus, ArchivedStatus, ProjectStatus, TaskStatus } from '@dua-upd/types-common';
+import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
 
 @Component({
     selector: 'upd-data-table-exports',
@@ -26,9 +26,9 @@ import { PageStatus, ArchivedStatus, ProjectStatus, TaskStatus } from '@dua-upd/
     providers: [NgbPopoverConfig],
     standalone: false
 })
-export class DataTableExportsComponent<T> {
+export class DataTableExportsComponent<ColumnRow extends object, T extends object> {
   private i18n = inject(I18nFacade);
-  private config: NgbPopoverConfig;
+  private secondsToMinutes = inject(SecondsToMinutesPipe);
 
   utf8Encoder = new TextEncoder();
 
@@ -45,15 +45,13 @@ export class DataTableExportsComponent<T> {
 
   @Input() id!: string;
   @Input() data: T[] = [];
-  @Input() cols: ColumnConfig<T>[] = [];
+  @Input() cols: ColumnConfig<ColumnRow>[] = [];
 
   constructor() {
     const config = inject(NgbPopoverConfig);
 
     config.placement = 'right';
     config.triggers = 'hover focus';
-
-    this.config = config;
   }
 
   async getFormattedExportData(replaceKeysWithHeaders = false) {
@@ -63,48 +61,43 @@ export class DataTableExportsComponent<T> {
       this.cols.reduce(
         (formattedRow, col) => {
           const colKey = replaceKeysWithHeaders ? col.header : col.field;
-          const cellValue = row[col.field as keyof T];
+          const cellValue = (row as Record<string, unknown>)[col.field];
 
-          if (!cellValue) {
+          if (cellValue === null || cellValue === undefined) {
             formattedRow[colKey] = '';
+          } else if (col.type === 'label') {
+            const labelValues = Array.isArray(cellValue)
+              ? cellValue
+              : [cellValue];
+            formattedRow[colKey] = labelValues
+              .map((value) =>
+                this.i18n.service.translate(String(value), currentLang),
+              )
+              .join(', ');
+          } else if (col.type === 'change' && col.secondaryField) {
+            const primaryValue = this.formatValue(
+              cellValue,
+              col.pipe,
+              col.pipeParam,
+              currentLang,
+            );
+            const secondaryValue = this.formatValue(
+              (row as Record<string, unknown>)[col.secondaryField.field],
+              col.secondaryField.pipe,
+              col.secondaryField.pipeParam,
+              currentLang,
+            );
+
+            formattedRow[colKey] = `${primaryValue} (${secondaryValue})`;
           } else if (Array.isArray(cellValue)) {
             formattedRow[colKey] = cellValue.join(', ');
-          } else if (col.secondaryField) {
-            formattedRow[colKey] = `${formatPercent(
-              (<unknown>cellValue) as number,
-              currentLang,
-              col.pipeParam,
-            )} (${formatNumber(
-              (<unknown>row[col.secondaryField.field as keyof T]) as number,
-              currentLang,
-              col.secondaryField.pipeParam,
-            )})` as string;
-          } else if (col.pipe === 'percent') {
-            formattedRow[colKey] = formatPercent(
-              (<unknown>cellValue) as number,
-              currentLang,
-            );
-          } else if (col.pipe === 'number') {
-            formattedRow[colKey] = formatNumber(
-              (<unknown>cellValue) as number,
-              currentLang,
-            );
-          } else if (col.pipe === 'date') {
-            formattedRow[colKey] = formatDate(
-              (<unknown>cellValue) as Date,
-              col.pipeParam ?? 'yyyy-MM-dd',
-              currentLang,
-              'UTC',
-            );
-          } else if (col.type === 'label' && Array.isArray(cellValue)) {
-            formattedRow[colKey] =
-              cellValue
-                .map((value) => this.i18n.service.translate(value, currentLang))
-                .join(', ') || '';
-          } else if (col.type === 'label') {
-            formattedRow[colKey] = this.i18n.service.translate(cellValue as string, currentLang);
           } else {
-            formattedRow[colKey] = (<unknown>cellValue) as string;
+            formattedRow[colKey] = this.formatValue(
+              cellValue,
+              col.pipe,
+              col.pipeParam,
+              currentLang,
+            );
           }
 
           return formattedRow;
@@ -112,6 +105,35 @@ export class DataTableExportsComponent<T> {
         {} as Record<string, string>,
       ),
     );
+  }
+
+  private formatValue(
+    value: unknown,
+    pipe: ColumnConfigPipe | undefined,
+    pipeParam: string | undefined,
+    currentLang: string,
+  ) {
+    if (value === null || value === undefined) return '';
+
+    switch (pipe) {
+      case 'percent':
+        return formatPercent(value as number, currentLang, pipeParam);
+      case 'number':
+        return formatNumber(value as number, currentLang, pipeParam);
+      case 'date':
+        return formatDate(
+          value as Date,
+          pipeParam ?? 'yyyy-MM-dd',
+          currentLang,
+          'UTC',
+        );
+      case 'secondsToMinutes':
+        return typeof value === 'number'
+          ? String(this.secondsToMinutes.transform(value))
+          : String(value);
+      default:
+        return String(value);
+    }
   }
 
   async exportCsv() {

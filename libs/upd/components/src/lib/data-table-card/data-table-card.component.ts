@@ -7,14 +7,14 @@ import type { ColumnConfig } from '@dua-upd/types-common';
     styleUrls: ['./data-table-card.component.css'],
     standalone: false
 })
-export class DataTableCardComponent<T> {
+export class DataTableCardComponent<ColumnRow extends object, T extends object> {
   @Input() data: T[] = [];
   @Input() displayRows = 10;
   @Input() sort = true;
   @Input() pagination = true;
   @Input() filter = true;
   @Input() filterTree = false;
-  @Input() cols: ColumnConfig[] = [];
+  @Input() cols: ColumnConfig<ColumnRow>[] = [];
   @Input() searchFields: string[] = [];
   @Input() captionTitle = '';
   @Input() kpi = false;

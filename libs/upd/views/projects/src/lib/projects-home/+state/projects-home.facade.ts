@@ -44,9 +44,9 @@ export class ProjectsHomeFacade {
         //         ? 'WOS_COPS'
         //         : null,
         projectTypeLabel: [
-          ...(d.cops ? ['COPS'] : []),
-          ...(d.wos_cops ? ['WOS_COPS'] : []),
-        ],            
+          ...(d.cops ? (['COPS'] as const) : []),
+          ...(d.wos_cops ? (['WOS_COPS'] as const) : []),
+        ],
         startDate: d.startDate || '',
         avgSuccessValueChange: d.avgSuccessValueChange * 100
       }));
