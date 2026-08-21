@@ -281,7 +281,8 @@
             <!-- Category/multiselect filtering -->
             @if (
               col.filterConfig.type === 'category' ||
-              col.filterConfig.type === 'pageStatus'
+              col.filterConfig.type === 'pageStatus' ||
+              col.filterConfig.type === 'taskStatus'
             ) {
               <p-columnFilter
                 [field]="col.field"

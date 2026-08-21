@@ -49,7 +49,7 @@
           {{ 'zone-map-combined-score-description' | translate }}
         </p>
 
-        <div class="zone-score-guide">
+        <div class="zone-score-guide mb-3">
           <div>
             <strong>50%</strong>
             <span>
@@ -104,9 +104,7 @@
           {{ 'zone-map-high-impact' | translate }}
         </h6>
 
-        <p
-          [innerHTML]="'zone-map-high-impact-description' | translate"
-        ></p>
+        <p [innerHTML]="'zone-map-high-impact-description' | translate"></p>
       </div>
 
       <upd-accordion [title]="'zone-map-additional-tips' | translate">
@@ -146,118 +144,97 @@
       <p class="zone-map-subtitle mb-3">
         {{ 'zone-map-matrix-description' | translate }}
       </p>
-
-      <div
-        class="zone-bootstrap-grid"
-        role="grid"
-        [attr.aria-label]="'zone-map-grid-aria-label' | translate"
-      >
-        <div aria-hidden="true"></div>
-        <div aria-hidden="true"></div>
-
-        @for (column of columns; track column) {
-          <div
-            class="zone-column-header d-flex flex-column align-items-center justify-content-center"
-            role="columnheader"
-          >
-            <div>{{ getHistoricalName(column) }}</div>
-            <small>{{ getHistoricalRangeLabel(column) }}</small>
-          </div>
-        }
-
+      <div class="zone-matrix overflow-auto">
         <div
-          class="zone-axis-label d-flex align-items-center justify-content-center"
-          aria-hidden="true"
+          class="zone-bootstrap-grid gap-3"
+          role="grid"
+          [attr.aria-label]="'zone-map-grid-aria-label' | translate"
         >
-          <div>
-            {{ 'task-status-performance-score' | translate }}
-          </div>
-        </div>
-
-        @for (row of rows; track row) {
-          <div
-            class="zone-row-header d-flex flex-column align-items-center justify-content-center"
-            [ngClass]="getRowClass(row)"
-            role="rowheader"
-          >
-            <div>{{ getRelativeName(row) }}</div>
-            <small>{{ getRelativeRangeLabel(row) }}</small>
-          </div>
+          <div aria-hidden="true"></div>
 
           @for (column of columns; track column) {
             <div
-              class="zone-cell d-flex flex-column align-items-center justify-content-center"
-              [ngClass]="[
-                getStatus(row, column).className,
-                isActive(row, column) ? 'active' : '',
-              ]"
-              role="gridcell"
-              tabindex="0"
-              [attr.title]="
-                'zone-map-cell-title'
-                  | translate
-                    : {
-                        row: getRelativeName(row),
-                        column: getHistoricalName(column),
-                      }
-              "
-              [attr.aria-current]="isActive(row, column) ? 'true' : null"
-              [attr.aria-label]="
-                'zone-map-cell-aria-label'
-                  | translate
-                    : {
-                        row: getRelativeName(row),
-                        rowRange: getRelativeRangeLabel(row),
-                        column: getHistoricalName(column),
-                        columnRange: getHistoricalRangeLabel(column),
-                        status: (getStatus(row, column).labelKey | translate),
-                        current: isActive(row, column)
-                          ? ('zone-map-current-task-status' | translate)
-                          : '',
-                      }
-              "
+              class="zone-column-header d-flex flex-column align-items-center justify-content-center text-center rounded-3 px-3 py-2"
+              role="columnheader"
             >
-              <div
-                class="zone-status-pill text-center fw-bold"
-                [ngClass]="getStatus(row, column).className"
-                aria-hidden="true"
-              >
-                {{ getStatus(row, column).labelKey | translate }}
-              </div>
+              <div class="fw-bold">
+                <span aria-hidden="true">
+                  {{ getHistoricalArrow(column) }}
+                </span>
 
-              <div class="zone-cell-subtitle mt-2" aria-hidden="true">
-                {{ getRelativeName(row) }} +
                 {{ getHistoricalName(column) }}
               </div>
+
+              <small class="fw-semibold mt-1">
+                {{ getHistoricalRangeLabelKey(column) | translate }}
+              </small>
             </div>
           }
-        }
-      </div>
 
-      <div
-        class="zone-legend zone-legend--horizontal mt-3"
-        [attr.aria-label]="'zone-map-status-legend' | translate"
-      >
-        <div class="zone-legend-title fw-bold">
-          {{ 'zone-map-status-legend' | translate }}
-        </div>
-
-        <div
-          class="d-flex flex-wrap align-items-center justify-content-center gap-3"
-        >
-          @for (item of legend; track item.labelKey) {
-            <div class="zone-legend-item d-flex align-items-center gap-2">
-              <div
-                class="zone-legend-pill text-center fw-bold flex-shrink-0"
-                [ngClass]="item.className"
-              >
-                {{ item.labelKey | translate }}
+          @for (row of rows; track row) {
+            <div
+              class="zone-row-header d-flex flex-column justify-content-center rounded-3 p-3"
+              [ngClass]="getRowClass(row)"
+              role="rowheader"
+            >
+              <div class="zone-row-header__eyebrow text-uppercase fw-bold mb-2">
+                {{ 'zone-map-quality' | translate }}
               </div>
 
-              <div class="zone-legend-note">
-                {{ item.noteKey | translate }}
+              <div class="zone-row-header__name fw-bold">
+                {{ getRelativeName(row) }}
+              </div>
+
+              <div class="zone-row-header__range fw-semibold mt-1">
+                {{ getRelativeRangeLabel(row) }}
               </div>
             </div>
+
+            @for (column of columns; track column) {
+              @let status = getStatus(row, column);
+
+              <div
+                class="zone-cell d-flex flex-column justify-content-center rounded-3 p-3"
+                [ngClass]="[
+                  status.className,
+                  isActive(row, column) ? 'active' : '',
+                ]"
+                role="gridcell"
+                tabindex="0"
+                [attr.title]="
+                  'zone-map-cell-title'
+                    | translate
+                      : {
+                          row: getRelativeName(row),
+                          column: getHistoricalName(column),
+                        }
+                "
+                [attr.aria-current]="isActive(row, column) ? 'true' : null"
+                [attr.aria-label]="
+                  'zone-map-cell-aria-label'
+                    | translate
+                      : {
+                          row: getRelativeName(row),
+                          rowRange: getRelativeRangeLabel(row),
+                          column: getHistoricalName(column),
+                          columnRange:
+                            (getHistoricalRangeLabelKey(column) | translate),
+                          status: (status.labelKey | translate),
+                          current: isActive(row, column)
+                            ? ('zone-map-current-task-status' | translate)
+                            : '',
+                        }
+                "
+              >
+                <div class="zone-cell__status fw-bold mb-2">
+                  {{ status.labelKey | translate }}
+                </div>
+
+                <div class="zone-cell__note">
+                  {{ status.noteKey | translate }}
+                </div>
+              </div>
+            }
           }
         </div>
       </div>

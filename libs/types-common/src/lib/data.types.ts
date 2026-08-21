@@ -540,7 +540,7 @@ export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
-export type TaskStatus = 'Stable' | 'Watch' | 'Action required' | 'Unscored';
+export type TaskStatus = 'On track' | 'Watch' | 'Action required' | 'Unscored';
 
 export interface searchAssessmentColTypes {
   query: string;

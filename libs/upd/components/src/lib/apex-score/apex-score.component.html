@@ -1,24 +1,41 @@
 <div class="score-chart">
-  @if (chartOptions(); as options) {
-    <apx-chart
-      [series]="options.series!"
-      [chart]="options.chart!"
-      [annotations]="options.annotations!"
-      [xaxis]="options.xaxis!"
-      [yaxis]="options.yaxis!"
-      [dataLabels]="options.dataLabels!"
-      [plotOptions]="options.plotOptions!"
-      [tooltip]="options.tooltip!"
-      [legend]="options.legend!"
-      [grid]="options.grid!"
-      [states]="options.states!"
-      [colors]="options.colors!"
-      [fill]="options.fill!"
-    ></apx-chart>
-  }
+  <div class="score-chart__bar">
+    @if (chartOptions(); as options) {
+      <apx-chart
+        [series]="options.series!"
+        [chart]="options.chart!"
+        [annotations]="options.annotations!"
+        [xaxis]="options.xaxis!"
+        [yaxis]="options.yaxis!"
+        [dataLabels]="options.dataLabels!"
+        [plotOptions]="options.plotOptions!"
+        [tooltip]="options.tooltip!"
+        [legend]="options.legend!"
+        [grid]="options.grid!"
+        [states]="options.states!"
+        [colors]="options.colors!"
+        [fill]="options.fill!"
+      ></apx-chart>
+    }
 
-  <div
-    class="score-marker"
-    [style.left.%]="scorePosition()"
-  ></div>
+    <div class="score-marker" [style.left.%]="scorePosition()"></div>
+  </div>
+
+  <div class="score-chart__scale">
+    @for (boundary of rangeBoundaries(); track boundary) {
+      <span class="score-chart__tick" [style.left.%]="boundary"></span>
+    }
+
+    @for (range of rangeLabels(); track range.name) {
+      <span
+        class="score-chart__label"
+        [class.score-chart__label--active]="range.active"
+        [style.left.%]="range.left"
+        [style.width.%]="range.width"
+        [style.--range-color]="range.color"
+      >
+        {{ range.name | titlecase }}
+      </span>
+    }
+  </div>
 </div>
