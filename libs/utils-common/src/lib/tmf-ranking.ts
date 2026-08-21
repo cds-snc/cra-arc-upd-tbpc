@@ -1,5 +1,5 @@
 import { isNullish } from './utils-common';
-export type TaskStatus = 'Stable' | 'Watch' | 'Action required' | 'Unscored';
+export type TaskStatus = 'On track' | 'Watch' | 'Action required' | 'Unscored';
 
 const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
 export const HIGH_DEMAND_METRIC_KEYS = ['visits', 'calls', 'dyf_no'] as const;
@@ -274,31 +274,30 @@ export function getTaskStatus(
   if (
     rps == null ||
     hps == null ||
-    Number.isNaN(rps) ||
-    Number.isNaN(hps)
+    !Number.isFinite(rps) ||
+    !Number.isFinite(hps)
   ) {
     return 'Unscored';
   }
 
   const variance = rps - hps;
 
-  if (rps >= 0.5 && variance >= -0.05) {
-    return 'Stable';
+  const improving = variance > 0.05;
+  const declining = variance < -0.05;
+
+  if (rps >= 0.8) {
+    return declining ? 'Watch' : 'On track';
+  }
+
+  if (rps >= 0.6) {
+    return declining ? 'Watch' : 'On track';
   }
 
   if (rps >= 0.5) {
-    return 'Watch';
+    return declining ? 'Action required' : 'Watch';
   }
 
-  if (rps >= 0.36 && variance > 0.05) {
-    return 'Watch';
-  }
-
-  if (rps >= 0.36 && variance >= -0.05) {
-    return 'Watch';
-  }
-
-  if (rps < 0.36 && variance > 0.05) {
+  if (improving) {
     return 'Watch';
   }
 

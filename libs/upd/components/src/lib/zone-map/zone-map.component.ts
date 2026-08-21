@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   Input,
 } from '@angular/core';
 
-type PerformanceBand = 'poor' | 'low' | 'good' | 'great';
-type TrendBand = 'higher' | 'normal' | 'lower';
-
+import type {
+  PerformanceBand,
+  TrendBand,
+} from '../task-status/task-status.component';
+import { I18nFacade } from '@dua-upd/upd/state';
 export type ZoneRange<T extends string = string> = {
   key: T;
   name: string;
@@ -15,10 +18,7 @@ export type ZoneRange<T extends string = string> = {
   color: string;
 };
 
-type ZoneStatusClass =
-  | 'healthy'
-  | 'watch'
-  | 'needs-action';
+type ZoneStatusClass = 'healthy' | 'watch' | 'needs-action';
 
 type ZoneStatus = {
   labelKey: string;
@@ -36,89 +36,125 @@ type StatusKey = `${PerformanceBand}-${TrendBand}`;
   standalone: false,
 })
 export class ZoneMapComponent {
-  @Input() relative: PerformanceBand = 'great';
-  @Input() historical: TrendBand = 'higher';
+  private i18n = inject(I18nFacade);
+  readonly currentLang = this.i18n.currentLang;
+  @Input() relative: PerformanceBand = 'strong';
+  @Input() historical: TrendBand = 'improving';
 
   @Input() relativeRanges: ZoneRange<PerformanceBand>[] = [];
   @Input() historicalRanges: ZoneRange<TrendBand>[] = [];
 
+  @Input() highlightActive = true;
+
   private readonly rowOrder: PerformanceBand[] = [
-    'great',
+    'strong',
     'good',
-    'low',
+    'fair',
     'poor',
   ];
 
   private readonly columnOrder: TrendBand[] = [
-    'higher',
-    'normal',
-    'lower',
-  ];
-
-  readonly legend: ZoneStatus[] = [
-    {
-      labelKey: 'zone-map-status-healthy',
-      className: 'healthy',
-      noteKey: 'task-status-note-no-action',
-    },
-    {
-      labelKey: 'zone-map-status-watch',
-      className: 'watch',
-      noteKey: 'task-status-note-monitor',
-    },
-    {
-      labelKey: 'zone-map-status-needs-action',
-      className: 'needs-action',
-      noteKey: 'task-status-note-prioritize',
-    },
+    'improving',
+    'steady',
+    'declining',
   ];
 
   private readonly statusMap: Record<StatusKey, ZoneStatus> = {
-    'great-higher': this.legend[0],
-    'great-normal': this.legend[0],
-    'great-lower': this.legend[1],
+    'strong-improving': {
+      labelKey: 'zone-map-status-healthy',
+      noteKey: 'zone-map-note-strong-improving',
+      className: 'healthy',
+    },
 
-    'good-higher': this.legend[0],
-    'good-normal': this.legend[0],
-    'good-lower': this.legend[1],
+    'strong-steady': {
+      labelKey: 'zone-map-status-healthy',
+      noteKey: 'zone-map-note-strong-steady',
+      className: 'healthy',
+    },
 
-    'low-higher': this.legend[1],
-    'low-normal': this.legend[1],
-    'low-lower': this.legend[2],
+    'strong-declining': {
+      labelKey: 'zone-map-status-watch',
+      noteKey: 'zone-map-note-strong-declining',
+      className: 'watch',
+    },
 
-    'poor-higher': this.legend[1],
-    'poor-normal': this.legend[2],
-    'poor-lower': this.legend[2],
+    'good-improving': {
+      labelKey: 'zone-map-status-healthy',
+      noteKey: 'zone-map-note-good-improving',
+      className: 'healthy',
+    },
+
+    'good-steady': {
+      labelKey: 'zone-map-status-healthy',
+      noteKey: 'zone-map-note-good-steady',
+      className: 'healthy',
+    },
+
+    'good-declining': {
+      labelKey: 'zone-map-status-watch',
+      noteKey: 'zone-map-note-good-declining',
+      className: 'watch',
+    },
+
+    'fair-improving': {
+      labelKey: 'zone-map-status-watch',
+      noteKey: 'zone-map-note-fair-improving',
+      className: 'watch',
+    },
+
+    'fair-steady': {
+      labelKey: 'zone-map-status-watch',
+      noteKey: 'zone-map-note-fair-steady',
+      className: 'watch',
+    },
+
+    'fair-declining': {
+      labelKey: 'zone-map-status-needs-action',
+      noteKey: 'zone-map-note-fair-declining',
+      className: 'needs-action',
+    },
+
+    'poor-improving': {
+      labelKey: 'zone-map-status-watch',
+      noteKey: 'zone-map-note-poor-improving',
+      className: 'watch',
+    },
+
+    'poor-steady': {
+      labelKey: 'zone-map-status-needs-action',
+      noteKey: 'zone-map-note-poor-steady',
+      className: 'needs-action',
+    },
+
+    'poor-declining': {
+      labelKey: 'zone-map-status-needs-action',
+      noteKey: 'zone-map-note-poor-declining',
+      className: 'needs-action',
+    },
   };
 
   get rows(): PerformanceBand[] {
-    const available = new Set(
-      this.relativeRanges.map((range) => range.key),
-    );
+    const available = new Set(this.relativeRanges.map((range) => range.key));
 
     return this.rowOrder.filter((key) => available.has(key));
   }
 
   get columns(): TrendBand[] {
-    const available = new Set(
-      this.historicalRanges.map((range) => range.key),
-    );
+    const available = new Set(this.historicalRanges.map((range) => range.key));
 
     return this.columnOrder.filter((key) => available.has(key));
   }
 
-  isActive(
-    row: PerformanceBand,
-    column: TrendBand,
-  ): boolean {
-    return row === this.relative && column === this.historical;
+  isActive(row: PerformanceBand, column: TrendBand): boolean {
+    return (
+      this.highlightActive &&
+      row === this.relative &&
+      column === this.historical
+    );
   }
 
-  getStatus(
-    row: PerformanceBand,
-    column: TrendBand,
-  ): ZoneStatus {
-    return this.statusMap[`${row}-${column}`] ?? this.legend[3];
+  getStatus(row: PerformanceBand, column: TrendBand): ZoneStatus {
+    return this.statusMap[`${row}-${column}`];
   }
 
   getRowClass(row: PerformanceBand): string {
@@ -126,24 +162,18 @@ export class ZoneMapComponent {
   }
 
   getRelativeName(row: PerformanceBand): string {
-    return (
-      this.relativeRanges.find((range) => range.key === row)?.name ??
-      row
-    );
+    return this.relativeRanges.find((range) => range.key === row)?.name ?? row;
   }
 
   getHistoricalName(column: TrendBand): string {
     return (
-      this.historicalRanges.find(
-        (range) => range.key === column,
-      )?.name ?? column
+      this.historicalRanges.find((range) => range.key === column)?.name ??
+      column
     );
   }
 
   getRelativeRangeLabel(row: PerformanceBand): string {
-    const range = this.relativeRanges.find(
-      (item) => item.key === row,
-    );
+    const range = this.relativeRanges.find((item) => item.key === row);
 
     if (!range) {
       return '';
@@ -152,25 +182,40 @@ export class ZoneMapComponent {
     return this.formatPercentRange(range.from, range.to);
   }
 
-  getHistoricalRangeLabel(column: TrendBand): string {
-    if (column === 'higher') {
-      return '> +5%';
-    }
+  getHistoricalArrow(column: TrendBand): string {
+    switch (column) {
+      case 'improving':
+        return '↑';
 
-    if (column === 'lower') {
-      return '< -5%';
-    }
+      case 'declining':
+        return '↓';
 
-    return '±5%';
+      default:
+        return '→';
+    }
   }
 
-  private formatPercentRange(
-    from: number,
-    to: number,
-  ): string {
-    const fromPercent = from <= 1 ? from * 100 : from;
-    const toPercent = to <= 1 ? to * 100 : to;
+  getHistoricalRangeLabelKey(column: TrendBand): string {
+    switch (column) {
+      case 'improving':
+        return 'zone-map-range-improving';
 
-    return `${Math.round(fromPercent)}–${Math.round(toPercent)}%`;
+      case 'declining':
+        return 'zone-map-range-declining';
+
+      default:
+        return 'zone-map-range-steady';
+    }
+  }
+
+  private formatPercentRange(from: number, to: number): string {
+    const percent = new Intl.NumberFormat(this.currentLang(), {
+      style: 'percent',
+      maximumFractionDigits: 0,
+    });
+
+    const normalize = (value: number) => (value <= 1 ? value : value / 100);
+
+    return `${percent.format(normalize(from))}–${percent.format(normalize(to))}`;
   }
 }

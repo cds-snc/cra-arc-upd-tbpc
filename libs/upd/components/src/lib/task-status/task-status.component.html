@@ -37,93 +37,124 @@
   </div>
 </ng-template>
 
-<upd-card
-  [status]="healthTier()"
-  [title]="'tab-taskperformance'"
-  [titleSize]="'h5'"
->
-  <ng-template #cardTitleAction>
-    <upd-modal
-      [modalTitle]="'task-status-how-health-calculated'"
-      modalSize="xl"
-    >
-      <upd-zone-map
-        [relative]="performanceBand()"
-        [historical]="trendBand()"
-        [relativeRanges]="relativeRanges()"
-        [historicalRanges]="historicalRanges()"
-      ></upd-zone-map>
-    </upd-modal>
-  </ng-template>
+<upd-card [status]="healthTier()" [title]="''" [flushBody]="true">
   @if (hasData()) {
-    <div class="task-health py-1">
-      <div
-        class="task-health-header d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 mb-4"
-      >
-        <div
-          class="health-label d-flex align-items-center gap-2"
-          [ngClass]="healthTier()"
-        >
-          <span class="health-dot"></span>
+    <div class="task-health">
+      <div class="row g-0 task-performance-layout">
+        <div class="col-12 col-lg-7 task-performance-layout__main">
+          <div class="task-performance-title d-flex align-items-center gap-2">
+            <h5 class="task-performance-title__text">
+              {{ 'tab-taskperformance' | translate }}
+            </h5>
 
-          {{ healthBadge() }}
-        </div>
-
-        <div
-          class="unscored-header-divider d-none d-lg-block"
-          aria-hidden="true"
-        ></div>
-
-        <div
-          class="health-action-pill d-inline-flex align-items-center justify-content-center px-3 rounded-3 text-white"
-          [ngClass]="healthTier()"
-        >
-          {{ healthNote() }}
-        </div>
-
-        @if (hasHighDemand()) {
-          <div class="unscored-header-divider" aria-hidden="true"></div>
-          <div class="health-demand d-inline-flex align-items-center">
-            <span
-              class="health-demand__pill d-inline-flex align-items-center justify-content-center border rounded-pill"
-              tabindex="0"
-              role="note"
-              [ngbTooltip]="highDemandTooltip"
-              placement="bottom"
-              triggers="mouseenter:mouseleave focusin:focusout"
-              container="body"
-              tooltipClass="high-demand-tooltip"
-              [openDelay]="100"
-              [closeDelay]="100"
+            <upd-modal
+              [modalTitle]="'task-status-how-health-calculated'"
+              modalSize="xl"
             >
-              <span
-                class="material-icons health-demand__icon flex-shrink-0"
-                aria-hidden="true"
+              <upd-zone-map
+                [relative]="performanceBand()"
+                [historical]="trendBand()"
+                [relativeRanges]="relativeRanges()"
+                [historicalRanges]="historicalRanges()"
+              ></upd-zone-map>
+            </upd-modal>
+          </div>
+
+          <div
+            class="task-health-header d-flex flex-wrap align-items-center gap-3"
+          >
+            <div
+              class="health-label d-flex align-items-center gap-2"
+              [ngClass]="healthTier()"
+            >
+              <span class="health-dot"></span>
+
+              {{ healthBadge() }}
+            </div>
+
+            @if (hasHighDemand()) {
+              <div
+                class="health-demand d-inline-flex align-items-center ms-lg-auto"
               >
-                local_fire_department
+                <span
+                  class="health-demand__pill d-inline-flex align-items-center justify-content-center border rounded-pill"
+                  tabindex="0"
+                  role="note"
+                  [ngbTooltip]="highDemandTooltip"
+                  placement="bottom"
+                  triggers="mouseenter:mouseleave focusin:focusout"
+                  container="body"
+                  tooltipClass="high-demand-tooltip"
+                  [openDelay]="100"
+                  [closeDelay]="100"
+                >
+                  <span
+                    class="material-icons health-demand__icon flex-shrink-0"
+                    aria-hidden="true"
+                  >
+                    local_fire_department
+                  </span>
+
+                  {{ 'task-status-high-demand-label' | translate }}
+                </span>
+              </div>
+            }
+          </div>
+
+          <div class="performance-context d-flex flex-wrap align-items-center">
+            <span
+              class="performance-context__summary d-inline-flex align-items-center gap-1"
+              [ngClass]="performanceBand()"
+            >
+              <strong class="performance-context__band">
+                {{ currentRelativeRange().name }}
+              </strong>
+
+              <span class="performance-context__score">
+                {{ 'task-status-score-label' | translate }}
               </span>
 
-              {{ 'task-status-high-demand-label' | translate }}
+              <span class="performance-context__score">
+                {{ currentRelativeRange().from }}-{{
+                  currentRelativeRange().to / 100
+                    | percent: '1.0-0' : currentLang()
+                }}
+              </span>
+            </span>
+
+            <span class="performance-context__separator" aria-hidden="true">
+              ·
+            </span>
+
+            <span
+              class="performance-context__trend d-inline-flex align-items-center gap-1"
+              [ngClass]="trendClass()"
+            >
+              <span
+                class="material-icons performance-context__icon"
+                aria-hidden="true"
+              >
+                {{ trendIcon() }}
+              </span>
+
+              {{ trendLabel() }}
             </span>
           </div>
-        }
-      </div>
 
-      <div class="row g-4 align-items-start">
-        <div class="col-lg-7">
-          <p
-            class="health-title"
-            [ngClass]="healthTier()"
-            [innerHTML]="healthTitle()"
-          ></p>
+          <div class="performance-context__divider"></div>
 
-          @if (highImpactTitle(); as highImpact) {
-            <p [innerHTML]="highImpact"></p>
-          }
+          <div class="performance-copy">
+            <p class="performance-copy__title" [innerHTML]="healthTitle()"></p>
 
-          <div class="confidence-section-title">
+            @if (highImpactTitle(); as highImpact) {
+              <p class="performance-copy__impact" [innerHTML]="highImpact"></p>
+            }
+          </div>
+
+          <div class="confidence-section-title pt-2">
             {{ 'what-this-means' | translate }}
           </div>
+
           <div class="confidence-row py-3 border-bottom">
             <div class="confidence-content">
               <strong [innerHTML]="psConfidenceTitle()"></strong>
@@ -172,16 +203,16 @@
           }
         </div>
 
-        <div class="col-lg-5">
+        <div class="col-12 col-lg-5 task-performance-layout__score">
           <div class="overview-scores d-flex flex-column gap-3">
-            <div
-              class="score-card score-card--performance border rounded-3 overflow-hidden"
-            >
+            <div class="score-card score-card--performance">
               <div class="score-card-main d-grid align-items-start">
                 <div class="score-copy">
                   <div>
                     <span class="score-title">
-                      {{ 'task-status-performance-score' | translate }}
+                      <strong>
+                        {{ 'task-status-performance-score' | translate }}
+                      </strong>
                     </span>
                   </div>
 
@@ -228,6 +259,7 @@
                 <div class="score-detail-title">
                   {{ 'task-status-in-this-score' | translate }}
                 </div>
+
                 <div class="score-metric-list d-flex flex-column gap-3">
                   @for (metric of scoreMetrics(); track metric.key) {
                     <div
@@ -239,6 +271,7 @@
                     >
                       <span
                         class="score-metric-icon material-icons rounded-circle"
+                        [ngClass]="metric.included ? healthTier() : null"
                         aria-hidden="true"
                       >
                         {{ metric.included ? 'check' : 'close' }}
@@ -326,7 +359,7 @@
 
               @if (tmfRank() && tmfTotalTasks()) {
                 <div
-                  class="score-rank-row border-top d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-2 gap-lg-3"
+                  class="score-rank-row border-top d-flex flex-column flex-xl-row align-items-start align-items-xl-center justify-content-between gap-2 gap-xl-3"
                 >
                   <span>
                     {{
@@ -355,16 +388,23 @@
             </div>
 
             <div class="score-card score-card--stacked">
-              <div class="score-stacked-row d-flex flex-column bg-white border">
+              <div class="score-stacked-row d-flex flex-column">
                 <div
                   class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
                 >
                   <div class="score-copy">
-                    <div>
-                      <span class="score-title">
-                        {{ 'task-status-historical-average' | translate }}
-                      </span>
-                    </div>
+                    <span
+                      class="score-title card-tooltip"
+                      [ngbTooltip]="
+                        'task-status-ha-tooltip-description' | translate
+                      "
+                      placement="top"
+                      container="body"
+                    >
+                      <strong>{{
+                        'task-status-historical-average' | translate
+                      }}</strong>
+                    </span>
                   </div>
 
                   <div
@@ -396,20 +436,23 @@
               </div>
 
               @if (sha() !== null) {
-                <div
-                  class="score-stacked-row d-flex flex-column bg-white border"
-                >
+                <div class="score-stacked-row d-flex flex-column">
                   <div
                     class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
                   >
                     <div class="score-copy">
-                      <div>
-                        <span class="score-title">
-                          {{
-                            'task-status-seasonal-historic-average' | translate
-                          }}
-                        </span>
-                      </div>
+                      <span
+                        class="score-title card-tooltip"
+                        [ngbTooltip]="
+                          'task-status-sha-tooltip-description' | translate
+                        "
+                        placement="top"
+                        container="body"
+                      >
+                        <strong>{{
+                          'task-status-seasonal-historical-average' | translate
+                        }}</strong>
+                      </span>
                     </div>
 
                     <div
@@ -446,7 +489,26 @@
       </div>
     </div>
   } @else {
-    <div class="task-health task-health--unscored py-1">
+    <div class="task-health task-health--unscored">
+      <div class="task-performance-title d-flex align-items-center gap-2">
+        <h5 class="task-performance-title__text">
+          {{ 'tab-taskperformance' | translate }}
+        </h5>
+
+        <upd-modal
+          [modalTitle]="'task-status-how-health-calculated'"
+          modalSize="xl"
+        >
+          <upd-zone-map
+            [relative]="performanceBand()"
+            [historical]="trendBand()"
+            [relativeRanges]="relativeRanges()"
+            [historicalRanges]="historicalRanges()"
+            [highlightActive]="false"
+          ></upd-zone-map>
+        </upd-modal>
+      </div>
+
       <div
         class="task-health-header d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-3 mb-4"
       >
@@ -462,7 +524,7 @@
         ></div>
 
         <div
-          class="health-action-pill health-action-pill--unscored d-inline-flex align-items-center bg-white border rounded-1"
+          class="health-action-pill health-action-pill--unscored d-inline-flex align-items-center justify-content-center border rounded-1"
         >
           {{ 'task-status-no-score-insufficient-data' | translate }}
         </div>
@@ -507,7 +569,9 @@
                     {{ metric.included ? 'check' : 'close' }}
                   </span>
 
-                  <span>{{ metric.label }}</span>
+                  <span>
+                    {{ metric.label }}
+                  </span>
                 </div>
               }
             </div>

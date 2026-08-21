@@ -1,20 +1,67 @@
 .score-chart {
   position: relative;
+  padding-bottom: 2rem;
+
+  &__bar {
+    position: relative;
+    height: 30px;
+  }
+
+  &__scale {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    height: 2rem;
+  }
+
+  &__tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 8px;
+    background: #d0d5dd;
+    transform: translateX(-50%);
+  }
+
+  &__label {
+    position: absolute;
+    top: 10px;
+
+    // important
+    text-align: center;
+
+    color: #667085;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+
+    &--active {
+      color: var(--range-color);
+      font-weight: 700;
+    }
+  }
 }
 
 .score-marker {
   position: absolute;
-  top: 63%;
+  top: 48%;
   left: 0;
-  width: 12px;
-  height: 12px;
+
+  width: 14px;
+  height: 14px;
+
   background: #101828;
-  border: 2px solid #f8f9fa;
+  border: 3px solid #fff;
   border-radius: 50%;
+
   box-shadow:
     0 0 0 1px rgba(16, 24, 40, 0.35),
     0 1px 3px rgba(16, 24, 40, 0.25);
+
   transform: translate(-50%, -50%);
+
   pointer-events: none;
   z-index: 2;
 }

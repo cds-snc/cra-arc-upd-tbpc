@@ -23,17 +23,15 @@ type HighDemandTooltipMetric = {
   highDemand: boolean;
 };
 
-type PerformanceBand = 'poor' | 'low' | 'good' | 'great';
-type TrendBand = 'higher' | 'normal' | 'lower';
+export type PerformanceBand = 'poor' | 'fair' | 'good' | 'strong';
+export type TrendBand = 'improving' | 'steady' | 'declining';
 type Tier = 'green' | 'yellow' | 'blue' | 'red' | 'grey';
 type ScoreMetricKey = 'calls' | 'feedback' | 'survey';
 
 type StatusView = {
   tier: Tier;
   badge: string;
-  situation: string;
   title: string;
-  note: string;
 };
 
 type ScoreMetric = {
@@ -138,32 +136,67 @@ export class TaskStatusComponent {
     return this.conjunctionListFormatter().format(metrics);
   });
 
+  readonly currentRelativeRange = computed(
+    () =>
+      this.relativeRanges().find(({ key }) => key === this.performanceBand())!,
+  );
+
+  readonly trendLabel = computed(() =>
+    this.translate(`task-status-range-${this.trendBand()}`),
+  );
+
+  readonly trendIcon = computed(() => {
+    switch (this.trendBand()) {
+      case 'improving':
+        return 'arrow_upward';
+
+      case 'declining':
+        return 'arrow_downward';
+
+      default:
+        return 'arrow_right_alt';
+    }
+  });
+
+  readonly trendClass = computed(() => {
+    switch (this.trendBand()) {
+      case 'improving':
+        return 'change-good';
+
+      case 'declining':
+        return 'change-bad';
+
+      default:
+        return 'change-neutral';
+    }
+  });
+
   readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
     {
       key: 'poor',
       name: this.translate('task-status-range-poor'),
       from: 0,
-      to: 35,
+      to: 49,
       color: '#d93025',
     },
     {
-      key: 'low',
-      name: this.translate('task-status-range-low'),
-      from: 36,
-      to: 49,
+      key: 'fair',
+      name: this.translate('task-status-range-fair'),
+      from: 50,
+      to: 59,
       color: '#f2a93b',
     },
     {
       key: 'good',
       name: this.translate('task-status-range-good'),
-      from: 50,
-      to: 64,
-      color: '#75c962',
+      from: 60,
+      to: 79,
+      color: '#158898',
     },
     {
-      key: 'great',
-      name: this.translate('task-status-range-great'),
-      from: 65,
+      key: 'strong',
+      name: this.translate('task-status-range-strong'),
+      from: 80,
       to: 100,
       color: '#1f9d55',
     },
@@ -171,143 +204,125 @@ export class TaskStatusComponent {
 
   readonly historicalRanges = computed<ScoreRange<TrendBand>[]>(() => [
     {
-      key: 'lower',
-      name: this.translate('task-status-range-lower'),
+      key: 'declining',
+      name: this.translate('task-status-range-declining'),
       from: -100,
       to: -5,
       color: '#b42318',
     },
     {
-      key: 'normal',
-      name: this.translate('task-status-range-normal'),
+      key: 'steady',
+      name: this.translate('task-status-range-steady'),
       from: -5,
       to: 5,
-      color: '#f2b632',
+      color: '#d38e26',
     },
     {
-      key: 'higher',
-      name: this.translate('task-status-range-higher'),
+      key: 'improving',
+      name: this.translate('task-status-range-improving'),
       from: 5,
       to: 100,
-      color: '#2f7d4d',
+      color: '#006b3f',
     },
   ]);
 
   private readonly statusMap = computed<Record<string, StatusView>>(() => ({
-    'great-higher': {
+    'strong-improving': {
       tier: 'green',
       badge: this.translate('task-status-badge-healthy'),
-      situation: this.translate('task-status-situation-great-higher'),
-      title: this.translate('task-status-title-great-higher'),
-      note: this.translate('task-status-note-no-action'),
+      title: this.translate('task-status-title-strong-improving'),
     },
-
-    'great-normal': {
+    'strong-steady': {
       tier: 'green',
       badge: this.translate('task-status-badge-healthy'),
-      situation: this.translate('task-status-situation-great-normal'),
-      title: this.translate('task-status-title-great-normal'),
-      note: this.translate('task-status-note-no-action'),
+      title: this.translate('task-status-title-strong-steady'),
     },
-
-    'great-lower': {
+    'strong-declining': {
       tier: 'yellow',
       badge: this.translate('task-status-badge-watch'),
-      situation: this.translate('task-status-situation-great-lower'),
-      title: this.translate('task-status-title-great-lower'),
-      note: this.translate('task-status-note-monitor'),
+      title: this.translate('task-status-title-strong-declining'),
     },
 
-    'good-higher': {
+    'good-improving': {
       tier: 'green',
       badge: this.translate('task-status-badge-healthy'),
-      situation: this.translate('task-status-situation-good-higher'),
-      title: this.translate('task-status-title-good-higher'),
-      note: this.translate('task-status-note-no-action'),
+      title: this.translate('task-status-title-good-improving'),
     },
-
-    'good-normal': {
+    'good-steady': {
       tier: 'green',
       badge: this.translate('task-status-badge-healthy'),
-      situation: this.translate('task-status-situation-good-normal'),
-      title: this.translate('task-status-title-good-normal'),
-      note: this.translate('task-status-note-no-action'),
+      title: this.translate('task-status-title-good-steady'),
     },
-
-    'good-lower': {
+    'good-declining': {
       tier: 'yellow',
       badge: this.translate('task-status-badge-watch'),
-      situation: this.translate('task-status-situation-good-lower'),
-      title: this.translate('task-status-title-good-lower'),
-      note: this.translate('task-status-note-monitor'),
+      title: this.translate('task-status-title-good-declining'),
     },
 
-    'low-higher': {
+    'fair-improving': {
       tier: 'yellow',
       badge: this.translate('task-status-badge-watch'),
-      situation: this.translate('task-status-situation-low-higher'),
-      title: this.translate('task-status-title-low-higher'),
-      note: this.translate('task-status-note-monitor'),
+      title: this.translate('task-status-title-fair-improving'),
     },
-
-    'low-normal': {
+    'fair-steady': {
       tier: 'yellow',
       badge: this.translate('task-status-badge-watch'),
-      situation: this.translate('task-status-situation-low-normal'),
-      title: this.translate('task-status-title-low-normal'),
-      note: this.translate('task-status-note-monitor'),
+      title: this.translate('task-status-title-fair-steady'),
     },
-
-    'low-lower': {
+    'fair-declining': {
       tier: 'red',
       badge: this.translate('task-status-badge-needs-action'),
-      situation: this.translate('task-status-situation-low-lower'),
-      title: this.translate('task-status-title-low-lower'),
-      note: this.translate('task-status-note-prioritize'),
+      title: this.translate('task-status-title-fair-declining'),
     },
 
-    'poor-higher': {
+    'poor-improving': {
       tier: 'yellow',
       badge: this.translate('task-status-badge-watch'),
-      situation: this.translate('task-status-situation-poor-higher'),
-      title: this.translate('task-status-title-poor-higher'),
-      note: this.translate('task-status-note-monitor'),
+      title: this.translate('task-status-title-poor-improving'),
     },
-
-    'poor-normal': {
+    'poor-steady': {
       tier: 'red',
       badge: this.translate('task-status-badge-needs-action'),
-      situation: this.translate('task-status-situation-poor-normal'),
-      title: this.translate('task-status-title-poor-normal'),
-      note: this.translate('task-status-note-prioritize'),
+      title: this.translate('task-status-title-poor-steady'),
     },
-
-    'poor-lower': {
+    'poor-declining': {
       tier: 'red',
       badge: this.translate('task-status-badge-needs-action'),
-      situation: this.translate('task-status-situation-poor-lower'),
-      title: this.translate('task-status-title-poor-lower'),
-      note: this.translate('task-status-note-prioritize'),
+      title: this.translate('task-status-title-poor-declining'),
     },
   }));
 
-  performanceBand = computed<PerformanceBand>(() => {
-    const score = this.ps()!;
+  readonly performanceBand = computed<PerformanceBand>(() => {
+    const score = this.ps();
 
-    if (score >= 0.65) return 'great';
-    if (score >= 0.5) return 'good';
-    if (score >= 0.36) return 'low';
+    if (score == null) return 'poor';
+
+    if (score >= 0.8) return 'strong';
+    if (score >= 0.6) return 'good';
+    if (score >= 0.5) return 'fair';
 
     return 'poor';
   });
 
-  trendBand = computed<TrendBand>(() => {
-    const variance = this.ps()! - this.ha()!;
+  readonly trendBand = computed<TrendBand>(() => {
+    const score = this.ps();
+    const historicalAverage = this.ha();
 
-    if (variance > this.historicalVarianceThreshold) return 'higher';
-    if (variance < -this.historicalVarianceThreshold) return 'lower';
+    if (score == null || historicalAverage == null) {
+      return 'steady';
+    }
 
-    return 'normal';
+    const variance = score - historicalAverage;
+
+    if (variance > this.historicalVarianceThreshold) {
+      return 'improving';
+    }
+
+    if (variance < -this.historicalVarianceThreshold) {
+      return 'declining';
+    }
+
+    return 'steady';
   });
 
   shaVariance = computed(() => {
@@ -322,10 +337,13 @@ export class TaskStatusComponent {
 
   historicalVariance = computed(() => this.ps()! - this.ha()!);
 
-  statusKey = computed(() => `${this.performanceBand()}-${this.trendBand()}`);
+  readonly statusKey = computed(
+    () => `${this.performanceBand()}-${this.trendBand()}`,
+  );
 
-  status = computed(
-    () => this.statusMap()[this.statusKey()] ?? this.statusMap()['poor-lower'],
+  readonly status = computed(
+    () =>
+      this.statusMap()[this.statusKey()] ?? this.statusMap()['poor-declining'],
   );
 
   readonly healthLabel = computed(() => this.healthBadge());
@@ -358,16 +376,14 @@ export class TaskStatusComponent {
     });
   });
 
-  readonly healthNote = computed(() => this.status().note);
-
   readonly haConfidenceTitle = computed(() => {
     const trend = this.trendBand();
 
-    if (trend === 'higher') {
+    if (trend === 'improving') {
       return this.translate('task-status-ha-above');
     }
 
-    if (trend === 'lower') {
+    if (trend === 'declining') {
       return this.translate('task-status-ha-below');
     }
 
@@ -378,13 +394,13 @@ export class TaskStatusComponent {
     const band = this.performanceBand();
 
     switch (band) {
-      case 'great':
+      case 'strong':
         return this.translate('task-status-ps-great');
 
       case 'good':
         return this.translate('task-status-ps-good');
 
-      case 'low':
+      case 'fair':
         return this.translate('task-status-ps-low');
 
       default:
@@ -416,7 +432,7 @@ export class TaskStatusComponent {
     return typeof score === 'number' && Number.isFinite(score);
   });
 
-  hasHistoricalAverage = computed(() => {
+  readonly hasHistoricalAverage = computed(() => {
     const historicalAverage = this.ha();
 
     return (

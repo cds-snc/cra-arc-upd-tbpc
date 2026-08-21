@@ -58,6 +58,62 @@ export class ApexScoreComponent {
     );
   });
 
+  readonly rangeLabels = computed(() => {
+    const ranges = this.getSortedRanges();
+
+    if (!ranges.length) {
+      return [];
+    }
+
+    const domainMin = ranges[0].from;
+    const domainMax = ranges[ranges.length - 1].to;
+    const domainSize = domainMax - domainMin;
+    const currentRange = this.currentRange();
+
+    if (domainSize <= 0) {
+      return [];
+    }
+
+    return ranges.map((range, index) => {
+      const nextRange = ranges[index + 1];
+
+      // Use the start of the next band so the visual ranges are:
+      // 0–60, 60–70, 70–80, 80–100
+      const start = range.from;
+      const end = nextRange?.from ?? domainMax;
+
+      return {
+        name: range.name,
+        color: range.color,
+        active: currentRange?.name === range.name,
+        left: this.clampPercent(((start - domainMin) / domainSize) * 100),
+        width: this.clampPercent(((end - start) / domainSize) * 100),
+      };
+    });
+  });
+
+  readonly rangeBoundaries = computed(() => {
+    const ranges = this.getSortedRanges();
+
+    if (ranges.length < 2) {
+      return [];
+    }
+
+    const domainMin = ranges[0].from;
+    const domainMax = ranges[ranges.length - 1].to;
+    const domainSize = domainMax - domainMin;
+
+    if (domainSize <= 0) {
+      return [];
+    }
+
+    return ranges
+      .slice(1)
+      .map((range) =>
+        this.clampPercent(((range.from - domainMin) / domainSize) * 100),
+      );
+  });
+
   readonly chartOptions = computed<ApexOptions>(() => {
     const currentRange = this.currentRange();
     const score = this.scoreValue();
@@ -70,7 +126,7 @@ export class ApexScoreComponent {
 
       chart: {
         ...base.chart,
-        height: 22,
+        height: 24,
         type: 'bar',
         stacked: false,
         toolbar: {
@@ -105,8 +161,8 @@ export class ApexScoreComponent {
       plotOptions: {
         bar: {
           horizontal: true,
-          barHeight: '45%',
-          borderRadius: 4,
+          barHeight: '49%',
+          borderRadius: 5,
         },
       },
 
@@ -282,13 +338,15 @@ export class ApexScoreComponent {
       (left, right) => left.from - right.from,
     );
 
-    return sortedRanges.find((range, index) => {
-      const isLastRange = index === sortedRanges.length - 1;
+    return (
+      sortedRanges.find((range, index) => {
+        const isLastRange = index === sortedRanges.length - 1;
 
-      return (
-        score >= range.from &&
-        (isLastRange ? score <= range.to : score < range.to)
-      );
-    }) ?? sortedRanges[0];
+        return (
+          score >= range.from &&
+          (isLastRange ? score <= range.to : score < range.to)
+        );
+      }) ?? sortedRanges[0]
+    );
   }
 }
