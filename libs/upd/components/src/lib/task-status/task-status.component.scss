@@ -4,8 +4,10 @@ $improving: #00747a;
 $bad: #b42318;
 $grey: #475467;
 $demand: #c1154a;
+
 $text-muted: #667085;
 $text-main: #101828;
+
 $card-grey: #f6f8fb;
 $card-border: #d8dee6;
 $divider: #d9dde3;
@@ -35,287 +37,472 @@ $tiers: (
 .health-label {
   font-weight: 800;
   letter-spacing: 0.08em;
+
   &:hover .health-dot {
     animation: pulse-dot 1.5s infinite;
   }
 }
+
 .health-dot {
   width: 10px;
   height: 10px;
+
   border-radius: 50%;
+
   background: var(--tier-color);
   box-shadow: 0 0 0 4px var(--tier-ring);
+
   transition: box-shadow 0.2s ease;
 }
+
 @keyframes pulse-dot {
   0% {
     box-shadow:
       0 0 0 0 var(--tier-glow),
       0 0 0 4px var(--tier-ring);
   }
+
   70% {
     box-shadow:
       0 0 0 10px transparent,
       0 0 0 4px var(--tier-ring);
   }
+
   100% {
     box-shadow:
       0 0 0 0 transparent,
       0 0 0 4px var(--tier-ring);
   }
 }
+
 .health-action-pill {
   height: 1.55rem;
+
   background: var(--tier-color);
+
   font-size: 0.85rem;
   font-weight: 800;
   line-height: 1;
+
   white-space: nowrap;
 }
+
 .health-title {
   margin-bottom: 1rem;
+
   color: $text-main;
+
   font-size: 1.05rem;
   line-height: 1.4;
 }
+
 :host ::ng-deep .title-highlight {
   color: var(--tier-color);
+
   font-weight: 700;
+
   text-decoration-color: currentColor;
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
 }
 
-.score-card--performance {
-  --bs-border-color: #{$card-border};
-  background: $card-grey;
-  box-shadow: inset 0 0 0 1px rgba($text-main, 0.04);
-  .score-card-main {
-    padding: 1rem 1rem 0.25rem;
+.task-performance-layout {
+  min-height: 100%;
+
+  &__main {
+    padding: 20px;
+    background: #fff;
   }
-  .score-chart {
-    padding: 0 1rem 0.5rem;
+
+  &__score {
+    padding: 20px;
+
+    background: $card-grey;
+    border-inline-start: 1px solid $card-border;
   }
 }
 
-.score-card--stacked {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  .score-stacked-row {
-    min-width: 0;
-    padding: 0.65rem 0.85rem;
-    border-color: $card-border !important;
-    border-radius: 0.35rem;
+.task-performance-title {
+  margin-bottom: 1rem;
+
+  &__text {
+    margin: 0;
+
+    color: $text-main;
+
+    font-weight: 800;
   }
-  .score-copy {
-    min-width: 0;
+}
+
+.task-health-header {
+  margin-bottom: 0.75rem;
+}
+
+.performance-context {
+  font-size: 0.95rem;
+  line-height: 1.2;
+
+  &__summary {
+    gap: 0.25rem;
+
+    &.poor .performance-context__band {
+      color: $bad;
+    }
+
+    &.fair .performance-context__band {
+      color: $neutral;
+    }
+
+    &.good .performance-context__band {
+      color: $improving;
+    }
+
+    &.strong .performance-context__band {
+      color: $good;
+    }
   }
-  .score-title {
-    font-size: 0.78rem;
-    white-space: normal;
+
+  &__band {
+    font-weight: 800;
   }
-  .score-value-block {
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between;
+
+  &__score {
+    color: $text-muted;
+
+    font-weight: 400;
+  }
+
+  &__separator {
+    margin-inline: 0.5rem;
+
+    color: #98a2b3;
+  }
+
+  &__trend {
+    font-weight: 800;
+  }
+
+  &__icon {
+    width: 1rem;
+    height: 1rem;
+
+    font-size: 1rem;
+    line-height: 1rem;
+  }
+
+  &__divider {
     width: 100%;
-    min-width: 0;
-    text-align: left;
-  }
-  .score-change-row {
-    margin-top: 0;
+    height: 1px;
+
+    margin: 1.25rem 0;
+
+    background: $divider;
   }
 }
 
-.score-card-main {
-  grid-template-columns: 1fr auto;
-  gap: 0.35rem 1rem;
-}
-.score-title {
+.performance-copy {
   color: $text-main;
-  font-size: 0.85rem;
-  font-weight: 800;
+
+  &__title {
+    margin: 0 0 0.75rem;
+
+    color: $text-main;
+
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  &__impact {
+    margin: 0;
+
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
 }
-.score-subtitle,
-.confidence-subtitle,
-.score-metric-detail,
-.unscored-message {
-  color: $text-muted;
-}
-.score-subtitle {
-  margin-top: 0.35rem;
-  font-size: 0.82rem;
-  line-height: 1.3;
-}
+
 .confidence-section-title,
 .score-detail-title,
 .unscored-sources-title {
   font-weight: 900;
   text-transform: uppercase;
 }
+
 .confidence-section-title {
   margin-top: 1.25rem;
   padding-bottom: 0.75rem;
+
   border-bottom: 1px solid $divider;
+
   color: $grey;
+
   font-size: 0.85rem;
   line-height: 1.2;
   letter-spacing: 0.03em;
 }
-.confidence-subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
-  line-height: 1.35;
-}
+
 .confidence-row {
   border-color: #e5e7eb !important;
+
   &:last-child {
     border-bottom: 0;
   }
 }
 
+.confidence-subtitle {
+  margin-top: 0.25rem;
+
+  color: $text-muted;
+
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.task-performance-layout__score {
+  .overview-scores,
+  .score-card,
+  .score-card--performance,
+  .score-card--stacked {
+    background: transparent;
+  }
+
+  .score-card {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .score-card--performance {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+
+    .score-card-main {
+      padding: 0 0 1rem;
+    }
+
+    .score-chart {
+      padding: 0 0 1.25rem;
+    }
+  }
+}
+
+.score-card-main {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem 1rem;
+}
+
+.score-copy {
+  min-width: 0;
+}
+
+.score-title {
+  color: $text-main;
+
+  font-size: 1rem;
+}
+
+.score-subtitle {
+  margin-top: 0.35rem;
+
+  color: $text-muted;
+
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.score-value-block {
+  line-height: 1;
+}
+
 .score-value {
   color: $text-main;
-  font-size: 1.9rem;
+
+  font-size: 2.2rem;
   font-weight: 900;
-  line-height: 1;
+
   &--small {
-    font-size: 1.05rem;
+    font-size: 1.25rem;
   }
+}
+
+.score-change-row {
+  margin-top: 0.2rem;
+
+  font-size: 0.82rem;
+  line-height: 1.1;
 }
 
 .score-detail-block {
   --bs-border-color: #{$divider};
-  padding: 0.75rem 1rem 0.9rem;
+
+  padding: 1.25rem 0;
+
+  background: transparent;
 }
+
 .score-detail-title {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.75rem;
+
+  color: $grey;
+
   font-size: 0.75rem;
   letter-spacing: 0.08em;
+}
+
+.score-metric-list {
+  min-width: 0;
 }
 
 .score-metric-item {
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 0.55rem;
+
   font-size: 0.9rem;
   line-height: 1.3;
+
   &--included {
     color: $text-main;
+
     .score-metric-icon {
       background: $good;
       border-color: $good;
       color: #fff;
     }
   }
+
   &--excluded {
     color: $text-muted;
+
     .score-metric-icon {
+      background: transparent;
       color: $grey;
       opacity: 0.65;
     }
   }
 }
+
 .score-metric-content,
 .score-metric-label {
   min-width: 0;
 }
+
 .score-metric-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
   gap: 1rem;
   align-items: baseline;
 }
+
 .score-metric-label {
   color: $text-main;
+
   em {
     font-size: 0.82rem;
     font-weight: 400;
   }
 }
+
 .score-metric-value {
   color: $text-main;
+
   font-weight: 800;
   text-align: right;
+
   white-space: nowrap;
 }
+
 .score-metric-detail {
   margin-top: 0.15rem;
+
+  color: $text-muted;
+
   font-size: 0.78rem;
   line-height: 1.35;
 }
+
 .score-metric-icon {
   display: inline-grid;
   place-items: center;
+
   width: 16px;
   height: 16px;
+
   margin-top: 0.15rem;
+
   border: 1.5px solid currentColor;
+
   font-size: 12px;
   line-height: 1;
 }
 
 .score-rank-row {
   --bs-border-color: #{$divider};
-  padding: 0.8rem 1rem;
-  background: #fcfcfd;
+
+  padding: 1rem 0 0;
+
+  background: transparent;
+
   color: $text-main;
+
   font-size: 0.85rem;
 }
+
 .score-rank-pill {
   padding: 0.35rem 0.7rem;
+
   border-radius: 0.45rem;
+
   background: #fff3cd;
   color: #6f4500;
+
   font-size: 0.8rem;
   font-weight: 800;
+
   white-space: nowrap;
-}
-.score-value-block {
-  line-height: 1;
-}
-.score-change-row {
-  margin-top: 0.2rem;
-  font-size: 0.82rem;
-  line-height: 1.1;
 }
 
-.unscored-header-divider {
-  width: 1px;
-  height: 28px;
-  background: #e5e7eb;
-  flex-shrink: 0;
-}
-.task-health--unscored .health-action-pill--unscored {
-  padding: 0.45rem 0.9rem;
-  border-color: #dee2e6 !important;
-  box-shadow: 0 1px 2px rgba($text-main, 0.08);
-  color: $grey !important;
-  font-size: 0.95rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.unscored-title {
-  margin: 0 0 0.75rem;
-  color: $text-main;
-  font-size: 1.25rem;
-  font-weight: 800;
-  line-height: 1.3;
-}
-.unscored-message {
-  margin: 0;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-.unscored-sources {
-  padding-left: 2rem;
-  border-left: 1px solid #e5e7eb;
-}
-.unscored-sources-title {
-  margin-bottom: 0.75rem;
-  color: $grey;
-  font-size: 0.9rem;
-  letter-spacing: 0.08em;
+.score-card--stacked {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  border-top: 1px solid $divider;
+
+  .score-stacked-row {
+    min-width: 0;
+    padding: 0.75rem 0.85rem;
+
+    background: #fff;
+
+    border: 1px solid $card-border !important;
+    border-radius: 0.35rem;
+
+    box-shadow: 0 1px 2px rgba($text-main, 0.03);
+  }
+
+  .score-copy {
+    min-width: 0;
+  }
+
+  .score-title {
+    font-size: 0.78rem;
+    white-space: normal;
+  }
+
+  .score-value-block {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between;
+
+    width: 100%;
+    min-width: 0;
+
+    text-align: left;
+  }
+
+  .score-change-row {
+    margin-top: 0;
+  }
 }
 
 $changes: (
@@ -324,21 +511,27 @@ $changes: (
   bad: $bad,
   improving: $improving,
 );
+
 @each $state, $color in $changes {
   .change-#{$state} {
     color: $color !important;
+
     font-weight: 800;
   }
 }
+
 .change-value {
   display: inline-flex;
   align-items: center;
   gap: 1px;
+
   font-weight: 800;
 }
+
 .change-icon {
   width: 12px;
   height: 12px;
+
   font-size: 14px;
   line-height: 12px;
 }
@@ -346,48 +539,69 @@ $changes: (
 .health-demand {
   &__pill {
     gap: 0.25rem;
+
     min-height: 1.55rem;
+
     padding: 0.35rem 0.75rem;
+
     border-color: #f4b8ca !important;
+
     background: #fce7ef;
+
     box-shadow:
       0 2px 5px rgba($demand, 0.14),
       0 1px 2px rgba($text-main, 0.08);
+
     color: $demand;
+
     cursor: help;
+
     font-size: 0.85rem;
     font-weight: 800;
     line-height: 1;
+
     white-space: nowrap;
+
     transform: translateY(-1px);
+
     transition:
       background-color 150ms ease,
       border-color 150ms ease,
       box-shadow 150ms ease,
       transform 150ms ease;
+
     &:hover,
     &:focus-visible {
       border-color: #ee8fb0 !important;
+
       background: #fbcfe0;
+
       box-shadow:
         0 5px 12px rgba($demand, 0.2),
         0 2px 4px rgba($text-main, 0.1);
+
       transform: translateY(-2px);
+
       .health-demand__icon {
         transform: scale(1.12);
       }
     }
+
     &:focus-visible {
       outline: 2px solid rgba($demand, 0.25);
       outline-offset: 2px;
     }
   }
+
   &__icon {
     width: 0.85rem;
     height: 0.85rem;
+
     color: #f04438;
+
     font-size: 0.85rem;
     line-height: 0.85rem;
+
     transition: transform 150ms ease;
   }
 }
@@ -395,6 +609,7 @@ $changes: (
 .high-demand-tooltip {
   &__metric {
     width: 100%;
+
     font-size: 0.82rem;
 
     strong {
@@ -405,10 +620,14 @@ $changes: (
 
   &__label {
     display: block;
+
     min-width: 0;
+
     font-size: 0.875rem;
     line-height: 1.25;
+
     text-align: left;
+
     white-space: normal;
 
     &--wrapped {
@@ -422,27 +641,125 @@ $changes: (
 
   &__flame {
     display: inline-block;
+
     width: auto;
     height: auto;
+
     margin-inline-start: 0.15rem;
 
     color: #f97066;
+
     font-size: 0.8rem;
     line-height: 1;
+
     vertical-align: -0.1em;
   }
 }
 
+.task-health--unscored {
+  padding: 2rem;
+}
+
+.unscored-header-divider {
+  width: 1px;
+  height: 28px;
+
+  background: #e5e7eb;
+
+  flex-shrink: 0;
+}
+
+.task-health--unscored .health-action-pill--unscored {
+  padding: 0.45rem 0.9rem;
+
+  border-color: #dee2e6 !important;
+
+  background: #fff;
+
+  box-shadow: 0 1px 2px rgba($text-main, 0.08);
+
+  color: $grey !important;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.unscored-title {
+  margin: 0 0 0.75rem;
+
+  color: $text-main;
+
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.unscored-message {
+  margin: 0;
+
+  color: $text-muted;
+
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.unscored-sources {
+  padding-left: 2rem;
+
+  border-left: 1px solid #e5e7eb;
+}
+
+.unscored-sources-title {
+  margin-bottom: 0.75rem;
+
+  color: $grey;
+
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+}
+
 @media (max-width: 991.98px) {
+  .task-performance-layout {
+    &__main,
+    &__score {
+      padding: 1.5rem;
+    }
+
+    &__score {
+      border-top: 1px solid $card-border;
+      border-inline-start: 0;
+    }
+  }
+
+  .task-performance-title {
+    margin-bottom: 1.5rem;
+  }
+
+  .health-demand {
+    margin-inline-start: 0 !important;
+  }
+
   .score-card--stacked {
     grid-template-columns: 1fr;
+
+    gap: 1rem;
   }
-  .task-health--unscored .health-action-pill--unscored {
-    line-height: 1.3;
-    white-space: normal;
+
+  .task-health--unscored {
+    padding: 1.5rem;
+
+    .health-action-pill--unscored {
+      line-height: 1.3;
+
+      white-space: normal;
+    }
   }
+
   .unscored-sources {
     padding-left: 0;
+
     border-left: 0;
   }
 }
@@ -451,10 +768,12 @@ $changes: (
   .health-label:hover .health-dot {
     animation: none;
   }
+
   .health-demand__pill,
   .health-demand__icon {
     transition: none;
   }
+
   .health-demand__pill:hover,
   .health-demand__pill:focus-visible {
     transform: translateY(-1px);

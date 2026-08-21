@@ -5,7 +5,7 @@ import type { UnwrapObservable } from '@dua-upd/utils-common';
 import { TasksHomeFacade } from './+state/tasks-home.facade';
 
 const taskStatusCategories = [
-  'Stable',
+  'On track',
   'Watch',
   'Action required',
   'Unscored',
@@ -182,7 +182,7 @@ export class TasksHomeComponent implements OnInit {
       type: 'label',
       typeParam: 'taskStatus',
       filterConfig: {
-        type: 'category',
+        type: 'taskStatus',
         categories: taskStatusCategories.map((status) => ({
           name: status,
           value: status,

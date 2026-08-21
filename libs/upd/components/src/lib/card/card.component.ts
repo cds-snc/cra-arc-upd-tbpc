@@ -12,8 +12,9 @@ import type { ColumnConfig } from '@dua-upd/types-common';
   selector: 'upd-card',
   template: `
     <div
-      class="card pt-2"
+      class="card"
       [ngClass]="[
+        !flushBody ? 'pt-2' : 'overflow-hidden',
         status ? 'status-card' : '',
         status ? 'status-' + status : '',
         cardHeight,
@@ -21,46 +22,60 @@ import type { ColumnConfig } from '@dua-upd/types-common';
       ]"
       tabindex="0"
     >
-      <div class="card-body card-pad pt-2 h-100">
-        <div class="d-flex justify-content-between">
-          @if (title !== '') {
-            <h3
-              [class]="'modal-icon-alignment card-title pb-2 ' + titleSize"
-              [class.card-tooltip]="titleTooltip"
-            >
-              <span placement="top" ngbTooltip="{{ titleTooltip | translate }}"
-                >{{ title | translate }}
-                @if (titleSuffix) {
-                  <span class="title-suffix">
-                    - {{ titleSuffix | translate }}</span
-                  >
-                }
-              </span>
-              @if (cardTitleAction) {
-                <span class="modal-icon-by-title">
-                  <ng-container
-                    [ngTemplateOutlet]="cardTitleAction"
-                  ></ng-container>
-                </span>
-              } @else if (modal) {
-                <span class="modal-icon-by-title">
-                  <upd-modal
-                    [modalTitle]="title"
-                    [modalContent]="modal"
-                    [modalSize]="modalSize"
-                  ></upd-modal>
-                </span>
-              }
-            </h3>
-          }
+      <div
+        class="card-body h-100"
+        [ngClass]="flushBody ? 'p-0' : 'card-pad pt-2'"
+      >
+        @if (!flushBody || title !== '') {
+          <div
+            class="d-flex justify-content-between"
+            [ngClass]="flushBody ? 'card-pad pt-2' : ''"
+          >
+            @if (title !== '') {
+              <h3
+                [class]="'modal-icon-alignment card-title pb-2 ' + titleSize"
+                [class.card-tooltip]="titleTooltip"
+              >
+                <span
+                  placement="top"
+                  ngbTooltip="{{ titleTooltip | translate }}"
+                >
+                  {{ title | translate }}
 
-          <upd-card-secondary-title
-            [config]="config"
-            [data]="data"
-            [type]="type"
-            [modal]="modal"
-          ></upd-card-secondary-title>
-        </div>
+                  @if (titleSuffix) {
+                    <span class="title-suffix">
+                      - {{ titleSuffix | translate }}
+                    </span>
+                  }
+                </span>
+
+                @if (cardTitleAction) {
+                  <span class="modal-icon-by-title">
+                    <ng-container
+                      [ngTemplateOutlet]="cardTitleAction"
+                    ></ng-container>
+                  </span>
+                } @else if (modal) {
+                  <span class="modal-icon-by-title">
+                    <upd-modal
+                      [modalTitle]="title"
+                      [modalContent]="modal"
+                      [modalSize]="modalSize"
+                    ></upd-modal>
+                  </span>
+                }
+              </h3>
+            }
+
+            <upd-card-secondary-title
+              [config]="config"
+              [data]="data"
+              [type]="type"
+              [modal]="modal"
+            ></upd-card-secondary-title>
+          </div>
+        }
+
         <ng-content></ng-content>
       </div>
     </div>
@@ -86,6 +101,7 @@ export class CardComponent {
   @Input() modalSize: 'xl' | 'lg' | 'md' | 'sm' = 'md';
   @Input() styleClass = '';
   @Input() status?: 'green' | 'yellow' | 'blue' | 'red' | 'grey';
+  @Input() flushBody = false;
 
   constructor() {
     const popoverConfig = inject(NgbPopoverConfig);
