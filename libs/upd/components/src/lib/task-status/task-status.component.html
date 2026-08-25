@@ -61,7 +61,7 @@
           </div>
 
           <div
-            class="task-health-header d-flex flex-wrap align-items-center gap-3"
+            class="task-health-header d-flex flex-wrap align-items-center gap-3 border-bottom pb-3 mb-4"
           >
             <div
               class="health-label d-flex align-items-center gap-2"
@@ -74,7 +74,7 @@
 
             @if (hasHighDemand()) {
               <div
-                class="health-demand d-inline-flex align-items-center ms-lg-auto"
+                class="health-demand d-inline-flex align-items-center"
               >
                 <span
                   class="health-demand__pill d-inline-flex align-items-center justify-content-center border rounded-pill"
@@ -101,7 +101,7 @@
             }
           </div>
 
-          <div class="performance-context d-flex flex-wrap align-items-center">
+          <!-- <div class="performance-context d-flex flex-wrap align-items-center">
             <span
               class="performance-context__summary d-inline-flex align-items-center gap-1"
               [ngClass]="performanceBand()"
@@ -139,9 +139,7 @@
 
               {{ trendLabel() }}
             </span>
-          </div>
-
-          <div class="performance-context__divider"></div>
+          </div> -->
 
           <div class="performance-copy">
             <p class="performance-copy__title" [innerHTML]="healthTitle()"></p>

@@ -2,10 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
 } from '@angular/core';
 import type { ApexOptions } from 'ng-apexcharts';
 import { createBaseConfig } from '../apex-base/apex.config.base';
+import { I18nFacade } from '@dua-upd/upd/state';
+import { formatPercent } from '@angular/common';
 
 export type ScoreRange = {
   name: string;
@@ -22,6 +25,7 @@ export type ScoreRange = {
   standalone: false,
 })
 export class ApexScoreComponent {
+  private i18n = inject(I18nFacade);
   readonly title = input('Individual Score');
   readonly ranges = input<ScoreRange[]>();
 
@@ -77,8 +81,6 @@ export class ApexScoreComponent {
     return ranges.map((range, index) => {
       const nextRange = ranges[index + 1];
 
-      // Use the start of the next band so the visual ranges are:
-      // 0–60, 60–70, 70–80, 80–100
       const start = range.from;
       const end = nextRange?.from ?? domainMax;
 
@@ -119,7 +121,7 @@ export class ApexScoreComponent {
     const score = this.scoreValue();
     const colorStops = this.createColorStops();
 
-    const base = createBaseConfig((value: number) => `${value}%`);
+    const base = createBaseConfig((value: number) => `${value}`);
 
     return {
       ...base,
@@ -228,7 +230,7 @@ export class ApexScoreComponent {
             <div class="apexcharts-tooltip-y-group">
               <span class="apexcharts-tooltip-text-y-label">
                 <strong>${currentRange?.name ?? ''}:</strong>
-                ${score.toFixed(0)}%
+                ${formatPercent(score / 100, this.i18n.currentLang(), '1.0-0')}
               </span>
             </div>
           </div>
