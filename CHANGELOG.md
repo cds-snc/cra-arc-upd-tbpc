@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.1...v4.4.2) (2026-08-25)
+
+
+### Bug Fixes
+
+* pages &gt; readability tab had 2 modals ([5138153](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5138153aaa304693640f889bad5779cc57920cef))
+
 ## [4.4.1](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.0...v4.4.1) (2026-08-18)
 
 
