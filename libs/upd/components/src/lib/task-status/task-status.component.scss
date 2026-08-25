@@ -138,68 +138,6 @@ $tiers: (
   margin-bottom: 0.75rem;
 }
 
-.performance-context {
-  font-size: 0.95rem;
-  line-height: 1.2;
-
-  &__summary {
-    gap: 0.25rem;
-
-    &.poor .performance-context__band {
-      color: $bad;
-    }
-
-    &.fair .performance-context__band {
-      color: $neutral;
-    }
-
-    &.good .performance-context__band {
-      color: $improving;
-    }
-
-    &.strong .performance-context__band {
-      color: $good;
-    }
-  }
-
-  &__band {
-    font-weight: 800;
-  }
-
-  &__score {
-    color: $text-muted;
-
-    font-weight: 400;
-  }
-
-  &__separator {
-    margin-inline: 0.5rem;
-
-    color: #98a2b3;
-  }
-
-  &__trend {
-    font-weight: 800;
-  }
-
-  &__icon {
-    width: 1rem;
-    height: 1rem;
-
-    font-size: 1rem;
-    line-height: 1rem;
-  }
-
-  &__divider {
-    width: 100%;
-    height: 1px;
-
-    margin: 1.25rem 0;
-
-    background: $divider;
-  }
-}
-
 .performance-copy {
   color: $text-main;
 
@@ -735,10 +673,6 @@ $changes: (
 
   .task-performance-title {
     margin-bottom: 1.5rem;
-  }
-
-  .health-demand {
-    margin-inline-start: 0 !important;
   }
 
   .score-card--stacked {
