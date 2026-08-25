@@ -58,8 +58,8 @@ import type { ColumnConfig } from '@dua-upd/types-common';
                 } @else if (modal) {
                   <span class="modal-icon-by-title">
                     <upd-modal
-                      [modalTitle]="title"
-                      [modalContent]="modal"
+                      [modalTitle]="modalTitle || title"
+                      [modalContent]="modal | translate"
                       [modalSize]="modalSize"
                     ></upd-modal>
                   </span>
@@ -98,9 +98,10 @@ export class CardComponent {
   @Input() data: Record<string, number | string>[] = [];
   @Input() type = 'list';
   @Input() modal = '';
+  @Input() modalTitle = '';
   @Input() modalSize: 'xl' | 'lg' | 'md' | 'sm' = 'md';
   @Input() styleClass = '';
-  @Input() status?: 'green' | 'yellow' | 'blue' | 'red' | 'grey';
+  @Input() status?: 'green' | 'yellow' | 'red' | 'grey';
   @Input() flushBody = false;
 
   constructor() {
