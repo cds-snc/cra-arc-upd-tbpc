@@ -25,7 +25,7 @@ type HighDemandTooltipMetric = {
 
 export type PerformanceBand = 'poor' | 'fair' | 'good' | 'strong';
 export type TrendBand = 'improving' | 'steady' | 'declining';
-type Tier = 'green' | 'yellow' | 'blue' | 'red' | 'grey';
+type Tier = 'green' | 'yellow' | 'red' | 'grey';
 type ScoreMetricKey = 'calls' | 'feedback' | 'survey';
 
 type StatusView = {
@@ -134,41 +134,6 @@ export class TaskStatusComponent {
       .map(({ label }) => label.toLocaleLowerCase(this.currentLang()));
 
     return this.conjunctionListFormatter().format(metrics);
-  });
-
-  readonly currentRelativeRange = computed(
-    () =>
-      this.relativeRanges().find(({ key }) => key === this.performanceBand())!,
-  );
-
-  readonly trendLabel = computed(() =>
-    this.translate(`task-status-range-${this.trendBand()}`),
-  );
-
-  readonly trendIcon = computed(() => {
-    switch (this.trendBand()) {
-      case 'improving':
-        return 'arrow_upward';
-
-      case 'declining':
-        return 'arrow_downward';
-
-      default:
-        return 'arrow_right_alt';
-    }
-  });
-
-  readonly trendClass = computed(() => {
-    switch (this.trendBand()) {
-      case 'improving':
-        return 'change-good';
-
-      case 'declining':
-        return 'change-bad';
-
-      default:
-        return 'change-neutral';
-    }
   });
 
   readonly relativeRanges = computed<ScoreRange<PerformanceBand>[]>(() => [
@@ -465,16 +430,10 @@ export class TaskStatusComponent {
     switch (this.healthTier()) {
       case 'green':
         return this.translate('task-status-callout-healthy');
-
       case 'yellow':
         return this.translate('task-status-callout-watch');
-
-      case 'blue':
-        return this.translate('task-status-callout-improving');
-
       case 'red':
         return this.translate('task-status-callout-needs-action');
-
       default:
         return '';
     }

@@ -2079,22 +2079,22 @@
   "task-status-situation-poor-higher": "Très faible + Supérieur",
   "task-status-situation-poor-normal": "Très faible + Normal",
   "task-status-situation-poor-lower": "Très faible + Inférieur",
+  
+  "task-status-title-strong-improving": "Le score est <strong>fort</strong> et <strong>en amélioration par rapport à sa moyenne historique</strong> — <strong>maintenez cet élan</strong>.",
+  "task-status-title-strong-steady": "Le score est <strong>fort</strong> et <strong>stable par rapport à sa moyenne historique</strong> — <strong>maintenez le rendement</strong>.",
+  "task-status-title-strong-declining": "Le score est <strong>fort</strong>, mais <strong>en baisse par rapport à sa moyenne historique</strong> — <strong>examinez ce qui a changé</strong> avant que le rendement ne diminue davantage.",
 
-  "task-status-title-strong-improving": "Le score est <strong>fort</strong> et <strong>en amélioration</strong> — <strong>maintenez cet élan</strong>.",
-  "task-status-title-strong-steady": "Le score est <strong>fort</strong> et <strong>stable</strong> — <strong>maintenez le rendement</strong>.",
-  "task-status-title-strong-declining": "Le score est <strong>fort</strong>, mais <strong>en baisse</strong> — <strong>examinez ce qui a changé</strong> avant que le rendement ne diminue davantage.",
+  "task-status-title-good-improving": "Le score est <strong>bon</strong> et <strong>en amélioration par rapport à sa moyenne historique</strong> — <strong>maintenez cet élan</strong> et poursuivez les améliorations.",
+  "task-status-title-good-steady": "Le score est <strong>bon</strong> et <strong>stable par rapport à sa moyenne historique</strong> — <strong>maintenez le rendement</strong> et cherchez des possibilités d’amélioration.",
+  "task-status-title-good-declining": "Le score est <strong>bon</strong>, mais <strong>en baisse par rapport à sa moyenne historique</strong> — <strong>examinez ce qui a changé</strong> avant qu’il ne passe à un statut inférieur.",
 
-  "task-status-title-good-improving": "Le score est <strong>bon</strong> et <strong>en amélioration</strong> — <strong>maintenez cet élan</strong> et poursuivez les améliorations.",
-  "task-status-title-good-steady": "Le score est <strong>bon</strong> et <strong>stable</strong> — <strong>maintenez le rendement</strong> et cherchez des possibilités d’amélioration.",
-  "task-status-title-good-declining": "Le score est <strong>bon</strong>, mais <strong>en baisse</strong> — <strong>examinez ce qui a changé</strong> avant qu’il ne passe dans une catégorie inférieure.",
+  "task-status-title-fair-improving": "Le score est <strong>passable</strong>, mais <strong>en amélioration par rapport à sa moyenne historique</strong> — <strong>poursuivez les efforts</strong> pour le faire passer dans la catégorie Bon.",
+  "task-status-title-fair-steady": "Le score est <strong>passable</strong> et <strong>stable par rapport à sa moyenne historique</strong> — <strong>déterminez ce qui limite</strong> les améliorations supplémentaires.",
+  "task-status-title-fair-declining": "Le score est <strong>passable</strong> et <strong>en baisse par rapport à sa moyenne historique</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin d’éviter une détérioration supplémentaire.",
 
-  "task-status-title-fair-improving": "Le score est <strong>passable</strong>, mais <strong>en amélioration</strong> — <strong>poursuivez les efforts</strong> pour le faire passer dans la catégorie Bon.",
-  "task-status-title-fair-steady": "Le score est <strong>passable</strong> et <strong>stable</strong> — <strong>déterminez ce qui limite</strong> les améliorations supplémentaires.",
-  "task-status-title-fair-declining": "Le score est <strong>passable</strong> et <strong>en baisse</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin d’éviter une détérioration supplémentaire.",
-
-  "task-status-title-poor-improving": "Le score est <strong>faible</strong>, mais <strong>en amélioration</strong> — <strong>poursuivez les améliorations</strong> pour le faire passer dans une catégorie supérieure.",
-  "task-status-title-poor-steady": "Le score est <strong>faible</strong> et <strong>stable</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin d’améliorer le rendement.",
-  "task-status-title-poor-declining": "Le score est <strong>faible</strong> et <strong>en baisse</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin de renverser la tendance.",
+  "task-status-title-poor-improving": "Le score est <strong>faible</strong>, mais <strong>en amélioration par rapport à sa moyenne historique</strong> — <strong>poursuivez les améliorations</strong> pour le faire passer à un statut supérieur.",
+  "task-status-title-poor-steady": "Le score est <strong>faible</strong> et <strong>stable par rapport à sa moyenne historique</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin d’améliorer le rendement.",
+  "task-status-title-poor-declining": "Le score est <strong>faible</strong> et <strong>en baisse par rapport à sa moyenne historique</strong> — <strong>accordez la priorité aux mesures correctives</strong> afin de renverser la tendance.",
 
   "task-status-title-strong-improving-high-impact": "<strong>Tâche à fort impact :</strong> elle génère un volume élevé de visites, d’appels et de rétroactions, de sorte que les gains réalisés ici touchent un grand nombre d’utilisateurs.",
   "task-status-title-strong-steady-high-impact": "<strong>Tâche à fort impact :</strong> elle génère un volume élevé de visites, d’appels et de rétroactions, de sorte que le maintien de ce niveau compte pour un grand nombre d’utilisateurs.",
