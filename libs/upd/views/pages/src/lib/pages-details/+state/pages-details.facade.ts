@@ -133,12 +133,12 @@ export class PagesDetailsFacade {
 
   pageStatus$ = this.pagesDetailsData$.pipe(
     map((data) => {
-      if (data?.isRedirect) {
-        return 'Redirected';
-      }
-
       if (data?.is404) {
         return '404';
+      }
+      
+      if (data?.isRedirect) {
+        return 'Redirected';
       }
 
       return 'Live';
