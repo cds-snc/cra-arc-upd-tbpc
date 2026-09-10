@@ -497,11 +497,13 @@ margin: 0px 20px 0px 20px;
   min-width: 120px;
 }
 
-#tasks-home- .p-datatable-thead > tr > th {
+#tasks-home- .p-datatable-thead > tr > th,
+#projects-home- .p-datatable-thead > tr > th {
   vertical-align: bottom !important; 
 }
 
-#tasks-home- .p-datatable-thead > tr > th > div {
+#tasks-home- .p-datatable-thead > tr > th > div,
+#projects-home- .p-datatable-thead > tr > th > div {
   white-space: normal !important; 
 } 
 
