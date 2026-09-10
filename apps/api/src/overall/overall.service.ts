@@ -1158,7 +1158,7 @@ async function getUxData(uxTests: UxTest[]): Promise<OverviewUxData> {
   const lastFiscalStart = lastFiscalEnd.subtract(1, 'year').add(1, 'day');
 
   uxTests
-    .filter((test) => test.status === 'Complete')
+    //.filter((test) => test.status === 'Complete')
     .map((test) => {
       const project = test.project ? test.project.toString() : 'unknown';
       projectData[project] = projectData[project] || {
@@ -1172,7 +1172,11 @@ async function getUxData(uxTests: UxTest[]): Promise<OverviewUxData> {
 
       projectData[project].testTypes.add(test.test_type);
 
-      if (test.tasks) projectData[project].tasks.add(test.tasks.toString());
+      if (test.tasks && test.success_rate != null) {
+        test.tasks.forEach((task) =>
+          projectData[project].tasks.add(task.toString())
+        );
+      }
       if (test.cops) projectData[project].cops.add(test.test_type.toString());
       if (
         test.date >= lastQuarterStart.toDate() &&
