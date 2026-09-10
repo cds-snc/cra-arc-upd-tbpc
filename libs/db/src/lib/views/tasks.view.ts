@@ -660,6 +660,7 @@ export class TasksViewService extends DbViewNew<
       subtopic: string;
       sub_subtopic: string[];
       user_type: string[];
+      user_subtype: string[];
       tpc_ids: number[];
       program: string;
       service: string;
@@ -707,6 +708,7 @@ export class TasksViewService extends DbViewNew<
         subtopic: '$task.subtopic',
         sub_subtopic: '$task.sub_subtopic',
         user_type: '$task.user_type',
+        user_subtype: '$task.user_subtype',
         tpc_ids: '$task.tpc_ids',
         program: '$task.program',
         service: '$task.service',
@@ -940,6 +942,7 @@ export class TasksViewService extends DbViewNew<
       channel: string[];
       portfolio: string;
       user_type: string[];
+      user_subtype: string[];
       calls: number;
       calls_per_100_visits: number | null;
       dyf_yes: number;
@@ -977,6 +980,7 @@ export class TasksViewService extends DbViewNew<
       channel: '$task.channel',
       portfolio: '$task.portfolio',
       user_type: '$task.user_type',
+      user_subtype: '$task.user_subtype',
       calls: '$totalCalls',
       calls_per_100_visits: {
         $cond: {

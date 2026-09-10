@@ -57,6 +57,7 @@ class TasksView(ParquetModel):
                     "subtopic": string(),
                     "sub_subtopic": list_(string()),
                     "user_type": list_(string()),
+                    "user_subtype": list_(string()),
                     "tpc_ids": list_(int32()),
                     "program": string(),
                     "service": string(),

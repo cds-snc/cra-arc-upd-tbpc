@@ -247,6 +247,7 @@ export interface ITask {
   subtopic: string;
   sub_subtopic: string[];
   user_type: string[];
+  user_subtype: string[];
   ux_tests?: Types.ObjectId[] | IUxTest[];
   projects?: Types.ObjectId[] | IProject[];
   pages?: Types.ObjectId[] | IPage[];

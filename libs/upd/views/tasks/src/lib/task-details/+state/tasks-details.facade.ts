@@ -101,6 +101,7 @@ export class TasksDetailsFacade {
         'user_journey',
         'status',
         'user_type',
+        'user_subtype',
       ] as const;
 
       return detailsFieldNames.map((fieldName) => {
