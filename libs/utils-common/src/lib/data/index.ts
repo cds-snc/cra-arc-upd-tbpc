@@ -806,9 +806,19 @@ export const getImprovedKpiTopSuccessRates = (
 
   const avgTestTopSuccessRates = piped(
     filteredTests1,
-    // for tests with multiple tasks, unwind the tasks array
-    map(unwind('tasks')),
-    flatten,
+    // // for tests with multiple tasks, unwind the tasks array
+    // map(unwind('tasks')),
+    // flatten,
+    // //exclude tasks not in the topTaskIds
+    // filter((test: any) => topTaskIds.includes(test.tasks.toString())),
+    // Unwind and then remove non-Top-50 tasks as one pipeline argument
+    pipe(
+      map(unwind('tasks')),
+      flatten,
+      filter((test: any) =>
+        topTaskIds.includes(test.tasks.toString()),
+      ),
+    ),
     (tests: IUxTest[]) =>
       groupByTaskByProjectByTestType(tests) as Dictionary<
         Dictionary<ProjectTestTypes>
