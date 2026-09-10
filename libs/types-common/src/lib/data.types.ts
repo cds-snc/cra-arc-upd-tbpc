@@ -360,6 +360,7 @@ export interface TasksHomeAggregatedData {
   portfolio?: string;
   visits: number;
   user_type: string[];
+  user_subtype: string[];
   calls: number;
   dyf_no: number;
   dyf_yes: number;
@@ -427,6 +428,7 @@ export interface TaskDetailsData extends EntityDetailsData<TaskDetailsMetrics> {
   subtopic: string;
   sub_subtopic: string[];
   user_type: string[];
+  user_subtype: string[];
   tpc_ids: number[];
   program: string;
   service: string;

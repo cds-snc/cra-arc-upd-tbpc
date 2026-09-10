@@ -50,6 +50,9 @@ export class Task implements ITask {
   @Prop({ type: [String] })
   user_type: string[] = [];
 
+  @Prop({ type: [String] })
+  user_subtype: string[] = [];
+
   @Prop({ type: [{ type: MSchema.Types.ObjectId, ref: 'UxTest' }] })
   ux_tests?: Types.ObjectId[] | UxTest[];
 

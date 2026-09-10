@@ -26,6 +26,7 @@ export interface TaskData {
   topic?: string;
   subtopic?: string;
   user_type?: string[];
+  user_subtype?: string[];
   ux_tests?: string[];
   pages?: string[];
   program?: string;

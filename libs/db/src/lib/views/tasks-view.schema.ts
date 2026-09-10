@@ -36,6 +36,7 @@ export class TasksView implements ITaskView {
       subtopic: String,
       sub_subtopic: [String],
       user_type: [String],
+      user_subtype: [String],
       tpc_ids: [Number],
       program: String,
       service: String,

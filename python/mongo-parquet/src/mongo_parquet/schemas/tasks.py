@@ -28,6 +28,7 @@ class Tasks(ParquetModel):
             "subtopic": string(),
             "sub_subtopic": list_(string()),
             "user_type": list_(string()),
+            "user_subtype": list_(string()),
             "ux_tests": list_(ObjectIdType()),
             "projects": list_(ObjectIdType()),
             "pages": list_(ObjectIdType()),
