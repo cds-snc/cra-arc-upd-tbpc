@@ -45,39 +45,8 @@ export class ProjectsHomeComponent implements OnInit {
             header: this.i18n.service.translate('Name', lang),
             type: 'link',
             typeParam: '_id',
+            width: '400px',
           },
-          // {
-          //   field: 'cops',
-          //   header: this.i18n.service.translate('type', lang),
-          //   type: 'label',
-          //   typeParam: 'cops',
-          //   filterConfig: {
-          //     type: 'boolean',
-          //   },
-          // },
-          // {
-          //   field: 'wos_cops',
-          //   header: this.i18n.service.translate('type', lang),
-          //   type: 'label',
-          //   typeParam: 'wos_cops',
-          //   filterConfig: {
-          //     type: 'boolean',
-          //   },
-          // },
-          // {
-          //   field: 'projectTypeLabel',
-          //   header: this.i18n.service.translate('type', lang),
-          //   type: 'label',
-          //   typeParam: 'projectType',
-          //   filterConfig: {
-          //     type: 'category',
-          //     categories: createCategoryConfig({
-          //       i18n: this.i18n.service,
-          //       data,
-          //       field: 'projectTypeLabel',
-          //     }),
-          //   },
-          // },
           {
             field: 'projectTypeLabel',
             header: this.i18n.service.translate('type', lang),
@@ -144,6 +113,7 @@ export class ProjectsHomeComponent implements OnInit {
               pipe: 'number',
               pipeParam: '1.0',
             },
+            width: '150px',
           },
         ];
       },
