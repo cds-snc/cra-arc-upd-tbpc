@@ -29,6 +29,10 @@ export class TasksHomeFacade {
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
             : '',
+        user_subtype:
+          row.user_subtype?.length > 0
+            ? row.user_subtype.map((userSubtype) => userSubtype || '')
+            : '',    
         taskStatus:
           getTaskStatus(
             row.performance_score,
