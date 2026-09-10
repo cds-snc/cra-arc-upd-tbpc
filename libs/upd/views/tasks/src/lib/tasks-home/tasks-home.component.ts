@@ -136,6 +136,13 @@ export class TasksHomeComponent implements OnInit {
       group: 'categories',
     },
     {
+      field: 'user_subtype',
+      header: 'Audience subtype',
+      hide: true,
+      translate: true,
+      group: 'categories',
+    },
+    {
       field: 'topic',
       header: 'topic',
       hide: true,
