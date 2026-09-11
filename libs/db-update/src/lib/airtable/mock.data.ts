@@ -14,6 +14,7 @@ export const mockData: UxData = {
       sub_subtopic: [],
       ux_tests: [new Types.ObjectId('6294c2cdd37accd525909969')],
       user_type: ['Business'],
+      user_subtype: ['Business'],
       pages: [
         new Types.ObjectId('62c4ba166227bffd7dd87420'),
         new Types.ObjectId('62c4f0916227bffd7dd8a27a'),
@@ -38,6 +39,7 @@ export const mockData: UxData = {
       sub_subtopic: [],
       ux_tests: [],
       user_type: ['Individual'],
+      user_subtype: ['Individual'],
       pages: [
         new Types.ObjectId('625c5b88634047cb4e9e2566'),
         new Types.ObjectId('625c5b88634047cb4e9e244f'),
