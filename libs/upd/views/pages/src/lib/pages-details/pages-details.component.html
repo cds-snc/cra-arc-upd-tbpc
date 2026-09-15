@@ -17,9 +17,9 @@
         >
         </upd-project-status-label>
       } 
-      @if ((archiveStatus$ | async) !== null) {
+      @if ((archivedStatus$ | async) !== null) {
         <upd-project-status-label class="d-inline-block ms-2"
-          [archiveStatus]="archiveStatus$ | async"
+          [archivedStatus]="archivedStatus$ | async"
         >
         </upd-project-status-label>
       }

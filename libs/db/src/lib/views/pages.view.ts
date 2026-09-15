@@ -16,7 +16,7 @@ import type {
   IPage,
   IPageView,
   PageStatus,
-  ArchiveStatus,
+  ArchivedStatus,
 } from '@dua-upd/types-common';
 import { DbViewNew, ViewConfig } from '../db.views.new';
 import { PagesView, PagesViewSchema } from './pages-view.schema';
@@ -43,7 +43,7 @@ type BaseDoc = {
   url: string;
   lang: 'en' | 'fr';
   pageStatus: PageStatus;
-  archiveStatus: ArchiveStatus;
+  archivedStatus: ArchivedStatus;
   redirect: string;
   owners?: string;
   sections?: string;
@@ -141,7 +141,7 @@ export class PagesViewService extends DbViewNew<
           lang: 1,
           is_404: 1,
           redirect: 1,
-          is_archive: 1,
+          is_archived: 1,
           sections: 1,
           owners: 1,
           tasks: 1,
@@ -161,9 +161,9 @@ export class PagesViewService extends DbViewNew<
                 ? 'Redirected'
                 : 'Live') as PageStatus,
             redirect: page.redirect,
-            archiveStatus: (page.is_archive
+            archivedStatus: (page.is_archived
               ? 'Archived'
-              : "Not archived") as ArchiveStatus,
+              : "Not archived") as ArchivedStatus,
             owners: page.owners,
             sections: page.sections,
             tasks: page.tasks as Types.ObjectId[],
@@ -205,7 +205,7 @@ export class PagesViewService extends DbViewNew<
       lang,
       pageStatus,
       redirect,
-      archiveStatus,
+      archivedStatus,
       owners,
       sections,
       tasks,
@@ -240,7 +240,7 @@ export class PagesViewService extends DbViewNew<
         sections,
       } satisfies IPage,
       pageStatus,
-      archiveStatus,
+      archivedStatus,
       numComments: numCommentsByPage[_id.toString()]?.numComments || 0,
       ...topLevelMetrics,
       aa_searchterms,
