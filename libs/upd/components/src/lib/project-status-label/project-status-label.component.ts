@@ -4,8 +4,8 @@ import {
   PageStatus,
   ProjectType,
   TaskStatus,
-  ArchiveStatus,
-  PageArchiveStatus,
+  ArchivedStatus,
+  PageArchivedStatus,
 } from '@dua-upd/types-common';
 
 @Component({
@@ -43,20 +43,20 @@ import {
         >{{ taskStatus | translate }}</span
       >
     }
-    @if (archiveStatus) {
+    @if (archivedStatus) {
       <span
         class="badge {{ styleClass }} {{
-          archiveStatusClassMap[archiveStatus]
+          archivedStatusClassMap[archivedStatus]
         }} d-block"
-        >{{ archiveStatus | translate }}</span
+        >{{ archivedStatus | translate }}</span
       >
     }
-    @if (pageArchiveStatus) {
+    @if (pageArchivedStatus) {
       <span
         class="badge {{ styleClass }} {{
-          pageArchiveStatusClassMap[pageArchiveStatus]
+          pageArchivedStatusClassMap[pageArchivedStatus]
         }} d-block"
-        >{{ pageArchiveStatus | translate }}</span
+        >{{ pageArchivedStatus | translate }}</span
       >
     }
   `,
@@ -68,9 +68,9 @@ export class ProjectStatusLabelComponent {
   @Input() pageStatus: PageStatus | null = null;
   @Input() projectType: ProjectType | null = null;
   @Input() taskStatus: TaskStatus | null = null;
-  @Input() archiveStatus: ArchiveStatus | null = null;
+  @Input() archivedStatus: ArchivedStatus | null = null;
+  @Input() pageArchivedStatus: PageArchivedStatus | null = null;
   @Input() styleClass: string | null = null;
-  @Input() pageArchiveStatus: PageArchiveStatus | null = null;
 
   projectStatusClassMap: Record<ProjectStatus, string> = {
     Unknown: 'bg-unknown',
@@ -103,16 +103,16 @@ export class ProjectStatusLabelComponent {
     "Pending": 'bg-pending',
   };
 
-  archiveStatusClassMap: Record<ArchiveStatus, string> = {
-    Archived: 'bg-archive',
+  archivedStatusClassMap: Record<ArchivedStatus, string> = {
+    Archived: 'bg-archived',
     'Not archived': 'bg-primary',
   };
 
-  pageArchiveStatusClassMap: Record<PageArchiveStatus, string> = {
+  pageArchivedStatusClassMap: Record<PageArchivedStatus, string> = {
     Live: 'bg-complete',
     '404': 'bg-404',
     Redirected: 'bg-redirect',
-    Archived: 'bg-archive',
+    Archived: 'bg-archived',
     'Not archived': 'bg-primary',
   };
 }

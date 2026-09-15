@@ -2,13 +2,15 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
     "inlineSources": true,
     "types": [],
     "target": "ES2022",
     "useDefineForClassFields": false,
     "moduleResolution": "bundler"
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
   },
   "exclude": [
     "src/test-setup.ts",

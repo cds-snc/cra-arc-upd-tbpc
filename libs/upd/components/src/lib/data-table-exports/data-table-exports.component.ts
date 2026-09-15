@@ -7,7 +7,7 @@ import * as FileSaver from 'file-saver';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import { DropdownOption } from '../dropdown/dropdown.component';
 import { I18nFacade } from '@dua-upd/upd/state';
-import { PageStatus, ArchiveStatus, ProjectStatus, TaskStatus, PageArchiveStatus } from '@dua-upd/types-common';
+import { PageStatus, ArchivedStatus, ProjectStatus, TaskStatus, PageArchivedStatus } from '@dua-upd/types-common';
 
 @Component({
     selector: 'upd-data-table-exports',
@@ -77,9 +77,9 @@ export class DataTableExportsComponent<T> {
 
     const taskStatusKeys: TaskStatus[] = ['On track', 'Watch', 'Action required', 'Unscored'];
 
-    const archiveStatusKeys: ArchiveStatus[] = ['Archived', 'Not archived'];
+    const archivedStatusKeys: ArchivedStatus[] = ['Archived', 'Not archived'];
 
-    const pageArchiveStatusKeys: PageArchiveStatus[] = [...pageStatusKeys, ...archiveStatusKeys];
+    const pageArchivedStatusKeys: PageArchivedStatus[] = [...pageStatusKeys, ...archivedStatusKeys];
 
     const projectStatuses = (await this.i18n.service.get(
       projectStatusKeys,
@@ -93,12 +93,12 @@ export class DataTableExportsComponent<T> {
       taskStatusKeys,
     )) as Record<string, string>;
 
-    const archiveStatuses = (await this.i18n.service.get (
-      archiveStatusKeys,
+    const archivedStatuses = (await this.i18n.service.get (
+      archivedStatusKeys,
     )) as Record<string, string>;
 
-    const pageArchiveStatuses = (await this.i18n.service.get (
-      pageArchiveStatusKeys,
+    const pageArchivedStatuses = (await this.i18n.service.get (
+      pageArchivedStatusKeys,
     )) as Record<string, string>;
 
     return this.data.map((row) =>
@@ -146,10 +146,10 @@ export class DataTableExportsComponent<T> {
             formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
           } else if (col.filterConfig?.type === 'taskStatus') {
             formattedRow[colKey] = taskStatuses[(<unknown>cellValue) as string];
-          } else if (col.filterConfig?.type === 'archiveStatus') {
-            formattedRow[colKey] = archiveStatuses[(<unknown>cellValue) as string];
-          } else if (col.filterConfig?.type === 'pageArchiveStatus') {
-            formattedRow[colKey] = pageArchiveStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'archivedStatus') {
+            formattedRow[colKey] = archivedStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'pageArchivedStatus') {
+            formattedRow[colKey] = pageArchivedStatuses[(<unknown>cellValue) as string];
           } else if (col.type === 'label') {
             formattedRow[colKey] =
               projectStatuses[(<unknown>cellValue) as string];

@@ -63,7 +63,7 @@ export class Url implements IUrl {
   is_404?: boolean;
 
   @Prop({ type: Boolean, index: true })
-  is_archive?: boolean;
+  is_archived?: boolean;
 
   @Prop({ type: [{ hash: String, date: Date }], _id: false })
   hashes?: UrlHash[];

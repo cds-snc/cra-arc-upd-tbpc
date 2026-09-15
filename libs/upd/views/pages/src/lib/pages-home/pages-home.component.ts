@@ -31,41 +31,13 @@ export class PagesHomeComponent implements OnInit {
             type: 'link',
             typeParam: '_id',
           },
-          // {
-          //   field: 'pageStatus',
-          //   header: 'Current status',
-          //   type: 'label',
-          //   typeParam: 'pageStatus',
-          //   filterConfig: {
-          //     type: 'pageStatus',
-          //     categories: createCategoryConfig({
-          //       i18n: this.i18n.service,
-          //       data,
-          //       field: 'pageStatus',
-          //     }),
-          //   },
-          // },
-          // {
-          //   field: 'archiveStatus',
-          //   header: 'Archive status',
-          //   type: 'label',
-          //   typeParam: 'archiveStatus',
-          //   filterConfig: {
-          //     type: 'archiveStatus',
-          //     categories: createCategoryConfig({
-          //       i18n: this.i18n.service,
-          //       data,
-          //       field: 'archiveStatus',
-          //     }),
-          //   },
-          // },
           {
-            field: 'pageArchiveStatusLabel',
+            field: 'pageArchivedStatusLabel',
             header: 'Current page status',
             type: 'label',
-            typeParam: 'pageArchive',
+            typeParam: 'pageArchived',
             filterConfig: {
-              type: 'pageArchiveStatus',
+              type: 'pageArchivedStatus',
               categories: 
                 [
                   { name: '404', value: '404' },

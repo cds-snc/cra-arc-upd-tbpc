@@ -6,8 +6,8 @@ import type {
   IPage,
   IPageView,
   PageStatus,
-  ArchiveStatus,
-  PageArchiveStatus,
+  ArchivedStatus,
+  PageArchivedStatus,
 } from '@dua-upd/types-common';
 import type { ModelWithStatics } from '@dua-upd/utils-common/types';
 import { MetricsCommon } from '../schemas/metrics-common.schema';
@@ -40,10 +40,10 @@ export class PagesView extends MetricsCommon implements IPageView {
   pageStatus: PageStatus;
   
   @Prop({ type: String })
-  archiveStatus: ArchiveStatus;
+  archivedStatus: ArchivedStatus;
   
   @Prop({ type: String })
-  pageArchiveStatus: PageArchiveStatus;
+  pageArchivedStatus: PageArchivedStatus;
 
   @Prop({ type: Number })
   numComments: number;

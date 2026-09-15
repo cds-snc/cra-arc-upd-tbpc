@@ -59,8 +59,8 @@ export interface FilterConfig<T = any> {
     | 'passFail'
     | 'pageStatus'
     | 'taskStatus'
-    | 'archiveStatus'
-    | 'pageArchiveStatus';
+    | 'archivedStatus'
+    | 'pageArchivedStatus';
   categories?: { name: string; value: T[keyof T] | null }[];
   matchMode?: string;
 }

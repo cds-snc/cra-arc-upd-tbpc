@@ -145,12 +145,12 @@ export class PagesDetailsFacade {
     }),
   );
 
-  archiveStatus$ = this.pagesDetailsData$.pipe(
-    map((data)  => (data?.isArchive ? 'Archived' : null),
+  archivedStatus$ = this.pagesDetailsData$.pipe(
+    map((data)  => (data?.isArchived ? 'Archived' : null),
     ),
   );
 
-  pageArchiveStatus$ = this.pageStatus$ || this. archiveStatus$;
+  pageArchivedStatus$ = this.pageStatus$ || this. archivedStatus$;
 
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),
