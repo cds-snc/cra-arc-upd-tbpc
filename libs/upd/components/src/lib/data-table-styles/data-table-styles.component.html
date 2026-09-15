@@ -36,8 +36,8 @@
   }
   <upd-project-status-label
     *ngIf="
-      labelType === 'archive'"
-    [archiveStatus]="archiveStatus"
+      labelType === 'archived'"
+    [archivedStatus]="archivedStatus"
   ></upd-project-status-label>
 
   <!-- COPS Type -->
@@ -86,12 +86,12 @@
     ></upd-project-status-label>
   }
 
-  <!-- COMBINED PageStatus ArchiveStatus Type -->
-   @if (config.type === 'label' && config.typeParam === 'pageArchive') {
-    @for (status of pageArchiveStatus; track status) {
+  <!-- COMBINED PageStatus ArchivedStatus Type -->
+   @if (config.type === 'label' && config.typeParam === 'pageArchived') {
+    @for (status of pageArchivedStatus; track status) {
       @if (status === 'Redirected' || status === '404' || status === 'Live' || status === 'Archived') {
         <upd-project-status-label
-          [pageArchiveStatus]="status"
+          [pageArchivedStatus]="status"
           class="d-inline-flex me-1"
         >
         </upd-project-status-label>
@@ -224,7 +224,7 @@
 }
 
 <!-- Array Data -->
-@if (isArray(data[config.field]) && config.typeParam !== 'projectType' && config.typeParam !== 'pageArchive') {
+@if (isArray(data[config.field]) && config.typeParam !== 'projectType' && config.typeParam !== 'pageArchived') {
   {{ array | translateArray | arrayToText }}
 }
 

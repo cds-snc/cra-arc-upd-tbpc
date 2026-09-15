@@ -38,7 +38,7 @@ export class Page {
   is_404?: boolean;
 
   @Prop({ type: Boolean })
-  is_archive?: boolean;
+  is_archived?: boolean;
 
   @Prop({ type: Object })
   metadata?: { [prop: string]: string | Date };

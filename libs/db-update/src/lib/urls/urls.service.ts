@@ -157,7 +157,6 @@ export class UrlsService {
               },
               {
                 is_404: true,
-                is_archive: false,
                 last_checked: { $lt: fourDaysAgo },
               },
             ],
@@ -339,7 +338,7 @@ export class UrlsService {
               last_modified: date,
               is_404: true,
               ...redirect,
-              is_archive: false,
+              is_archived: false,
             });
           }
 
@@ -359,7 +358,7 @@ export class UrlsService {
               // if the body is empty, it's technically not a 404, but may as well be.
               is_404: true,
               ...redirect,
-              is_archive: false,
+              is_archived: false,
             });
           }
 
@@ -512,7 +511,8 @@ export class UrlsService {
                     ...langHrefs,
                     links: processedHtml.links,
                     ...redirect,
-                    is_archive: processedHtml.archived,
+                    is_404: false,
+                    is_archived: processedHtml.isArchived,
                   },
                   readabilityScore,
                 );
@@ -527,7 +527,8 @@ export class UrlsService {
                 ...langHrefs,
                 links: processedHtml.links,
                 ...redirect,
-                is_archive: processedHtml.archived,
+                is_404: false,
+                is_archived: processedHtml.isArchived,
               });
             } catch (err) {
               this.logger.error(
@@ -576,7 +577,7 @@ export class UrlsService {
                 is_404: false,
                 hash: { hash, date },
                 latest_snapshot: hash,
-                is_archive: processedHtml.archived,
+                is_archived: processedHtml.isArchived,
               },
               readabilityScore,
             );
@@ -741,7 +742,7 @@ export class UrlsService {
           title: string;
           redirect?: string;
           is_404?: boolean;
-          is_archive?: boolean;
+          is_archived?: boolean;
           metadata?: { [prop: string]: string | Date };
           page: IPage;
           langHrefs?: {
@@ -758,7 +759,7 @@ export class UrlsService {
           metadata: 1,
           page: 1,
           langHrefs: 1,
-          is_archive: 1,
+          is_archived: 1,
         })
         .match({
           page: { $exists: true },
@@ -794,7 +795,7 @@ export class UrlsService {
       'redirect',
       'is_404',
       'metadata',
-      'is_archive',
+      'is_archived',
     ]);
 
     const toComparisonString = pipe(pickUrlsProps, JSON.stringify);
@@ -1619,7 +1620,7 @@ type ProcessedHtml = {
   metadata: Record<string, string>;
   links: { href: string; text: string }[];
   langHrefs: { [lang: string]: string };
-  archived: boolean;
+  isArchived: boolean;
 };
 
 export const processHtml = (html: string): ProcessedHtml | null => {
@@ -1633,11 +1634,11 @@ export const processHtml = (html: string): ProcessedHtml | null => {
   $('script, meta[property="fb:pages"]').remove();
 
   /* Check for archived class banner */
-  const archived = !!$('.gc-archv').length;
+  const isArchived = !!$('.gc-archv').length;
 
   /* DEBUG */
   logJson("Archived page?? ");
-  logJson(archived);
+  logJson(isArchived);
 
   const body = $('main').html() || '';
 
@@ -1699,7 +1700,7 @@ export const processHtml = (html: string): ProcessedHtml | null => {
     metadata,
     links,
     langHrefs,
-    archived,
+    isArchived,
   };
 };
 
