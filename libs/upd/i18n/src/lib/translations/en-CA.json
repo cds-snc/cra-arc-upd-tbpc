@@ -169,6 +169,8 @@
   "notification-what-visitors-clicked-on": "This report shows the links clicked by visitors during the selected period. Some links may differ or have combined counts. It includes links translated by the browser, downloads, and clicks from menus and sidebars.",
   "tooltip-what-visitors-clicked-on": "What visitors clicked on the page during the selected period.",
   "Redirected": "Redirected",
+  "Archived": "Archived",
+  "Not archived": "Not archived",
   "rank": "Rank",
   "page": "Page",
   "visitors": "Visitors",
