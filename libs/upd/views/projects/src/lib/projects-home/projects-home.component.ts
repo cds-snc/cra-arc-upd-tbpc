@@ -53,7 +53,7 @@ export class ProjectsHomeComponent implements OnInit {
             type: 'label',
             typeParam: 'projectType',
             filterConfig: {
-              type: 'category',
+              type: 'projectType',
               categories: [
                 {
                   name: this.i18n.service.translate('COPS', lang),
@@ -71,9 +71,9 @@ export class ProjectsHomeComponent implements OnInit {
             field: 'status',
             header: this.i18n.service.translate('Status', lang),
             type: 'label',
-            typeParam: 'status',
+            typeParam: 'projectStatus',
             filterConfig: {
-              type: 'category',
+              type: 'projectStatus',
               categories: createCategoryConfig({
                 i18n: this.i18n.service,
                 data,

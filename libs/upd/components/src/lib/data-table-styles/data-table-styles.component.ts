@@ -12,7 +12,6 @@ import { SecondsToMinutesPipe } from '@dua-upd/upd/pipes';
   standalone: false,
 })
 export class DataTableStylesComponent implements OnInit {
-[x: string]: any;
   private secondsToMinutesPipe = inject(SecondsToMinutesPipe);
   public i18n = inject(I18nFacade);
 
@@ -33,7 +32,7 @@ export class DataTableStylesComponent implements OnInit {
     }
 
     if (this.config.type === 'label') {
-      if (this.config.typeParam === 'status') {
+      if (this.config.typeParam === 'projectStatus') {
         this.labelType = 'project';
       } else if (this.config.typeParam === 'pageStatus') {
         this.labelType = 'page';
