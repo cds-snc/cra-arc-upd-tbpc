@@ -29,15 +29,20 @@ class MongoConfig:
         self.db_name = db_name
         self.host = host or os.getenv("DB_HOST", "localhost")
         self.port = port or int(os.getenv("DB_PORT", 27017))
-        self.username = (
-            username or os.getenv("DOCDB_USERNAME") or os.getenv("MONGO_USERNAME")
-        )
-        self.password = (
-            password or os.getenv("DOCDB_PASSWORD") or os.getenv("MONGO_PASSWORD")
-        )
-        self.tls_ca_file = (
-            tls_ca_file or os.getenv("DB_TLS_CA_FILE") or os.getenv("MONGO_TLS_CA_FILE")
-        )
+        if self.host != "localhost":
+            self.username = (
+                username or os.getenv("DOCDB_USERNAME") or os.getenv("MONGO_USERNAME")
+            )
+            self.password = (
+                password or os.getenv("DOCDB_PASSWORD") or os.getenv("MONGO_PASSWORD")
+            )
+            self.tls_ca_file = (
+                tls_ca_file or os.getenv("DB_TLS_CA_FILE") or os.getenv("MONGO_TLS_CA_FILE")
+            )
+        else:
+            self.username = None
+            self.password = None
+            self.tls_ca_file = None
         self.connection_string = self.create_connection_string()
         print(f"Connecting to MongoDB host: {self.host}")
 
