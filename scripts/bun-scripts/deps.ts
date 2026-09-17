@@ -12,12 +12,14 @@ import {
   GCTasksMappingsSchema,
   CustomReportsRegistrySchema,
 } from '@dua-upd/db';
-import { ApexOptions } from 'apexcharts';
-import { writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import type { ApexAxisChartSeries, ApexOptions } from 'apexcharts';
+import { DuckDbExtensionsManager } from '@dua-upd/duckdb';
+import { drizzle, type DuckDBDatabase } from '@duckdbfan/drizzle-duckdb';
+import { freemem, availableParallelism } from 'node:os';
+import { DuckDBInstance } from '@duckdb/node-api';
 
 class Db {
-  private connection: Mongoose | null = null;
+  private _connection: Mongoose | null = null;
 
   readonly pages = model('Page', PageSchema);
   readonly pageMetrics = model('PageMetrics', PageMetricsSchema);
@@ -29,15 +31,22 @@ class Db {
   readonly calldrivers = model('CallDriver', CallDriverSchema);
   readonly urls = model('Url', UrlSchema);
   readonly gcTasksMappings = model('GCTasksMappings', GCTasksMappingsSchema);
-  readonly customReports = model('CustomReportsRegistry', CustomReportsRegistrySchema);
+  readonly customReports = model(
+    'CustomReportsRegistry',
+    CustomReportsRegistrySchema,
+  );
+
+  get connection() {
+    return this._connection;
+  }
 
   async connect(prod = false) {
     const connectionString = `mongodb://${!prod ? 'localhost' : process.env['DB_HOST']}:27017/upd-test`;
 
     console.log(`Connecting to MongoDB at ${connectionString}`);
 
-    if (!this.connection) {
-      this.connection = await connect(connectionString, {
+    if (!this._connection) {
+      this._connection = await connect(connectionString, {
         compressors: ['zstd', 'snappy', 'zlib'],
       });
 
@@ -48,9 +57,9 @@ class Db {
   }
 
   async disconnect() {
-    if (this.connection) {
+    if (this._connection) {
       await disconnect();
-      this.connection = null;
+      this._connection = null;
     }
   }
 
@@ -59,83 +68,184 @@ class Db {
   }
 
   collection(name: string) {
-    return this.connection?.connection.collection(name);
+    return this._connection?.connection.collection(name);
   }
 }
 
 export const getDb = (prod = false) => new Db().connect(prod);
 
-async function openHtmlFile(path: string) {
-  const spawn = (command: string[]) => Bun.spawn(command);
+export type LineChartTitles = {
+  chart?: string;
+  xAxis?: string;
+  yAxis?: string;
+};
 
-  switch (process.platform) {
-    case 'darwin':
-      return spawn(['open chrome', resolve(path)]);
-    case 'win32': {
-      return new Promise<void>((res) => {
-        const proc = spawn(['cmd.exe', '/K', 'start', 'chrome', resolve(path)]);
-        proc.unref();
-        res();
-      });
-    }
-    default:
-      const proc = spawn(['cmd.exe', '/K', 'start', 'chrome', resolve(path)]);
-      proc.unref();
-    // return spawn(['xdg-open', resolve(path)]);
+export type LineChartOutput = 'file' | 'server';
+
+const chartFile = 'line-chart.html';
+
+const jsonForHtml = (value: unknown) =>
+  JSON.stringify(value)
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026');
+
+const htmlEscape = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+
+async function renderLineChart(
+  series: ApexAxisChartSeries,
+  titles: LineChartTitles,
+) {
+  if (series.length === 0) {
+    throw new Error('Line chart data must include at least one series.');
   }
-}
 
-export async function outputChart(filename: string, options: ApexOptions = {}) {
-  const output = `
+  const apexCharts = await Bun.file(
+    Bun.fileURLToPath(import.meta.resolve('apexcharts/dist/apexcharts.min.js')),
+  ).text();
+
+  const options: ApexOptions = {
+    chart: {
+      type: 'line',
+      height: '100%',
+      toolbar: { show: true },
+      zoom: { enabled: true },
+    },
+    series,
+    xaxis: {
+      title: { text: titles.xAxis },
+    },
+    yaxis: {
+      title: { text: titles.yAxis },
+    },
+    title: {
+      text: titles.chart,
+      align: 'left',
+    },
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth', width: 2 },
+    grid: { borderColor: '#e5e7eb' },
+    theme: { mode: 'light' },
+  };
+
+  return `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <title>${htmlEscape(titles.chart ?? 'Line chart')}</title>
+  <style>body { margin: 0; } #chart { height: 100vh; }</style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-  <div id="chart" style="width: 98vw; height: 98vh; box-sizing: border-box; border: #0a58ca solid 1px"></div>
+  <div id="chart"></div>
   <script>
-    var options = {
-        series: [{
-          name: "Desktops",
-          data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-        }],
-        chart: {
-          height: 500,
-          type: 'line',
-          zoom: {
-            enabled: false
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          curve: 'smooth'
-        },
-        title: {
-          text: 'Product Trends by Month',
-          align: 'left'
-        },
-        grid: {
-          row: {
-            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-            opacity: 0.5
-          },
-        },
-        ...(${JSON.stringify(options)})
-        };
-
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
-
-        console.log(options);
+${apexCharts}
+  </script>
+  <script>
+    const options = ${jsonForHtml(options)};
+    new ApexCharts(document.querySelector('#chart'), options).render();
   </script>
 </body>
 </html>
   `;
+}
 
-  await writeFile(`./${filename}.html`, output, 'utf8');
+/**
+ * Creates a line chart from named series. Select `'server'` to keep a local
+ * chart server running; otherwise, it writes `line-chart.html` to the current directory.
+ */
+export async function createLineChart(
+  data: ApexAxisChartSeries,
+  titles: LineChartTitles = {},
+  output: LineChartOutput = 'file',
+) {
+  const html = await renderLineChart(data, titles);
 
-  await openHtmlFile(`./${filename}.html`);
+  if (output === 'file') {
+    await Bun.write(chartFile, html);
+    return { file: chartFile };
+  }
+
+  const server = Bun.serve({
+    hostname: 'localhost',
+    port: 0,
+    fetch: () =>
+      new Response(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      }),
+  });
+
+  console.log(`Line chart available at ${server.url}`);
+  return server;
+}
+
+/**
+ * DuckDB helper functions.
+ */
+
+async function setupExtensions(db: DuckDBDatabase) {
+  const extensionsManager = new DuckDbExtensionsManager(db);
+  await extensionsManager.installExtension('httpfs');
+  await extensionsManager.installExtension('aws');
+}
+
+async function setupAuth(db: DuckDBDatabase) {
+  await db.execute(`
+        CREATE OR REPLACE SECRET s3 (
+          TYPE s3,
+          PROVIDER credential_chain,
+          REGION 'ca-central-1',
+          REFRESH auto
+        ); 
+      `);
+}
+
+async function setResourceLimits(
+  db: DuckDBDatabase,
+  config: { memoryLimitMb: number; numThreads: number },
+) {
+  const systemMemoryMB = freemem() / (1024 * 1024);
+  const memoryLimit = config.memoryLimitMb ?? Math.floor(systemMemoryMB * 0.7); // default to 70% of available system memory
+
+  console.log(`Setting DuckDB memory limit to ${memoryLimit} MB`);
+  await db.execute(`SET memory_limit = '${memoryLimit}MB';`);
+
+  const numThreads = config.numThreads ?? (availableParallelism() - 1 || 1);
+  console.log(`Setting DuckDB threads to ${numThreads}`);
+  await db.execute(`SET threads = ${numThreads};`);
+}
+
+export async function duckDbClient(
+  config: {
+    connectionString?: string;
+    logger?: boolean;
+    memoryLimitMb?: number;
+    numThreads?: number;
+  } = {},
+) {
+  const instance =
+    config.connectionString === ':memory:' || !config.connectionString
+      ? await DuckDBInstance.create(config.connectionString ?? ':memory:')
+      : await DuckDBInstance.fromCache(config.connectionString);
+  const client = await instance.connect();
+  const duckDb = drizzle(client, { logger: config.logger ?? true });
+
+  await setupExtensions(duckDb);
+  await setupAuth(duckDb);
+  await setResourceLimits(duckDb, {
+    memoryLimitMb: config.memoryLimitMb,
+    numThreads: config.numThreads,
+  });
+
+  duckDb[Symbol.asyncDispose] = async () => {
+    await duckDb.close();
+  };
+
+  return duckDb as typeof duckDb & {
+    [Symbol.asyncDispose]: () => Promise<void>;
+  };
 }
