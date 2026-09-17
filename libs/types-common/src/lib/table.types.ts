@@ -58,6 +58,8 @@ export interface FilterConfig<T = any> {
     | 'boolean'
     | 'passFail'
     | 'pageStatus'
+    | 'projectStatus'
+    | 'projectType'
     | 'taskStatus'
     | 'archivedStatus'
     | 'pageArchivedStatus';
