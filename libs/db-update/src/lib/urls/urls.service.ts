@@ -1636,10 +1636,6 @@ export const processHtml = (html: string): ProcessedHtml | null => {
   /* Check for archived class banner */
   const isArchived = !!$('.gc-archv').length;
 
-  /* DEBUG */
-  logJson("Archived page?? ");
-  logJson(isArchived);
-
   const body = $('main').html() || '';
 
   if (!body.trim()) {

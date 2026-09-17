@@ -54,7 +54,6 @@ export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
   archivedStatus?: ArchivedStatus;
-  pageArchivedStatus?: PageArchivedStatus;
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 

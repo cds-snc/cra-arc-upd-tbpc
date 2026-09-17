@@ -41,9 +41,6 @@ export class PagesView extends MetricsCommon implements IPageView {
   
   @Prop({ type: String })
   archivedStatus: ArchivedStatus;
-  
-  @Prop({ type: String })
-  pageArchivedStatus: PageArchivedStatus;
 
   @Prop({ type: Number })
   numComments: number;

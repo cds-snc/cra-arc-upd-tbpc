@@ -150,8 +150,6 @@ export class PagesDetailsFacade {
     ),
   );
 
-  pageArchivedStatus$ = this.pageStatus$ || this. archivedStatus$;
-
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),
   );
