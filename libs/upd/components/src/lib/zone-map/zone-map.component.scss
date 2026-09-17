@@ -32,7 +32,7 @@ $active: #5145cd;
   display: grid;
   grid-template-columns:
     minmax(188px, 0.56fr)
-    repeat(3, minmax(250px, 1fr));
+    repeat(4, minmax(200px, 1fr));
   grid-template-rows:
     76px
     repeat(4, minmax(112px, auto));
@@ -139,6 +139,15 @@ $active: #5145cd;
 
     .zone-cell__status {
       color: $red-dark;
+    }
+  }
+
+  &.pending {
+    border-color: #91d2dc;
+    background: #dff3f7;
+
+    .zone-cell__status {
+      color: #0b5f6a;
     }
   }
 

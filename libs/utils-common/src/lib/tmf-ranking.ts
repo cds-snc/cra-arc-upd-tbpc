@@ -1,5 +1,10 @@
 import { isNullish } from './utils-common';
-export type TaskStatus = 'On track' | 'Watch' | 'Action required' | 'Unscored';
+export type TaskStatus =
+  | 'On track'
+  | 'Watch'
+  | 'Action required'
+  | 'Pending'
+  | 'Unscored';
 
 const METRIC_KEYS = ['visits', 'calls', 'dyf_total', 'survey'] as const;
 export const HIGH_DEMAND_METRIC_KEYS = ['visits', 'calls', 'dyf_no'] as const;
@@ -270,14 +275,18 @@ export function addTmfScoresToTasks<T extends TaskRankingParams>(
 export function getTaskStatus(
   rps?: number | null,
   hps?: number | null,
-): TaskStatus {
-  if (
-    rps == null ||
-    hps == null ||
-    !Number.isFinite(rps) ||
-    !Number.isFinite(hps)
-  ) {
+  historicalMonths?: number | null,
+): TaskStatus | undefined {
+  if (rps == null || !Number.isFinite(rps)) {
     return 'Unscored';
+  }
+
+  if (historicalMonths != null && historicalMonths < 6) {
+    return 'Pending';
+  }
+
+  if (hps == null || !Number.isFinite(hps)) {
+    return 'Pending';
   }
 
   const variance = rps - hps;

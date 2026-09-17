@@ -18,7 +18,7 @@ export type ZoneRange<T extends string = string> = {
   color: string;
 };
 
-type ZoneStatusClass = 'healthy' | 'watch' | 'needs-action';
+type ZoneStatusClass = 'healthy' | 'watch' | 'needs-action' | 'pending';
 
 type ZoneStatus = {
   labelKey: string;
@@ -27,6 +27,7 @@ type ZoneStatus = {
 };
 
 type StatusKey = `${PerformanceBand}-${TrendBand}`;
+type ZoneColumn = TrendBand | 'pending';
 
 @Component({
   selector: 'upd-zone-map',
@@ -139,13 +140,13 @@ export class ZoneMapComponent {
     return this.rowOrder.filter((key) => available.has(key));
   }
 
-  get columns(): TrendBand[] {
+  get columns(): ZoneColumn[] {
     const available = new Set(this.historicalRanges.map((range) => range.key));
 
-    return this.columnOrder.filter((key) => available.has(key));
+    return [...this.columnOrder.filter((key) => available.has(key)), 'pending'];
   }
 
-  isActive(row: PerformanceBand, column: TrendBand): boolean {
+  isActive(row: PerformanceBand, column: ZoneColumn): boolean {
     return (
       this.highlightActive &&
       row === this.relative &&
@@ -153,7 +154,15 @@ export class ZoneMapComponent {
     );
   }
 
-  getStatus(row: PerformanceBand, column: TrendBand): ZoneStatus {
+  getStatus(row: PerformanceBand, column: ZoneColumn): ZoneStatus {
+    if (column === 'pending') {
+      return {
+        labelKey: 'zone-map-status-pending',
+        noteKey: 'zone-map-note-pending',
+        className: 'pending',
+      };
+    }
+
     return this.statusMap[`${row}-${column}`];
   }
 
@@ -165,7 +174,11 @@ export class ZoneMapComponent {
     return this.relativeRanges.find((range) => range.key === row)?.name ?? row;
   }
 
-  getHistoricalName(column: TrendBand): string {
+  getHistoricalName(column: ZoneColumn): string {
+    if (column === 'pending') {
+      return this.i18n.service.instant('zone-map-no-historical-data');
+    }
+
     return (
       this.historicalRanges.find((range) => range.key === column)?.name ??
       column
@@ -182,7 +195,11 @@ export class ZoneMapComponent {
     return this.formatPercentRange(range.from, range.to);
   }
 
-  getHistoricalArrow(column: TrendBand): string {
+  getHistoricalArrow(column: ZoneColumn): string {
+    if (column === 'pending') {
+      return '';
+    }
+
     switch (column) {
       case 'improving':
         return '↑';
@@ -195,7 +212,11 @@ export class ZoneMapComponent {
     }
   }
 
-  getHistoricalRangeLabelKey(column: TrendBand): string {
+  getHistoricalRangeLabelKey(column: ZoneColumn): string {
+    if (column === 'pending') {
+      return '';
+    }
+
     switch (column) {
       case 'improving':
         return 'zone-map-range-improving';

@@ -160,7 +160,7 @@ export class TasksService {
     const total_tasks = tasks.length;
 
     const perf_total_tasks = tasks.filter(
-      ({ performance_score, historical_average }) => performance_score >= 0 && historical_average >= 0,
+      ({ performance_score }) => performance_score >= 0,
     ).length;
 
     const highDemandStats = getHighDemandMetricStats(tasks);
@@ -171,26 +171,28 @@ export class TasksService {
       dyf_no: highDemandStats.dyf_no.p90,
     };
 
-    const isAboveThreshold = (value: number, threshold: number) => {
-      return value > threshold;
-    };
+    const isAboveThreshold = (value: number, threshold: number) =>
+      value > threshold;
 
     const tmfTaskMap = new Map(
       tasks
         .toSorted((a, b) => {
-          const aScored =
-            a.performance_score != null && a.historical_average != null;
-          const bScored =
-            b.performance_score != null && b.historical_average != null;
+          const aScored = a.performance_score != null;
+          const bScored = b.performance_score != null;
 
-          // unscored tasks always sort after scored tasks
-          if (aScored !== bScored) return aScored ? -1 : 1;
+          if (aScored !== bScored) {
+            return aScored ? -1 : 1;
+          }
 
-          if (!aScored) return a.tmf_rank - b.tmf_rank;
+          if (!aScored || !bScored) {
+            return a.tmf_rank - b.tmf_rank;
+          }
 
           const scoreDiff = b.performance_score - a.performance_score;
 
-          if (scoreDiff !== 0) return scoreDiff;
+          if (scoreDiff !== 0) {
+            return scoreDiff;
+          }
 
           return a.tmf_rank - b.tmf_rank;
         })
@@ -219,10 +221,7 @@ export class TasksService {
               overall_score: task.overall_score,
               tmf_rank: task.tmf_rank,
               performance_score: task.performance_score ?? null,
-              perf_rank:
-                task.performance_score !== null
-                  ? index + 1
-                  : null,
+              perf_rank: task.performance_score != null ? index + 1 : null,
               is_high_demand: high_demand_metrics.length > 0,
               high_demand_metrics,
             },

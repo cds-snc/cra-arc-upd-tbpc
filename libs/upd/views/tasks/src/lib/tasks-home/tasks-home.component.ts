@@ -8,6 +8,7 @@ const taskStatusCategories = [
   'On track',
   'Watch',
   'Action required',
+  'Pending',
   'Unscored',
 ] as const;
 
