@@ -85,6 +85,7 @@ export class TaskDetailsSummaryComponent implements OnInit {
   individualHistoryChart$ = this.taskDetailsService.individualHistoryChart$;
   individualHistoryTableCols: ColumnConfig[] = [];
   performanceScore$ = this.taskDetailsService.performanceScore$;
+  historicalMonths$ = this.taskDetailsService.historicalMonths$;
   performanceScoreDifference$ =
     this.taskDetailsService.performanceScoreDifference$;
   seasonalHistoricAverage$ = this.taskDetailsService.seasonalHistoricAverage$;

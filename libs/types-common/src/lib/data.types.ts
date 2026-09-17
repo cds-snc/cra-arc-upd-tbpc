@@ -1,9 +1,4 @@
-import type {
-  QueryFilter,
-  ProjectionType,
-  Types,
-  SortOrder,
-} from 'mongoose';
+import type { QueryFilter, ProjectionType, Types, SortOrder } from 'mongoose';
 import type {
   AttachmentData,
   CallsByTopic,
@@ -232,8 +227,10 @@ export interface OverviewProject extends ProjectsHomeProject {
   totalUsers: number;
 }
 
-export interface OverviewProjectData
-  extends Omit<ProjectsHomeData, 'projects'> {
+export interface OverviewProjectData extends Omit<
+  ProjectsHomeData,
+  'projects'
+> {
   projects: OverviewProject[];
 }
 
@@ -247,8 +244,7 @@ export type OverallSearchTerm = {
 };
 
 export interface OverviewData
-  extends ViewData<OverviewAggregatedData>,
-    OverviewUxData {
+  extends ViewData<OverviewAggregatedData>, OverviewUxData {
   projects?: OverviewProjectData;
   totalTasks?: number;
   uxTests: {
@@ -388,12 +384,13 @@ export interface TasksHomeAggregatedData {
   historical_average?: number | null;
   historical_average_percent_change?: number | null;
   historical_average_difference?: number | null;
+  historical_months?: number;
 
   seasonal_average?: number | null;
   seasonal_average_percent_change?: number | null;
   seasonal_average_difference?: number | null;
 
-  performance_score?: number;
+  performance_score?: number | null;
   performance_score_percent_change?: number | null;
   performance_score_difference?: number | null;
 }
@@ -542,7 +539,12 @@ export type PageStatus = 'Live' | '404' | 'Redirected';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 
-export type TaskStatus = 'On track' | 'Watch' | 'Action required' | 'Unscored';
+export type TaskStatus =
+  | 'On track'
+  | 'Watch'
+  | 'Action required'
+  | 'Unscored'
+  | 'Pending';
 
 export interface searchAssessmentColTypes {
   query: string;
@@ -633,8 +635,7 @@ export interface ProjectDetailsAggregatedData {
   totalCalldrivers: number;
 }
 
-export interface ProjectsDetailsData
-  extends EntityDetailsData<ProjectDetailsAggregatedData> {
+export interface ProjectsDetailsData extends EntityDetailsData<ProjectDetailsAggregatedData> {
   status: ProjectStatus;
   cops?: boolean;
   wos_cops?: boolean;

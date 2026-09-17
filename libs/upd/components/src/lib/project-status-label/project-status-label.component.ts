@@ -80,5 +80,6 @@ export class ProjectStatusLabelComponent {
     Watch: 'bg-watch',
     'Action required': 'bg-needs-action',
     "Unscored": 'bg-unscored',
+    "Pending": 'bg-pending',
   };
 }

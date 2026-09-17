@@ -131,6 +131,17 @@ export class TasksDetailsFacade {
     map((data) => data?.historical_average),
   );
 
+  historicalMonths$ = this.tasksDetailsData$.pipe(
+    map(
+      (data) =>
+        data?.individualHistory?.filter(
+          ({ individual_score }) =>
+            typeof individual_score === 'number' &&
+            Number.isFinite(individual_score),
+        ).length ?? 0,
+    ),
+  );
+
   individualScoreDifference$ = this.tasksDetailsData$.pipe(
     map((data) => data?.individualScoreDifference || 0),
   );

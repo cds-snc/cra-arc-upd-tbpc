@@ -101,7 +101,7 @@ export class CardComponent {
   @Input() modalTitle = '';
   @Input() modalSize: 'xl' | 'lg' | 'md' | 'sm' = 'md';
   @Input() styleClass = '';
-  @Input() status?: 'green' | 'yellow' | 'red' | 'grey';
+  @Input() status?: 'green' | 'yellow' | 'blue' | 'red' | 'grey';
   @Input() flushBody = false;
 
   constructor() {
