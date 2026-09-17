@@ -34,11 +34,11 @@
       [pageStatus]="pageStatus"
     ></upd-project-status-label>
   }
-  <upd-project-status-label
-    *ngIf="
-      labelType === 'archived'"
-    [archivedStatus]="archivedStatus"
-  ></upd-project-status-label>
+  @if (labelType === 'archived') {
+    <upd-project-status-label
+      [archivedStatus]="archivedStatus"
+    ></upd-project-status-label>
+  }
 
   <!-- COPS Type -->
   @if (
@@ -87,16 +87,15 @@
   }
 
   <!-- COMBINED PageStatus ArchivedStatus Type -->
-   @if (config.type === 'label' && config.typeParam === 'pageArchived') {
-    @for (status of pageArchivedStatus; track status) {
-      @if (status === 'Redirected' || status === '404' || status === 'Live' || status === 'Archived') {
+  @if (config.type === 'label' && config.typeParam === 'pageArchived') {
+    @for (status of pageArchivedStatus; track status; let last = $last) {
+      @if (status !== 'Not archived') {
         <upd-project-status-label
           [pageArchivedStatus]="status"
-          class="d-inline-flex me-1"
+          class="d-inline-flex {{ last ? '' : 'me-1' }}"
         >
         </upd-project-status-label>
       }
-      
     }
   }
 
@@ -224,7 +223,11 @@
 }
 
 <!-- Array Data -->
-@if (isArray(data[config.field]) && config.typeParam !== 'projectType' && config.typeParam !== 'pageArchived') {
+@if (
+  isArray(data[config.field]) &&
+  config.typeParam !== 'projectType' &&
+  config.typeParam !== 'pageArchived'
+) {
   {{ array | translateArray | arrayToText }}
 }
 
@@ -259,7 +262,9 @@
       </span>
 
       <span>
-        {{ getValueIndicator(config.field, config.pipe, config.pipeParam, false) }}
+        {{
+          getValueIndicator(config.field, config.pipe, config.pipeParam, false)
+        }}
       </span>
     </span>
 

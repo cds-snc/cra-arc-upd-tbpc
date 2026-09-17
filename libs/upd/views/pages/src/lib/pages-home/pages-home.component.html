@@ -6,11 +6,11 @@
   <upd-data-table
     id="pages-home-"
     [data]="(pagesHomeData$ | async) || []"
-    [cols]="(columns | async) || []"
+    [cols]="columns || []"
     [displayRows]="25"
     [loading]="(loading$ | async) || false"
     placeholderText="dt_search_keyword_url"
-    [searchFields]="(searchFields | async) || []"
+    [searchFields]="searchFields || []"
   >
   </upd-data-table>
-</upd-card> 
+</upd-card>

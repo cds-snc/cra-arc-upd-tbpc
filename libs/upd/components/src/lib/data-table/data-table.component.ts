@@ -20,6 +20,7 @@ import { toGroupedColumnSelect } from '@dua-upd/upd/utils';
 import { SortEvent } from 'primeng/api';
 import { FilterService } from 'primeng/api';
 import { isNullish } from '@dua-upd/utils-common';
+import { statusLabelClassMap } from '../project-status-label/project-status-label.component';
 
 type HeaderGroup<T> = {
   label: string | null;
@@ -286,6 +287,26 @@ export class DataTableComponent<T extends object> {
 
       return (a - b) * order;
     });
+  }
+
+  categoryFilterClass(
+    filterConfigType:
+      | 'category'
+      | 'projectStatus'
+      | 'pageStatus'
+      | 'taskStatus'
+      | 'archivedStatus'
+      | 'pageArchivedStatus',
+    value: any, // template is untyped
+  ) {
+    if (filterConfigType === 'category') {
+      return 'bg-unknown';
+    }
+    const classMap = statusLabelClassMap[filterConfigType] as Record<
+      string,
+      string
+    >;
+    return classMap[value];
   }
 
   ngOnInit() {

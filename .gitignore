@@ -83,3 +83,4 @@ scripts/bun-scripts/*.ts
 AGENTS.md
 CLAUDE.local.md
 paseo.json
+*.parquet
