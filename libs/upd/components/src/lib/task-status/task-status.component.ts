@@ -25,7 +25,7 @@ type HighDemandTooltipMetric = {
 
 export type PerformanceBand = 'poor' | 'fair' | 'good' | 'strong';
 export type TrendBand = 'improving' | 'steady' | 'declining';
-type Tier = 'green' | 'yellow' | 'red' | 'grey';
+type Tier = 'green' | 'yellow' | 'blue' | 'red' | 'grey';
 type ScoreMetricKey = 'calls' | 'feedback' | 'survey';
 
 type StatusView = {
@@ -51,7 +51,8 @@ type ScoreMetric = {
 export class TaskStatusComponent {
   ps = input<number | null>(null);
   ha = input<number | null>(null);
-  sha = input(0);
+  sha = input<number | null>(null);
+  historyMonths = input<number | null>(null);
   rpsChange = input(0);
   hpsChange = input(0);
   shaChange = input(0);
@@ -67,9 +68,7 @@ export class TaskStatusComponent {
   feedbackVolume = input(0);
   highDemandMetrics = input<HighDemandMetric[]>([]);
 
-  hasData = computed(() => {
-    return !!(this.hasPerformanceScore() && this.hasHistoricalAverage());
-  });
+  hasData = computed(() => this.hasPerformanceScore());
 
   private i18n = inject(I18nFacade);
   readonly currentLang = this.i18n.currentLang;
@@ -290,17 +289,38 @@ export class TaskStatusComponent {
     return 'steady';
   });
 
-  shaVariance = computed(() => {
-    const sha = this.sha();
+  readonly shaVariance = computed<number | null>(() => {
+    const score = this.ps();
+    const seasonalAverage = this.sha();
 
-    if (sha == null || Number.isNaN(sha)) {
+    if (
+      typeof score !== 'number' ||
+      !Number.isFinite(score) ||
+      typeof seasonalAverage !== 'number' ||
+      !Number.isFinite(seasonalAverage) ||
+      seasonalAverage === 0
+    ) {
       return null;
     }
 
-    return this.ps()! - sha;
+    return score - seasonalAverage;
   });
 
-  historicalVariance = computed(() => this.ps()! - this.ha()!);
+  readonly historicalVariance = computed<number | null>(() => {
+    const score = this.ps();
+    const historicalAverage = this.ha();
+
+    if (
+      typeof score !== 'number' ||
+      !Number.isFinite(score) ||
+      typeof historicalAverage !== 'number' ||
+      !Number.isFinite(historicalAverage)
+    ) {
+      return null;
+    }
+
+    return score - historicalAverage;
+  });
 
   readonly statusKey = computed(
     () => `${this.performanceBand()}-${this.trendBand()}`,
@@ -314,8 +334,12 @@ export class TaskStatusComponent {
   readonly healthLabel = computed(() => this.healthBadge());
 
   readonly healthTier = computed<Tier>(() => {
-    if (!this.hasData()) {
+    if (!this.hasPerformanceScore()) {
       return 'grey';
+    }
+
+    if (!this.hasHistoricalAverage()) {
+      return 'blue';
     }
 
     return this.status().tier;
@@ -324,6 +348,10 @@ export class TaskStatusComponent {
   readonly healthBadge = computed(() => {
     if (!this.hasPerformanceScore()) {
       return this.translate('task-status-badge-unscored');
+    }
+
+    if (!this.hasHistoricalAverage()) {
+      return this.translate('task-status-badge-pending');
     }
 
     return this.status().badge;
@@ -336,12 +364,20 @@ export class TaskStatusComponent {
       return null;
     }
 
+    if (!this.hasHistoricalAverage()) {
+      return this.translate('task-status-title-high-volume-no-history');
+    }
+
     return this.translate(`task-status-title-${this.statusKey()}-high-impact`, {
       metrics: this.highDemandMetricList(),
     });
   });
 
   readonly haConfidenceTitle = computed(() => {
+    if (!this.hasHistoricalAverage()) {
+      return this.translate('task-status-ha-insufficient');
+    }
+
     const trend = this.trendBand();
 
     if (trend === 'improving') {
@@ -399,11 +435,21 @@ export class TaskStatusComponent {
 
   readonly hasHistoricalAverage = computed(() => {
     const historicalAverage = this.ha();
+    const historicalMonths = this.historyMonths();
 
     return (
       typeof historicalAverage === 'number' &&
       Number.isFinite(historicalAverage) &&
-      historicalAverage >= 0
+      historicalAverage >= 0 &&
+      (historicalMonths == null || historicalMonths > 6)
+    );
+  });
+
+  readonly hasSeasonalHistoricalAverage = computed(() => {
+    const seasonalAverage = this.sha();
+
+    return (
+      typeof seasonalAverage === 'number' && Number.isFinite(seasonalAverage) && seasonalAverage > 0
     );
   });
 

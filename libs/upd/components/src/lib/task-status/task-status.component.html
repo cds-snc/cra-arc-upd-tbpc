@@ -56,6 +56,7 @@
                 [historical]="trendBand()"
                 [relativeRanges]="relativeRanges()"
                 [historicalRanges]="historicalRanges()"
+                [highlightActive]="hasHistoricalAverage()"
               ></upd-zone-map>
             </upd-modal>
           </div>
@@ -73,9 +74,7 @@
             </div>
 
             @if (hasHighDemand()) {
-              <div
-                class="health-demand d-inline-flex align-items-center"
-              >
+              <div class="health-demand d-inline-flex align-items-center">
                 <span
                   class="health-demand__pill d-inline-flex align-items-center justify-content-center border rounded-pill"
                   tabindex="0"
@@ -142,7 +141,21 @@
           </div> -->
 
           <div class="performance-copy">
-            <p class="performance-copy__title" [innerHTML]="healthTitle()"></p>
+            @if (hasHistoricalAverage()) {
+              <p
+                class="performance-copy__title"
+                [innerHTML]="healthTitle()"
+              ></p>
+            }
+
+            @if (!hasHistoricalAverage()) {
+              <p class="performance-copy__title">
+                {{
+                  'task-status-insufficient-history-notice'
+                    | translate: { months: historyMonths() }
+                }}
+              </p>
+            }
 
             @if (highImpactTitle(); as highImpact) {
               <p class="performance-copy__impact" [innerHTML]="highImpact"></p>
@@ -163,17 +176,22 @@
             </div>
           </div>
 
-          <div class="confidence-row py-3 border-bottom">
-            <div class="confidence-content">
-              <strong [innerHTML]="haConfidenceTitle()"></strong>
+          @if (hasHistoricalAverage()) {
+            <div class="confidence-row py-3 border-bottom">
+              <div class="confidence-content">
+                <strong [innerHTML]="haConfidenceTitle()"></strong>
 
-              <div class="confidence-subtitle">
-                {{ 'task-status-based-24-month-history' | translate }}
+                <div class="confidence-subtitle">
+                  {{
+                    'task-status-based-history'
+                      | translate: { months: historyMonths() }
+                  }}
+                </div>
               </div>
             </div>
-          </div>
+          }
 
-          @if (sha() !== null) {
+          @if (hasSeasonalHistoricalAverage()) {
             <div class="confidence-row py-3 border-bottom">
               <div class="confidence-content">
                 <strong [innerHTML]="shaConfidenceTitle()"></strong>
@@ -269,7 +287,6 @@
                     >
                       <span
                         class="score-metric-icon material-icons rounded-circle"
-                        [ngClass]="metric.included ? healthTier() : null"
                         aria-hidden="true"
                       >
                         {{ metric.included ? 'check' : 'close' }}
@@ -386,6 +403,8 @@
             </div>
 
             <div class="score-card score-card--stacked">
+              @let historicalChange = historicalVariance();
+
               <div class="score-stacked-row d-flex flex-column">
                 <div
                   class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
@@ -409,78 +428,90 @@
                     class="score-value-block d-flex flex-column align-items-end"
                   >
                     <div class="score-value score-value--small">
-                      {{ ha() | localePercent: '1.0-0' }}
+                      @if (hasHistoricalAverage()) {
+                        {{ ha() | localePercent: '1.0-0' }}
+                      } @else {
+                        —
+                      }
                     </div>
 
-                    <div class="score-change-row d-flex justify-content-end">
-                      <span
-                        class="change-value"
-                        [ngClass]="getChangeClass(historicalVariance())"
-                      >
-                        <span class="change-icon material-icons">
-                          {{ getArrow(historicalVariance()) }}
-                        </span>
-
-                        {{
-                          getAbsChange(historicalVariance()!) * 100
-                            | localeNumber: '1.0-1'
-                        }}
-
-                        {{ 'task-status-points-abbreviation' | translate }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              @if (sha() !== null) {
-                <div class="score-stacked-row d-flex flex-column">
-                  <div
-                    class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
-                  >
-                    <div class="score-copy">
-                      <span
-                        class="score-title card-tooltip"
-                        [ngbTooltip]="
-                          'task-status-sha-tooltip-description' | translate
-                        "
-                        placement="top"
-                        container="body"
-                      >
-                        <strong>{{
-                          'task-status-seasonal-historical-average' | translate
-                        }}</strong>
-                      </span>
-                    </div>
-
-                    <div
-                      class="score-value-block d-flex flex-column align-items-end"
-                    >
-                      <div class="score-value score-value--small">
-                        {{ sha()! | localePercent: '1.0-0' }}
-                      </div>
-
+                    @if (historicalChange !== null) {
                       <div class="score-change-row d-flex justify-content-end">
                         <span
                           class="change-value"
-                          [ngClass]="getChangeClass(shaVariance()!)"
+                          [ngClass]="getChangeClass(historicalChange)"
                         >
                           <span class="change-icon material-icons">
-                            {{ getArrow(shaVariance()!) }}
+                            {{ getArrow(historicalChange) }}
                           </span>
 
                           {{
-                            getAbsChange(shaVariance()!) * 100
+                            getAbsChange(historicalChange) * 100
                               | localeNumber: '1.0-1'
                           }}
 
                           {{ 'task-status-points-abbreviation' | translate }}
                         </span>
                       </div>
-                    </div>
+                    }
                   </div>
                 </div>
-              }
+              </div>
+
+              @let seasonalChange = shaVariance();
+
+              <div class="score-stacked-row d-flex flex-column">
+                <div
+                  class="score-stacked-header d-flex flex-column align-items-stretch gap-2"
+                >
+                  <div class="score-copy">
+                    <span
+                      class="score-title card-tooltip"
+                      [ngbTooltip]="
+                        'task-status-sha-tooltip-description' | translate
+                      "
+                      placement="top"
+                      container="body"
+                    >
+                      <strong>{{
+                        'task-status-seasonal-historical-average' | translate
+                      }}</strong>
+                    </span>
+                  </div>
+
+                  <div
+                    class="score-value-block d-flex flex-column align-items-end"
+                  >
+                    <div class="score-value score-value--small">
+                      @if (hasSeasonalHistoricalAverage()) {
+                        {{ sha() | localePercent: '1.0-0' }}
+                      } @else {
+                        —
+                      }
+                    </div>
+
+                    @if (seasonalChange !== null) {
+                      <div class="score-change-row d-flex justify-content-end">
+                        <span
+                          class="change-value"
+                          [ngClass]="getChangeClass(seasonalChange)"
+                        >
+                          <span class="change-icon material-icons">
+                            {{ getArrow(seasonalChange) }}
+                          </span>
+
+                          {{
+                            getAbsChange(seasonalChange) * 100
+                              | localeNumber: '1.0-1'
+                          }}
+
+                          {{ 'task-status-points-abbreviation' | translate }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

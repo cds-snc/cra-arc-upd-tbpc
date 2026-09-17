@@ -24,7 +24,7 @@ export class TasksHomeFacade {
         topic: row.topic || '',
         tasks_subtopic: row.subtopic || '',
         program: row.program || '',
-        performance_score: row.historical_average! >= 0 ? row.performance_score : null,
+        performance_score: row.performance_score ?? null,
         user_type:
           row.user_type.length > 0
             ? row.user_type.map((userType) => userType || '')
@@ -37,6 +37,7 @@ export class TasksHomeFacade {
           getTaskStatus(
             row.performance_score,
             row.historical_average,
+            row.historical_months,
           ) || '',
         change:
           row.performance_score && row.performance_score !== 0

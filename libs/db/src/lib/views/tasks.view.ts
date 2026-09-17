@@ -925,6 +925,7 @@ export class TasksViewService extends DbViewNew<
       tmf_ranking_index: number;
       performance_score: number;
       historical_average: number;
+      historical_months: number;
       seasonal_average: number;
       individual_status: string;
       cops: boolean;
@@ -963,6 +964,15 @@ export class TasksViewService extends DbViewNew<
       tmf_ranking_index: 1,
       performance_score: 1,
       historical_average: 1,
+      historical_months: {
+        $size: {
+          $filter: {
+            input: { $ifNull: ['$individualHistory', []] },
+            as: 'history',
+            cond: { $ne: ['$$history.individual_score', null] },
+          },
+        },
+      },
       seasonal_average: 1,
       individual_status: 1,
       cops: 1,
