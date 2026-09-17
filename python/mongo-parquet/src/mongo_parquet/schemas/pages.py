@@ -25,6 +25,7 @@ class Pages(ParquetModel):
         "altLangHref": 1,
         "redirect": 1,
         "is_404": 1,
+        "is_archived": 1,
         "metadata": {
             "$map": {
                 "input": {"$objectToArray": "$metadata"},
@@ -53,6 +54,7 @@ class Pages(ParquetModel):
             "altLangHref": string(),
             "redirect": string(),
             "is_404": bool_(),
+            "is_archived": bool_(),
             "metadata": list_(
                 struct(
                     {

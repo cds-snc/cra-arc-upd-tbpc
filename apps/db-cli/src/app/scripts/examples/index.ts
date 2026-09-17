@@ -20,7 +20,7 @@
  */
 
 import { UrlsService } from '@dua-upd/db-update';
-import { DbService } from '@dua-upd/db';
+import { DbService, Url } from '@dua-upd/db';
 import { logJson } from '@dua-upd/utils-common';
 import { RunScriptCommand } from '../../run-script.command';
 import { outputChart, outputTable } from '../utils/output';

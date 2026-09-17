@@ -169,6 +169,8 @@
   "notification-what-visitors-clicked-on": "Ce rapport montre les liens sur lesquels les visiteurs ont cliqué pendant la période de temps sélectionnée. Certains liens peuvent différer ou avoir des comptages combinés. Il comprend les liens traduits par le navigateur, les téléchargements et les clics depuis les menus et les barres latérales.",
   "tooltip-what-visitors-clicked-on": "Ce que les visiteurs ont cliqué sur la page pendant la période sélectionnée.",
   "Redirected": "Redirigé",
+  "Archived": "Archivé",
+  "Not archived": "Non archivé",
   "rank": "Classement",
   "page": "Page",
   "visitors": "Visiteurs",

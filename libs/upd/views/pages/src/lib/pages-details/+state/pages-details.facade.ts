@@ -145,6 +145,11 @@ export class PagesDetailsFacade {
     }),
   );
 
+  archivedStatus$ = this.pagesDetailsData$.pipe(
+    map((data)  => (data?.isArchived ? 'Archived' : null),
+    ),
+  );
+
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),
   );

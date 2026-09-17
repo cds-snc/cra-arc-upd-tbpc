@@ -126,7 +126,7 @@ export class ReportsFacade {
           type: 'label',
           typeParam: 'projectType',
           filterConfig: {
-            type: 'category',
+            type: 'projectType',
             categories: [
               { name: this.i18n.service.translate('COPS', lang), value: 'COPS' },
               { name: this.i18n.service.translate('WOS_COPS', lang), value: 'WOS_COPS' }
@@ -138,9 +138,9 @@ export class ReportsFacade {
           field: 'status',
           header: this.i18n.service.translate('Status', lang),
           type: 'label',
-          typeParam: 'status',
+          typeParam: 'projectStatus',
           filterConfig: {
-            type: 'category',
+            type: 'projectStatus',
             categories: createCategoryConfig({
               i18n: this.i18n.service,
               data,

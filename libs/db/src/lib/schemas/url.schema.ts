@@ -62,6 +62,9 @@ export class Url implements IUrl {
   @Prop({ type: Boolean, index: true })
   is_404?: boolean;
 
+  @Prop({ type: Boolean, index: true })
+  is_archived?: boolean;
+
   @Prop({ type: [{ hash: String, date: Date }], _id: false })
   hashes?: UrlHash[];
 
