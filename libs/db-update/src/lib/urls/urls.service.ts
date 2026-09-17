@@ -330,14 +330,25 @@ export class UrlsService {
             ? { redirect: response.redirect }
             : {};
 
-          if (response.is404) {
+          const redirectHasChanged =
+            redirect.redirect !== collectionData.redirect;
+
+          const redirectToSet =
+            redirectHasChanged && !redirect.redirect
+              ? { redirect: undefined }
+              : redirect;
+
+          const has404Changed =
+            response.is404 && response.is404 !== collectionData.is_404;
+
+          if (response.is404 && (redirectHasChanged || has404Changed)) {
             return await addToQueues({
               _id: collectionData._id,
               url: collectionData.url,
               last_checked: date,
               last_modified: date,
               is_404: true,
-              ...redirect,
+              ...redirectToSet,
               is_archived: false,
             });
           }
@@ -357,7 +368,7 @@ export class UrlsService {
               last_modified: date,
               // if the body is empty, it's technically not a 404, but may as well be.
               is_404: true,
-              ...redirect,
+              ...redirectToSet,
               is_archived: false,
             });
           }
@@ -510,7 +521,7 @@ export class UrlsService {
                     metadata: processedHtml.metadata,
                     ...langHrefs,
                     links: processedHtml.links,
-                    ...redirect,
+                    ...redirectToSet,
                     is_404: false,
                     is_archived: processedHtml.isArchived,
                   },
@@ -526,7 +537,7 @@ export class UrlsService {
                 metadata: processedHtml.metadata,
                 ...langHrefs,
                 links: processedHtml.links,
-                ...redirect,
+                ...redirectToSet,
                 is_404: false,
                 is_archived: processedHtml.isArchived,
               });
@@ -571,7 +582,7 @@ export class UrlsService {
                 metadata: processedHtml.metadata,
                 ...langHrefs,
                 links: processedHtml.links,
-                ...redirect,
+                ...redirectToSet,
                 last_checked: date,
                 last_modified: date,
                 is_404: false,
