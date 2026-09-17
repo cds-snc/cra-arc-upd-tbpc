@@ -33,7 +33,7 @@ export class PagesHomeComponent implements OnInit {
           },
           {
             field: 'pageArchivedStatusLabel',
-            header: 'Current page status',
+            header: 'Page status',
             type: 'label',
             typeParam: 'pageArchived',
             filterConfig: {
@@ -44,6 +44,7 @@ export class PagesHomeComponent implements OnInit {
                   { name: 'Redirected', value: 'Redirected' },
                   { name: 'Live', value: 'Live' },
                   { name: 'Archived', value: 'Archived' },
+                  { name: 'Not archived', value: 'Not archived' },
                 ],
                 matchMode: 'arrayContains'
             },

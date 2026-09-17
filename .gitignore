@@ -50,8 +50,7 @@ docker/certbot
 
 /logs
 
-.nx/cache
-.nx/workspace-data
+.nx
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
@@ -65,7 +64,7 @@ docs/
 # Zone.Identifier files (Windows WSL)
 *:Zone.Identifier
 .omx/
-.codex/
+.gjc/
 # Local working files
 /data.zip
 /local-scenario-id-rollback.js
@@ -77,5 +76,10 @@ docs/
 .github/instructions/nx.instructions.md
 
 .claude/worktrees
-.nx/polygraph
-.nx/self-healing
+.codex
+agent_docs
+
+scripts/bun-scripts/*.ts
+AGENTS.md
+CLAUDE.local.md
+paseo.json
