@@ -293,6 +293,7 @@ export class DataTableComponent<T extends object> {
     filterConfigType:
       | 'category'
       | 'projectStatus'
+      | 'projectType'
       | 'pageStatus'
       | 'taskStatus'
       | 'archivedStatus'
