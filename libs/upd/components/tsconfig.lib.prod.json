@@ -6,7 +6,5 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler"
   },
-  "angularCompilerOptions": {
-    "strictTemplates": true,
-  }
+  "angularCompilerOptions": {}
 }

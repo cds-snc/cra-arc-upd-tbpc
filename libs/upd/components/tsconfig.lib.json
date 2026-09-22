@@ -9,14 +9,11 @@
     "useDefineForClassFields": false,
     "moduleResolution": "bundler"
   },
-  "angularCompilerOptions": {
-    "strictTemplates": true,
-  },
   "exclude": [
-    "src/test-setup.ts",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "jest.config.ts"
+    "./src/test-setup.ts",
+    "./**/*.spec.ts",
+    "./**/*.test.ts",
+    "./jest.config.ts"
   ],
-  "include": ["**/*.ts"]
+  "include": ["./**/*.ts"]
 }
