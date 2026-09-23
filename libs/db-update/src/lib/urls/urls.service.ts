@@ -294,7 +294,7 @@ export class UrlsService {
             },
             update: {
               $setOnInsert: pick(['_id', 'url'], urlData),
-              $set: omit(['_id', 'url'], urlData),
+              $set: omit(['_id', 'url', ...propsToUnset], urlData),
               upsert: true,
               ...$unset,
             },
@@ -313,7 +313,10 @@ export class UrlsService {
           },
           update: {
             $setOnInsert: pick(['_id', 'url'], urlData),
-            $set: omit(['_id', 'url', 'hash', 'links'], urlData),
+            $set: omit(
+              ['_id', 'url', 'hash', 'links', ...propsToUnset],
+              urlData,
+            ),
             $addToSet: {
               hashes: urlData.hash,
               links: {
