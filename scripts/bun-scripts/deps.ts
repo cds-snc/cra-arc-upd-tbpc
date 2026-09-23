@@ -1,4 +1,10 @@
-import { connect, disconnect, model, Mongoose } from 'mongoose';
+import {
+  connect,
+  disconnect,
+  model,
+  Mongoose,
+  type ConnectOptions,
+} from 'mongoose';
 import {
   PageMetricsSchema,
   PageSchema,
@@ -46,8 +52,29 @@ class Db {
     console.log(`Connecting to MongoDB at ${connectionString}`);
 
     if (!this._connection) {
+      const config: ConnectOptions =
+        prod && (process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME)
+          ? {
+              authMechanism: 'SCRAM-SHA-1',
+              ssl: true,
+              tlsCAFile:
+                process.env.DB_TLS_CA_FILE || process.env.MONGO_TLS_CA_FILE,
+              auth: {
+                username:
+                  process.env.DOCDB_USERNAME || process.env.MONGO_USERNAME,
+                password:
+                  process.env.DOCDB_PASSWORD || process.env.MONGO_PASSWORD,
+              },
+              replicaSet: 'rs0',
+              readPreference: 'secondaryPreferred',
+              retryWrites: false,
+            }
+          : {};
+
       this._connection = await connect(connectionString, {
+        dbName: 'upd-test',
         compressors: ['zstd', 'snappy', 'zlib'],
+        ...config,
       });
 
       return this;
@@ -206,7 +233,7 @@ async function setupAuth(db: DuckDBDatabase) {
 
 async function setResourceLimits(
   db: DuckDBDatabase,
-  config: { memoryLimitMb: number; numThreads: number },
+  config: { memoryLimitMb?: number; numThreads?: number },
 ) {
   const systemMemoryMB = freemem() / (1024 * 1024);
   const memoryLimit = config.memoryLimitMb ?? Math.floor(systemMemoryMB * 0.7); // default to 70% of available system memory
@@ -241,11 +268,13 @@ export async function duckDbClient(
     numThreads: config.numThreads,
   });
 
-  duckDb[Symbol.asyncDispose] = async () => {
+  type AsyncDisposableDuckDb = typeof duckDb & {
+    [Symbol.asyncDispose]: () => Promise<void>;
+  };
+
+  (duckDb as AsyncDisposableDuckDb)[Symbol.asyncDispose] = async () => {
     await duckDb.close();
   };
 
-  return duckDb as typeof duckDb & {
-    [Symbol.asyncDispose]: () => Promise<void>;
-  };
+  return duckDb as AsyncDisposableDuckDb;
 }

@@ -79,13 +79,33 @@ async function remotePath() {
     if (rowBatch.length === 0) break;
 
     for (const row of rowBatch) {
+      if (!row.html) {
+        continue;
+      }
+
       const $ = load(row.html);
       const isArchived = !!$('.gc-archv').length;
 
       if (isArchived) {
         archivedPagesUpdateOps.push({
           updateOne: {
-            filter: { url: row.url },
+            filter: {
+              url: row.url,
+              $and: [
+                {
+                  $or: [
+                    { redirect: { $exists: false } },
+                    { redirect: { $in: [null, ''] } },
+                  ],
+                },
+                {
+                  $or: [
+                    { is_404: { $exists: false } },
+                    { is_404: { $in: [null, false] } },
+                  ],
+                },
+              ],
+            },
             update: { $set: { is_archived: true } },
           },
         });
