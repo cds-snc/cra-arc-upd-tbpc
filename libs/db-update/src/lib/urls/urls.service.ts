@@ -124,6 +124,7 @@ export class UrlsService {
 
     const threeDaysAgo = today().subtract(3, 'days').add(2, 'hours').toDate();
     const fourDaysAgo = today().subtract(4, 'days').add(2, 'hours').toDate();
+    const twoMonthsAgo = today().subtract(2, 'months').add(2, 'hours').toDate();
 
     const ignoredUrls = [
       // Search pages seem to be blocked
@@ -158,6 +159,7 @@ export class UrlsService {
               {
                 is_404: true,
                 last_checked: { $lt: fourDaysAgo },
+                last_modified: { $lt: twoMonthsAgo }, // stop checking 404s after 2 months without modification
               },
             ],
           };
@@ -270,6 +272,20 @@ export class UrlsService {
         await readabilityQueue.add(readabilityScore);
       }
 
+      const propsToUnset = Object.entries(urlData)
+        .filter(([key, value]) => value === undefined)
+        .map(([key]) => key);
+
+      const $unset =
+        propsToUnset.length > 0
+          ? {
+              $unset: propsToUnset.reduce(
+                (acc, key) => ({ ...acc, [key]: '' }),
+                {},
+              ),
+            }
+          : {};
+
       if (!urlData.hash) {
         const updateOp: AnyBulkWriteOperation<Url> = {
           updateOne: {
@@ -280,6 +296,7 @@ export class UrlsService {
               $setOnInsert: pick(['_id', 'url'], urlData),
               $set: omit(['_id', 'url'], urlData),
               upsert: true,
+              ...$unset,
             },
           },
         };
@@ -304,6 +321,7 @@ export class UrlsService {
               },
               all_titles: urlData.title,
             },
+            ...$unset,
           },
           upsert: true,
         },
@@ -341,7 +359,10 @@ export class UrlsService {
           const has404Changed =
             response.is404 && response.is404 !== collectionData.is_404;
 
-          if (response.is404 && (redirectHasChanged || has404Changed)) {
+          if (
+            response.is404 &&
+            (redirectHasChanged || has404Changed || collectionData.is_archived)
+          ) {
             return await addToQueues({
               _id: collectionData._id,
               url: collectionData.url,
@@ -361,16 +382,24 @@ export class UrlsService {
           const processedHtml = processHtml(response.body || '');
 
           if (!processedHtml) {
-            return await addToQueues({
-              _id: collectionData._id,
-              url: collectionData.url,
-              last_checked: date,
-              last_modified: date,
-              // if the body is empty, it's technically not a 404, but may as well be.
-              is_404: true,
-              ...redirectToSet,
-              is_archived: false,
-            });
+            if (
+              redirectHasChanged ||
+              !collectionData.is_404 ||
+              collectionData.is_archived
+            ) {
+              return await addToQueues({
+                _id: collectionData._id,
+                url: collectionData.url,
+                last_checked: date,
+                last_modified: date,
+                // if the body is empty, it's technically not a 404, but may as well be.
+                is_404: true,
+                ...redirectToSet,
+                is_archived: false,
+              });
+            }
+
+            return;
           }
 
           const langHrefs = processedHtml.langHrefs
@@ -406,7 +435,7 @@ export class UrlsService {
                 });
               } catch (err) {
                 this.logger.error(
-                  `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${err.message}`,
+                  `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${(<Error>err).message}`,
                 );
               }
             }
@@ -444,7 +473,7 @@ export class UrlsService {
               // or because the blob was uploaded from a "redirect" url after we
               // checked if it exists.
 
-              if (/already exists/.test(err.message)) {
+              if (/already exists/.test((<Error>err).message)) {
                 // if already exists, set blob metadata like above
                 const blobMetadata = (await urlBlob.getProperties()).metadata;
 
@@ -462,7 +491,7 @@ export class UrlsService {
                     });
                   } catch (err) {
                     this.logger.error(
-                      `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${err.message}`,
+                      `Error setting metadata for blob\nURL: ${response.url}\nhash: ${hash}\nError: ${(<Error>err).message}`,
                     );
                   }
                 }
@@ -485,10 +514,12 @@ export class UrlsService {
             }
           }
 
-          if (
-            collectionData?.hashes &&
-            collectionData.hashes.map(({ hash }) => hash).includes(hash)
-          ) {
+          // if url has become a redirect, set is_archived to false; otherwise, use the processedHtml value
+          const archivedToSet = redirectToSet.redirect
+            ? { is_archived: false }
+            : { is_archived: processedHtml.isArchived };
+
+          if (collectionData.hashes?.map(({ hash }) => hash).includes(hash)) {
             // current hash has already been saved previously -- can skip
             // (just update last_checked in db)
             try {
@@ -523,7 +554,7 @@ export class UrlsService {
                     links: processedHtml.links,
                     ...redirectToSet,
                     is_404: false,
-                    is_archived: processedHtml.isArchived,
+                    ...archivedToSet,
                   },
                   readabilityScore,
                 );
@@ -539,13 +570,13 @@ export class UrlsService {
                 links: processedHtml.links,
                 ...redirectToSet,
                 is_404: false,
-                is_archived: processedHtml.isArchived,
+                ...archivedToSet,
               });
             } catch (err) {
               this.logger.error(
                 'Error updating Url collection data or assessing readability:',
               );
-              this.logger.error(err.stack);
+              this.logger.error((<Error>err).stack);
               return;
             }
           }
@@ -588,7 +619,7 @@ export class UrlsService {
                 is_404: false,
                 hash: { hash, date },
                 latest_snapshot: hash,
-                is_archived: processedHtml.isArchived,
+                ...archivedToSet,
               },
               readabilityScore,
             );
@@ -597,17 +628,17 @@ export class UrlsService {
               `An error occurred when inserting Url data to db for url:\n${response.url}\n`,
             );
 
-            if (/cheerio/.test(err.message) && !response.body) {
+            if (/cheerio/.test((<Error>err).message) && !response.body) {
               this.logger.error(
                 `Cheerio loading error. Response body is empty!`,
               );
-            } else if (/cheerio/.test(err.message)) {
+            } else if (/cheerio/.test((<Error>err).message)) {
               this.logger.error(
                 `Cheerio loading error but response body is not empty.`,
               );
-              this.logger.error(err);
+              this.logger.error((<Error>err).stack);
             } else {
-              this.logger.error(err.stack);
+              this.logger.error((<Error>err).stack);
             }
           }
         },
@@ -621,7 +652,7 @@ export class UrlsService {
       }
     } catch (err) {
       this.logger.error('An error occurred during http.getAll():');
-      this.logger.error(err.stack);
+      this.logger.error((<Error>err).stack);
     } finally {
       // commit any remaining updates
       await flushQueues();
