@@ -1,5 +1,44 @@
 # Changelog
 
+## [4.4.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.2...v4.4.3) (2026-09-24)
+
+
+### Features
+
+* add scenario_id field to ux-test types and schemas ([87c52d9](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/87c52d9f6b92f2df6258c93fa37d379d03ccda99))
+* Audience subtype field added ([f655693](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f65569368fda3fa7d8135061359313141159eda2))
+* Bun script for setting `is_archived` to all pages ([933a399](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/933a399272ac0c27080b6fd7f1111ca4f4889ee2))
+* DuckDB dep for bun scripts ([57fe138](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/57fe138805fe0b4b5da4e35e765a5e96f9a7ff5a))
+
+
+### Bug Fixes
+
+* Add "Archived"/"Not archived" translations ([119c4d1](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/119c4d13fd04be54bdbee565b1f7d8b6e189fdb5))
+* Add multiline column headers ([644bcc2](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/644bcc267d6c7835c3f5885c54b9b79d530bf90e))
+* added audience subtype and translations updates ([224771e](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/224771e0fc88d7cedad44355330cc200b8ada23b))
+* Change logic of table exports to account for other array types ([5d23454](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/5d234541941ac6891a5e979e7d84c4e27454539a))
+* Don't set `is_archived` for 404s or redirects in bun script ([ff1bffd](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/ff1bffdf9359eaf41f5c50a12e51c28185bb5a7a))
+* Don't set properties that you want to unset ([f52662f](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/f52662f004b7157daf80b00a16e41884cf6da8f5))
+* Fix for different Page status display on Pages-&gt;Home and Page details tabs ([4b06713](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/4b06713eb259615006798b97f2425ad43a8f068f))
+* Improved top 50 KPI fix for calculating the correct number of Validation tests ([201bf87](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/201bf87867eb61eb9f7bcc724bf84f1a2680f3ff))
+* Mongo connection config for bun scripts dep ([ff1bffd](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/ff1bffdf9359eaf41f5c50a12e51c28185bb5a7a))
+* pageArchiveStatus data table export ([40ae8f3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/40ae8f3e65b2a9076f024844eca914d04d31a7a9))
+* Projects home table columns fixed width added ([ec202b5](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/ec202b50f2388c14af978afc7c3f496cd7e3d0bd))
+* Some typescript strict mode errors in urls.service.ts ([49b5f44](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/49b5f440e23c7e6b812f6cac770bd626e164dd25))
+* Stop checking urls that have been 404s for at least 2 months ([49b5f44](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/49b5f440e23c7e6b812f6cac770bd626e164dd25))
+* translations updated ([82504f7](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/82504f7c7170aa3eae889519bdf4e369a9b93266))
+* Unique tasks tested since 2018 calculation, Tests completed since 2018 tooltip added ([b15cf33](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b15cf33716a759b19eb3a482f2eaaf529e2b65ee))
+* Update logic for setting/unsetting `is_archived`/`is_404`/`redirect` ([49b5f44](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/49b5f440e23c7e6b812f6cac770bd626e164dd25))
+* Update some build settings and fix build error for `upd-components` ([2631292](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/26312922a55325155a2d61bc258c36be199a7490))
+* Update urls service to unset redirects & not update 404s unnecessarily ([ce6f431](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/ce6f43141b8a60f0e501759427bbd6c09c87da32))
+* Use consistent naming for is_archived/isArchived ([af67f0a](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/af67f0ae736b8be8126116d869bb99dedbc5aa32))
+* Use label classes in filter select & make translation work ([7fef6fb](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/7fef6fb49d360cd17d15f8967c415acd6167de56))
+
+
+### Miscellaneous Chores
+
+* Misc page/archived status cleanup ([24a5caa](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/24a5caa11649cd459de5fdb4b8a5b15f435e32f6))
+
 ## [4.4.2](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.1...v4.4.2) (2026-08-25)
 
 
