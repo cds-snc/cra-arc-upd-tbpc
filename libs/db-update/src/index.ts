@@ -14,3 +14,5 @@ export * from './lib/pipelines';
 export * from './lib/urls/urls.service';
 export * from './lib/readability/readability.module';
 export * from './lib/readability/readability.service';
+export * from './lib/portal-page/portal-page.service';
+export * from './lib/portal-page-metrics/portal-page-metrics.service';

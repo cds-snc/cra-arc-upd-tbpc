@@ -1,0 +1,16 @@
+<h2 class="mb-4">Portal Pages</h2>
+
+<upd-date-selector></upd-date-selector>
+
+<upd-card [title]="'List of all portal pages'" titleSize="h5" [ngClass]="'portal-pages-home'">
+  <upd-data-table
+    id="portal-pages-home-"
+    [data]="(portalPagesHomeData$ | async) || []"
+    [cols]="(columns | async) || []"
+    [displayRows]="25"
+    [loading]="(loading$ | async) || false"
+    placeholderText="dt_search_keyword_url"
+    [searchFields]="(searchFields | async) || []"
+  >
+  </upd-data-table>
+</upd-card>

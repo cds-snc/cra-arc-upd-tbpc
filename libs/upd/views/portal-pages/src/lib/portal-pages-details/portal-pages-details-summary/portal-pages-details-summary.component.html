@@ -1,0 +1,69 @@
+<div class="container-fluid my-4 gx-0">
+  <div class="row g-3">
+    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+      <upd-data-card
+        [current]="visits()"
+        [comparison]="visitsPercentChange$ | async"
+        [title]="'visits'"
+        [tooltip]="'tooltip-visits'"
+      ></upd-data-card>
+    </div>
+
+    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+      <upd-data-card
+        [current]="pageViews$ | async"
+        [comparison]="pageViewsPercentChange$ | async"
+        [title]="'page-views'"
+        [tooltip]="'tooltip-page-views'"
+      ></upd-data-card>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-apex-bar
+        [title]="'visits'"
+        [series]="(apexBar$ | async) || []"
+        [table]="barTable$ | async"
+        [yAxis]="'visits' | translate"
+        [tableCols]="barTableCols()"
+        [allowHeaderWrap]="true"
+      ></upd-apex-bar>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-apex-bar
+        [title]="'d3-visits-by-device-type'"
+        [titleTooltip]="'tooltip-d3-visits-by-device-type' | translate"
+        [series]="(apexVisitsByDeviceTypeChart$ | async) || []"
+        [xAxis]="[
+          visitsByDeviceTypeCols()[1].header,
+          visitsByDeviceTypeCols()[2].header,
+        ]"
+        [yAxis]="'visits' | translate"
+        [table]="visitsByDeviceTypeTable$ | async"
+        [tableCols]="visitsByDeviceTypeCols()"
+      ></upd-apex-bar>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
+    <div class="col">
+      <upd-data-table-card
+        [data]="(visitorLocation$ | async) || []"
+        [cols]="visitorLocationCols()"
+        [pagination]="false"
+        [filter]="false"
+        [title]="'visitor-location'"
+      ></upd-data-table-card>
+    </div>
+  </div>
+</div>

@@ -25,6 +25,8 @@ import { AnnotationsService } from './airtable/annotations.service';
 import { GcTaskService } from './gc-task/gc-task.service';
 import { GCTasksMappingsService } from './airtable/gc-tasks-mappings.service';
 import { DuckDbModule } from '@dua-upd/duckdb';
+import { PortalPageService } from './portal-page/portal-page.service';
+import { PortalPagesMetricsService } from './portal-page-metrics/portal-page-metrics.service';
 
 const date = dayjs().format('YYYY-MM-DD');
 const month = dayjs().format('YYYY-MM');
@@ -67,6 +69,8 @@ export class DbUpdateModule {
         AnnotationsService,
         GcTaskService,
         GCTasksMappingsService,
+        PortalPageService,
+        PortalPagesMetricsService,
         {
           provide: AirtableClient.name,
           useFactory: () => new AirtableClient(),
@@ -97,6 +101,8 @@ export class DbUpdateModule {
         AnnotationsService,
         GcTaskService,
         GCTasksMappingsService,
+        PortalPageService,
+        PortalPagesMetricsService,
       ],
     };
   }

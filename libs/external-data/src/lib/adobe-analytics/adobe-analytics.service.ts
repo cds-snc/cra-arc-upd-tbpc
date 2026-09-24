@@ -20,6 +20,8 @@ import {
   createInternalSearchQuery,
   createOverallMetricsQuery,
   createPageMetricsQuery,
+  createPortalPageMetricsQuery,
+  createSecurePortalsQuery,
   PageMetricsQueryOptions,
 } from './';
 
@@ -38,6 +40,12 @@ export type InternalSearchResult = {
   itemId?: string;
 };
 
+export type PortalPagesResult = {
+  date: Date;
+  url: string;
+  [metric: string]: string | number | Date;
+};
+
 export type ActivityMapResult = {
   activity_map: ActivityMapMetrics[];
   itemId: string;
@@ -48,17 +56,17 @@ export class AdobeAnalyticsService {
   constructor(
     @Inject(AdobeAnalyticsClient.name)
     private readonly client: AdobeAnalyticsClient,
-    private readonly logger: ConsoleLogger
+    private readonly logger: ConsoleLogger,
   ) {}
 
   async getOverallMetrics(
     dateRange: DateRange<string>,
     options?: {
       onComplete?: <U>(
-        data: IOverall[]
+        data: IOverall[],
       ) => U extends Promise<unknown> ? U : Promise<U>;
       inclusiveDateRange?: boolean;
-    }
+    },
   ) {
     const endDate = options?.inclusiveDateRange
       ? dayjs.utc(dateRange.end).add(1, 'day').format('YYYY-MM-DD')
@@ -75,7 +83,7 @@ export class AdobeAnalyticsService {
             this.logger.log(`Fetching overall metrics for ${dateRange}:`),
           post: options?.onComplete,
         },
-      }
+      },
     );
   }
 
@@ -83,7 +91,7 @@ export class AdobeAnalyticsService {
     dateRange: DateRange<string>,
     options?: {
       onComplete?: (results: Partial<IPageMetrics>[]) => Promise<void>;
-    } & PageMetricsQueryOptions
+    } & PageMetricsQueryOptions,
   ) {
     return await this.client.executeMultiDayQuery<IPageMetrics>(
       {
@@ -99,7 +107,7 @@ export class AdobeAnalyticsService {
           this.logger.log(`Fetching page metrics from AA for ${dateRange}:`),
         post: options?.onComplete,
       },
-      true
+      true,
     );
   }
 
@@ -111,7 +119,7 @@ export class AdobeAnalyticsService {
       },
       {
         limit: 50000,
-      }
+      },
     );
 
     return await this.client.executeQuery<IAAItemId>(query);
@@ -122,7 +130,7 @@ export class AdobeAnalyticsService {
     lang: 'en' | 'fr',
     options?: {
       onComplete?: (results: SearchTermResult[]) => Promise<void>;
-    }
+    },
   ) {
     dateRange = {
       start: toQueryFormat(dateRange.start),
@@ -140,15 +148,95 @@ export class AdobeAnalyticsService {
       {
         pre: (dateRange) =>
           this.logger.log(
-            chalk.blueBright(`Getting overall search terms for ${dateRange}...`)
+            chalk.blueBright(
+              `Getting overall search terms for ${dateRange}...`,
+            ),
           ),
         post: options?.onComplete,
       },
-      true
+      true,
     );
   }
 
-  async getPageSearchTerms(dateRange: DateRange<string>, itemIdDocs: IAAItemId[]) {
+  async getPortalPages(
+    dateRange: DateRange<string>,
+    lang: 'en' | 'fr',
+    options?: {
+      onComplete?: (results: PortalPagesResult[]) => Promise<void>;
+    },
+  ) {
+    dateRange = {
+      start: toQueryFormat(dateRange.start),
+      end: toQueryFormat(dateRange.end),
+    };
+
+    return await this.client.executeMultiDayQuery<PortalPagesResult>(
+      dateRange,
+      (dateRange) =>
+        createPortalPageMetricsQuery(dateRange, {
+          lang,
+        }),
+      {
+        pre: (dateRange) =>
+          this.logger.log(
+            chalk.blueBright(
+              `Getting ${lang} portal page metrics for ${dateRange}...`,
+            ),
+          ),
+        post: options?.onComplete,
+      },
+      true,
+    );
+  }
+
+  async getPortalScreenItemIds(
+    dateRange: DateRange<string>,
+    lang: 'en' | 'fr',
+  ) {
+    return await this.client.getPortalScreenItemIds(
+      {
+        start: toQueryFormat(dateRange.start),
+        end: toQueryFormat(dateRange.end),
+      },
+      { lang },
+    );
+  }
+
+  async getPortalMetrics(
+    dateRange: DateRange<string>,
+    itemIds: string[],
+    lang: 'en' | 'fr',
+  ) {
+    return await this.client.getOverallPortalMetrics(
+      {
+        start: toQueryFormat(dateRange.start),
+        end: toQueryFormat(dateRange.end),
+      },
+      itemIds,
+      { lang },
+    );
+  }
+
+  async getPortalPageUrls(
+    dateRange: DateRange<string>,
+    itemIds: string[],
+    lang: 'en' | 'fr',
+  ) {
+    return await this.client.getPortalPageUrls(
+      {
+        start: toQueryFormat(dateRange.start),
+        end: toQueryFormat(dateRange.end),
+      },
+      itemIds,
+      { lang },
+    );
+  }
+  
+
+  async getPageSearchTerms(
+    dateRange: DateRange<string>,
+    itemIdDocs: IAAItemId[],
+  ) {
     const itemIds = itemIdDocs.map(({ itemId }) => itemId);
 
     const queries = createBatchedInternalSearchQueries(dateRange, itemIds);
@@ -162,14 +250,14 @@ export class AdobeAnalyticsService {
           hooks: {
             pre: (date) =>
               this.logger.log(
-                `Dispatching (query ${i + 1}) searchterms for ${date}`
+                `Dispatching (query ${i + 1}) searchterms for ${date}`,
               ),
           },
-        }
+        },
       );
 
       queryPromises.push(
-        promise.catch((err) => this.logger.error(chalk.red(err.stack)))
+        promise.catch((err) => this.logger.error(chalk.red(err.stack))),
       );
 
       await wait(520);
@@ -186,13 +274,16 @@ export class AdobeAnalyticsService {
       },
       {
         limit: 50000,
-      }
+      },
     );
 
     return await this.client.executeQuery<IAAItemId>(query);
   }
 
-  async getPageActivityMap(dateRange: DateRange<string>, itemIdDocs: IAAItemId[]) {
+  async getPageActivityMap(
+    dateRange: DateRange<string>,
+    itemIdDocs: IAAItemId[],
+  ) {
     const itemIds = itemIdDocs.map(({ itemId }) => itemId);
     const queries = createBatchedActivityMapQueries(dateRange, itemIds);
     const queryPromises: Promise<ActivityMapResult[]>[] = [];
@@ -204,14 +295,14 @@ export class AdobeAnalyticsService {
           hooks: {
             pre: (date) =>
               this.logger.log(
-                `Dispatching (query ${i + 1}) activity map for ${date}`
+                `Dispatching (query ${i + 1}) activity map for ${date}`,
               ),
           },
-        }
+        },
       );
 
       queryPromises.push(
-        promise.catch((err) => this.logger.error(chalk.red(err.stack)))
+        promise.catch((err) => this.logger.error(chalk.red(err.stack))),
       );
 
       await wait(520);
@@ -219,7 +310,6 @@ export class AdobeAnalyticsService {
 
     return (await Promise.all(queryPromises)).flat();
   }
-}
 
 export function toQueryFormat(date: string | Date): string {
   if (typeof date === 'string') {

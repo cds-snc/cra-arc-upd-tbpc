@@ -6,6 +6,7 @@ import { AdobeAnalyticsModule } from '@dua-upd/adobe-analytics';
 import { CustomReportsModule } from '@dua-upd/api/custom-reports';
 import { QueryModule } from '@dua-upd/api/query';
 import { PagesModule } from '../pages/pages.module';
+import { PortalPagesModule } from '../portal-pages/portal-pages.module';
 import { OverallModule } from '../overall/overall.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { ProjectsModule } from '../projects/projects.module';
@@ -26,6 +27,7 @@ import { HealthCheckController } from '../healthcheck/healthcheck.controller';
     }),
     DbModule.forRoot(environment.production, environment.dbHost),
     PagesModule,
+    PortalPagesModule,
     OverallModule,
     TasksModule,
     ProjectsModule,

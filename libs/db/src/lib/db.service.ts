@@ -37,6 +37,8 @@ import {
   type GcTasksModel,
   type FeedbackModel,
   type PageModel,
+  PortalPages,
+  PortalPagesMetrics
 } from './db.schemas';
 import {
   arrayToDictionary,
@@ -94,6 +96,8 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
     customReportsMetrics: this.customReportsMetrics,
     gcTasks: this.gcTasks,
     gcTasksMappings: this.gcTasksMappings,
+    portalPages: this.portalPages,
+    portalPagesMetrics: this.portalPagesMetrics,
   } as const;
 
   readonly views = {
@@ -158,6 +162,10 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
     private gcTasks: GcTasksModel,
     @InjectModel(GCTasksMappings.name, 'defaultConnection')
     private gcTasksMappings: Model<GCTasksMappings>,
+    @InjectModel(PortalPages.name, 'defaultConnection')
+    private portalPages: Model<PortalPages>,
+    @InjectModel(PortalPagesMetrics.name, 'defaultConnection')
+    private portalPagesMetrics: Model<PortalPagesMetrics>,
     @InjectConnection('defaultConnection')
     private connection: Connection,
   ) {}

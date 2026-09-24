@@ -83,6 +83,51 @@ export const overallMetricsQueryConfig: MetricsConfig = {
   // time_more_than_30_min: CALCULATED_METRICS.TIME_MORETHAN30MIN,
 };
 
+export const securePortalMetricsQueryConfig: MetricsConfig = {
+  visits: 'metrics/visits',
+  visitors: 'metrics/visitors',
+  views: 'metrics/pageviews',
+  average_time_spent: 'metrics/timespentvisit', // this is most likely correct, used on PAT/PP Workspace
+  // reloads: 'metrics/reloads',
+  // single_page_visits: 'metrics/singlepagevisits',
+  // entries: 'metrics/entries',
+  // exits: 'metrics/exits',
+  visits_geo_ab: CALCULATED_METRICS.GEO_AB,
+  visits_geo_bc: CALCULATED_METRICS.GEO_BC,
+  visits_geo_mb: CALCULATED_METRICS.GEO_MB,
+  visits_geo_nb: CALCULATED_METRICS.GEO_NB,
+  visits_geo_nl: CALCULATED_METRICS.GEO_NFL,
+  visits_geo_ns: CALCULATED_METRICS.GEO_NS,
+  visits_geo_nt: CALCULATED_METRICS.GEO_NWT,
+  visits_geo_nu: CALCULATED_METRICS.GEO_NV,
+  visits_geo_on: CALCULATED_METRICS.GEO_ON,
+  visits_geo_pe: CALCULATED_METRICS.GEO_PEI,
+  visits_geo_qc: CALCULATED_METRICS.GEO_QC,
+  visits_geo_sk: CALCULATED_METRICS.GEO_SK,
+  visits_geo_yt: CALCULATED_METRICS.GEO_YK,
+  visits_geo_outside_canada: CALCULATED_METRICS.GEO_OUTSIDE_CANADA,
+  visits_geo_us: CALCULATED_METRICS.GEO_US,
+  visits_referrer_other: CALCULATED_METRICS.REF_OTHER_WEBSITES,
+  visits_referrer_searchengine: CALCULATED_METRICS.REF_SEARCH_ENGINE,
+  visits_referrer_social: CALCULATED_METRICS.REF_SOCIAL_NETWORKS,
+  visits_referrer_typed_bookmarked: CALCULATED_METRICS.REF_TYPED_BOOKMARKS,
+  visits_device_other: CALCULATED_METRICS.DEVICES_OTHER,
+  visits_device_desktop: CALCULATED_METRICS.DEVICES_DESKTOP,
+  visits_device_mobile: CALCULATED_METRICS.DEVICES_MOBILE,
+  visits_device_tablet: CALCULATED_METRICS.DEVICES_TABLET,
+  visits_referrer_convo_ai: CALCULATED_METRICS.REF_CONVO_AI,
+  // time_less_than_15_sec: CALCULATED_METRICS.TIME_LESSTHAN15SEC,
+  // time_15_to_29_sec: CALCULATED_METRICS.TIME_15TO29SEC,
+  // time_30_to_59_sec: CALCULATED_METRICS.TIME_30TO59SEC,
+  // time_1_to_3_min: CALCULATED_METRICS.TIME_1TO3MIN,
+  // time_3_to_5_min: CALCULATED_METRICS.TIME_3TO5MIN,
+  // time_5_to_10_min: CALCULATED_METRICS.TIME_5TO10MIN,
+  // time_10_to_15_min: CALCULATED_METRICS.TIME_10TO15MIN,
+  // time_15_to_20_min: CALCULATED_METRICS.TIME_15TO20MIN,
+  // time_20_to_30_min: CALCULATED_METRICS.TIME_20TO30MIN,
+  // time_more_than_30_min: CALCULATED_METRICS.TIME_MORETHAN30MIN,
+};
+
 export const createOverallMetricsQuery = (
   dateRange: DateRange<string>,
   settings: ReportSettings = {},
@@ -164,6 +209,220 @@ export const createCXTasksQuery = (
     .setSettings(querySettings)
     .build();
 };
+
+export const createSecurePortalPageIdItemIdsQuery = (
+  dateRange: DateRange<string>,
+  options: PageMetricsQueryOptions & {
+    lang?: 'en' | 'fr';
+  } = {},
+) => {
+  const queryBuilder = new AdobeAnalyticsQueryBuilder();
+
+  const lang = options.lang;
+
+  delete options.lang;
+
+  const querySettings: ReportSettings = {
+    nonesBehavior: 'exclude-nones',
+    countRepeatInstances: true,
+    limit: 25000,
+    ...options.settings,
+  };
+
+  const langSegment: ReportFilter[] = lang
+    ? [
+        {
+          type: 'segment',
+          segmentId: lang === 'fr' ? SEGMENTS.french : SEGMENTS.english,
+        },
+      ]
+    : [];
+
+  return queryBuilder
+    .setDimension('variables/evar8')
+    .setMetrics({ clicks: 'metrics/visits' } as MetricsConfig)
+    .setGlobalFilters([
+      { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
+      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` },
+      ...langSegment,
+    ])
+    .setSettings(querySettings)
+    .build();
+};
+
+export const createSecurePortalsQuery = (
+  dateRange: DateRange<string>,
+  itemids?: string[],
+  options: PageMetricsQueryOptions & {
+    lang?: 'en' | 'fr';
+    metrics?: MetricsConfig;
+  } = {},
+) => {
+  const queryBuilder = new AdobeAnalyticsQueryBuilder();
+
+  const lang = options.lang;
+
+  delete options.lang;
+
+  const querySettings: ReportSettings = {
+    nonesBehavior: 'exclude-nones',
+    countRepeatInstances: true,
+    limit: 5000,
+    ...options.settings,
+  };
+
+  const langSegment: ReportFilter[] = lang
+    ? [
+        {
+          type: 'segment',
+          segmentId: lang === 'fr' ? SEGMENTS.french : SEGMENTS.english,
+        },
+      ]
+    : [];
+
+  const metricsFilter: MetricsConfig =
+    itemids && itemids.length
+      ? {
+          activityMap: {
+            id: 'metrics/visits',
+            filters: [
+              {
+                itemIds: itemids,
+                type: 'breakdown',
+                dimension: 'variables/evar8',
+              },
+            ],
+          },
+        }
+      : (options.metrics ?? securePortalMetricsQueryConfig);
+
+  return queryBuilder
+    .setDimension('variables/evar11')
+    .setMetrics(metricsFilter)
+    .setGlobalFilters([
+      { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
+      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` },
+      ...langSegment,
+    ])
+    .setSettings(querySettings)
+    .build();
+};
+
+export const createPortalPageMetricsQuery = (
+  dateRange: DateRange<string>,
+  options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},
+) => {
+  const queryBuilder = new AdobeAnalyticsQueryBuilder();
+
+  const lang = options.lang;
+  delete options.lang;
+
+  const querySettings: ReportSettings = {
+    nonesBehavior: 'exclude-nones',
+    countRepeatInstances: true,
+    limit: 25000,
+    ...options.settings,
+  };
+
+  const langSegment: ReportFilter[] = lang
+    ? [
+        {
+          type: 'segment',
+          segmentId: lang === 'fr' ? SEGMENTS.french : SEGMENTS.english,
+        },
+      ]
+    : [];
+
+  return queryBuilder
+    .setDimension('variables/evar8') // Page Screen ID (v8)
+    .setMetrics(securePortalMetricsQueryConfig)
+    .setGlobalFilters([
+      { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
+      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` },
+      ...langSegment,
+    ])
+    .setSettings(querySettings)
+    .build();
+};
+
+// Resolves the top (highest-visits) URL (evar22) per screen-id itemId
+export const createSecurePortalPageUrlsQuery = (
+  dateRange: DateRange<string>,
+  itemids: string[],
+  options: PageMetricsQueryOptions & {
+    lang?: 'en' | 'fr';
+  } = {},
+) => {
+  const queryBuilder = new AdobeAnalyticsQueryBuilder();
+
+  const lang = options.lang;
+
+  delete options.lang;
+
+  const querySettings: ReportSettings = {
+    nonesBehavior: 'exclude-nones',
+    countRepeatInstances: true,
+    limit: 5000,
+    ...options.settings,
+  };
+
+  const langSegment: ReportFilter[] = lang
+    ? [
+        {
+          type: 'segment',
+          segmentId: lang === 'fr' ? SEGMENTS.french : SEGMENTS.english,
+        },
+      ]
+    : [];
+
+  return queryBuilder
+    .setDimension('variables/evar22')
+    .setMetrics({
+      activityMap: {
+        id: 'metrics/visits',
+        filters: [
+          {
+            itemIds: itemids,
+            type: 'breakdown',
+            dimension: 'variables/evar8',
+          },
+        ],
+      },
+    })
+    .setGlobalFilters([
+      { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
+      { type: 'dateRange', dateRange: `${dateRange.start}/${dateRange.end}` },
+      ...langSegment,
+    ])
+    .setSettings(querySettings)
+    .build();
+};
+
+export const createBatchedSecurePortalsQueries = (
+  dateRange: DateRange<string>,
+  itemIds: string[],
+  options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},
+) =>
+  chunkMap(
+    itemIds,
+    (itemIdsBatch) =>
+      createSecurePortalsQuery(dateRange, itemIdsBatch, { ...options }),
+    200,
+  );
+
+export const createBatchedSecurePortalPageUrlsQueries = (
+  dateRange: DateRange<string>,
+  itemIds: string[],
+  options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},
+) =>
+  chunkMap(
+    itemIds,
+    (itemIdsBatch) =>
+      createSecurePortalPageUrlsQuery(dateRange, itemIdsBatch, {
+        ...options,
+      }),
+    200,
+  );
 
 export const createBatchedInternalSearchQueries = (
   dateRange: DateRange<string>,
@@ -479,3 +738,4 @@ export const createActivityMapQuery = (
     .setSettings(querySettings)
     .build(false);
 };
+

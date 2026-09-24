@@ -15,6 +15,12 @@ const routes: Routes = [
       ),
     data: { animation: 'overview', title: 'Overview | Summary' },
   },
+    {
+    path: 'portal-pages',
+    loadChildren: () =>
+      import('@dua-upd/upd/views/portal-pages').then((module) => module.PortalPagesModule),
+    data: { animation: 'portal-pages', title: 'Portal Pages | Home' },
+  },
   {
     path: 'pages',
     loadChildren: () =>

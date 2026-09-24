@@ -1,0 +1,38 @@
+{
+  "name": "upd-views-portal-pages",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/upd/views/portal-pages/src",
+  "prefix": "upd",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/libs/upd/views/portal-pages"],
+      "options": {
+        "project": "libs/upd/views/portal-pages/ng-package.json",
+        "tsConfig": "libs/upd/views/portal-pages/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/upd/views/portal-pages/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "libs/upd/views/portal-pages/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/upd/views/portal-pages"],
+      "options": {
+        "jestConfig": "libs/upd/views/portal-pages/jest.config.ts",
+        "tsConfig": "libs/upd/views/portal-pages/tsconfig.spec.json"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

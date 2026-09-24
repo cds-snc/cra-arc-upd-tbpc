@@ -8,6 +8,7 @@ import type { PageStatus } from './data.types';
 export type AAItemIdTypes =
   | 'internalSearch'
   | 'activityMapTitle'
+  | 'portalPages'
   | 'urlLast255'
   | 'pageUrl';
 
@@ -166,6 +167,44 @@ export interface IPageMetrics extends IMetrics {
   tasks?: Types.ObjectId[] | ITask[];
   projects?: Types.ObjectId[] | IProject[];
   ux_tests?: Types.ObjectId[] | IUxTest[];
+}
+
+export interface IPortalPages {
+  _id: Types.ObjectId;
+  screen_id: string;
+  title: string | null;
+  url: string | null;
+  lang?: 'en' | 'fr';
+}
+
+export interface IPortalPagesMetrics {
+  _id: Types.ObjectId;
+  date: Date;
+  language: 'en' | 'fr';
+  pages: Types.ObjectId | IPortalPages | null;
+  visits: number;
+  visitors: number;
+  views: number;
+  average_time_spent: number;
+  visits_geo_ab: number;
+  visits_geo_bc: number;
+  visits_geo_mb: number;
+  visits_geo_nb: number;
+  visits_geo_nl: number;
+  visits_geo_ns: number;
+  visits_geo_nt: number;
+  visits_geo_nu: number;
+  visits_geo_on: number;
+  visits_geo_pe: number;
+  visits_geo_qc: number;
+  visits_geo_sk: number;
+  visits_geo_yt: number;
+  visits_geo_outside_canada: number;
+  visits_geo_us: number;
+  visits_device_other: number;
+  visits_device_desktop: number;
+  visits_device_mobile: number;
+  visits_device_tablet: number;
 }
 
 export interface IPageView extends IMetrics {
