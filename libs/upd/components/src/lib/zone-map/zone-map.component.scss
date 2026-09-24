@@ -15,6 +15,14 @@ $red-dark: #9f1f26;
 $red-cell: #fcecee;
 $red-border: #efb9bd;
 
+$blue-border: #91d2dc;
+$blue-cell: #dff3f7;
+$blue-dark: #0b5f6a;
+
+$grey-dark: #475467;
+$grey-cell: #f2f4f7;
+$grey-border: #d0d5dd;
+
 $matrix-header-blue: #2f5384;
 
 $text-main: #101828;
@@ -143,11 +151,20 @@ $active: #5145cd;
   }
 
   &.pending {
-    border-color: #91d2dc;
-    background: #dff3f7;
+    border-color: $blue-border;
+    background: $blue-cell;
 
     .zone-cell__status {
-      color: #0b5f6a;
+      color: $blue-dark;
+    }
+  }
+
+  &.neutral {
+    border-color: $grey-border;
+    background: $grey-cell;
+
+    .zone-cell__status {
+      color: $grey-dark;
     }
   }
 

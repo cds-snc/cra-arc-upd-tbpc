@@ -18,7 +18,7 @@ export type ZoneRange<T extends string = string> = {
   color: string;
 };
 
-type ZoneStatusClass = 'healthy' | 'watch' | 'needs-action' | 'pending';
+type ZoneStatusClass = 'healthy' | 'watch' | 'needs-action' | 'neutral';
 
 type ZoneStatus = {
   labelKey: string;
@@ -27,7 +27,7 @@ type ZoneStatus = {
 };
 
 type StatusKey = `${PerformanceBand}-${TrendBand}`;
-type ZoneColumn = TrendBand | 'pending';
+type ZoneColumn = TrendBand | 'neutral';
 
 @Component({
   selector: 'upd-zone-map',
@@ -143,7 +143,7 @@ export class ZoneMapComponent {
   get columns(): ZoneColumn[] {
     const available = new Set(this.historicalRanges.map((range) => range.key));
 
-    return [...this.columnOrder.filter((key) => available.has(key)), 'pending'];
+    return [...this.columnOrder.filter((key) => available.has(key)), 'neutral'];
   }
 
   isActive(row: PerformanceBand, column: ZoneColumn): boolean {
@@ -155,11 +155,11 @@ export class ZoneMapComponent {
   }
 
   getStatus(row: PerformanceBand, column: ZoneColumn): ZoneStatus {
-    if (column === 'pending') {
+    if (column === 'neutral') {
       return {
         labelKey: 'zone-map-status-pending',
         noteKey: 'zone-map-note-pending',
-        className: 'pending',
+        className: 'neutral',
       };
     }
 
@@ -175,7 +175,7 @@ export class ZoneMapComponent {
   }
 
   getHistoricalName(column: ZoneColumn): string {
-    if (column === 'pending') {
+    if (column === 'neutral') {
       return this.i18n.service.instant('zone-map-no-historical-data');
     }
 
@@ -196,7 +196,7 @@ export class ZoneMapComponent {
   }
 
   getHistoricalArrow(column: ZoneColumn): string {
-    if (column === 'pending') {
+    if (column === 'neutral') {
       return '';
     }
 
@@ -213,7 +213,7 @@ export class ZoneMapComponent {
   }
 
   getHistoricalRangeLabelKey(column: ZoneColumn): string {
-    if (column === 'pending') {
+    if (column === 'neutral') {
       return '';
     }
 

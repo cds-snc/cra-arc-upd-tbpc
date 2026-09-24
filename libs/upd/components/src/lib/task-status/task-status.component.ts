@@ -339,7 +339,7 @@ export class TaskStatusComponent {
     }
 
     if (!this.hasHistoricalAverage()) {
-      return 'blue';
+      return 'grey';
     }
 
     return this.status().tier;
