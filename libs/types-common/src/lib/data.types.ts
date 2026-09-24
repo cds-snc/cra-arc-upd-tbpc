@@ -6,6 +6,8 @@ import type {
   TopCalldriverTopics,
   IPage,
   IPageMetrics,
+  IPortalPages,
+  IPortalPagesMetrics,
   ITask,
   IUxTest,
   IReadability,
@@ -49,6 +51,50 @@ export interface EntityDetailsData<T> extends ViewData<T> {
   _id: string;
   title: string;
 }
+
+export type PortalPagesDetailsMetrics = Pick<
+  IPortalPagesMetrics,
+  | 'visits'
+  | 'visitors'
+  | 'views'
+  | 'average_time_spent'
+  | 'visits_device_other'
+  | 'visits_device_desktop'
+  | 'visits_device_mobile'
+  | 'visits_device_tablet'
+  | 'visits_geo_ab'
+  | 'visits_geo_bc'
+  | 'visits_geo_mb'
+  | 'visits_geo_nb'
+  | 'visits_geo_nl'
+  | 'visits_geo_ns'
+  | 'visits_geo_nt'
+  | 'visits_geo_nu'
+  | 'visits_geo_on'
+  | 'visits_geo_pe'
+  | 'visits_geo_qc'
+  | 'visits_geo_sk'
+  | 'visits_geo_yt'
+  | 'visits_geo_us'
+  | 'visits_geo_outside_canada'
+>;
+
+export type PortalPagesHomeAggregatedData = Pick<
+  IPortalPages,
+  '_id' | 'screen_id' | 'title' | 'url' | 'lang'
+> &
+  PortalPagesDetailsMetrics;
+
+export type PortalPagesHomeData = ViewData<
+  PortalPagesHomeAggregatedData[]
+>;
+export interface PortalPageAggregatedData extends PortalPagesDetailsMetrics {
+  visitsByDay: { date: string; visits: number }[];
+}
+
+export type PortalPageDetailsData =
+  EntityDetailsData<PortalPageAggregatedData> &
+    Pick<IPortalPages, 'screen_id' | 'url' | 'lang'>;
 
 export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;

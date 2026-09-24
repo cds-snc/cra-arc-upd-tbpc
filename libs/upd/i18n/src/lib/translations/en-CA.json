@@ -5,6 +5,7 @@
   "opposite.language": "Français",
   "menu-overview": "Overview",
   "menu-pages": "Pages",
+  "menu-portal-pages": "Portal pages",
   "menu-tasks": "Tasks",
   "menu-projects": "UX projects",
   "menu-feedback": "Feedback",
@@ -1553,6 +1554,7 @@
   "Hidden content": "Hidden content",
   "Modal content": "Modal/pop-up content",
   "Dynamic content": "Dynamic content",
+
   "-----ACCESSIBILITY TAB---": "-----------------------------------------------------",
   "accessibility": "Accessibility (Desktop)",
   "accessibility-title": "Page Accessibility Testing",

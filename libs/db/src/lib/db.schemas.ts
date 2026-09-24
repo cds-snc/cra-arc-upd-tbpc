@@ -18,3 +18,5 @@ export * from './schemas/gc-tasks.schema';
 export * from './schemas/gc-tasks-mappings.schema';
 export * from './schemas/custom-reports-registry.schema';
 export * from './schemas/custom-reports-metrics.schema';
+export * from './schemas/portal-pages.schema';
+export * from './schemas/portal-pages-metrics.schema';

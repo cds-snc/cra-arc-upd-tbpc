@@ -43,6 +43,8 @@ import { UrlsService } from './urls/urls.service';
 import dayjs from 'dayjs';
 import { AnnotationsService } from './airtable/annotations.service';
 import { GCTasksMappingsService } from './airtable/gc-tasks-mappings.service';
+import { PortalPageService } from './portal-page/portal-page.service';
+import { PortalPagesMetricsService } from './portal-page-metrics/portal-page-metrics.service';
 
 @Injectable()
 export class DbUpdateService {
@@ -74,6 +76,8 @@ export class DbUpdateService {
     @InjectModel(PagesList.name, 'defaultConnection')
     private pagesListModel: Model<PagesListDocument>,
     private urlsService: UrlsService,
+    private portalPageService: PortalPageService,
+    private portalPagesMetricsService: PortalPagesMetricsService,
   ) {
     this.logger.setContext('DbUpdater');
 
@@ -203,6 +207,14 @@ export class DbUpdateService {
         this.logger.error(err.stack),
       );
 
+      await this.portalPageService
+        .updatePortalPages()
+        .catch((err) => this.logger.error(err.stack));
+
+      await this.portalPagesMetricsService
+        .updatePortalPagesMetrics()
+        .catch((err) => this.logger.error(err.stack));
+
       await this.pagesService
         .updatePagesLang()
         .catch((err) => this.logger.error(err.stack));
@@ -325,7 +337,9 @@ export class DbUpdateService {
     this.logger.log(`Successfully synced ${syncResult} feedback references. `);
   }
 
-  async upsertPageMetrics(pageMetrics: PageMetrics[]): Promise<mongo.BulkWriteResult> {
+  async upsertPageMetrics(
+    pageMetrics: PageMetrics[],
+  ): Promise<mongo.BulkWriteResult> {
     const bulkInsertOps: AnyBulkWriteOperation<PageMetrics>[] = [];
 
     for (const pageMetric of pageMetrics) {

@@ -36,17 +36,30 @@
       "@dua-upd/upd/state": ["./libs/upd/state/src/index.ts"],
       "@dua-upd/upd/utils": ["./libs/upd/utils/src/index.ts"],
       "@dua-upd/upd/views/about-us": ["./libs/upd/views/about-us/src/index.ts"],
-      "@dua-upd/upd/views/custom-reports": ["./libs/upd/views/custom-reports/src/index.ts"],
+      "@dua-upd/upd/views/custom-reports": [
+        "./libs/upd/views/custom-reports/src/index.ts"
+      ],
       "@dua-upd/upd/views/overview": ["./libs/upd/views/overview/src/index.ts"],
+      "@dua-upd/upd/views/portal-pages": [
+        "./libs/upd/views/portal-pages/src/index.ts"
+      ],
       "@dua-upd/upd/views/pages": ["./libs/upd/views/pages/src/index.ts"],
       "@dua-upd/upd/views/projects": ["./libs/upd/views/projects/src/index.ts"],
       "@dua-upd/upd/views/reports": ["./libs/upd/views/reports/src/index.ts"],
       "@dua-upd/upd/views/tasks": ["./libs/upd/views/tasks/src/index.ts"],
       "@dua-upd/utils-common": ["./libs/utils-common/src/index.ts"],
-      "@dua-upd/utils-common/data": ["./libs/utils-common/src/lib/data/index.ts"],
-      "@dua-upd/utils-common/date": ["./libs/utils-common/src/lib/date/index.ts"],
-      "@dua-upd/utils-common/math": ["./libs/utils-common/src/lib/math/index.ts"],
-      "@dua-upd/utils-common/types": ["./libs/utils-common/src/lib/types/index.ts"],
+      "@dua-upd/utils-common/data": [
+        "./libs/utils-common/src/lib/data/index.ts"
+      ],
+      "@dua-upd/utils-common/date": [
+        "./libs/utils-common/src/lib/date/index.ts"
+      ],
+      "@dua-upd/utils-common/math": [
+        "./libs/utils-common/src/lib/math/index.ts"
+      ],
+      "@dua-upd/utils-common/types": [
+        "./libs/utils-common/src/lib/types/index.ts"
+      ],
       "@dua-upd/workspace-plugin": ["./tools/workspace-plugin/src/index.ts"],
       "@dua-upd/adobe-analytics": ["./libs/adobe-analytics/src/index.ts"],
       "package.json": ["./package.json"]

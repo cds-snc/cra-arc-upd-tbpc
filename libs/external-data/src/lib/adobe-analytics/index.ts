@@ -29,6 +29,8 @@ import {
 } from '@dua-upd/node-utils';
 import {
   createActivityMapQuery,
+  createBatchedSecurePortalPageUrlsQueries,
+  createBatchedSecurePortalsQueries,
   createCXTasksQuery,
   createInternalSearchQuery,
   createOverallMetricsQuery,
@@ -38,6 +40,9 @@ import {
   createPhrasesSearchedOnPageQuery,
   createPageUrlItemIdsQuery,
   createWhereVisitorsCameFromQuery,
+  createSecurePortalsQuery,
+  createSecurePortalPageIdItemIdsQuery,
+  createSecurePortalPageUrlsQuery,
 } from './queries';
 import { singleDatesFromDateRange, withRetry } from '../utils';
 
@@ -270,6 +275,206 @@ export class AdobeAnalyticsClient {
           return [...parsedResults, newDailyData];
         }, [] as Partial<Overall>[])
     );
+  }
+
+  async getPortalScreenItemIds(
+    dateRange: DateRange<string>,
+    options?: {
+      settings?: ReportSettings;
+      search?: ReportSearch;
+      postProcess?: (data: Partial<PageMetrics[]>) => unknown | void;
+      segment?: string;
+      lang?: 'en' | 'fr';
+    },
+  ) {
+    if (!this.client || this.clientTokenIsExpired()) {
+      await this.initClient();
+    }
+
+    const itemIdsQuery = createSecurePortalPageIdItemIdsQuery(
+      dateRange,
+      options,
+    );
+    const results = await this.client.getReport(itemIdsQuery);
+
+    const { columnIds } = results.body.columns;
+
+    return results.body.rows.reduce((parsedResults, row) => {
+      // build up results object using columnIds as keys
+      const newPageMetricsData = row.data.reduce(
+        (rowValues, value, index) => {
+          const columnId = columnIds[index];
+          rowValues[columnId] = value;
+          return rowValues;
+        },
+        {
+          value: row.value,
+          itemid_secureportal: row.itemId,
+        },
+      );
+
+      return [...parsedResults, newPageMetricsData];
+    }, []);
+  }
+
+  async getOverallPortalMetrics(
+    dateRange: DateRange<string>,
+    itemIds?: string[],
+    options?: {
+      settings?: ReportSettings;
+      search?: ReportSearch;
+      postProcess?: (data: Partial<PageMetrics[]>) => unknown | void;
+      segment?: string;
+      lang?: 'en' | 'fr';
+    },
+  ): Promise<Partial<PageMetrics[]>[]> {
+    if (!this.client || this.clientTokenIsExpired()) {
+      await this.initClient();
+    }
+
+    const dateRanges = singleDatesFromDateRange(dateRange, queryDateFormat)
+      .map((date) => ({
+        start: date,
+        end: dayjs.utc(date).add(1, 'day').format(queryDateFormat),
+      }))
+      .filter(
+        (dateRange) =>
+          dayjs.utc(dateRange.start).startOf('day') !==
+          dayjs.utc().startOf('day'),
+      );
+    const results = [];
+
+    console.log('AA dateRanges', dateRanges);
+
+    for (const dateRange of dateRanges) {
+      console.log('Creating AA Secure Portals Page Metrics query for date range:', dateRange);
+
+      const pageMetricsQueries = itemIds?.length
+        ? createBatchedSecurePortalsQueries(dateRange, itemIds, options)
+        : [createSecurePortalsQuery(dateRange, itemIds, options)];
+
+      const date = new Date(dateRange.start + 'Z');
+
+      for (const pageMetricsQuery of pageMetricsQueries) {
+        const result = itemIds?.length > 0
+          ? await this.executeQueryWithRetry(pageMetricsQuery, {
+              resultsParser: (columnIds, rows) =>
+                sortArrayDesc(seperateArray(rows))
+                  .map((row) =>
+                    row.map((v) => ({ link: v.value, visits: v.data })),
+                  )
+                  .reduce(
+                    (rowValues, value, index) => {
+                      rowValues[columnIds[index]] = value;
+                      return rowValues;
+                    },
+                    { date },
+                  ),
+            })
+          : await this.executeQueryWithRetry(pageMetricsQuery).then((results) => {
+              const { columnIds } = results.body.columns;
+
+              return results.body.rows.reduce((parsedResults, row) => {
+                // the 'Z' means the date is UTC, so no conversion required
+                const date = new Date(dateRange.start + 'Z');
+
+                // build up results object using columnIds as keys
+                const newPageMetricsData = row.data.reduce(
+                  (rowValues, value, index) => {
+                    const columnId = columnIds[index];
+
+                    if (columnId === 'bouncerate' && value === 'NaN') {
+                      rowValues[columnId] = 0;
+                    } else {
+                      rowValues[columnId] = value;
+                    }
+
+                    return rowValues;
+                  },
+                  {
+                    date,
+                    url: row.value,
+                  } as Partial<PageMetrics>,
+                );
+
+                return [...parsedResults, newPageMetricsData];
+              }, [] as Partial<PageMetrics>[]);
+              });
+
+        if (options?.postProcess) {
+          await options.postProcess(result);
+        }
+
+        results.push(result);
+
+        await wait(520);
+      }
+    }
+
+    return results;
+  }
+
+  // Resolves the top (highest-visits) URL (evar22) per screen-id itemId
+  async getPortalPageUrls(
+    dateRange: DateRange<string>,
+    itemIds: string[],
+    options?: {
+      settings?: ReportSettings;
+      search?: ReportSearch;
+      segment?: string;
+      lang?: 'en' | 'fr';
+    },
+  ) {
+    if (!this.client || this.clientTokenIsExpired()) {
+      await this.initClient();
+    }
+
+    const dateRanges = singleDatesFromDateRange(dateRange, queryDateFormat)
+      .map((date) => ({
+        start: date,
+        end: dayjs.utc(date).add(1, 'day').format(queryDateFormat),
+      }))
+      .filter(
+        (dateRange) =>
+          dayjs.utc(dateRange.start).startOf('day') !==
+          dayjs.utc().startOf('day'),
+      );
+
+    const results = [];
+
+    for (const singleDateRange of dateRanges) {
+      const pageUrlsQueries = createBatchedSecurePortalPageUrlsQueries(
+        singleDateRange,
+        itemIds,
+        options,
+      );
+
+      const date = new Date(singleDateRange.start + 'Z');
+
+      for (const pageUrlsQuery of pageUrlsQueries) {
+        const result = await this.executeQueryWithRetry(pageUrlsQuery, {
+          resultsParser: (columnIds, rows) => {
+            return sortArrayDesc(seperateArray(rows))
+              .map((row) =>
+                row.map((v) => ({ link: v.value, visits: v.data })),
+              )
+              .reduce(
+                (rowValues, value, index) => {
+                  rowValues[columnIds[index]] = value;
+                  return rowValues;
+                },
+                { date },
+              );
+          },
+        });
+
+        results.push(result);
+
+        await wait(520);
+      }
+    }
+
+    return results;
   }
 
   // make sure url_last_255 itemIds get captured ***** @@

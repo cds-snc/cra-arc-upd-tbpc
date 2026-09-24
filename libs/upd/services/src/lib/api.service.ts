@@ -55,6 +55,14 @@ export class ApiService {
     return this.get('/api/pages/flow', params);
   }
 
+  getPortalPagesHomeData(params: ApiParams) {
+    return this.get<PagesHomeData>('/api/portal-pages/home', params);
+  }
+
+  getPortalPageDetails(params: ApiParams) {
+    return this.get<PageDetailsData>('/api/portal-pages/details', params);
+  }
+
   getHashes(params: ApiParams) {
     return this.get('/api/hashes', params);
   }

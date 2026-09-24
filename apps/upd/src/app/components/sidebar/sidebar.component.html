@@ -22,7 +22,17 @@
             'menu-overview' | translate
           }}</span>
         </a>
-
+        <a
+          [routerLink]="[langPath(), 'portal-pages']"
+          [routerLinkActive]="['active']"
+          [queryParamsHandling]="queryParamsHandling()"
+          class="nav_link"
+        >
+          <span class="material-icons nav_icon" aria-hidden="true">layers</span>
+          <span class="nav_name" data-i18n="menu-portal-pages">{{
+            'menu-portal-pages' | translate
+          }}</span>
+        </a>
         <a
           [routerLink]="[langPath(), 'pages']"
           [routerLinkActive]="['active']"

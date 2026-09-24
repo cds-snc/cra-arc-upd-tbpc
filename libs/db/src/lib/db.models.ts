@@ -42,6 +42,14 @@ import {
   GCTasksMappings,
   GCTasksMappingsSchema,
 } from './schemas/gc-tasks-mappings.schema';
+import {
+  PortalPages,
+  PortalPagesSchema
+} from './schemas/portal-pages.schema';
+import {
+  PortalPagesMetrics,
+  PortalPagesMetricsSchema
+} from './schemas/portal-pages-metrics.schema';
 import { PagesView, PagesViewSchema } from './views/pages-view.schema';
 import { TasksView, TasksViewSchema } from './views/tasks-view.schema';
 
@@ -74,6 +82,11 @@ export const models = {
   customReportsMetrics: {
     model: CustomReportsMetrics,
     schema: CustomReportsMetricsSchema,
+  },
+  portalPages: { model: PortalPages, schema: PortalPagesSchema },
+  portalPagesMetrics: {
+    model: PortalPagesMetrics,
+    schema: PortalPagesMetricsSchema,
   },
 } as const;
 
