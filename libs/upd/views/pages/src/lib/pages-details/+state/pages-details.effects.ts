@@ -2,13 +2,24 @@ import { inject, Injectable } from '@angular/core';
 import { createEffect, Actions, ofType } from '@ngrx/effects';
 import { concatLatestFrom } from '@ngrx/operators';
 import { Store } from '@ngrx/store';
-import { catchError, mergeMap, map, of, EMPTY, filter } from 'rxjs';
+import {
+  catchError,
+  merge,
+  mergeMap,
+  map,
+  of,
+  EMPTY,
+  filter,
+  distinctUntilChanged,
+} from 'rxjs';
 import { ApiService } from '@dua-upd/upd/services';
+import { omit } from 'rambdax';
 import {
   selectDateRanges,
   selectRouteNestedParam,
   selectDatePeriod,
   selectRoute,
+  selectCurrentLang,
 } from '@dua-upd/upd/state';
 import {
   getHashes,
@@ -20,6 +31,9 @@ import {
   loadAccessibilitySuccess,
   loadAccessibilityError,
   loadPagesDetailsError,
+  loadPageHighlightsInit,
+  loadPageHighlightsSuccess,
+  loadPageHighlightsError,
 } from './pages-details.actions';
 import { selectPagesDetailsData, selectAccessibilityData } from './pages-details.selectors';
 import * as PagesDetailsSelectors from './pages-details.selectors';
@@ -172,6 +186,57 @@ export class PagesDetailsEffects {
         return !hasCache;
       }),
       map(([{ data }]) => loadAccessibilityInit({ url: data!.url })),
+    );
+  });
+
+  triggerPageHighlightsOnPageLoad$ = createEffect(() => {
+    return merge(
+      this.actions$.pipe(ofType(loadPagesDetailsSuccess)),
+      this.store.select(selectCurrentLang).pipe(distinctUntilChanged()),
+    ).pipe(
+      concatLatestFrom(() => [
+        this.store.select(selectPagesDetailsData),
+        this.store.select(PagesDetailsSelectors.selectPageHighlightsKey),
+        this.store.select(PagesDetailsSelectors.selectPagesDetailsState),
+        this.store.select(selectCurrentLang),
+      ]),
+      filter(([, data, key, state]) => !!data?.url && !!key && !state.pageHighlightsByKey[key]),
+      map(([, data, key, , lang]) =>
+        loadPageHighlightsInit({
+          key: key as string,
+          pageData: {
+            title: data.title,
+            url: data.url,
+            dateRange: data.dateRange,
+            comparisonDateRange: data.comparisonDateRange,
+            dateRangeData: data.dateRangeData &&
+              omit([], data.dateRangeData),
+            comparisonDateRangeData: data.comparisonDateRangeData &&
+              omit([], data.comparisonDateRangeData),
+            topSearchTermsIncrease: data.topSearchTermsIncrease,
+            topSearchTermsDecrease: data.topSearchTermsDecrease,
+            language: lang === 'fr-CA' ? 'fr' : 'en',
+          },
+        }),
+      ),
+    );
+  });
+
+  loadPageHighlights$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(loadPageHighlightsInit),
+      mergeMap(({ key, pageData }) =>
+        this.api.getPageHighlights(pageData).pipe(
+          map(({ highlights }) => loadPageHighlightsSuccess({ key, highlights })),
+          catchError((error) =>
+            of(
+              loadPageHighlightsError({
+                error: error.message || 'Failed to load page highlights',
+              }),
+            ),
+          ),
+        ),
+      ),
     );
   });
 }

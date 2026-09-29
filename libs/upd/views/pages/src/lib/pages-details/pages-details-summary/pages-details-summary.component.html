@@ -1,5 +1,33 @@
 <div class="container-fluid my-4 gx-0">
   <div class="row">
+    <div class="col">
+      <upd-card [title]="'page-highlights-title'">
+        @if (pageHighlightsLoading() && !pageHighlights()) {
+          <div class="text-center my-2">
+            <i class="pi pi-spin pi-spinner" style="font-size: 1.5rem"></i>
+            <p class="mt-2 mb-0">{{ 'page-highlights-loading' | translate }}</p>
+          </div>
+        } @else if (pageHighlightsError()) {
+          <div class="alert alert-danger mb-0" role="alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ 'page-highlights-error' | translate }}
+          </div>
+        } @else if (pageHighlights()?.length) {
+          <ul class="mb-0">
+            @for (highlight of pageHighlights(); track highlight) {
+              <li>{{ highlight }}</li>
+            }
+          </ul>
+        } @else {
+          <p class="mb-0 text-muted">{{ 'page-highlights-empty' | translate }}</p>
+        }
+      </upd-card>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid my-4 gx-0">
+  <div class="row">
     <!-- <div class="col">
       <upd-data-card
         [current]="visitors$ | async"
