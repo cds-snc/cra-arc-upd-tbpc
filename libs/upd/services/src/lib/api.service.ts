@@ -9,6 +9,7 @@ import type {
 import type {
   ApiParams,
   OverviewData,
+  PageHighlightsData,
   PageDetailsData,
   PagesHomeData,
   ProjectsHomeData,
@@ -49,6 +50,13 @@ export class ApiService {
 
   getPageDetails(params: ApiParams) {
     return this.get<PageDetailsData>('/api/pages/details', params);
+  }
+
+  getPageHighlights(pageData: PageHighlightsData) {
+    return this.http.post<{ highlights: string[] }>(
+      '/api/pages/page-highlights',
+      { pageData },
+    );
   }
 
   getPageFlow(params: ApiParams) {

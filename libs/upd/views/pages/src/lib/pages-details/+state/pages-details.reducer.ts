@@ -20,6 +20,10 @@ export interface PagesDetailsState {
   loadedAccessibility: boolean;
   loadingAccessibility: boolean;
   errorAccessibility?: string | null;
+  pageHighlightsByKey: Record<string, string[]>;
+  loadedPageHighlights: boolean;
+  loadingPageHighlights: boolean;
+  errorPageHighlights?: string | null;
 }
 
 export interface PagesDetailsPartialState {
@@ -57,6 +61,10 @@ export const pagesDetailsInitialState: PagesDetailsState = {
   loadedAccessibility: false,
   loadingAccessibility: false,
   errorAccessibility: null,
+  pageHighlightsByKey: {},
+  loadedPageHighlights: false,
+  loadingPageHighlights: false,
+  errorPageHighlights: null,
 };
 
 const reducer = createReducer(
@@ -199,6 +207,37 @@ const reducer = createReducer(
       loadedAccessibility: false,
       loadingAccessibility: false,
       errorAccessibility: null,
+    }),
+  ),
+  on(
+    PagesDetailsActions.loadPageHighlightsInit,
+    (state): PagesDetailsState => ({
+      ...state,
+      loadingPageHighlights: true,
+      loadedPageHighlights: false,
+      errorPageHighlights: null,
+    }),
+  ),
+  on(
+    PagesDetailsActions.loadPageHighlightsSuccess,
+    (state, { key, highlights }): PagesDetailsState => ({
+      ...state,
+      pageHighlightsByKey: {
+        ...state.pageHighlightsByKey,
+        [key]: highlights,
+      },
+      loadingPageHighlights: false,
+      loadedPageHighlights: true,
+      errorPageHighlights: null,
+    }),
+  ),
+  on(
+    PagesDetailsActions.loadPageHighlightsError,
+    (state, { error }): PagesDetailsState => ({
+      ...state,
+      loadingPageHighlights: false,
+      loadedPageHighlights: true,
+      errorPageHighlights: error,
     }),
   ),
 );

@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { PageDetailsData } from '@dua-upd/types-common';
+import { PageDetailsData, PageHighlightsData } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
 export const loadPagesDetailsInit = createAction('[PagesDetails] Load PagesDetails Init');
@@ -45,4 +45,19 @@ export const loadAccessibilityError = createAction(
 
 export const clearAccessibilityCache = createAction(
   '[PagesDetails] Clear Accessibility Cache'
+);
+
+export const loadPageHighlightsInit = createAction(
+  '[PagesDetails/API] Load Page Highlights Init',
+  props<{ key: string; pageData: PageHighlightsData }>()
+);
+
+export const loadPageHighlightsSuccess = createAction(
+  '[PagesDetails/API] Load Page Highlights Success',
+  props<{ key: string; highlights: string[] }>()
+);
+
+export const loadPageHighlightsError = createAction(
+  '[PagesDetails/API] Load Page Highlights Error',
+  props<{ error: string }>()
 );

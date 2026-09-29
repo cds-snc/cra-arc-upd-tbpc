@@ -277,3 +277,28 @@ export const selectAccessibilityError = createSelector(
   selectPagesDetailsState,
   (state: PagesDetailsState) => state.errorAccessibility
 );
+
+export const selectPageHighlightsKey = createSelector(
+  selectPagesDetailsData,
+  selectCurrentLang,
+  (data, lang) =>
+    data?.url
+      ? `${data.url}|${data.dateRange}|${data.comparisonDateRange || ''}|${lang === 'fr-CA' ? 'fr' : 'en'}`
+      : null,
+);
+
+export const selectPageHighlights = createSelector(
+  selectPagesDetailsState,
+  selectPageHighlightsKey,
+  (state: PagesDetailsState, key) => (key ? state.pageHighlightsByKey[key] || null : null)
+);
+
+export const selectPageHighlightsLoading = createSelector(
+  selectPagesDetailsState,
+  (state: PagesDetailsState) => state.loadingPageHighlights
+);
+
+export const selectPageHighlightsError = createSelector(
+  selectPagesDetailsState,
+  (state: PagesDetailsState) => state.errorPageHighlights
+);
