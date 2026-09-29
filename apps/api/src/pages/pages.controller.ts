@@ -1,9 +1,21 @@
-import { Controller, Get, Header, Query } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post, Query } from '@nestjs/common';
+import type { PageHighlightsData } from '@dua-upd/types-common';
 import { PagesService } from './pages.service';
+
+type PageHighlightsRequest = {
+  pageData: PageHighlightsData;
+};
 
 @Controller('pages')
 export class PagesController {
   constructor(private readonly pagesService: PagesService) {}
+
+  @Post('page-highlights')
+  async getPageHighlights(@Body() request: PageHighlightsRequest) {
+    return {
+      highlights: await this.pagesService.getPageHighlights(request.pageData),
+    };
+  }
 
   @Get('home')
   @Header('Content-Type', 'application/json')

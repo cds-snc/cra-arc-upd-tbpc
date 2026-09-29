@@ -6,7 +6,11 @@ import utc from 'dayjs/plugin/utc';
 import 'dayjs/locale/en-ca';
 import 'dayjs/locale/fr-ca';
 import { type LocaleId } from '@dua-upd/upd/i18n';
-import { I18nFacade, selectDatePeriodSelection, selectUrl } from '@dua-upd/upd/state';
+import {
+  I18nFacade,
+  selectDatePeriodSelection,
+  selectUrl,
+} from '@dua-upd/upd/state';
 import { percentChange } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import type {
@@ -16,9 +20,7 @@ import type {
 } from '@dua-upd/types-common';
 import * as PagesDetailsActions from './pages-details.actions';
 import * as PagesDetailsSelectors from './pages-details.selectors';
-import type {
-  ApexAxisChartSeries,
-} from 'ng-apexcharts';
+import type { ApexAxisChartSeries } from 'ng-apexcharts';
 import {
   selectPageLang,
   selectReadabilityData,
@@ -53,8 +55,8 @@ export class PagesDetailsFacade {
   currentLang$ = this.i18n.currentLang$;
 
   currentRoute$ = this.store
-      .select(selectUrl)
-      .pipe(map((url) => url.replace(/\?.+$/, '')));
+    .select(selectUrl)
+    .pipe(map((url) => url.replace(/\?.+$/, '')));
 
   dateRangeSelected$ = this.store.select(selectDatePeriodSelection);
 
@@ -128,15 +130,17 @@ export class PagesDetailsFacade {
 
   pageTitle$ = this.pagesDetailsData$.pipe(map((data) => data?.title));
   pageUrl$ = this.pagesDetailsData$.pipe(map((data) => data?.url));
-  
-  altPageId$ = this.pagesDetailsData$.pipe(map((data) => data?.alternatePageId || 0));
+
+  altPageId$ = this.pagesDetailsData$.pipe(
+    map((data) => data?.alternatePageId || 0),
+  );
 
   pageStatus$ = this.pagesDetailsData$.pipe(
     map((data) => {
       if (data?.is404) {
         return '404';
       }
-      
+
       if (data?.isRedirect) {
         return 'Redirected';
       }
@@ -146,9 +150,10 @@ export class PagesDetailsFacade {
   );
 
   archivedStatus$ = this.pagesDetailsData$.pipe(
-    map((data)  => (data?.isArchived ? 'Archived' : null),
-    ),
+    map((data) => (data?.isArchived ? 'Archived' : null)),
   );
+
+  pageArchivedStatus$ = this.pageStatus$ || this.archivedStatus$;
 
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),
@@ -170,7 +175,7 @@ export class PagesDetailsFacade {
   pageViewsPercentChange$ = this.pagesDetailsData$.pipe(
     mapToPercentChange('views'),
   );
-  
+
   averageTimeSpent$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.average_time_spent || 0),
   );
@@ -205,10 +210,28 @@ export class PagesDetailsFacade {
 
   apexKpiFeedback$ = this.store.select(selectDyfNoPerVisitsSeries);
 
-  accessibility$ = this.store.select(PagesDetailsSelectors.selectAccessibilityData);
-  accessibilityLoading$ = this.store.select(PagesDetailsSelectors.selectAccessibilityLoading).pipe(debounceTime(500));
-  accessibilityLoaded$ = this.store.select(PagesDetailsSelectors.selectAccessibilityLoaded);
-  accessibilityError$ = this.store.select(PagesDetailsSelectors.selectAccessibilityError);
+  accessibility$ = this.store.select(
+    PagesDetailsSelectors.selectAccessibilityData,
+  );
+  accessibilityLoading$ = this.store
+    .select(PagesDetailsSelectors.selectAccessibilityLoading)
+    .pipe(debounceTime(500));
+  accessibilityLoaded$ = this.store.select(
+    PagesDetailsSelectors.selectAccessibilityLoaded,
+  );
+  accessibilityError$ = this.store.select(
+    PagesDetailsSelectors.selectAccessibilityError,
+  );
+
+  pageHighlights$ = this.store.select(
+    PagesDetailsSelectors.selectPageHighlights,
+  );
+  pageHighlightsLoading$ = this.store
+    .select(PagesDetailsSelectors.selectPageHighlightsLoading)
+    .pipe(debounceTime(500));
+  pageHighlightsError$ = this.store.select(
+    PagesDetailsSelectors.selectPageHighlightsError,
+  );
 
   pageLang$ = this.store.select(selectPageLang);
 
@@ -756,9 +779,7 @@ export class PagesDetailsFacade {
 
   error$ = this.store.select(PagesDetailsSelectors.selectPagesDetailsError);
 
-  hashesData = this.store.selectSignal(
-    PagesDetailsSelectors.selectHashesData
-  );
+  hashesData = this.store.selectSignal(PagesDetailsSelectors.selectHashesData);
 
   getHashes() {
     this.store.dispatch(PagesDetailsActions.getHashes());

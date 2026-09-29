@@ -62,6 +62,10 @@ export class PagesDetailsSummaryComponent implements OnInit {
 
   tasks$ = this.pageDetailsService.tasks$;
 
+  pageHighlights = toSignal(this.pageDetailsService.pageHighlights$);
+  pageHighlightsLoading = toSignal(this.pageDetailsService.pageHighlightsLoading$);
+  pageHighlightsError = toSignal(this.pageDetailsService.pageHighlightsError$);
+
   dateRangeLabel = toSignal(this.pageDetailsService.dateRangeLabel$);
   comparisonDateRangeLabel = toSignal(
     this.pageDetailsService.comparisonDateRangeLabel$,
