@@ -768,6 +768,8 @@
   "items": "Items",
   "feedback-report-error": "An error occurred, please try again.",
   "No feedback data was found": "No data was found for the selected item(s) in the specified date range.",
+  "data jobs complete": "data jobs complete",
+  "pending across all reports": "pending across all reports",
 
   "------TASKS----": "---------------------------TASKS TRANSLATION--------------------------------------",
   "Manage or update a My Business Account": "Manage or update a My Business Account",
