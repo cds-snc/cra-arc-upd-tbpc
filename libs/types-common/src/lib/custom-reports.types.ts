@@ -140,6 +140,7 @@ export type ReportStatus = {
   data?: Record<string, unknown>[];
   totalChildJobs?: number;
   completedChildJobs?: number;
+  totalPendingServerJobs?: number;
 };
 
 export type DimensionMetrics = { dimensionValue: string } & {

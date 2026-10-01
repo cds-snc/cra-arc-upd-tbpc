@@ -8,6 +8,8 @@ import { AppModule } from './app/app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.enableShutdownHooks(['SIGINT', 'SIGTERM']);
+
   app.use(helmet());
   
   if (process.env.COMPRESS_RESPONSES === 'true') {

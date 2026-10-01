@@ -120,6 +120,14 @@ export class CustomReportsReportComponent implements OnInit {
 
   data = computed(() => this.reportStatus()?.data || null);
 
+  completedJobs = computed(() => this.reportStatus()?.completedChildJobs || 0);
+
+  totalJobs = computed(() => this.reportStatus()?.totalChildJobs || 0);
+
+  totalPendingServerJobs = computed(
+    () => this.reportStatus()?.totalPendingServerJobs || 0,
+  );
+
   progress = computed(() => {
     const totalJobs = this.reportStatus()?.totalChildJobs;
 

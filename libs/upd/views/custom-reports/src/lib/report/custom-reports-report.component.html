@@ -24,7 +24,16 @@
       <div class="card align-middle w-100">
         <div class="card-body">
           @if (status() === 'pending' || status() === undefined) {
-            <p class="text-muted">{{ 'fetching data' | translate }}</p>
+            <p class="text-muted">
+              {{ 'fetching data' | translate }}
+            </p>
+            <p class="text-muted">
+              {{ completedJobs() }}
+              {{ 'of' | translate }} {{ totalJobs() }}
+              {{ 'data jobs complete' | translate }}
+              ({{ totalPendingServerJobs() }}
+              {{ 'pending across all reports' | translate }})
+            </p>
             <div class="w-100">
               <p-progressBar [value]="progress() || 0"></p-progressBar>
             </div>
