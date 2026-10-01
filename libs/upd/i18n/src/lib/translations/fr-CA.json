@@ -768,6 +768,8 @@
   "items": "Éléments",
   "feedback-report-error": "Une erreur s'est produite, veuillez réessayer.",
   "No feedback data was found": "Aucune donnée n'a été trouvée pour les éléments sélectionnés dans la plage de dates spécifiée.",
+  "data jobs complete": "tâches de données terminées",
+  "pending across all reports": "en cours sur l'ensemble des rapports",
   "United States": "États-Unis",
   "Albania": "Albanie",
   "Algeria": "Algérie",

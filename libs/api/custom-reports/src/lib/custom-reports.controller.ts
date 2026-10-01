@@ -44,15 +44,15 @@ export class CustomReportsController {
   ): Promise<ReportStatus> {
     const reportStatus = await this.reportsService.getStatus(id);
 
+    if (!reportStatus?.data) {
+      res.header('Cache-Control', 'no-store');
+    }
+
     if (!reportStatus) {
       return {
         status: 'error',
         message: 'report not found',
       };
-    }
-
-    if (!reportStatus.data) {
-      res.header('Cache-Control', 'no-store');
     }
 
     return 'error' in reportStatus

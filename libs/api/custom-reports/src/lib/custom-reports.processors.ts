@@ -1,16 +1,17 @@
-import { DbService } from '@dua-upd/db';
-import { ReportConfig } from '@dua-upd/types-common';
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Inject } from '@nestjs/common';
+import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import {
   createQuery,
   AA_CLIENT_TOKEN,
   AdobeAnalyticsClient,
 } from '@dua-upd/adobe-analytics';
+import { DbService } from '@dua-upd/db';
+import { minutes } from '@dua-upd/utils-common';
+import type { ReportConfig } from '@dua-upd/types-common';
 import { CustomReportsCache } from './custom-reports.cache';
 import { ChildJobMetadata } from './custom-reports.service';
 import { processResults } from './custom-reports.strategies';
-import { Inject } from '@nestjs/common';
 
 type ReportCreationMetadata = {
   id: string;
@@ -23,7 +24,12 @@ type ReportCreationMetadata = {
  * This processor has as dependencies all sub-tasks needed
  * to prepare the data for the report.
  */
-@Processor('prepareReportData')
+@Processor('prepareReportData', {
+  concurrency: 1,
+  maxStalledCount: 0,
+  lockDuration: minutes(20),
+  autorun: false,
+})
 export class PrepareReportDataProcessor extends WorkerHost {
   constructor(
     private db: DbService,
@@ -37,10 +43,6 @@ export class PrepareReportDataProcessor extends WorkerHost {
       const report = await this.db.collections.customReportsMetrics.getReport(
         job.data.config,
       );
-
-      if (report.length) {
-        await this.cache.setReport(job.data.id, report);
-      }
 
       return report;
     } catch (err) {
@@ -56,13 +58,13 @@ export class PrepareReportDataProcessor extends WorkerHost {
  * Fetches and parses data from a datasource, and writes it to the db.
  */
 @Processor('fetchAndProcessReportData', {
-  concurrency: 1000,
+  concurrency: 20,
   maxStalledCount: 0,
-  lockDuration: 600 * 1000,
+  lockDuration: minutes(10),
   skipStalledCheck: true,
   limiter: {
-    max: 20,
-    duration: 200,
+    max: 10,
+    duration: 500,
   },
 })
 export class FetchAndProcessDataProcessor extends WorkerHost {
@@ -101,6 +103,15 @@ export class FetchAndProcessDataProcessor extends WorkerHost {
       console.error((<Error>err).stack);
 
       throw err;
+    }
+  }
+
+  @OnWorkerEvent('lockRenewalFailed')
+  onLockRenewalFailed(jobIds: string[]) {
+    console.error('Lock renewal failed for jobs:', jobIds);
+
+    for (const jobId of jobIds) {
+      this.worker.cancelJob(jobId, 'Lock renewal failed for job');
     }
   }
 }

@@ -56,10 +56,10 @@ export class CustomReportsService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     try {
-      await this.reportsQueue.obliterate();
+      await this.reportsQueue.obliterate({ force: true });
 
       try {
-        await this.childJobsQueue.obliterate();
+        await this.childJobsQueue.obliterate({ force: true });
       } catch (err) {
         console.error('An error occurred while obliterating child job queues:');
         console.error((<Error>err).message);
@@ -77,26 +77,31 @@ export class CustomReportsService implements OnApplicationBootstrap {
         {
           jobId: id,
           status: 'pending',
-        } as ChildJobStatus,
+        },
       ]),
     );
 
     const childJobEvents$ =
       this.childQueueEvents.getReportChildrenObservable(childJobIds);
 
+    const { active, waiting } = await this.childJobsQueue.getJobCounts(
+      'active',
+      'waiting',
+    );
+
     const childJobProgress$ = childJobEvents$.pipe(
-      map((event) => {
-        childJobStatuses[event.jobId] = event;
+      map((event: ChildJobStatus) => {
+        childJobStatuses[event.jobId] = event satisfies ChildJobStatus;
 
         const completedChildJobs = Object.entries(childJobStatuses).filter(
           ([, job]) => job.status === 'complete',
         ).length;
 
-        const totalChildJobs = Object.keys(childJobStatuses).length;
-
         return {
           completedChildJobs,
-          totalChildJobs,
+          totalChildJobs: childJobIds.length,
+          totalPendingServerJobs:
+            event.totalPendingServerJobs ?? active + waiting,
         };
       }),
     );
@@ -124,31 +129,27 @@ export class CustomReportsService implements OnApplicationBootstrap {
     return this.observablesRegistry.get(reportId);
   }
 
+  clearStatusObservable(reportId: string) {
+    this.observablesRegistry.delete(reportId);
+  }
+
   async getStatus(reportId: string) {
     const reportStatus$ = this.getStatusObservable(reportId);
+
+    if (!reportStatus$) {
+      await this.fetchOrPrepareReport(reportId);
+      const newReportStatus$ = this.getStatusObservable(reportId);
+      return (
+        newReportStatus$ &&
+        (await lastValueFrom(newReportStatus$.pipe(take(1))))
+      );
+    }
 
     return reportStatus$ && (await lastValueFrom(reportStatus$.pipe(take(1))));
   }
 
-  // are these necessary? duplicate jobs are ignored
   async findExistingReportJobs(reportId: string) {
     return await this.reportsQueue.getJob(reportId);
-  }
-
-  async filterExistingChildJobs(childJobIds: string[]) {
-    const existingJobs = (
-      await this.childJobsQueue.getJobs([
-        'active',
-        'delayed',
-        'paused',
-        'wait',
-        'waiting',
-      ])
-    ).map((job) => job.id);
-
-    const existingJobsSet = new Set(existingJobs);
-
-    return childJobIds.filter((id) => !existingJobsSet.has(id));
   }
 
   async create(config: ReportConfig): Promise<string> {
@@ -198,13 +199,18 @@ export class CustomReportsService implements OnApplicationBootstrap {
       throw Error('Report not found');
     }
 
+    const existingJob = await this.findExistingReportJobs(reportId);
+
+    if (await existingJob?.isFailed()) {
+      this.clearStatusObservable(reportId);
+      await this.reportsQueue.remove(reportId, { removeChildren: true });
+    }
+
     // decompose config into queries and data points and skip existing data points
     const queriesWithDataPoints = await this.filterExistingData(
       config,
       decomposeConfig(config),
     );
-
-    // logJson(queriesWithDataPoints);
 
     // if queriesWithDataPoints is empty, we already have all the data
     // so we can assemble the report and return it
@@ -257,17 +263,35 @@ export class CustomReportsService implements OnApplicationBootstrap {
               type: 'exponential',
               delay: 510,
             },
-            removeOnComplete: {
-              age: 1000 * 60 * 30, // 30 minutes
-            },
-            removeOnFail: {
-              age: 1000 * 60 * 30, // 30 minutes
-            },
             failParentOnFailure: true,
           },
         };
       },
     );
+
+    // clear existing parent job if it exists, otherwise it may become "complete"
+    // when we remove the child jobs
+    const existingParentJob = await this.reportsQueue.getJob(reportId);
+
+    if (existingParentJob) {
+      console.log('removing existing parent job: ', reportId);
+      await existingParentJob.remove({ removeChildren: true });
+    }
+
+    // clear existing failed or potentially stalled jobs, or they won't be retried
+    for (const child of children) {
+      const id = child.name;
+
+      const existingChildJob = await this.childJobsQueue.getJob(id);
+
+      if (
+        (await existingChildJob?.isFailed()) ||
+        (await existingChildJob?.isWaiting())
+      ) {
+        console.log('removing failed or stalled child job: ', id);
+        await existingChildJob?.remove();
+      }
+    }
 
     await this.reportFlowProducer.add({
       name: reportId,
@@ -280,12 +304,6 @@ export class CustomReportsService implements OnApplicationBootstrap {
       opts: {
         jobId: reportId,
         attempts: 3,
-        removeOnComplete: {
-          age: 1000 * 60 * 30, // 30 minutes
-        },
-        removeOnFail: {
-          age: 1000 * 60 * 30, // 30 minutes
-        },
         backoff: {
           type: 'fixed',
           delay: 2000,
@@ -299,8 +317,9 @@ export class CustomReportsService implements OnApplicationBootstrap {
       children.map((child) => child.data.hash),
     );
 
-    // just top-level for now, will derive a better status later
     this.observablesRegistry.set(reportId, reportStatus$);
+
+    return await Promise.resolve();
   }
 
   async filterExistingData(
@@ -317,7 +336,7 @@ export class CustomReportsService implements OnApplicationBootstrap {
     // use dates+url as a key to look up existing data points
     const generateKey = (doc: Partial<CustomReportsMetrics>) => {
       const dates = `${doc.startDate?.toISOString() || ''}${
-        doc.endDate?.toISOString() || ''
+        config.granularity === 'day' ? '' : doc.endDate?.toISOString() || ''
       }`;
 
       const url = doc['url'] || '';
