@@ -28,7 +28,7 @@ type ReportCreationMetadata = {
   concurrency: 1,
   maxStalledCount: 0,
   lockDuration: minutes(20),
-  autorun: false,
+  autorun: true,
 })
 export class PrepareReportDataProcessor extends WorkerHost {
   constructor(
