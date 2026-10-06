@@ -3,7 +3,7 @@
 ARG USER=node
 
 ## Stage for pinned node image
-FROM node:24.13.1-trixie-slim AS node-image
+FROM node:24.21.0-trixie-slim AS node-image
 
 
 ## Build stage for node base
