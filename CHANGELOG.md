@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.4.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.3...v4.4.4) (2026-10-06)
+
+
+### Features
+
+* Add live job counts to custom reports frontend ([c96f5ad](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c96f5ad97e3deb5de83fbb3a567471e4f53e6e33))
+
+
+### Bug Fixes
+
+* Reworked custom reports to avoid bad states causing a stuck process ([c96f5ad](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/c96f5ad97e3deb5de83fbb3a567471e4f53e6e33))
+* Set `autorun: true` on top-level custom reports processor ([b952f27](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/b952f27688fb2aa5922d33c53f75c789eed67c9f))
+
+
+### Miscellaneous Chores
+
+* Bump Node.js version to 24.21.0 across workflows and Dockerfile ([16eade8](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/16eade8bea1e930e4b4ccb970fc20206e211c315))
+
 ## [4.4.3](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.2...v4.4.3) (2026-09-24)
 
 
