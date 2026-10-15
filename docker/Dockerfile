@@ -133,6 +133,15 @@ WORKDIR /app
 COPY --chown=1000:1000 --from=api-deps --link /builder/node_modules/ ./node_modules/
 COPY --chown=1000:1000 --from=api-build --link /builder/dist/apps/api/ ./
 
+# Accessibility testing drives headless Chromium. Browsers must go to a shared
+# path rather than Playwright's default per-home cache, which would install them
+# under root's home and leave them unreadable to $USER at runtime.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  npx playwright install --with-deps chromium \
+  && chown -R 1000:1000 /ms-playwright
+
 EXPOSE 9000
 
 USER $USER
