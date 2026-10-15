@@ -20,6 +20,23 @@ export type AccessibilityTestResult = {
   testedAt: Date;
 };
 
+export type AccessibilityImpact = 'critical' | 'serious' | 'moderate' | 'minor';
+
+export type AccessibilityConformanceLevel = 'A' | 'AA' | 'AAA' | 'best-practice';
+
+export type AccessibilityCheckResult = {
+  id: string;
+  data?: unknown;
+  checkType: 'any' | 'all' | 'none';
+};
+
+export type AccessibilityAuditNode = {
+  html: string;
+  target: string[];
+  failureSummary?: string;
+  checkResults?: AccessibilityCheckResult[];
+};
+
 export type AccessibilityAudit = {
   id: string;
   title: string;
@@ -30,7 +47,12 @@ export type AccessibilityAudit = {
   snippet?: string;
   helpText?: string;
   selector?: string;
-  impact?: string;
+  impact?: AccessibilityImpact;
   tags?: string[];
   helpUrl?: string;
+  nodes?: AccessibilityAuditNode[];
+  conformanceLevel?: AccessibilityConformanceLevel;
+  wcagCriteria?: string[];
+  howToFix?: string;
+  affectedCount?: number;
 };

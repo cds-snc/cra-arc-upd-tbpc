@@ -40,7 +40,7 @@ import type { InternalSearchTerm } from '@dua-upd/types-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
 import { FlowService } from '@dua-upd/api/flow';
-import { PageSpeedInsightsService } from '@dua-upd/external-data';
+import { AxeCoreService } from '@dua-upd/external-data';
 import { omit } from 'rambdax';
 
 @Injectable()
@@ -58,7 +58,7 @@ export class PagesService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private feedbackService: FeedbackService,
     private flowService: FlowService,
-    private pageSpeedInsightsService: PageSpeedInsightsService,
+    private axeCoreService: AxeCoreService,
   ) {}
 
   async listPages({ projection, populate }): Promise<Page[]> {
@@ -602,17 +602,13 @@ export class PagesService {
 
   async runAccessibilityTest(url: string) {
     try {
-      // Ensure URL has https:// protocol for PageSpeed Insights API
       const fullUrl =
         url.startsWith('http://') || url.startsWith('https://')
           ? url
           : `https://${url}`;
 
-      // Run desktop tests for both locales (English and French)
       const results =
-        await this.pageSpeedInsightsService.runAccessibilityTestForBothLocales(
-          fullUrl,
-        );
+        await this.axeCoreService.runAccessibilityTestForBothLocales(fullUrl);
 
       return {
         en: {
@@ -629,63 +625,64 @@ export class PagesService {
         },
       };
     } catch (error) {
-      // Map error types to translation keys
-      let errorKey = 'accessibility-error-generic';
-
-      // Check HTTP status codes first (from axios error.response)
-      if (error.response?.status === 429) {
-        errorKey = 'accessibility-error-rate-limit';
-      } else if (error.response?.status === 500) {
-        errorKey = 'accessibility-error-server-error';
-      } else if (error.response?.status === 503) {
-        errorKey = 'accessibility-error-service-unavailable';
-      } else if (error.response?.status === 504) {
-        errorKey = 'accessibility-error-gateway-timeout';
-      } else if (error.response?.status === 502) {
-        errorKey = 'accessibility-error-bad-gateway';
-      }
-      // Check error codes for network/socket issues
-      else if (
-        error.code === 'ECONNRESET' ||
-        error.message?.includes('socket hang up') ||
-        error.message?.includes('ECONNRESET')
-      ) {
-        errorKey = 'accessibility-error-connection-reset';
-      } else if (
-        error.code === 'ETIMEDOUT' ||
-        error.message?.includes('timeout') ||
-        error.message?.includes('ETIMEDOUT')
-      ) {
-        errorKey = 'accessibility-error-timeout';
-      } else if (
-        error.code === 'ENOTFOUND' ||
-        error.message?.includes('network') ||
-        error.message?.includes('ENOTFOUND')
-      ) {
-        errorKey = 'accessibility-error-network';
-      }
-      // Check error message strings as fallback
-      else if (
-        error.message?.includes('429') ||
-        error.message?.includes('rate limit')
-      ) {
-        errorKey = 'accessibility-error-rate-limit';
-      } else if (
-        error.message?.includes('Invalid URL') ||
-        error.message?.includes('invalid url')
-      ) {
-        errorKey = 'accessibility-error-invalid-url';
-      }
-
       const errorResponse = {
         success: false,
-        error: errorKey,
+        error: this.toAccessibilityErrorKey(error as Error),
       };
+
       return {
         en: errorResponse,
         fr: errorResponse,
       };
     }
+  }
+
+  private toAccessibilityErrorKey(error: Error): string {
+    const message = error?.message ?? '';
+
+    const statusKeys: Record<string, string> = {
+      '429': 'accessibility-error-rate-limit',
+      '502': 'accessibility-error-bad-gateway',
+      '503': 'accessibility-error-service-unavailable',
+      '504': 'accessibility-error-gateway-timeout',
+    };
+
+    const status = /Navigation failed with status (\d+)/.exec(message)?.[1];
+
+    if (status) {
+      return (
+        statusKeys[status] ||
+        (status.startsWith('5')
+          ? 'accessibility-error-server-error'
+          : 'accessibility-error-test-failed')
+      );
+    }
+
+    const messageKeys: [RegExp, string][] = [
+      // a missing browser binary is a deployment problem, not a problem with the page
+      [
+        /Executable doesn't exist|browserType\.launch/i,
+        'accessibility-error-server-error',
+      ],
+      [
+        /ERR_CONNECTION_RESET|socket hang up/i,
+        'accessibility-error-connection-reset',
+      ],
+      [
+        /ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_CONNECTION_(REFUSED|FAILED|CLOSED)/i,
+        'accessibility-error-network',
+      ],
+      [
+        /invalid URL|Cannot navigate|restricted to canada\.ca|Unsupported protocol/i,
+        'accessibility-error-invalid-url',
+      ],
+      [/Timeout|timed out|exceeded/i, 'accessibility-error-timeout'],
+    ];
+
+    return (
+      messageKeys.find(([pattern]) => pattern.test(message))?.[1] ||
+      'accessibility-error-generic'
+    );
   }
 }
 
