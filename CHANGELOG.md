@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.4.5](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.4...v4.4.5) (2026-10-21)
+
+
+### Bug Fixes
+
+* CVEs and `trustedDependencies` ([fd693c6](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/fd693c63ce0726bbfd2212f456e3f6ecafeb2d91))
+* emSign vuln: Update uv version in Dockerfile; Override `certifi` version in pyproject.toml; Update node versions for good measure ([03633d3](https://github.com/cds-snc/cra-arc-upd-tbpc/commit/03633d386da7f6c16de54f99c7535e8c6bb3d3b2))
+
 ## [4.4.4](https://github.com/cds-snc/cra-arc-upd-tbpc/compare/v4.4.3...v4.4.4) (2026-10-06)
 
 
