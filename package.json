@@ -142,7 +142,6 @@
     "stopwords-en": "^0.3.0",
     "stopwords-fr": "^0.3.0",
     "stream-json": "^1.9.1",
-    "tar": "^7.5.9",
     "text-readability": "1.1.1",
     "tslib": "^2.8.1",
     "xlsx": "^0.18.5",
@@ -229,11 +228,16 @@
     "webpack-bundle-analyzer": "5.2.0",
     "webpack-merge": "6.0.1"
   },
+  "trustedDependencies": [
+    "@mongodb-js/zstd",
+    "@swc/core"
+  ],
   "overrides": {
     "@duckdb/node-api": "$@duckdb/node-api",
-    "brace-expansion": "^5.0.5",
+    "brace-expansion": "^5.0.12",
     "chokidar": "^5.0.0",
     "follow-redirects": "^1.16.0",
+    "ip-address": "^10.7.4",
     "picomatch": "^4.0.4",
     "uuid": "^14.0.0",
     "yaml": "^2.8.3"
