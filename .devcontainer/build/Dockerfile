@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:4.0.10-24-trixie@sha256:e66ed141c99e4190bf9dbf56db59f46f98cf172a341dfdd601ae6a78b23abbb3
+FROM mcr.microsoft.com/devcontainers/javascript-node:5.2.3-24-trixie@sha256:7e6eff9f0cac7f1d4d1836a7bd2a9011d8ea244fceb155261705be483218ea18
 
 # Install MongoDB command line tools - though mongo-database-tools not available on arm64
 ARG MONGO_TOOLS_VERSION=8.0
@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && curl -sSL "https://www.mongodb.org/static/pgp/server-${MONGO_TOOLS_VERSION}.asc" | gpg --dearmor > /usr/share/keyrings/mongodb-archive-keyring.gpg \
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/mongodb-archive-keyring.gpg] http://repo.mongodb.org/apt/debian ${MONGO_TOOLS_VERSION_CODENAME}/mongodb-org/${MONGO_TOOLS_VERSION} main" \
     | tee /etc/apt/sources.list.d/mongodb-org-${MONGO_TOOLS_VERSION}.list \
-  && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+  && apt-get update && apt-get upgrade -y && export DEBIAN_FRONTEND=noninteractive \
   && apt-get install -y --no-install-recommends tzdata mongodb-mongosh \
   && if [ "$(dpkg --print-architecture)" = "amd64" ]; then apt-get install -y mongodb-database-tools; fi
 
