@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 ## Build stage for python builder
 FROM debian:trixie-slim AS python-builder
 
-COPY --from=ghcr.io/astral-sh/uv:0.13.4-trixie-slim@sha256:2d5298090a57b670458ccae215742352f753f3d583db23f3cd35081d26859adab /uv /uvx /usr/local/bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.4-trixie-slim@sha256:2d5298090a57b670458ccae215742352f753f3d583db23f3cd35081d26859ada /uv /uvx /usr/local/bin/
 
 WORKDIR /builder
 ARG USER=node
