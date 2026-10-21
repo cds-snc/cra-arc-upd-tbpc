@@ -3,7 +3,7 @@
 ARG USER=node
 
 ## Stage for pinned node image
-FROM node:24.21.0-trixie-slim AS node-image
+FROM node:24.22.1-trixie-slim AS node-image
 
 
 ## Build stage for node base
@@ -47,7 +47,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 
 ## Build stage for python builder
-FROM ghcr.io/astral-sh/uv:0.10.4-trixie-slim@sha256:b852203fd7831954c58bfa1fec1166295adcfcfa50f4de7fdd0e684c8bd784eb AS python-builder
+FROM debian:trixie-slim AS python-builder
+
+COPY --from=ghcr.io/astral-sh/uv:0.13.4-trixie-slim@sha256:2d5298090a57b670458ccae215742352f753f3d583db23f3cd35081d26859adab /uv /uvx /usr/local/bin/
+
 WORKDIR /builder
 ARG USER=node
 
