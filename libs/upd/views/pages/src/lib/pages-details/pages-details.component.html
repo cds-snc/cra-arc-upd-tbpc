@@ -65,6 +65,28 @@
       </span>
     }
   </div>
+  <div class="page_header mt-2 px-1">
+    @if (basePath === 'pages/portal') {
+      @if (pageScreenId(); as screenId) {
+        <div>
+          <strong>{{ 'Screen ID' | translate }}</strong
+          >: {{ screenId }}
+        </div>
+      }
+      @if (pageLang(); as language) {
+        <div>
+          <strong>{{ 'Page Language' | translate }}</strong
+          >: {{ language | translate }}
+        </div>
+      }
+    }
+    @if (pageType(); as type) {
+      <div>
+        <strong>{{ 'Type' | translate }}</strong
+        >: {{ getType() }}
+      </div>
+    }
+  </div>
   <upd-project-header
     *ngIf="showProjectHeader"
     [data]="projectHeader()"

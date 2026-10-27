@@ -36,6 +36,8 @@ export class PagesDetailsComponent {
   loading$ = this.pageDetailsService.loading$;
   showUrl = true;
   showAlert = false;
+  pageScreenId = toSignal(this.pageDetailsService.pageScreenId$);
+  pageType = toSignal(this.pageDetailsService.pageType$);
   altPageId = toSignal(this.pageDetailsService.altPageId$);
   currentLang = this.i18n.currentLang;
   langLink = computed(() => (this.currentLang() === EN_CA ? 'en' : 'fr'));
@@ -56,6 +58,14 @@ export class PagesDetailsComponent {
     };
   
     return translations[langLink]?.[pageLang];
+  });
+  getType = computed(() => {
+    const pageType = this.pageType();
+    const currentLang = this.currentLang();
+
+    return pageType
+      ? this.i18n.service.translateLang(pageType, currentLang)
+      : null;
   });
 
   currentRoute$ = this.pageDetailsService.currentRoute$;

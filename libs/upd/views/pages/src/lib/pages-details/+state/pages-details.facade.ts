@@ -125,6 +125,12 @@ export class PagesDetailsFacade {
 
   pageTitle$ = this.pagesDetailsData$.pipe(map((data) => data?.title));
   pageUrl$ = this.pagesDetailsData$.pipe(map((data) => data?.url));
+  pageScreenId$ = this.pagesDetailsData$.pipe(
+    map((data) => (data as { screen_id?: string })?.screen_id),
+  );
+  pageType$ = this.pagesDetailsData$.pipe(
+    map((data) => (data as { type?: string })?.type),
+  );
   
   altPageId$ = this.pagesDetailsData$.pipe(map((data) => data?.alternatePageId || null));
 
