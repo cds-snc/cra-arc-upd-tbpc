@@ -21,10 +21,6 @@ export interface PagesDetailsState {
   loadedAccessibility: boolean;
   loadingAccessibility: boolean;
   errorAccessibility?: string | null;
-  pageHighlightsByKey: Record<string, string[]>;
-  loadedPageHighlights: boolean;
-  loadingPageHighlights: boolean;
-  errorPageHighlights?: string | null;
 }
 
 export interface PagesDetailsPartialState {
@@ -62,10 +58,6 @@ export const pagesDetailsInitialState: PagesDetailsState = {
   loadedAccessibility: false,
   loadingAccessibility: false,
   errorAccessibility: null,
-  pageHighlightsByKey: {},
-  loadedPageHighlights: false,
-  loadingPageHighlights: false,
-  errorPageHighlights: null,
 };
 
 // Factory so a fresh reducer bound to its own actions can be created for
@@ -211,37 +203,6 @@ export function createPagesDetailsReducer(actions: PagesDetailsActionsBundle) {
         loadedAccessibility: false,
         loadingAccessibility: false,
         errorAccessibility: null,
-      }),
-    ),
-    on(
-      actions.loadPageHighlightsInit,
-      (state): PagesDetailsState => ({
-        ...state,
-        loadingPageHighlights: true,
-        loadedPageHighlights: false,
-        errorPageHighlights: null,
-      }),
-    ),
-    on(
-      actions.loadPageHighlightsSuccess,
-      (state, { key, highlights }): PagesDetailsState => ({
-        ...state,
-        pageHighlightsByKey: {
-          ...state.pageHighlightsByKey,
-          [key]: highlights,
-        },
-        loadingPageHighlights: false,
-        loadedPageHighlights: true,
-        errorPageHighlights: null,
-      }),
-    ),
-    on(
-      actions.loadPageHighlightsError,
-      (state, { error }): PagesDetailsState => ({
-        ...state,
-        loadingPageHighlights: false,
-        loadedPageHighlights: true,
-        errorPageHighlights: error,
       }),
     ),
   );

@@ -134,6 +134,7 @@ export class PagesDetailsFacade {
         return '404';
       }
       
+      
       if (data?.isRedirect) {
         return 'Redirected';
       }
@@ -169,6 +170,7 @@ export class PagesDetailsFacade {
   pageViewsPercentChange$ = this.pagesDetailsData$.pipe(
     mapToPercentChange('views'),
   );
+  
   
   averageTimeSpent$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.average_time_spent || 0),
@@ -208,12 +210,6 @@ export class PagesDetailsFacade {
   accessibilityLoading$ = this.store.select(this.selectors.selectAccessibilityLoading).pipe(debounceTime(500));
   accessibilityLoaded$ = this.store.select(this.selectors.selectAccessibilityLoaded);
   accessibilityError$ = this.store.select(this.selectors.selectAccessibilityError);
-
-   pageHighlights$ = this.store.select(this.selectors.selectPageHighlights);
-  pageHighlightsLoading$ = this.store
-    .select(this.selectors.selectPageHighlightsLoading)
-    .pipe(debounceTime(500));
-  pageHighlightsError$ = this.store.select(this.selectors.selectPageHighlightsError);
 
   pageLang$ = this.store.select(this.selectors.selectPageLang);
 

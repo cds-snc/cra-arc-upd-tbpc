@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { PageDetailsData, PageHighlightsData } from '@dua-upd/types-common';
+import { PageDetailsData } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
 // Factory so the same action set can be instantiated multiple times (e.g. for
@@ -49,21 +49,6 @@ export function createPagesDetailsActions(prefix = 'PagesDetails') {
     clearAccessibilityCache: createAction(
       `[${prefix}] Clear Accessibility Cache`,
     ),
-
-    loadPageHighlightsInit: createAction(
-      `[${prefix}/API] Load Page Highlights Init`,
-      props<{ key: string; pageData: PageHighlightsData }>(),
-    ),
-
-    loadPageHighlightsSuccess: createAction(
-      `[${prefix}/API] Load Page Highlights Success`,
-      props<{ key: string; highlights: string[] }>(),
-    ),
-
-    loadPageHighlightsError: createAction(
-      `[${prefix}/API] Load Page Highlights Error`,
-      props<{ error: string }>(),
-    ),
   };
 }
 
@@ -84,7 +69,4 @@ export const {
   loadAccessibilitySuccess,
   loadAccessibilityError,
   clearAccessibilityCache,
-  loadPageHighlightsInit,
-  loadPageHighlightsSuccess,
-  loadPageHighlightsError,
 } = defaultPagesDetailsActions;

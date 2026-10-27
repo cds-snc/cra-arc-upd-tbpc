@@ -8,8 +8,6 @@ import { SearchAnalyticsClient } from './google-search-console';
 import { PageSpeedInsightsService } from './pagespeed-insights/pagespeed-insights.service';
 import { PageSpeedInsightsClient } from './pagespeed-insights/pagespeed-insights.client';
 import { ConfigService } from '@nestjs/config';
-import { OpenRouterClient } from './openrouter/openrouter.client';
-import { OpenRouterService } from './openrouter/openrouter.service';
 
 @Module({
   imports: [BlobStorageModule],
@@ -18,7 +16,6 @@ import { OpenRouterService } from './openrouter/openrouter.service';
     BlobProxyService,
     GoogleSearchConsoleService,
     PageSpeedInsightsService,
-    OpenRouterService,
     ConsoleLogger,
     {
       provide: AdobeAnalyticsClient.name,
@@ -34,11 +31,6 @@ import { OpenRouterService } from './openrouter/openrouter.service';
       useFactory: () => new PageSpeedInsightsClient(),
       inject: [ConfigService],
     },
-    {
-      provide: OpenRouterClient.name,
-      useFactory: () => new OpenRouterClient(),
-      inject: [ConfigService],
-    },
   ],
   exports: [
     AdobeAnalyticsService,
@@ -48,8 +40,6 @@ import { OpenRouterService } from './openrouter/openrouter.service';
     SearchAnalyticsClient.name,
     PageSpeedInsightsService,
     PageSpeedInsightsClient.name,
-    OpenRouterService,
-    OpenRouterClient.name,
   ],
 })
 export class ExternalDataModule {}

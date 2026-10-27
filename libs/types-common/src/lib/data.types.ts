@@ -179,20 +179,6 @@ export interface PageDetailsData extends EntityDetailsData<PageAggregatedData> {
   alternatePageId: string;
 }
 
-export type PageHighlightsData = Pick<
-  PageDetailsData,
-  | 'title'
-  | 'url'
-  | 'dateRange'
-  | 'comparisonDateRange'
-  | 'dateRangeData'
-  | 'comparisonDateRangeData'
-  | 'topSearchTermsIncrease'
-  | 'topSearchTermsDecrease'
-> & {
-  language: 'en' | 'fr';
-};
-
 export interface OverviewAggregatedData {
   visitors: number;
   visits: number;

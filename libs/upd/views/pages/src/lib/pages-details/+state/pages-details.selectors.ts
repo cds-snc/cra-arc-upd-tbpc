@@ -280,32 +280,6 @@ export function createPagesDetailsSelectors(featureKey: string) {
     (state: PagesDetailsState) => state.errorAccessibility,
   );
 
-  const selectPageHighlightsKey = createSelector(
-    selectPagesDetailsData,
-    selectCurrentLang,
-    (data, lang) =>
-      data?.url
-        ? `${data.url}|${data.dateRange}|${data.comparisonDateRange || ''}|${lang === 'fr-CA' ? 'fr' : 'en'}`
-        : null,
-  );
-
-  const selectPageHighlights = createSelector(
-    selectPagesDetailsState,
-    selectPageHighlightsKey,
-    (state: PagesDetailsState, key) =>
-      key ? state.pageHighlightsByKey[key] || null : null,
-  );
-
-  const selectPageHighlightsLoading = createSelector(
-    selectPagesDetailsState,
-    (state: PagesDetailsState) => state.loadingPageHighlights,
-  );
-
-  const selectPageHighlightsError = createSelector(
-    selectPagesDetailsState,
-    (state: PagesDetailsState) => state.errorPageHighlights,
-  );
-
   return {
     selectPagesDetailsState,
     selectPagesDetailsLoaded,
@@ -338,10 +312,6 @@ export function createPagesDetailsSelectors(featureKey: string) {
     selectAccessibilityLoaded,
     selectAccessibilityLoading,
     selectAccessibilityError,
-    selectPageHighlightsKey,
-    selectPageHighlights,
-    selectPageHighlightsLoading,
-    selectPageHighlightsError,
   };
 }
 
@@ -381,8 +351,4 @@ export const {
   selectAccessibilityLoaded,
   selectAccessibilityLoading,
   selectAccessibilityError,
-  selectPageHighlightsKey,
-  selectPageHighlights,
-  selectPageHighlightsLoading,
-  selectPageHighlightsError,
 } = defaultPagesDetailsSelectors;

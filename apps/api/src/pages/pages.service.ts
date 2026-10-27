@@ -21,7 +21,6 @@ import type {
   GscSearchTermMetrics,
   PageAggregatedData,
   PageDetailsData,
-  PageHighlightsData,
   PagesHomeData,
   PagesHomeAggregatedData,
   ActivityMapMetrics,
@@ -41,10 +40,7 @@ import type { InternalSearchTerm } from '@dua-upd/types-common';
 import { FeedbackService } from '@dua-upd/api/feedback';
 import { compressString, decompressString } from '@dua-upd/node-utils';
 import { FlowService } from '@dua-upd/api/flow';
-import {
-  OpenRouterService,
-  PageSpeedInsightsService,
-} from '@dua-upd/external-data';
+import { PageSpeedInsightsService } from '@dua-upd/external-data';
 import { omit } from 'rambdax';
 
 @Injectable()
@@ -63,16 +59,7 @@ export class PagesService {
     private feedbackService: FeedbackService,
     private flowService: FlowService,
     private pageSpeedInsightsService: PageSpeedInsightsService,
-    private openRouterService: OpenRouterService,
   ) {}
-
-  async getPageHighlights(pageData: PageHighlightsData): Promise<string[]> {
-    if (pageData === undefined || pageData === null) {
-      throw new Error('pageData is required.');
-    }
-
-    return this.openRouterService.getPageHighlights(pageData);
-  }
 
   async listPages({ projection, populate }): Promise<Page[]> {
     let query = this.pageModel.find({}, projection);
