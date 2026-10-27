@@ -21,8 +21,8 @@ import {
   createOverallMetricsQuery,
   createPageMetricsQuery,
   createPortalPageMetricsQuery,
-  createSecurePortalsQuery,
   PageMetricsQueryOptions,
+  PortalIdDimension,
 } from './';
 
 dayjs.extend(utc);
@@ -49,6 +49,13 @@ export type PortalPagesResult = {
 export type ActivityMapResult = {
   activity_map: ActivityMapMetrics[];
   itemId: string;
+};
+
+export type PortalPageResult = {
+  date: Date;
+  title: string;
+  url: string;
+  [metric: string]: string | number | Date;
 };
 
 @Injectable()
@@ -163,6 +170,7 @@ export class AdobeAnalyticsService {
     lang: 'en' | 'fr',
     options?: {
       onComplete?: (results: PortalPagesResult[]) => Promise<void>;
+      idDimension?: PortalIdDimension;
     },
   ) {
     dateRange = {
@@ -175,6 +183,7 @@ export class AdobeAnalyticsService {
       (dateRange) =>
         createPortalPageMetricsQuery(dateRange, {
           lang,
+          idDimension: options?.idDimension,
         }),
       {
         pre: (dateRange) =>
@@ -192,28 +201,30 @@ export class AdobeAnalyticsService {
   async getPortalScreenItemIds(
     dateRange: DateRange<string>,
     lang: 'en' | 'fr',
+    idDimension?: PortalIdDimension,
   ) {
     return await this.client.getPortalScreenItemIds(
       {
         start: toQueryFormat(dateRange.start),
         end: toQueryFormat(dateRange.end),
       },
-      { lang },
+      { lang, idDimension },
     );
   }
 
-  async getPortalMetrics(
+  async getPortalPageTitle(
     dateRange: DateRange<string>,
     itemIds: string[],
     lang: 'en' | 'fr',
+    idDimension?: PortalIdDimension,
   ) {
-    return await this.client.getOverallPortalMetrics(
+    return await this.client.getPortalPageTitle(
       {
         start: toQueryFormat(dateRange.start),
         end: toQueryFormat(dateRange.end),
       },
       itemIds,
-      { lang },
+      { lang, idDimension },
     );
   }
 
@@ -231,7 +242,6 @@ export class AdobeAnalyticsService {
       { lang },
     );
   }
-  
 
   async getPageSearchTerms(
     dateRange: DateRange<string>,
@@ -310,6 +320,7 @@ export class AdobeAnalyticsService {
 
     return (await Promise.all(queryPromises)).flat();
   }
+}
 
 export function toQueryFormat(date: string | Date): string {
   if (typeof date === 'string') {

@@ -40,9 +40,6 @@
         "./libs/upd/views/custom-reports/src/index.ts"
       ],
       "@dua-upd/upd/views/overview": ["./libs/upd/views/overview/src/index.ts"],
-      "@dua-upd/upd/views/portal-pages": [
-        "./libs/upd/views/portal-pages/src/index.ts"
-      ],
       "@dua-upd/upd/views/pages": ["./libs/upd/views/pages/src/index.ts"],
       "@dua-upd/upd/views/projects": ["./libs/upd/views/projects/src/index.ts"],
       "@dua-upd/upd/views/reports": ["./libs/upd/views/reports/src/index.ts"],

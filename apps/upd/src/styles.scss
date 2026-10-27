@@ -142,9 +142,95 @@
   border-radius: 10px;
 }
 
+.bg-individuals {
+  background-color: #edf8ff;
+  color: #17628f;
+  border: 1px solid #b9e2fa;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-business {
+  background-color: #e4f3f1;
+  color: #15756d;
+  border: 1px solid #b3ddd8;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-represent-client {
+  background-color: #fef5df;
+  color: #806000;
+  border: 1px solid #f0d68b;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-trusts {
+  background-color: #dffaf2;
+  color: #00674e;
+  border: 1px solid #a3e7d3;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-registered-plans {
+  background-color: #fceddf;
+  color: #a64a00;
+  border: 1px solid #f3c49b;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-non-resident {
+  background-color: #eae2f3;
+  color: #602e9c;
+  border: 1px solid #cbbbe0;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-charities {
+  background-color: #d8eaff;
+  color: #0b4f91;
+  border: 1px solid #9cc9f3;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-applications {
+  background-color: #f8e4f1;
+  color: #962767;
+  border: 1px solid #e8b5d4;
+  border-radius: 10px;
+  white-space: normal;
+}
+
+.bg-ams-cms {
+  background-color: #dbe3f2;
+  color: #234b82;
+  border: 1px solid #afc1df;
+  border-radius: 10px;
+  white-space: normal;
+}
+
 .bg-archived {
   background-color: #eaa30a;
   color: #262928;
+}
+
+.bg-english {
+  background-color: #dbe7f5;
+  color: #244a73;
+  border: 1px solid #8fa9c5;
+  border-radius: 10px;
+}
+
+.bg-french {
+  background-color: #fff0d9;
+  color: #8a4b08;
+  border: 1px solid #ddb278;
+  border-radius: 10px;
 }
 
 .p-datatable {
