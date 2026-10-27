@@ -38,7 +38,8 @@ import {
   type FeedbackModel,
   type PageModel,
   PortalPages,
-  PortalPagesMetrics
+  PortalPagesMetrics,
+  type PortalPagesMetricsModel
 } from './db.schemas';
 import {
   arrayToDictionary,
@@ -165,7 +166,7 @@ export class DbService implements OnApplicationBootstrap, OnApplicationShutdown 
     @InjectModel(PortalPages.name, 'defaultConnection')
     private portalPages: Model<PortalPages>,
     @InjectModel(PortalPagesMetrics.name, 'defaultConnection')
-    private portalPagesMetrics: Model<PortalPagesMetrics>,
+    private portalPagesMetrics: PortalPagesMetricsModel,
     @InjectConnection('defaultConnection')
     private connection: Connection,
   ) {}

@@ -210,10 +210,14 @@ export const createCXTasksQuery = (
     .build();
 };
 
+// evar8 = screen id, evar22 = url (for portal pages that have no screen id)
+export type PortalIdDimension = 'variables/evar8' | 'variables/evar22';
+
 export const createSecurePortalPageIdItemIdsQuery = (
   dateRange: DateRange<string>,
   options: PageMetricsQueryOptions & {
     lang?: 'en' | 'fr';
+    idDimension?: PortalIdDimension;
   } = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
@@ -239,7 +243,7 @@ export const createSecurePortalPageIdItemIdsQuery = (
     : [];
 
   return queryBuilder
-    .setDimension('variables/evar8')
+    .setDimension(options.idDimension ?? 'variables/evar8')
     .setMetrics({ clicks: 'metrics/visits' } as MetricsConfig)
     .setGlobalFilters([
       { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
@@ -250,12 +254,13 @@ export const createSecurePortalPageIdItemIdsQuery = (
     .build();
 };
 
-export const createSecurePortalsQuery = (
+export const createPortalPageTitlesQuery = (
   dateRange: DateRange<string>,
   itemids?: string[],
   options: PageMetricsQueryOptions & {
     lang?: 'en' | 'fr';
     metrics?: MetricsConfig;
+    idDimension?: PortalIdDimension;
   } = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
@@ -289,7 +294,7 @@ export const createSecurePortalsQuery = (
               {
                 itemIds: itemids,
                 type: 'breakdown',
-                dimension: 'variables/evar8',
+                dimension: options.idDimension ?? 'variables/evar8',
               },
             ],
           },
@@ -310,7 +315,10 @@ export const createSecurePortalsQuery = (
 
 export const createPortalPageMetricsQuery = (
   dateRange: DateRange<string>,
-  options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},
+  options: PageMetricsQueryOptions & {
+    lang?: 'en' | 'fr';
+    idDimension?: PortalIdDimension;
+  } = {},
 ) => {
   const queryBuilder = new AdobeAnalyticsQueryBuilder();
 
@@ -334,7 +342,7 @@ export const createPortalPageMetricsQuery = (
     : [];
 
   return queryBuilder
-    .setDimension('variables/evar8') // Page Screen ID (v8)
+    .setDimension(options.idDimension ?? 'variables/evar8')
     .setMetrics(securePortalMetricsQueryConfig)
     .setGlobalFilters([
       { type: 'segment', segmentId: SEGMENTS.SECURE_PORTAL },
@@ -345,7 +353,6 @@ export const createPortalPageMetricsQuery = (
     .build();
 };
 
-// Resolves the top (highest-visits) URL (evar22) per screen-id itemId
 export const createSecurePortalPageUrlsQuery = (
   dateRange: DateRange<string>,
   itemids: string[],
@@ -398,19 +405,22 @@ export const createSecurePortalPageUrlsQuery = (
     .build();
 };
 
-export const createBatchedSecurePortalsQueries = (
+export const createBatchedPortalPageTitlesQueries = (
   dateRange: DateRange<string>,
   itemIds: string[],
-  options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},
+  options: PageMetricsQueryOptions & {
+    lang?: 'en' | 'fr';
+    idDimension?: PortalIdDimension;
+  } = {},
 ) =>
   chunkMap(
     itemIds,
     (itemIdsBatch) =>
-      createSecurePortalsQuery(dateRange, itemIdsBatch, { ...options }),
+      createPortalPageTitlesQuery(dateRange, itemIdsBatch, { ...options }),
     200,
   );
 
-export const createBatchedSecurePortalPageUrlsQueries = (
+export const createBatchedPortalPageUrlsQueries = (
   dateRange: DateRange<string>,
   itemIds: string[],
   options: PageMetricsQueryOptions & { lang?: 'en' | 'fr' } = {},

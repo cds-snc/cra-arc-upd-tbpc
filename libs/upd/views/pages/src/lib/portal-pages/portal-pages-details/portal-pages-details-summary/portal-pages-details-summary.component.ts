@@ -5,7 +5,7 @@ import { I18nFacade } from '@dua-upd/upd/state';
 import type { ColumnConfig } from '@dua-upd/types-common';
 import type { GetTableProps } from '@dua-upd/utils-common';
 
-import { PortalPagesDetailsFacade } from '../+state/portal-pages-details.facade';
+import { PagesDetailsFacade } from '../../../pages-details/+state/pages-details.facade';
 
 type VisitsByDeviceColTypes = GetTableProps<
   PortalPagesDetailsSummaryComponent,
@@ -30,11 +30,11 @@ type BarTableColTypes = GetTableProps<
 })
 export class PortalPagesDetailsSummaryComponent implements OnInit {
   private readonly i18n = inject(I18nFacade);
-  private readonly pageDetailsService = inject(PortalPagesDetailsFacade);
+  private readonly pageDetailsService = inject(PagesDetailsFacade);
 
   currentLang = this.i18n.currentLang;
 
-  data$ = this.pageDetailsService.portalPagesDetailsData$;
+  data$ = this.pageDetailsService.pagesDetailsData$;
   error$ = this.pageDetailsService.error$;
 
   /*
@@ -113,17 +113,12 @@ export class PortalPagesDetailsSummaryComponent implements OnInit {
   visitorLocationCols: Signal<ColumnConfig<VisitorLocationColTypes>[]> =
     computed(() => [
       {
-        field: 'location',
+        field: 'province',
         header: this.i18n.service.translate('Location', this.currentLang()),
       },
       {
-        field: 'currentValue',
+        field: 'value',
         header: this.dateRangeLabel(),
-        pipe: 'number',
-      },
-      {
-        field: 'prevValue',
-        header: this.comparisonDateRangeLabel(),
         pipe: 'number',
       },
       {

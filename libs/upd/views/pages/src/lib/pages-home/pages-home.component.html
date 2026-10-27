@@ -1,12 +1,30 @@
-<h2 class="mb-4">Pages</h2>
+<h2 class="mb-4">{{ activePageTitle() }}</h2>
+
+<div class="tabs sticky pages-home-tabs">
+  <ul role="tablist" aria-label="{{ 'menu-pages' | translate }}">
+    @for (tab of homeTabs(); track tab.title) {
+      <li role="presentation">
+        <a
+          role="tab"
+          [routerLink]="tab.route"
+          [routerLinkActive]="['active']"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [queryParamsHandling]="'merge'"
+        >
+          {{ tab.title | translate }}
+        </a>
+      </li>
+    }
+  </ul>
+</div>
 
 <upd-date-selector></upd-date-selector>
 
-<upd-card [title]="'List of all pages'" titleSize="h5" [ngClass]="'pages-home'">
+<upd-card [title]="activeCardTitle()" titleSize="h5" [ngClass]="'pages-home'">
   <upd-data-table
-    id="pages-home-"
+    [id]="activeIdPrefix()"
     [data]="(pagesHomeData$ | async) || []"
-    [cols]="columns || []"
+    [cols]="effectiveColumns || []"
     [displayRows]="25"
     [loading]="(loading$ | async) || false"
     placeholderText="dt_search_keyword_url"

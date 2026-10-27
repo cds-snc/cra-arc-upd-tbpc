@@ -6,11 +6,7 @@ import utc from 'dayjs/plugin/utc';
 import 'dayjs/locale/en-ca';
 import 'dayjs/locale/fr-ca';
 import { type LocaleId } from '@dua-upd/upd/i18n';
-import {
-  I18nFacade,
-  selectDatePeriodSelection,
-  selectUrl,
-} from '@dua-upd/upd/state';
+import { I18nFacade, selectDatePeriodSelection, selectUrl } from '@dua-upd/upd/state';
 import { percentChange } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import type {
@@ -18,16 +14,13 @@ import type {
   PageAggregatedData,
   PageDetailsData,
 } from '@dua-upd/types-common';
-import * as PagesDetailsActions from './pages-details.actions';
-import * as PagesDetailsSelectors from './pages-details.selectors';
-import type { ApexAxisChartSeries } from 'ng-apexcharts';
 import {
-  selectPageLang,
-  selectReadabilityData,
-  selectVisitsByDayChartData,
-  selectVisitsByDayChartTable,
-  selectDyfNoPerVisitsSeries,
-} from './pages-details.selectors';
+  PAGES_DETAILS_ACTIONS,
+  PAGES_DETAILS_SELECTORS,
+} from './pages-details.tokens';
+import type {
+  ApexAxisChartSeries,
+} from 'ng-apexcharts';
 
 dayjs.extend(utc);
 
@@ -35,28 +28,30 @@ dayjs.extend(utc);
 export class PagesDetailsFacade {
   private readonly store = inject(Store);
   private i18n = inject(I18nFacade);
+  private readonly actions = inject(PAGES_DETAILS_ACTIONS);
+  private readonly selectors = inject(PAGES_DETAILS_SELECTORS);
 
-  loaded$ = this.store.select(PagesDetailsSelectors.selectPagesDetailsLoaded);
+  loaded$ = this.store.select(this.selectors.selectPagesDetailsLoaded);
 
   loading$ = this.store
-    .select(PagesDetailsSelectors.selectPagesDetailsLoading)
+    .select(this.selectors.selectPagesDetailsLoading)
     .pipe(debounceTime(500));
 
-  loadedHashes$ = this.store.select(PagesDetailsSelectors.selectHashesLoaded);
+  loadedHashes$ = this.store.select(this.selectors.selectHashesLoaded);
 
   loadingHashes$ = this.store
-    .select(PagesDetailsSelectors.selectHashesLoading)
+    .select(this.selectors.selectHashesLoading)
     .pipe(debounceTime(500));
 
   pagesDetailsData$ = this.store.select(
-    PagesDetailsSelectors.selectPagesDetailsData,
+    this.selectors.selectPagesDetailsData,
   );
 
   currentLang$ = this.i18n.currentLang$;
 
   currentRoute$ = this.store
-    .select(selectUrl)
-    .pipe(map((url) => url.replace(/\?.+$/, '')));
+      .select(selectUrl)
+      .pipe(map((url) => url.replace(/\?.+$/, '')));
 
   dateRangeSelected$ = this.store.select(selectDatePeriodSelection);
 
@@ -126,21 +121,19 @@ export class PagesDetailsFacade {
     ),
   );
 
-  apexBar$ = this.store.select(selectVisitsByDayChartData);
+  apexBar$ = this.store.select(this.selectors.selectVisitsByDayChartData);
 
   pageTitle$ = this.pagesDetailsData$.pipe(map((data) => data?.title));
   pageUrl$ = this.pagesDetailsData$.pipe(map((data) => data?.url));
-
-  altPageId$ = this.pagesDetailsData$.pipe(
-    map((data) => data?.alternatePageId || 0),
-  );
+  
+  altPageId$ = this.pagesDetailsData$.pipe(map((data) => data?.alternatePageId || null));
 
   pageStatus$ = this.pagesDetailsData$.pipe(
     map((data) => {
       if (data?.is404) {
         return '404';
       }
-
+      
       if (data?.isRedirect) {
         return 'Redirected';
       }
@@ -150,10 +143,11 @@ export class PagesDetailsFacade {
   );
 
   archivedStatus$ = this.pagesDetailsData$.pipe(
-    map((data) => (data?.isArchived ? 'Archived' : null)),
+    map((data)  => (data?.isArchived ? 'Archived' : null),
+    ),
   );
 
-  pageArchivedStatus$ = this.pageStatus$ || this.archivedStatus$;
+  pageArchivedStatus$ = this.pageStatus$ || this. archivedStatus$;
 
   visitors$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.visitors || 0),
@@ -175,7 +169,7 @@ export class PagesDetailsFacade {
   pageViewsPercentChange$ = this.pagesDetailsData$.pipe(
     mapToPercentChange('views'),
   );
-
+  
   averageTimeSpent$ = this.pagesDetailsData$.pipe(
     map((data) => data?.dateRangeData?.average_time_spent || 0),
   );
@@ -206,34 +200,22 @@ export class PagesDetailsFacade {
 
   tasks$ = this.pagesDetailsData$.pipe(map((data) => data?.tasks || 0));
 
-  readability$ = this.store.select(selectReadabilityData);
+  readability$ = this.store.select(this.selectors.selectReadabilityData);
 
-  apexKpiFeedback$ = this.store.select(selectDyfNoPerVisitsSeries);
+  apexKpiFeedback$ = this.store.select(this.selectors.selectDyfNoPerVisitsSeries);
 
-  accessibility$ = this.store.select(
-    PagesDetailsSelectors.selectAccessibilityData,
-  );
-  accessibilityLoading$ = this.store
-    .select(PagesDetailsSelectors.selectAccessibilityLoading)
-    .pipe(debounceTime(500));
-  accessibilityLoaded$ = this.store.select(
-    PagesDetailsSelectors.selectAccessibilityLoaded,
-  );
-  accessibilityError$ = this.store.select(
-    PagesDetailsSelectors.selectAccessibilityError,
-  );
+  accessibility$ = this.store.select(this.selectors.selectAccessibilityData);
+  accessibilityLoading$ = this.store.select(this.selectors.selectAccessibilityLoading).pipe(debounceTime(500));
+  accessibilityLoaded$ = this.store.select(this.selectors.selectAccessibilityLoaded);
+  accessibilityError$ = this.store.select(this.selectors.selectAccessibilityError);
 
-  pageHighlights$ = this.store.select(
-    PagesDetailsSelectors.selectPageHighlights,
-  );
+   pageHighlights$ = this.store.select(this.selectors.selectPageHighlights);
   pageHighlightsLoading$ = this.store
-    .select(PagesDetailsSelectors.selectPageHighlightsLoading)
+    .select(this.selectors.selectPageHighlightsLoading)
     .pipe(debounceTime(500));
-  pageHighlightsError$ = this.store.select(
-    PagesDetailsSelectors.selectPageHighlightsError,
-  );
+  pageHighlightsError$ = this.store.select(this.selectors.selectPageHighlightsError);
 
-  pageLang$ = this.store.select(selectPageLang);
+  pageLang$ = this.store.select(this.selectors.selectPageLang);
 
   currentKpiFeedback$ = this.pagesDetailsData$.pipe(
     map((data) => {
@@ -499,7 +481,7 @@ export class PagesDetailsFacade {
     }),
   );
 
-  barTable$ = this.store.select(selectVisitsByDayChartTable);
+  barTable$ = this.store.select(this.selectors.selectVisitsByDayChartTable);
 
   visitsByDeviceTypeTable$ = combineLatest([
     this.pagesDetailsData$,
@@ -744,13 +726,13 @@ export class PagesDetailsFacade {
   );
 
   feedbackCommentsAndWords = this.store.selectSignal(
-    PagesDetailsSelectors.selectFeedbackCommentsAndWords,
+    this.selectors.selectFeedbackCommentsAndWords,
   );
   numComments = this.store.selectSignal(
-    PagesDetailsSelectors.selectNumComments,
+    this.selectors.selectNumComments,
   );
   numCommentsPercentChange = this.store.selectSignal(
-    PagesDetailsSelectors.selectNumCommentsPercentChange,
+    this.selectors.selectNumCommentsPercentChange,
   );
 
   getDateRangeLabel(
@@ -777,12 +759,14 @@ export class PagesDetailsFacade {
       : `${formattedStartDate} ${separator} ${formattedEndDate}`;
   }
 
-  error$ = this.store.select(PagesDetailsSelectors.selectPagesDetailsError);
+  error$ = this.store.select(this.selectors.selectPagesDetailsError);
 
-  hashesData = this.store.selectSignal(PagesDetailsSelectors.selectHashesData);
+  hashesData = this.store.selectSignal(
+    this.selectors.selectHashesData
+  );
 
   getHashes() {
-    this.store.dispatch(PagesDetailsActions.getHashes());
+    this.store.dispatch(this.actions.getHashes());
   }
 
   /**
@@ -790,11 +774,11 @@ export class PagesDetailsFacade {
    * or more tasks in your Effects.
    */
   init() {
-    this.store.dispatch(PagesDetailsActions.loadPagesDetailsInit());
+    this.store.dispatch(this.actions.loadPagesDetailsInit());
   }
 
   refreshAccessibilityTest(url: string) {
-    this.store.dispatch(PagesDetailsActions.loadAccessibilityInit({ url }));
+    this.store.dispatch(this.actions.loadAccessibilityInit({ url }));
   }
 }
 

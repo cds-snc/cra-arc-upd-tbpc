@@ -4,7 +4,6 @@
   [value]="translatedData() || []"
   [rows]="displayRows"
   [rowHover]="true"
-  [showCurrentPageReport]="true"
   [customSort]="true"
   [rowsPerPageOptions]="[5, 10, 25, 50, 100]"
   [loading]="loading"
@@ -12,11 +11,7 @@
   size="small"
   styleClass="border"
   [paginator]="pagination"
-  currentPageReportTemplate="{{
-    'dt-paginator'
-      | translate
-        : { first: '{first}', last: '{last}', totalRecords: '{totalRecords}' }
-  }}"
+  [paginatorLocale]="lang()"
   [globalFilterFields]="searchFields()"
   [sortField]="sortField"
   [sortOrder]="sortOrder === 'desc' ? -1 : 1"
@@ -24,6 +19,8 @@
   (selectionChange)="onSelectionChange($event)"
   (sortFunction)="customSort($event)"
   [(selection)]="selectedRows"
+  [style]="{ width: '100%' }"
+  [tableStyle]="{ width: '100%' }"
   [resizableColumns]="resizableColumns"
   [expandedRowKeys]="expandedRows()"
 >
@@ -284,7 +281,9 @@
               col.filterConfig.type === 'pageStatus' ||
               col.filterConfig.type === 'taskStatus' ||
               col.filterConfig.type === 'archivedStatus' ||
-              col.filterConfig.type === 'pageArchivedStatus'
+              col.filterConfig.type === 'pageArchivedStatus' ||
+              col.filterConfig.type === 'languageStatus' ||
+              col.filterConfig.type === 'portalPageType'
             ) {
               <p-columnFilter
                 [field]="col.field"
@@ -311,7 +310,17 @@
                     [filter]="false"
                     [showHeader]="false"
                     scrollHeight="100%"
+                    [panelStyle]="
+                      col.filterConfig.type === 'portalPageType'
+                        ? { 'min-width': 'min(20rem, 90vw)' }
+                        : undefined
+                    "
                   >
+                    <ng-template let-selectedOptions pTemplate="selectedItems">
+                      @for (option of selectedOptions; track option.value) {
+                        <span>{{ option.name | translate }}</span>
+                      }
+                    </ng-template>
                     <ng-template let-option pTemplate="item">
                       <div class="p-multiselect-representative-option">
                         <span
@@ -448,6 +457,22 @@
         }
       </tr>
     }
+  </ng-template>
+  
+  <ng-template pTemplate="paginatorleft" let-state>
+    @let total = dt.totalRecords;
+    @let end = state.first + state.rows;
+    <span class="p-paginator-current">
+      {{
+        'dt-paginator'
+          | translate
+            : {
+                first: (total > 0 ? state.first + 1 : 0) | number: '1.0-0' : lang(),
+                last: (end < total ? end : total) | number: '1.0-0' : lang(),
+                totalRecords: total | number: '1.0-0' : lang(),
+              }
+      }}
+    </span>
   </ng-template>
 
   <ng-template pTemplate="emptymessage">

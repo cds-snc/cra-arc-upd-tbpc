@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, Input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { PagesDetailsFacade } from './+state/pages-details.facade';
 import type { ColumnConfig } from '@dua-upd/types-common';
@@ -17,6 +17,13 @@ export class PagesDetailsComponent {
   private i18n = inject(I18nFacade);
   private pageDetailsService = inject(PagesDetailsFacade);
   private router = inject(Router);
+
+  /** Which app section this instance is being used for (affects back-link/URL). */
+  @Input() basePath = 'pages';
+  @Input() backLabel = 'Pages';
+  @Input() navTabs: { href: string; title: string }[] = [];
+  @Input() showProjectHeader = true;
+  @Input() showLangToggle = true;
 
   constructor() {
     this.pageDetailsService.init();
@@ -45,7 +52,7 @@ export class PagesDetailsComponent {
   
     const translations = {
       en: { fr: "French", en: "English" },
-      fr: { fr: "française", en: "en anglais" },
+      fr: { fr: "française", en: "anglais" },
     };
   
     return translations[langLink]?.[pageLang];
@@ -65,43 +72,8 @@ export class PagesDetailsComponent {
   );
 
   navigateToAltPage() {
-    window.location.href = `/${this.langLink()}/pages/${this.altPageId()}/${this.currentUrl()}`;
+    window.location.href = `/${this.langLink()}/${this.basePath}/${this.altPageId()}/${this.currentUrl()}`;
   }
-
-  navTabs: { href: string; title: string }[] = [
-    {
-      href: 'summary',
-      title: 'tab-summary',
-    },
-    {
-      href: 'webtraffic',
-      title: 'tab-webtraffic',
-    },
-    {
-      href: 'searchanalytics',
-      title: 'tab-searchanalytics',
-    },
-    {
-      href: 'pagefeedback',
-      title: 'tab-pagefeedback',
-    },
-    {
-      href: 'flow',
-      title: 'tab-flow',
-    },
-    {
-      href: 'readability',
-      title: 'tab-readability',
-    },
-    {
-      href: 'version-history',
-      title: 'tab-version-history',
-    },
-    {
-      href: 'accessibility',
-      title: 'tab-accessibility',
-    },
-  ];
 
   projectsCol = computed(() => {
     return {

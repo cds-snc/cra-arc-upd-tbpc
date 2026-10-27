@@ -15,11 +15,10 @@ const routes: Routes = [
       ),
     data: { animation: 'overview', title: 'Overview | Summary' },
   },
-    {
+  {
     path: 'portal-pages',
-    loadChildren: () =>
-      import('@dua-upd/upd/views/portal-pages').then((module) => module.PortalPagesModule),
-    data: { animation: 'portal-pages', title: 'Portal Pages | Home' },
+    redirectTo: 'pages/portal',
+    pathMatch: 'prefix',
   },
   {
     path: 'pages',
@@ -69,12 +68,15 @@ const routes: Routes = [
 
 @NgModule({
   imports: [
-    RouterModule.forRoot([
-      {
-        path: ':lang',
-        children: routes,
-      },
-    ]),
+    RouterModule.forRoot(
+      [
+        {
+          path: ':lang',
+          children: routes,
+        },
+      ],
+      { bindToComponentInputs: true },
+    ),
   ],
   exports: [RouterModule],
 })

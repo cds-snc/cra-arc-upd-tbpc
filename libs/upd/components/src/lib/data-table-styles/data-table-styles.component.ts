@@ -1,5 +1,10 @@
 import { Component, inject, Input, OnInit } from '@angular/core';
-import type { ColumnConfig, TaskStatus } from '@dua-upd/types-common';
+import type {
+  ColumnConfig,
+  LanguageStatus,
+  PortalPageType,
+  TaskStatus,
+} from '@dua-upd/types-common';
 import { formatPercent, formatNumber, formatDate } from '@angular/common';
 import { PageStatus, ProjectStatus, ArchivedStatus, PageArchivedStatus } from '@dua-upd/types-common';
 import { I18nFacade } from '@dua-upd/upd/state';
@@ -19,7 +24,7 @@ export class DataTableStylesComponent implements OnInit {
   @Input() data: Record<string, number | string> = {};
 
   array: string[] = [];
-  labelType?: 'project' | 'page' | 'task' | 'archived' | 'pageArchived';
+  labelType?: 'project' | 'page' | 'task' | 'archived' | 'pageArchived' | 'language' | 'portalPageType';
   numberVal: number | string = 0;
 
   ngOnInit() {
@@ -40,6 +45,10 @@ export class DataTableStylesComponent implements OnInit {
         this.labelType = 'archived';
       } else if (this.config.typeParam == 'pageArchivedStatus') {
         this.labelType = 'pageArchived';
+      } else if (this.config.typeParam == 'languageStatus') {
+        this.labelType = 'language';
+      } else if (this.config.typeParam == 'portalPageType') {
+        this.labelType = 'portalPageType';
       }
     }
   }
@@ -70,6 +79,14 @@ export class DataTableStylesComponent implements OnInit {
 
   get pageArchivedStatus(): PageArchivedStatus[] {
     return this.data[this.config.field] as unknown as PageArchivedStatus[];
+  }
+
+  get languageStatus(): LanguageStatus {
+    return this.data[this.config.field] as LanguageStatus;
+  }
+
+  get portalPageType(): PortalPageType {
+    return this.data[this.config.field] as PortalPageType;
   }
 
   comparisonClassMap(field: string, upGoodDownBad = true, showColour = true) {

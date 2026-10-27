@@ -49,3 +49,7 @@ tr.task-row-odd td.task-performance-col {
   display: flex;
   align-items: center;
 }
+
+:host ::ng-deep .p-paginator-content-start {
+  margin-inline-end: 0;
+}

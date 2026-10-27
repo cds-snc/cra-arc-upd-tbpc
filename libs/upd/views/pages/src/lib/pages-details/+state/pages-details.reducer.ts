@@ -1,6 +1,7 @@
 import { createReducer, on, Action } from '@ngrx/store';
 
 import * as PagesDetailsActions from './pages-details.actions';
+import type { PagesDetailsActionsBundle } from './pages-details.actions';
 import { PageDetailsData } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
@@ -67,184 +68,189 @@ export const pagesDetailsInitialState: PagesDetailsState = {
   errorPageHighlights: null,
 };
 
-const reducer = createReducer(
-  pagesDetailsInitialState,
-  on(
-    PagesDetailsActions.loadPagesDetailsInit,
-    (state): PagesDetailsState => ({
-      ...state,
-      loading: true,
-      loadingHashes: true,
-      loaded: false,
-      error: null,
-    }),
-  ),
-  on(
-    PagesDetailsActions.loadPagesDetailsSuccess,
-    (state, { data }): PagesDetailsState => {
-      if (data === null) {
+// Factory so a fresh reducer bound to its own actions can be created for
+// separate feature-key instances (e.g. `pages` vs `portal-pages`).
+export function createPagesDetailsReducer(actions: PagesDetailsActionsBundle) {
+  const reducer = createReducer(
+    pagesDetailsInitialState,
+    on(
+      actions.loadPagesDetailsInit,
+      (state): PagesDetailsState => ({
+        ...state,
+        loading: true,
+        loadingHashes: true,
+        loaded: false,
+        error: null,
+      }),
+    ),
+    on(
+      actions.loadPagesDetailsSuccess,
+      (state, { data }): PagesDetailsState => {
+        if (data === null) {
+          return {
+            ...state,
+            loading: false,
+            loaded: true,
+            error: null,
+          };
+        }
+
         return {
           ...state,
+          data: { ...data },
           loading: false,
           loaded: true,
           error: null,
         };
       }
-
-      return {
+    ),
+    on(
+      actions.loadPagesDetailsError,
+      (state, { error }): PagesDetailsState => ({
         ...state,
-        data: { ...data },
         loading: false,
         loaded: true,
-        error: null,
-      };
-    }
-  ),
-  on(
-    PagesDetailsActions.loadPagesDetailsError,
-    (state, { error }): PagesDetailsState => ({
-      ...state,
-      loading: false,
-      loaded: true,
-      error,
-    }),
-  ),
-  on(
-    PagesDetailsActions.getHashes,
-    (state): PagesDetailsState => ({
-      ...state,
-      loadingHashes: true,
-      loadedHashes: false,
-      errorHashes: null,
-    }),
-  ),
-  on(
-    PagesDetailsActions.getHashesSuccess,
-    (state, { data }): PagesDetailsState =>
-      data === null
-        ? {
-            ...state,
-            loadingHashes: false,
-            loadedHashes: true,
-            errorHashes: null,
-          }
-        : {
-            ...state,
-            data: {
-              ...state.data,
-              hashes: data,
+        error,
+      }),
+    ),
+    on(
+      actions.getHashes,
+      (state): PagesDetailsState => ({
+        ...state,
+        loadingHashes: true,
+        loadedHashes: false,
+        errorHashes: null,
+      }),
+    ),
+    on(
+      actions.getHashesSuccess,
+      (state, { data }): PagesDetailsState =>
+        data === null
+          ? {
+              ...state,
+              loadingHashes: false,
+              loadedHashes: true,
+              errorHashes: null,
+            }
+          : {
+              ...state,
+              data: {
+                ...state.data,
+                hashes: data,
+              },
+              loadingHashes: false,
+              loadedHashes: true,
+              errorHashes: null,
             },
-            loadingHashes: false,
-            loadedHashes: true,
-            errorHashes: null,
-          },
-  ),
-  on(
-    PagesDetailsActions.getHashesError,
-    (state, { error }): PagesDetailsState => ({
-      ...state,
-      loadingHashes: false,
-      loadedHashes: true,
-      errorHashes: error,
-    }),
-  ),
-  on(
-    PagesDetailsActions.loadAccessibilityInit,
-    (state): PagesDetailsState => {
-      return {
+    ),
+    on(
+      actions.getHashesError,
+      (state, { error }): PagesDetailsState => ({
         ...state,
-        loadingAccessibility: true,
-        loadedAccessibility: false,
-        errorAccessibility: null,
-      };
-    }
-  ),
-  on(
-    PagesDetailsActions.loadAccessibilitySuccess,
-    (state, { url, data }): PagesDetailsState => {
-      const currentCache = state.accessibilityByUrl;
-      const cacheKeys = Object.keys(currentCache);
-
-      // Implement LRU cache: if cache is at limit, remove oldest entry (first key)
-      let updatedCache = { ...currentCache };
-      if (cacheKeys.length >= MAX_ACCESSIBILITY_CACHE_SIZE && !currentCache[url]) {
-        // Only evict if adding NEW url (not updating existing)
-        const [, ...remainingUrls] = cacheKeys;
-        updatedCache = remainingUrls.reduce((acc, key) => {
-          acc[key] = currentCache[key];
-          return acc;
-        }, {} as Record<string, LocalizedAccessibilityTestResponse>);
+        loadingHashes: false,
+        loadedHashes: true,
+        errorHashes: error,
+      }),
+    ),
+    on(
+      actions.loadAccessibilityInit,
+      (state): PagesDetailsState => {
+        return {
+          ...state,
+          loadingAccessibility: true,
+          loadedAccessibility: false,
+          errorAccessibility: null,
+        };
       }
+    ),
+    on(
+      actions.loadAccessibilitySuccess,
+      (state, { url, data }): PagesDetailsState => {
+        const currentCache = state.accessibilityByUrl;
+        const cacheKeys = Object.keys(currentCache);
 
-      const newCache = {
-        ...updatedCache,
-        [url]: data, // Store/update data by URL
-      };
+        // Implement LRU cache: if cache is at limit, remove oldest entry (first key)
+        let updatedCache = { ...currentCache };
+        if (cacheKeys.length >= MAX_ACCESSIBILITY_CACHE_SIZE && !currentCache[url]) {
+          // Only evict if adding NEW url (not updating existing)
+          const [, ...remainingUrls] = cacheKeys;
+          updatedCache = remainingUrls.reduce((acc, key) => {
+            acc[key] = currentCache[key];
+            return acc;
+          }, {} as Record<string, LocalizedAccessibilityTestResponse>);
+        }
 
-      return {
+        const newCache = {
+          ...updatedCache,
+          [url]: data, // Store/update data by URL
+        };
+
+        return {
+          ...state,
+          accessibilityByUrl: newCache,
+          loadingAccessibility: false,
+          loadedAccessibility: true,
+          errorAccessibility: null,
+        };
+      },
+    ),
+    on(
+      actions.loadAccessibilityError,
+      (state, { error }): PagesDetailsState => ({
         ...state,
-        accessibilityByUrl: newCache,
         loadingAccessibility: false,
         loadedAccessibility: true,
+        errorAccessibility: error,
+      }),
+    ),
+    on(
+      actions.clearAccessibilityCache,
+      (state): PagesDetailsState => ({
+        ...state,
+        accessibilityByUrl: {},
+        loadedAccessibility: false,
+        loadingAccessibility: false,
         errorAccessibility: null,
-      };
-    },
-  ),
-  on(
-    PagesDetailsActions.loadAccessibilityError,
-    (state, { error }): PagesDetailsState => ({
-      ...state,
-      loadingAccessibility: false,
-      loadedAccessibility: true,
-      errorAccessibility: error,
-    }),
-  ),
-  on(
-    PagesDetailsActions.clearAccessibilityCache,
-    (state): PagesDetailsState => ({
-      ...state,
-      accessibilityByUrl: {},
-      loadedAccessibility: false,
-      loadingAccessibility: false,
-      errorAccessibility: null,
-    }),
-  ),
-  on(
-    PagesDetailsActions.loadPageHighlightsInit,
-    (state): PagesDetailsState => ({
-      ...state,
-      loadingPageHighlights: true,
-      loadedPageHighlights: false,
-      errorPageHighlights: null,
-    }),
-  ),
-  on(
-    PagesDetailsActions.loadPageHighlightsSuccess,
-    (state, { key, highlights }): PagesDetailsState => ({
-      ...state,
-      pageHighlightsByKey: {
-        ...state.pageHighlightsByKey,
-        [key]: highlights,
-      },
-      loadingPageHighlights: false,
-      loadedPageHighlights: true,
-      errorPageHighlights: null,
-    }),
-  ),
-  on(
-    PagesDetailsActions.loadPageHighlightsError,
-    (state, { error }): PagesDetailsState => ({
-      ...state,
-      loadingPageHighlights: false,
-      loadedPageHighlights: true,
-      errorPageHighlights: error,
-    }),
-  ),
-);
+      }),
+    ),
+    on(
+      actions.loadPageHighlightsInit,
+      (state): PagesDetailsState => ({
+        ...state,
+        loadingPageHighlights: true,
+        loadedPageHighlights: false,
+        errorPageHighlights: null,
+      }),
+    ),
+    on(
+      actions.loadPageHighlightsSuccess,
+      (state, { key, highlights }): PagesDetailsState => ({
+        ...state,
+        pageHighlightsByKey: {
+          ...state.pageHighlightsByKey,
+          [key]: highlights,
+        },
+        loadingPageHighlights: false,
+        loadedPageHighlights: true,
+        errorPageHighlights: null,
+      }),
+    ),
+    on(
+      actions.loadPageHighlightsError,
+      (state, { error }): PagesDetailsState => ({
+        ...state,
+        loadingPageHighlights: false,
+        loadedPageHighlights: true,
+        errorPageHighlights: error,
+      }),
+    ),
+  );
 
-export function pagesDetailsReducer(
-  state: PagesDetailsState | undefined,
-  action: Action,
-) {
-  return reducer(state, action);
+  return function (state: PagesDetailsState | undefined, action: Action) {
+    return reducer(state, action);
+  };
 }
+
+export const pagesDetailsReducer = createPagesDetailsReducer(
+  PagesDetailsActions,
+);

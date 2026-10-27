@@ -1,13 +1,10 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { catchError, map, of } from 'rxjs';
 
 import { I18nFacade } from '@dua-upd/upd/state';
 import { EN_CA, FR_CA } from '@dua-upd/upd/i18n';
-
-const sanitizeUrl = (url: string) =>
-  url.trim().replace(/^https?:\/\//, '')
 
 const toLang = (lang: string | null) =>
   lang?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
@@ -17,8 +14,10 @@ export const PortalPagesUrlRedirectGuard: CanActivateFn = (route) => {
   const http = inject(HttpClient);
   const i18n = inject(I18nFacade);
 
-  const rawUrl = route.queryParamMap.get('url');
-  if (!rawUrl) return true;
+  const screenId = route.queryParamMap.get('screenId')?.trim().toLowerCase();
+  if (!screenId) return true;
+
+  const pageLang = toLang(route.queryParamMap.get('pageLang'));
 
   const lang = toLang(route.queryParamMap.get('lang'));
   i18n.setLang(lang === 'fr' ? FR_CA : EN_CA);
@@ -26,16 +25,19 @@ export const PortalPagesUrlRedirectGuard: CanActivateFn = (route) => {
   return http
     .get<{
       id: string | null;
-    }>('/api/portal-pages/getPageId', { params: { url: sanitizeUrl(rawUrl) } })
+      pageLang: string | null; 
+    }>('/api/portal-pages/getPageId', { params: { screenId, pageLang } })
     .pipe(
       map(({ id }) =>
         router.createUrlTree(
-          id ? ['/', lang, 'portal-pages', id, 'summary'] : ['/', lang, 'portal-pages'],
+          id
+            ? ['/', lang, 'pages', 'portal', id, 'summary']
+            : ['/', lang, 'pages', 'portal'],
         ),
       ),
       catchError(() =>
         of(
-          router.createUrlTree(['/', lang, 'portal-pages'], {
+          router.createUrlTree(['/', lang, 'pages', 'portal'], {
             queryParams: { error: 1 },
           }),
         ),

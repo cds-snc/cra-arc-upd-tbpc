@@ -2,7 +2,6 @@ import { inject, Injectable } from '@angular/core';
 import { createEffect, Actions, ofType } from '@ngrx/effects';
 import { concatLatestFrom } from '@ngrx/operators';
 import { catchError, EMPTY, mergeMap, map, of, filter } from 'rxjs';
-import * as PagesHomeActions from './pages-home.actions';
 import { Store } from '@ngrx/store';
 import {
   selectDatePeriod,
@@ -11,23 +10,33 @@ import {
 } from '@dua-upd/upd/state';
 import { PagesHomeData } from '@dua-upd/types-common';
 import { ApiService } from '@dua-upd/upd/services';
-
-const pagesRouteRegex = /\/pages$/;
+import {
+  PAGES_HOME_ACTIONS,
+  PAGES_HOME_API_CONFIG,
+} from './pages-home.tokens';
 
 @Injectable()
 export class PagesHomeEffects {
   private readonly actions$ = inject(Actions);
   private store = inject(Store);
   private api = inject(ApiService);
+  private readonly actions = inject(PAGES_HOME_ACTIONS);
+  private readonly apiConfig = inject(PAGES_HOME_API_CONFIG);
+
+  // Distinguishes instances shared across lazy modules (pages vs portal-pages) so
+  // NgRx doesn't dedupe them by class prototype and silently drop one's effects.
+  ngrxOnIdentifyEffects() {
+    return this.apiConfig.routeRegex.source;
+  }
 
   init$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(PagesHomeActions.loadPagesHomeInit),
+      ofType(this.actions.loadPagesHomeInit),
       concatLatestFrom(() => this.store.select(selectDateRanges)),
       mergeMap(([, { dateRange }]) =>
-        this.api.getPagesHomeData({ dateRange }).pipe(
-          map((data: PagesHomeData) =>
-            PagesHomeActions.loadPagesHomeSuccess({ data }),
+        this.apiConfig.getHomeData(this.api, { dateRange }).pipe(
+          map((data) =>
+            this.actions.loadPagesHomeSuccess({ data: data as PagesHomeData }),
           ),
           catchError(() => EMPTY),
         ),
@@ -39,8 +48,8 @@ export class PagesHomeEffects {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
       concatLatestFrom(() => this.store.select(selectRoute)),
-      filter(([, route]) => pagesRouteRegex.test(route)),
-      mergeMap(() => of(PagesHomeActions.loadPagesHomeInit())),
+      filter(([, route]) => this.apiConfig.routeRegex.test(route)),
+      mergeMap(() => of(this.actions.loadPagesHomeInit())),
     );
   });
 }

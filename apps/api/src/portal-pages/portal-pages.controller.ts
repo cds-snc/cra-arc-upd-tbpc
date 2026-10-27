@@ -3,9 +3,7 @@ import { PortalPagesService } from './portal-pages.service';
 
 @Controller('portal-pages')
 export class PortalPagesController {
-  constructor(
-    private readonly portalPagesService: PortalPagesService,
-  ) {}
+  constructor(private readonly portalPagesService: PortalPagesService) {}
 
   @Get('home')
   @Header('Content-Type', 'application/json')
@@ -24,5 +22,10 @@ export class PortalPagesController {
       dateRange,
       comparisonDateRange,
     );
+  }
+
+  @Get('getPageId')
+  getPageId(@Query('screenId') screenId: string, @Query('pageLang') pageLang: string) {
+    return this.portalPagesService.getPageId(screenId, pageLang);
   }
 }

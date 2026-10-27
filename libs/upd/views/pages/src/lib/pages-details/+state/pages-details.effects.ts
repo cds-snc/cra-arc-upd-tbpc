@@ -22,39 +22,35 @@ import {
   selectCurrentLang,
 } from '@dua-upd/upd/state';
 import {
-  getHashes,
-  getHashesError,
-  getHashesSuccess,
-  loadPagesDetailsInit,
-  loadPagesDetailsSuccess,
-  loadAccessibilityInit,
-  loadAccessibilitySuccess,
-  loadAccessibilityError,
-  loadPagesDetailsError,
-  loadPageHighlightsInit,
-  loadPageHighlightsSuccess,
-  loadPageHighlightsError,
-} from './pages-details.actions';
-import { selectPagesDetailsData, selectAccessibilityData } from './pages-details.selectors';
-import * as PagesDetailsSelectors from './pages-details.selectors';
+  PAGES_DETAILS_ACTIONS,
+  PAGES_DETAILS_SELECTORS,
+  PAGES_DETAILS_API_CONFIG,
+} from './pages-details.tokens';
 import { UrlHash } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
-
-const pagesRouteRegex = /\/pages\//;
 
 @Injectable()
 export class PagesDetailsEffects {
   private readonly actions$ = inject(Actions);
   private api = inject(ApiService);
   private store = inject(Store);
+  private readonly actions = inject(PAGES_DETAILS_ACTIONS);
+  private readonly selectors = inject(PAGES_DETAILS_SELECTORS);
+  private readonly apiConfig = inject(PAGES_DETAILS_API_CONFIG);
+
+  // Distinguishes instances shared across lazy modules (pages vs portal-pages) so
+  // NgRx doesn't dedupe them by class prototype and silently drop one's effects.
+  ngrxOnIdentifyEffects() {
+    return this.apiConfig.routeRegex.source;
+  }
 
   init$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(loadPagesDetailsInit),
+      ofType(this.actions.loadPagesDetailsInit),
       concatLatestFrom(() => [
         this.store.select(selectRouteNestedParam('id')),
         this.store.select(selectDateRanges),
-        this.store.select(selectPagesDetailsData),
+        this.store.select(this.selectors.selectPagesDetailsData),
       ]),
       filter(([, pageId]) => !!pageId),
       mergeMap(
@@ -74,18 +70,20 @@ export class PagesDetailsEffects {
             comparisonDateRangeIsLoaded
           ) {
             // if everything is already loaded in the state, don't update it
-            return of(loadPagesDetailsSuccess({ data: null }));
+            return of(this.actions.loadPagesDetailsSuccess({ data: null }));
           }
 
-          return this.api
-            .getPageDetails({
+          return this.apiConfig
+            .getDetails(this.api, {
               id: pageId,
               dateRange,
               ...{ comparisonDateRange },
             })
             .pipe(
-              map((data) => loadPagesDetailsSuccess({ data })),
-              catchError((err) => of(loadPagesDetailsError({ error: err }))),
+              map((data) => this.actions.loadPagesDetailsSuccess({ data })),
+              catchError((err) =>
+                of(this.actions.loadPagesDetailsError({ error: err })),
+              ),
             );
         },
       ),
@@ -96,14 +94,15 @@ export class PagesDetailsEffects {
     return this.actions$.pipe(
       ofType(selectDatePeriod),
       concatLatestFrom(() => this.store.select(selectRoute)),
-      filter(([, route]) => pagesRouteRegex.test(route)),
-      mergeMap(() => of(loadPagesDetailsInit())),
+      filter(([, route]) => this.apiConfig.routeRegex.test(route)),
+      mergeMap(() => of(this.actions.loadPagesDetailsInit())),
     );
   });
 
   getHashes$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(getHashes),
+      ofType(this.actions.getHashes),
+      filter(() => this.apiConfig.enableSideEffects !== false),
       concatLatestFrom(() => [this.store.select(selectRouteNestedParam('id'))]),
       mergeMap(([, id]) =>
         this.api
@@ -116,9 +115,13 @@ export class PagesDetailsEffects {
             id,
           })
           .pipe(
-            map((data) => getHashesSuccess({ data })),
+            map((data) => this.actions.getHashesSuccess({ data })),
             catchError((error) =>
-              of(getHashesError({ error: error.message || 'Failed to get hashes' })),
+              of(
+                this.actions.getHashesError({
+                  error: error.message || 'Failed to get hashes',
+                }),
+              ),
             ),
           ),
       ),
@@ -127,12 +130,13 @@ export class PagesDetailsEffects {
 
   loadAccessibility$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(loadAccessibilityInit),
+      ofType(this.actions.loadAccessibilityInit),
+      filter(() => this.apiConfig.enableSideEffects !== false),
       mergeMap(({ url }) =>
         this.api
           .get<LocalizedAccessibilityTestResponse>(`/api/pages/accessibility-test?url=${encodeURIComponent(url)}`)
           .pipe(
-            map((data) => loadAccessibilitySuccess({ url, data })),
+            map((data) => this.actions.loadAccessibilitySuccess({ url, data })),
             catchError((error) => {
               // If request was cancelled (navigation away), don't dispatch error
               // This prevents the global error state from affecting other cached pages
@@ -166,7 +170,7 @@ export class PagesDetailsEffects {
                 errorKey = 'accessibility-error-network';
               }
 
-              return of(loadAccessibilityError({ error: errorKey }));
+              return of(this.actions.loadAccessibilityError({ error: errorKey }));
             }),
           ),
       ),
@@ -175,34 +179,36 @@ export class PagesDetailsEffects {
 
   triggerAccessibilityOnPageLoad$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(loadPagesDetailsSuccess),
+      ofType(this.actions.loadPagesDetailsSuccess),
+      filter(() => this.apiConfig.enableSideEffects !== false),
       filter(({ data }) => !!data && !!data.url),
       concatLatestFrom(() => [
-        this.store.select(PagesDetailsSelectors.selectPagesDetailsState)
+        this.store.select(this.selectors.selectPagesDetailsState)
       ]),
       filter(([{ data }, state]) => {
         const url = data!.url;
         const hasCache = !!state.accessibilityByUrl[url];
         return !hasCache;
       }),
-      map(([{ data }]) => loadAccessibilityInit({ url: data!.url })),
+      map(([{ data }]) => this.actions.loadAccessibilityInit({ url: data!.url })),
     );
   });
 
   triggerPageHighlightsOnPageLoad$ = createEffect(() => {
     return merge(
-      this.actions$.pipe(ofType(loadPagesDetailsSuccess)),
+      this.actions$.pipe(ofType(this.actions.loadPagesDetailsSuccess)),
       this.store.select(selectCurrentLang).pipe(distinctUntilChanged()),
     ).pipe(
+      filter(() => this.apiConfig.enableSideEffects !== false),
       concatLatestFrom(() => [
-        this.store.select(selectPagesDetailsData),
-        this.store.select(PagesDetailsSelectors.selectPageHighlightsKey),
-        this.store.select(PagesDetailsSelectors.selectPagesDetailsState),
+        this.store.select(this.selectors.selectPagesDetailsData),
+        this.store.select(this.selectors.selectPageHighlightsKey),
+        this.store.select(this.selectors.selectPagesDetailsState),
         this.store.select(selectCurrentLang),
       ]),
       filter(([, data, key, state]) => !!data?.url && !!key && !state.pageHighlightsByKey[key]),
       map(([, data, key, , lang]) =>
-        loadPageHighlightsInit({
+        this.actions.loadPageHighlightsInit({
           key: key as string,
           pageData: {
             title: data.title,
@@ -224,13 +230,13 @@ export class PagesDetailsEffects {
 
   loadPageHighlights$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(loadPageHighlightsInit),
+      ofType(this.actions.loadPageHighlightsInit),
       mergeMap(({ key, pageData }) =>
         this.api.getPageHighlights(pageData).pipe(
-          map(({ highlights }) => loadPageHighlightsSuccess({ key, highlights })),
+          map(({ highlights }) => this.actions.loadPageHighlightsSuccess({ key, highlights })),
           catchError((error) =>
             of(
-              loadPageHighlightsError({
+              this.actions.loadPageHighlightsError({
                 error: error.message || 'Failed to load page highlights',
               }),
             ),
@@ -240,3 +246,4 @@ export class PagesDetailsEffects {
     );
   });
 }
+

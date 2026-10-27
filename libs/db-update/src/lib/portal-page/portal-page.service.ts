@@ -5,56 +5,74 @@ import utc from 'dayjs/plugin/utc';
 import { Types, type AnyBulkWriteOperation } from 'mongoose';
 import { arrayToDictionary, today } from '@dua-upd/utils-common';
 import { DbService, PortalPages } from '@dua-upd/db';
-import type { DateRange, IAAItemId } from '@dua-upd/types-common';
-import { AdobeAnalyticsService } from '@dua-upd/external-data';
+import type {
+  DateRange,
+  IAAItemId,
+  PortalPageMetrics,
+  PortalPageType,
+} from '@dua-upd/types-common';
+import {
+  AdobeAnalyticsService,
+  type PortalIdDimension,
+} from '@dua-upd/external-data';
 import { queryDateFormat } from '@dua-upd/node-utils';
 
 dayjs.extend(utc);
 
-type Language = 'en' | 'fr';
-
-type PortalEntry = { link: string; visits: number };
+type PortalResult = Record<string, PortalPageMetrics[]>;
 
 type PortalItemIdResult = {
   itemid_secureportal?: string;
   value?: string;
 };
 
-type RegistryEntry = {
-  screen_id: string;
-  title: string | null;
-  url: string | null;
-  lang: Language;
-};
-
-type LanguageItemIds = {
-  language: Language;
+type LangItemIds = {
+  lang: 'en' | 'fr';
   itemIds: IAAItemId[];
 };
 
-const PORTAL_PAGES_START_DATE = '2026-08-29';
+const portalPageTypePatterns: ReadonlyArray<{
+  match: string;
+  type: PortalPageType;
+}> = [
+  { match: '/ebci', type: 'applications' },
+  { match: '/awsc/cms', type: 'ams-cms' },
+  { match: '/ind', type: 'individuals' },
+  { match: '/bus', type: 'business' },
+  { match: '/rac', type: 'represent-client' },
+  { match: '/rep/t3', type: 'trusts' },
+  { match: '/rpas', type: 'registered-plans' },
+  { match: '/nonres', type: 'non-resident' },
+  { match: '/charity', type: 'charities' },
+];
 
-const normalizeUrl = (url: string) => url.replace(/apps[1-8]/g, 'apps');
+const classifyPortalPageType = (
+  url: string | null | undefined,
+): PortalPageType | null => {
+  if (!url) return null;
 
-const topEntriesByItemId = (results: Array<Record<string, unknown>>) => {
-  const topByItemId = new Map<string, PortalEntry>();
+  const normalizedUrl = url.toLowerCase();
 
-  for (const result of results) {
-    for (const [itemId, entries] of Object.entries(result)) {
-      if (itemId === 'date' || !Array.isArray(entries) || !entries.length) {
-        continue;
-      }
+  return (
+    portalPageTypePatterns.find(({ match }) => normalizedUrl.includes(match))
+      ?.type ?? null
+  );
+};
 
-      const top = entries[0] as PortalEntry;
-      const current = topByItemId.get(itemId);
+export const normalizeUrl = (url: string) => url.replace(/apps[1-8]/g, 'apps');
 
-      if (!current || top.visits > current.visits) {
-        topByItemId.set(itemId, top);
-      }
-    }
-  }
+const topEntriesByItemId = (results: PortalResult[], itemIds: string[]) => {
+  const entries = results
+    .flatMap((result) =>
+      itemIds.flatMap((itemId) => {
+        const entry = result[itemId]?.[0];
 
-  return topByItemId;
+        return entry ? [{ itemId, ...entry }] : [];
+      }),
+    )
+    .sort((a, b) => a.visits - b.visits);
+
+  return arrayToDictionary(entries, 'itemId', true);
 };
 
 @Injectable()
@@ -67,8 +85,17 @@ export class PortalPageService {
 
   async updatePortalPages(dateRange?: DateRange<string>) {
     const range = dateRange ?? {
-      start: dayjs.utc(PORTAL_PAGES_START_DATE).format(queryDateFormat),
-      // End is exclusive in this flow, so "today" includes all of yesterday.
+      start: dayjs
+        .utc(
+          (
+            await this.db.collections.portalPagesMetrics
+              .findOne({})
+              .sort({ date: -1 })
+              .lean()
+              .exec()
+          )?.date || '2025-02-01',
+        )
+        .format(queryDateFormat),
       end: today().startOf('day').format(queryDateFormat),
     };
 
@@ -76,17 +103,18 @@ export class PortalPageService {
       chalk.blueBright(`Syncing portal pages for ${range.start}/${range.end}`),
     );
 
-    const languageResults: LanguageItemIds[] = await Promise.all(
-      (['en', 'fr'] as const).map(async (language) => ({
-        language,
-        itemIds: await this.fetchItemIds(range, language),
+    const langResults: LangItemIds[] = await Promise.all(
+      (['en', 'fr'] as const).map(async (lang) => ({
+        lang,
+        itemIds: await this.fetchItemIds(range, lang),
       })),
     );
 
-    await this.syncItemIds(languageResults);
+    await this.syncItemIds(langResults);
 
-    for (const { language, itemIds } of languageResults) {
-      await this.updateRegistry(range, language, itemIds);
+    for (const { lang, itemIds } of langResults) {
+      const screenIds = await this.updateRegistry(range, lang, itemIds);
+      await this.updateUrlOnlyPages(range, lang, screenIds);
     }
 
     this.logger.log(chalk.green('Finished syncing portal pages.'));
@@ -94,34 +122,32 @@ export class PortalPageService {
 
   private async fetchItemIds(
     dateRange: DateRange<string>,
-    language: Language,
+    lang: 'en' | 'fr',
+    idDimension?: PortalIdDimension,
   ): Promise<IAAItemId[]> {
     const results = (
       await this.adobeAnalyticsService.getPortalScreenItemIds(
         dateRange,
-        language,
+        lang,
+        idDimension,
       )
     ).flat() as PortalItemIdResult[];
 
-    const itemIds: IAAItemId[] = results.flatMap((item) => {
-      if (!item.itemid_secureportal || !item.value) return [];
+    const itemIds: IAAItemId[] = results
+      .filter((item) => item.itemid_secureportal && item.value)
+      .map((item) => ({
+        _id: new Types.ObjectId(),
+        type: 'portalPages' as const,
+        itemId: item.itemid_secureportal!,
+        value: item.value!,
+      }));
 
-      return [
-        {
-          _id: new Types.ObjectId(),
-          type: 'portalPages' as const,
-          itemId: item.itemid_secureportal,
-          value: item.value,
-        },
-      ];
-    });
-
-    this.logger.log(`Got ${itemIds.length} valid ${language} portal itemIds.`);
+    this.logger.log(`Got ${itemIds.length} valid ${lang} portal itemIds.`);
 
     return itemIds;
   }
 
-  private async syncItemIds(results: LanguageItemIds[]) {
+  private async syncItemIds(results: LangItemIds[]) {
     const allItemIds = results.flatMap(({ itemIds }) => itemIds);
 
     if (!allItemIds.length) {
@@ -131,7 +157,7 @@ export class PortalPageService {
       return;
     }
 
-    const operations: AnyBulkWriteOperation<IAAItemId>[] = allItemIds.map(
+    const bulkWriteOps: AnyBulkWriteOperation<IAAItemId>[] = allItemIds.map(
       (item) => ({
         updateOne: {
           filter: {
@@ -153,7 +179,7 @@ export class PortalPageService {
       }),
     );
 
-    const result = await this.db.collections.aaItemIds.bulkWrite(operations, {
+    const result = await this.db.collections.aaItemIds.bulkWrite(bulkWriteOps, {
       ordered: false,
     });
 
@@ -162,53 +188,207 @@ export class PortalPageService {
     );
   }
 
+  private async updateUrlOnlyPages(
+    dateRange: DateRange<string>,
+    lang: 'en' | 'fr',
+    screenUrls: string[],
+  ) {
+    const urlItemIds = await this.fetchItemIds(
+      dateRange,
+      lang,
+      'variables/evar22',
+    );
+
+    const candidates = urlItemIds
+      .map(({ itemId, value }) => ({
+        itemId,
+        url: normalizeUrl(value),
+      }))
+      .filter(({ url }) => !screenUrls.includes(url));
+
+    if (screenUrls.length) {
+      const result = await this.db.collections.portalPages.deleteMany({
+        lang,
+        screen_id: null,
+        url: { $in: screenUrls },
+      });
+
+      if (result.deletedCount) {
+        this.logger.log(
+          `Removed ${result.deletedCount} url-only ${lang} portal pages now associated with screen ids.`,
+        );
+      }
+    }
+
+    if (!candidates.length) return;
+
+    const knownUrls = await this.db.collections.portalPages.distinct('url', {
+      lang,
+      url: { $in: candidates.map(({ url }) => url) },
+    });
+
+    const candidatesByUrl = new Map(
+      candidates.map((candidate) => [candidate.url, candidate] as const),
+    );
+    const newPages = [...candidatesByUrl]
+      .filter(([url]) => !knownUrls.includes(url))
+      .map(([, candidate]) => candidate);
+
+    if (!newPages.length) {
+      this.logger.log(`No new url-only ${lang} portal pages.`);
+      return;
+    }
+
+    const newItemIds = [
+      ...new Map(
+        newPages.map(({ itemId }) => [itemId, itemId] as const),
+      ).keys(),
+    ];
+
+    const titleResults: PortalResult[] =
+      await this.adobeAnalyticsService.getPortalPageTitle(
+        dateRange,
+        newItemIds,
+        lang,
+        'variables/evar22',
+      );
+
+    const topTitleByItemId = topEntriesByItemId(titleResults, newItemIds);
+
+    const bulkWriteOps: AnyBulkWriteOperation<PortalPages>[] = newPages.map(
+      ({ itemId, url }) => ({
+        updateOne: {
+          filter: { url, lang, screen_id: null },
+          update: {
+            $setOnInsert: { _id: new Types.ObjectId() },
+            $set: {
+              title: topTitleByItemId[itemId]?.link ?? null,
+              url,
+              type: classifyPortalPageType(url),
+              lang,
+            },
+          },
+          upsert: true,
+        },
+      }),
+    );
+
+    const result = await this.db.collections.portalPages.bulkWrite(
+      bulkWriteOps,
+      { ordered: false },
+    );
+
+    this.logger.log(
+      `Url-only portal pages ${lang}: ${result.upsertedCount} inserted.`,
+    );
+  }
+
   private async updateRegistry(
     dateRange: DateRange<string>,
-    language: Language,
+    lang: 'en' | 'fr',
     itemIdResults: IAAItemId[],
-  ) {
-    const itemIds = itemIdResults.map(({ itemId }) => itemId);
+  ): Promise<string[]> {
+    const existingPages = await this.db.collections.portalPages
+      .find(
+        { lang, screen_id: { $type: 'string' } },
+        { screen_id: 1, url: 1, urls: 1 },
+      )
+      .lean()
+      .exec();
+    const existingUrlsByScreenId = new Map<string, string[]>();
+    for (const { screen_id, url, urls } of existingPages) {
+      if (!screen_id) continue;
 
-    if (!itemIds.length) return;
+      const knownUrls = existingUrlsByScreenId.get(screen_id) ?? [];
+      for (const existingUrl of [...(urls ?? []), ...(url ? [url] : [])]) {
+        if (!knownUrls.includes(existingUrl)) knownUrls.push(existingUrl);
+      }
+      existingUrlsByScreenId.set(screen_id, knownUrls);
+    }
 
-    const itemIdDictionary = arrayToDictionary(itemIdResults, 'itemId', true);
-
-    const [titleResults, urlResults] = await Promise.all([
-      this.adobeAnalyticsService.getPortalMetrics(dateRange, itemIds, language),
-      this.adobeAnalyticsService.getPortalPageUrls(
-        dateRange,
-        itemIds,
-        language,
-      ),
-    ]);
-
-    const topTitleByItemId = topEntriesByItemId(
-      titleResults as unknown as Array<Record<string, unknown>>,
+    const existingScreenUrls = existingPages
+      .flatMap(({ url, urls }) => [...(urls ?? []), ...(url ? [url] : [])])
+      .filter((url, index, pageUrls) => pageUrls.indexOf(url) === index);
+    const itemIdById = new Map(
+      itemIdResults.map((item) => [item.itemId, item] as const),
     );
+    const itemIds = [...itemIdById.keys()];
 
-    const topUrlByItemId = topEntriesByItemId(
-      urlResults as unknown as Array<Record<string, unknown>>,
-    );
+    if (!itemIds.length) return existingScreenUrls;
 
-    const registryEntries: RegistryEntry[] = itemIds
-      .map((itemId) => {
-        const screenId = itemIdDictionary[itemId]?.value;
+    const [titleResults, urlResults]: [PortalResult[], PortalResult[]] =
+      await Promise.all([
+        this.adobeAnalyticsService.getPortalPageTitle(dateRange, itemIds, lang),
+        this.adobeAnalyticsService.getPortalPageUrls(dateRange, itemIds, lang),
+      ]);
 
-        if (!screenId) return null;
+    const topTitleByItemId = topEntriesByItemId(titleResults, itemIds);
+    const groupedEntries = new Map<
+      string,
+      {
+        title: string | null;
+        titleVisits: number;
+        urls: Map<string, number>;
+      }
+    >();
 
-        const topUrl = topUrlByItemId.get(itemId)?.link;
+    for (const itemId of itemIds) {
+      const screenId = itemIdById.get(itemId)?.value;
+
+      if (!screenId) continue;
+
+      let group = groupedEntries.get(screenId);
+
+      if (!group) {
+        group = {
+          title: null,
+          titleVisits: -1,
+          urls: new Map(
+            (existingUrlsByScreenId.get(screenId) ?? []).map((url) => [
+              url,
+              -1,
+            ]),
+          ),
+        };
+        groupedEntries.set(screenId, group);
+      }
+
+      const title = topTitleByItemId[itemId];
+      if (title && title.visits > group.titleVisits) {
+        group.title = title.link;
+        group.titleVisits = title.visits;
+      }
+
+      for (const result of urlResults) {
+        for (const { link, visits } of result[itemId] ?? []) {
+          const url = normalizeUrl(link);
+          group.urls.set(url, Math.max(group.urls.get(url) ?? 0, visits));
+        }
+      }
+    }
+
+    const registryEntries = [...groupedEntries].map(
+      ([screen_id, { title, urls }]) => {
+        const groupedUrls = [...urls]
+          .sort(([, visitsA], [, visitsB]) => visitsB - visitsA)
+          .map(([url]) => url);
 
         return {
-          screen_id: screenId,
-          title: topTitleByItemId.get(itemId)?.link ?? null,
-          url: topUrl ? normalizeUrl(topUrl) : null,
-          lang: language,
+          screen_id,
+          title,
+          url: groupedUrls[0] ?? null,
+          urls: groupedUrls,
+          lang,
         };
-      })
-      .filter((entry): entry is RegistryEntry => !!entry);
+      },
+    );
+    const screenIds = [
+      ...existingScreenUrls,
+      ...registryEntries.flatMap(({ urls }) => urls),
+    ].filter((url, index, allScreenIds) => allScreenIds.indexOf(url) === index);
 
-    const operations: AnyBulkWriteOperation<PortalPages>[] =
-      registryEntries.map(({ screen_id, title, url, lang }) => ({
+    const bulkWriteOps: AnyBulkWriteOperation<PortalPages>[] =
+      registryEntries.map(({ screen_id, title, url, urls, lang }) => ({
         updateOne: {
           filter: {
             screen_id,
@@ -221,6 +401,8 @@ export class PortalPageService {
             $set: {
               title,
               url,
+              type: classifyPortalPageType(url),
+              urls,
               lang,
             },
           },
@@ -228,14 +410,17 @@ export class PortalPageService {
         },
       }));
 
-    if (!operations.length) return;
+    if (!bulkWriteOps.length) return screenIds;
 
-    const result = await this.db.collections.portalPages.bulkWrite(operations, {
-      ordered: false,
-    });
+    const result = await this.db.collections.portalPages.bulkWrite(
+      bulkWriteOps,
+      { ordered: false },
+    );
 
     this.logger.log(
-      `Portal pages ${language}: ${result.upsertedCount} inserted, ${result.modifiedCount} updated.`,
+      `Portal pages ${lang}: ${result.upsertedCount} inserted, ${result.modifiedCount} updated.`,
     );
+
+    return screenIds;
   }
 }

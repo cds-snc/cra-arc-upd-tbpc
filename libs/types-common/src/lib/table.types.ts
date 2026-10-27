@@ -62,7 +62,9 @@ export interface FilterConfig<T = any> {
     | 'projectType'
     | 'taskStatus'
     | 'archivedStatus'
-    | 'pageArchivedStatus';
+    | 'pageArchivedStatus'
+    | 'languageStatus'
+    | 'portalPageType';
   categories?: { name: string; value: T[keyof T] | null }[];
   matchMode?: string;
 }

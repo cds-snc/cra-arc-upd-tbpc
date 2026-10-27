@@ -14,6 +14,17 @@ import { PagesDetailsVersionsComponent } from './pages-details/pages-details-ver
 import { PagesDetailsAccessibilityComponent } from './pages-details/pages-details-accessibility/pages-details-accessibility.component';
 import { pagesUrlRedirectGuard } from './pages-url-redirect.guard';
 
+const pagesNavTabs = [
+  { href: 'summary', title: 'tab-summary' },
+  { href: 'webtraffic', title: 'tab-webtraffic' },
+  { href: 'searchanalytics', title: 'tab-searchanalytics' },
+  { href: 'pagefeedback', title: 'tab-pagefeedback' },
+  { href: 'flow', title: 'tab-flow' },
+  { href: 'readability', title: 'tab-readability' },
+  { href: 'version-history', title: 'tab-version-history' },
+  { href: 'accessibility', title: 'tab-accessibility' },
+];
+
 const routes: Routes = [
   {
     path: '',
@@ -24,10 +35,35 @@ const routes: Routes = [
         component: PagesHomeComponent,
         pathMatch: 'full',
         canActivate: [pagesUrlRedirectGuard],
+        data: {
+          pageTitle: 'Pages',
+          cardTitle: 'List of all pages',
+          idPrefix: 'pages-home-',
+        },
+      },
+      {
+        path: 'portal-pages',
+        redirectTo: 'portal',
+        pathMatch: 'prefix',
+      },
+      {
+        path: 'portal',
+        loadChildren: () =>
+          import('./portal-pages/portal-pages.module').then(
+            (module) => module.PortalPagesModule,
+          ),
+        data: { title: 'Portal Pages | Home' },
       },
       {
         path: ':id',
         component: PagesDetailsComponent,
+        data: {
+          basePath: 'pages',
+          backLabel: 'Pages',
+          navTabs: pagesNavTabs,
+          showProjectHeader: true,
+          showLangToggle: true,
+        },
         children: [
           { path: '', redirectTo: 'summary', pathMatch: 'full' },
           {

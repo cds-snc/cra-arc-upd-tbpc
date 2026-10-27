@@ -1,6 +1,8 @@
 <div class="back_link">
   <span class="material-icons align-top">west</span>
-  <a [routerLink]="['/', langLink(), 'pages']">Pages</a>
+  <a [routerLink]="['/', langLink(), ...basePath.split('/')]">{{
+    backLabel
+  }}</a>
 </div>
 
 @if (loading$ | async) {
@@ -12,13 +14,15 @@
     }
     <span class="h5 d-inline-block mb-0 align-top ms-1">
       @if ((pageStatus$ | async) !== null) {
-        <upd-project-status-label class="d-inline-block"
+        <upd-project-status-label
+          class="d-inline-block"
           [pageStatus]="pageStatus$ | async"
         >
         </upd-project-status-label>
-      } 
+      }
       @if ((archivedStatus$ | async) !== null) {
-        <upd-project-status-label class="d-inline-block ms-2"
+        <upd-project-status-label
+          class="d-inline-block ms-2"
           [archivedStatus]="archivedStatus$ | async"
         >
         </upd-project-status-label>
@@ -47,16 +51,26 @@
         <upd-alert position="top">Copied successfully!</upd-alert>
       }
     </span>
-    <span id="language" (click)="navigateToAltPage()" tabindex="0">
-      <span class="material-icons align-top" aria-hidden="true">language</span>
-      {{ 'View page' | translate: { lang: pageLangText() } }}
-    </span>
+    @if (altPageId() !== null) {
+      <span
+        id="language"
+        (click)="navigateToAltPage()"
+        tabindex="0"
+        *ngIf="showLangToggle"
+      >
+        <span class="material-icons align-top" aria-hidden="true"
+          >language</span
+        >
+        {{ 'View page' | translate: { lang: pageLangText() } }}
+      </span>
+    }
   </div>
   <upd-project-header
+    *ngIf="showProjectHeader"
     [data]="projectHeader()"
     [config]="projectsCol()"
   ></upd-project-header>
-  <upd-nav-tabs [tabs]="navTabs"></upd-nav-tabs>
+  <upd-nav-tabs [tabs]="navTabs || []"></upd-nav-tabs>
   @if (
     !((currentRoute$ | async) || '').endsWith('readability') &&
     !((currentRoute$ | async) || '').endsWith('version-history') &&

@@ -1,6 +1,7 @@
 import { createReducer, on, Action } from '@ngrx/store';
 
 import * as PagesHomeActions from './pages-home.actions';
+import type { PagesHomeActionsBundle } from './pages-home.actions';
 import { PagesHomeData } from '@dua-upd/types-common';
 
 export const PAGES_HOME_FEATURE_KEY = 'pagesHome';
@@ -24,40 +25,43 @@ export const pagesHomeInitialState: PagesHomeState = {
   error: null,
 };
 
-const reducer = createReducer(
-  pagesHomeInitialState,
-  on(
-    PagesHomeActions.loadPagesHomeInit,
-    (state): PagesHomeState => ({
-      ...state,
-      loading: true,
-      loaded: false,
-      error: null,
-    }),
-  ),
-  on(
-    PagesHomeActions.loadPagesHomeSuccess,
-    (state, { data }): PagesHomeState => ({
-      data: data,
-      loading: false,
-      loaded: true,
-      error: null,
-    }),
-  ),
-  on(
-    PagesHomeActions.loadPagesHomeError,
-    (state, { error }): PagesHomeState => ({
-      ...state,
-      loading: false,
-      loaded: true,
-      error,
-    }),
-  ),
-);
+// Factory so a fresh reducer bound to its own actions can be created for
+// separate feature-key instances (e.g. `pages` vs `portal-pages`).
+export function createPagesHomeReducer(actions: PagesHomeActionsBundle) {
+  const reducer = createReducer(
+    pagesHomeInitialState,
+    on(
+      actions.loadPagesHomeInit,
+      (state): PagesHomeState => ({
+        ...state,
+        loading: true,
+        loaded: false,
+        error: null,
+      }),
+    ),
+    on(
+      actions.loadPagesHomeSuccess,
+      (state, { data }): PagesHomeState => ({
+        data: data,
+        loading: false,
+        loaded: true,
+        error: null,
+      }),
+    ),
+    on(
+      actions.loadPagesHomeError,
+      (state, { error }): PagesHomeState => ({
+        ...state,
+        loading: false,
+        loaded: true,
+        error,
+      }),
+    ),
+  );
 
-export function pagesHomeReducer(
-  state: PagesHomeState | undefined,
-  action: Action,
-) {
-  return reducer(state, action);
+  return function (state: PagesHomeState | undefined, action: Action) {
+    return reducer(state, action);
+  };
 }
+
+export const pagesHomeReducer = createPagesHomeReducer(PagesHomeActions);

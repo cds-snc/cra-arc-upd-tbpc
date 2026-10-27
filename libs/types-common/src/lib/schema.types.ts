@@ -171,11 +171,24 @@ export interface IPageMetrics extends IMetrics {
 
 export interface IPortalPages {
   _id: Types.ObjectId;
-  screen_id: string;
+  screen_id: string | null;
   title: string | null;
   url: string | null;
+  type: string | null;
+  urls?: string[];
   lang?: 'en' | 'fr';
 }
+
+export type PortalPageType =
+  | 'individuals'
+  | 'business'
+  | 'represent-client'
+  | 'trusts'
+  | 'registered-plans'
+  | 'non-resident'
+  | 'charities'
+  | 'applications'
+  | 'ams-cms';
 
 export interface IPortalPagesMetrics {
   _id: Types.ObjectId;

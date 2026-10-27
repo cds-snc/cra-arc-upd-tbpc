@@ -39,6 +39,18 @@
       [archivedStatus]="archivedStatus"
     ></upd-project-status-label>
   }
+  @if (labelType === 'language') {
+    <upd-project-status-label
+      [languageStatus]="languageStatus"
+    ></upd-project-status-label>
+  }
+
+  @if (labelType === 'portalPageType') {
+    <upd-project-status-label
+      [portalPageType]="portalPageType"
+      class="d-inline-flex"
+    ></upd-project-status-label>
+  }
 
   <!-- COPS Type -->
   @if (

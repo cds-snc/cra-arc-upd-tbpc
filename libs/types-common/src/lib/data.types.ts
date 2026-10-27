@@ -81,7 +81,7 @@ export type PortalPagesDetailsMetrics = Pick<
 
 export type PortalPagesHomeAggregatedData = Pick<
   IPortalPages,
-  '_id' | 'screen_id' | 'title' | 'url' | 'lang'
+  '_id' | 'screen_id' | 'title' | 'url' | 'lang' | 'type'
 > &
   PortalPagesDetailsMetrics;
 
@@ -94,12 +94,13 @@ export interface PortalPageAggregatedData extends PortalPagesDetailsMetrics {
 
 export type PortalPageDetailsData =
   EntityDetailsData<PortalPageAggregatedData> &
-    Pick<IPortalPages, 'screen_id' | 'url' | 'lang'>;
+    Pick<IPortalPages, 'screen_id' | 'url' | 'lang' | 'type'>;
 
 export type PagesHomeAggregatedData = Pick<IPage, '_id' | 'url' | 'title'> & {
   visits: number;
   pageStatus?: PageStatus;
   archivedStatus?: ArchivedStatus;
+  pageArchivedStatusLabel?: (PageStatus | ArchivedStatus)[]
 };
 export type PagesHomeData = ViewData<PagesHomeAggregatedData[]>;
 
@@ -603,6 +604,8 @@ export type ArchivedStatus = 'Archived' | 'Not archived';
 
 // export type PageArchivedStatus = PageStatus | ArchivedStatus;
 export type PageArchivedStatus = 'Live' | '404' | 'Redirected' | 'Archived' | 'Not archived';
+
+export type LanguageStatus = 'en' | 'fr';
 
 export type ProjectType = 'COPS' | 'WOS_COPS';
 

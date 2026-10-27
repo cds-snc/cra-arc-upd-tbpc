@@ -4,8 +4,7 @@ import { UpdComponentsModule } from '@dua-upd/upd-components';
 
 import { PagesRoutingModule } from './pages-routing.module';
 import { PagesComponent } from './pages.component';
-import { PagesHomeComponent } from './pages-home/pages-home.component';
-import { PagesDetailsComponent } from './pages-details/pages-details.component';
+import { PagesSharedModule } from './pages-shared.module';
 import { PagesDetailsSummaryComponent } from './pages-details/pages-details-summary/pages-details-summary.component';
 import { PagesDetailsWebtrafficComponent } from './pages-details/pages-details-webtraffic/pages-details-webtraffic.component';
 import { PagesDetailsSearchAnalyticsComponent } from './pages-details/pages-details-search-analytics/pages-details-search-analytics.component';
@@ -41,6 +40,7 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     UpdComponentsModule,
     ClipboardModule,
     I18nModule,
+    PagesSharedModule,
     StoreModule.forFeature(PAGES_HOME_FEATURE_KEY, pagesHomeReducer),
     EffectsModule.forFeature([PagesHomeEffects]),
     StoreModule.forFeature(PAGES_DETAILS_FEATURE_KEY, pagesDetailsReducer),
@@ -51,8 +51,6 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
   ],
   declarations: [
     PagesComponent,
-    PagesHomeComponent,
-    PagesDetailsComponent,
     PagesDetailsSummaryComponent,
     PagesDetailsWebtrafficComponent,
     PagesDetailsSearchAnalyticsComponent,

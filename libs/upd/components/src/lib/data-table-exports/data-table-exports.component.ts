@@ -13,6 +13,7 @@ import {
   ProjectStatus,
   TaskStatus,
   PageArchivedStatus,
+  PortalPageType,
 } from '@dua-upd/types-common';
 
 @Component({
@@ -81,10 +82,23 @@ export class DataTableExportsComponent<T> {
 
     const pageStatusKeys: PageStatus[] = ['Live', '404', 'Redirected'];
 
+    const portalPageTypeKeys: PortalPageType[] = [
+      'individuals',
+      'business',
+      'represent-client',
+      'trusts',
+      'registered-plans',
+      'non-resident',
+      'charities',
+      'applications',
+      'ams-cms',
+    ];
+
     const taskStatusKeys: TaskStatus[] = [
       'On track',
       'Watch',
       'Action required',
+      'Pending',
       'Unscored',
     ];
 
@@ -101,6 +115,10 @@ export class DataTableExportsComponent<T> {
 
     const pageStatuses = (await this.i18n.service.get(
       pageStatusKeys,
+    )) as Record<string, string>;
+
+    const portalPageTypes = (await this.i18n.service.get(
+      portalPageTypeKeys,
     )) as Record<string, string>;
 
     const taskStatuses = (await this.i18n.service.get(
@@ -129,6 +147,8 @@ export class DataTableExportsComponent<T> {
             formattedRow[colKey] = cellValue ? wos_cops : '';
           } else if (col.filterConfig?.type === 'pageStatus') {
             formattedRow[colKey] = pageStatuses[(<unknown>cellValue) as string];
+          } else if (col.filterConfig?.type === 'portalPageType') {
+            formattedRow[colKey] = portalPageTypes[(<unknown>cellValue) as string];
           } else if (col.filterConfig?.type === 'taskStatus') {
             formattedRow[colKey] = taskStatuses[(<unknown>cellValue) as string];
           } else if (col.filterConfig?.type === 'archivedStatus') {

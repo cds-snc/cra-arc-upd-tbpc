@@ -14,8 +14,8 @@ export const SEGMENTS = {
   cra_v2: 's300000938_649b3eef7920a9775bdcb0d5', // v2 w/ no errors
   cra: 's300000938_6437f85ef58fb02d8e75cd5b', // v2 w/ errors
   cra_over_255: 's300000938_62d198c24906df4fba26597e', // cra segment, but only includes pages with 256+ characters
-  english: 's300000938_57924078e4b05f8496f06d63',
-  french: 's300000938_579240a6e4b00bd9617283bd',
+  english: 's300000938_6ad0ebbe9d66ef45c334f513',
+  french: 's300000938_6ad0eb9c392f0011974555e7',
   no_low_traffic: 's300000938_6335b3e85aac1b53dba7dd5f',
   FWYLF: {
     CANT_FIND_INFO: 's300000938_60ec6b712b7fae2105ab3c07',

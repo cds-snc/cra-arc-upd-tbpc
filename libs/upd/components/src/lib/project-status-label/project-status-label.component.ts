@@ -6,6 +6,8 @@ import {
   TaskStatus,
   ArchivedStatus,
   PageArchivedStatus,
+  LanguageStatus,
+  PortalPageType,
 } from '@dua-upd/types-common';
 
 @Component({
@@ -59,6 +61,22 @@ import {
         >{{ pageArchivedStatus | translate }}</span
       >
     }
+    @if (languageStatus) {
+      <span
+        class="badge {{ styleClass }} {{
+          languageStatusClassMap[languageStatus]
+        }} d-block"
+        >{{ languageStatus | translate }}</span
+      >
+    }
+    @if (portalPageType) {
+      <span
+        class="badge {{ styleClass }} {{
+          portalPageTypeClassMap[portalPageType]
+        }} d-block"
+        >{{ portalPageType | translate }}</span
+      >
+    }
   `,
   styleUrls: ['./project-status-label.component.scss'],
   standalone: false,
@@ -70,6 +88,8 @@ export class ProjectStatusLabelComponent {
   @Input() taskStatus: TaskStatus | null = null;
   @Input() archivedStatus: ArchivedStatus | null = null;
   @Input() pageArchivedStatus: PageArchivedStatus | null = null;
+  @Input() languageStatus: LanguageStatus | null = null;
+  @Input() portalPageType: PortalPageType | null = null;
   @Input() styleClass: string | null = null;
 
   projectStatusClassMap = statusLabelClassMap['projectStatus'];
@@ -83,6 +103,10 @@ export class ProjectStatusLabelComponent {
   archivedStatusClassMap = statusLabelClassMap['archivedStatus'];
 
   pageArchivedStatusClassMap = statusLabelClassMap['pageArchivedStatus'];
+
+  languageStatusClassMap = statusLabelClassMap['languageStatus'];
+
+  portalPageTypeClassMap = statusLabelClassMap['portalPageType'];
 }
 
 const projectStatusClassMap: Record<ProjectStatus, string> = {
@@ -129,6 +153,23 @@ const pageArchivedStatusClassMap: Record<PageArchivedStatus, string> = {
   'Not archived': 'bg-primary',
 };
 
+const languageStatusClassMap: Record<LanguageStatus, string> = {
+  en: 'bg-english',
+  fr: 'bg-french',
+};
+
+const portalPageTypeClassMap: Record<PortalPageType, string> = {
+  'ams-cms': 'bg-ams-cms',
+  individuals: 'bg-individuals',
+  business: 'bg-business',
+  'represent-client': 'bg-represent-client',
+  trusts: 'bg-trusts',
+  'registered-plans': 'bg-registered-plans',
+  'non-resident': 'bg-non-resident',
+  charities: 'bg-charities',
+  applications: 'bg-applications',
+};
+
 export const statusLabelClassMap = {
   projectStatus: projectStatusClassMap,
   pageStatus: pageStatusClassMap,
@@ -136,4 +177,6 @@ export const statusLabelClassMap = {
   taskStatus: taskStatusClassMap,
   archivedStatus: archivedStatusClassMap,
   pageArchivedStatus: pageArchivedStatusClassMap,
+  languageStatus: languageStatusClassMap,
+  portalPageType: portalPageTypeClassMap,
 } as const;

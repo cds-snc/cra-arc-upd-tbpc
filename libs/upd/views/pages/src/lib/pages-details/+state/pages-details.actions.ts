@@ -2,62 +2,89 @@ import { createAction, props } from '@ngrx/store';
 import { PageDetailsData, PageHighlightsData } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
-export const loadPagesDetailsInit = createAction('[PagesDetails] Load PagesDetails Init');
+// Factory so the same action set can be instantiated multiple times (e.g. for
+// `pages` and `portal-pages`) under distinct action-type namespaces, avoiding
+// cross-talk between separate NgRx feature slices that share this state shape.
+export function createPagesDetailsActions(prefix = 'PagesDetails') {
+  return {
+    loadPagesDetailsInit: createAction(`[${prefix}] Load PagesDetails Init`),
 
-export const loadPagesDetailsSuccess = createAction(
-  '[PagesDetails/API] Load PagesDetails Success',
-  props<{ data: PageDetailsData | null }>()
-);
+    loadPagesDetailsSuccess: createAction(
+      `[${prefix}/API] Load PagesDetails Success`,
+      props<{ data: PageDetailsData | null }>(),
+    ),
 
-export const loadPagesDetailsError = createAction(
-  '[PagesDetails/API] Load PagesDetails Error',
-  props<{ error: string }>()
-);
+    loadPagesDetailsError: createAction(
+      `[${prefix}/API] Load PagesDetails Error`,
+      props<{ error: string }>(),
+    ),
 
-export const getHashes = createAction(
-  '[PagesDetails/API] Get Hashes',
-);
+    getHashes: createAction(`[${prefix}/API] Get Hashes`),
 
-export const getHashesSuccess = createAction(
-  '[PagesDetails/API] Get Hashes Success',
-  props<{ data: PageDetailsData['hashes'] }>(),
-);
+    getHashesSuccess: createAction(
+      `[${prefix}/API] Get Hashes Success`,
+      props<{ data: PageDetailsData['hashes'] }>(),
+    ),
 
-export const getHashesError = createAction(
-  '[PagesDetails/API] Get Hashes Error',
-  props<{ error: string }>(),
-);
+    getHashesError: createAction(
+      `[${prefix}/API] Get Hashes Error`,
+      props<{ error: string }>(),
+    ),
 
-export const loadAccessibilityInit = createAction(
-  '[PagesDetails/API] Load Accessibility Init',
-  props<{ url: string }>()
-);
+    loadAccessibilityInit: createAction(
+      `[${prefix}/API] Load Accessibility Init`,
+      props<{ url: string }>(),
+    ),
 
-export const loadAccessibilitySuccess = createAction(
-  '[PagesDetails/API] Load Accessibility Success',
-  props<{ url: string; data: LocalizedAccessibilityTestResponse }>()
-);
+    loadAccessibilitySuccess: createAction(
+      `[${prefix}/API] Load Accessibility Success`,
+      props<{ url: string; data: LocalizedAccessibilityTestResponse }>(),
+    ),
 
-export const loadAccessibilityError = createAction(
-  '[PagesDetails/API] Load Accessibility Error',
-  props<{ error: string }>()
-);
+    loadAccessibilityError: createAction(
+      `[${prefix}/API] Load Accessibility Error`,
+      props<{ error: string }>(),
+    ),
 
-export const clearAccessibilityCache = createAction(
-  '[PagesDetails] Clear Accessibility Cache'
-);
+    clearAccessibilityCache: createAction(
+      `[${prefix}] Clear Accessibility Cache`,
+    ),
 
-export const loadPageHighlightsInit = createAction(
-  '[PagesDetails/API] Load Page Highlights Init',
-  props<{ key: string; pageData: PageHighlightsData }>()
-);
+    loadPageHighlightsInit: createAction(
+      `[${prefix}/API] Load Page Highlights Init`,
+      props<{ key: string; pageData: PageHighlightsData }>(),
+    ),
 
-export const loadPageHighlightsSuccess = createAction(
-  '[PagesDetails/API] Load Page Highlights Success',
-  props<{ key: string; highlights: string[] }>()
-);
+    loadPageHighlightsSuccess: createAction(
+      `[${prefix}/API] Load Page Highlights Success`,
+      props<{ key: string; highlights: string[] }>(),
+    ),
 
-export const loadPageHighlightsError = createAction(
-  '[PagesDetails/API] Load Page Highlights Error',
-  props<{ error: string }>()
-);
+    loadPageHighlightsError: createAction(
+      `[${prefix}/API] Load Page Highlights Error`,
+      props<{ error: string }>(),
+    ),
+  };
+}
+
+export type PagesDetailsActionsBundle = ReturnType<
+  typeof createPagesDetailsActions
+>;
+
+const defaultPagesDetailsActions = createPagesDetailsActions('PagesDetails');
+
+export const {
+  loadPagesDetailsInit,
+  loadPagesDetailsSuccess,
+  loadPagesDetailsError,
+  getHashes,
+  getHashesSuccess,
+  getHashesError,
+  loadAccessibilityInit,
+  loadAccessibilitySuccess,
+  loadAccessibilityError,
+  clearAccessibilityCache,
+  loadPageHighlightsInit,
+  loadPageHighlightsSuccess,
+  loadPageHighlightsError,
+} = defaultPagesDetailsActions;

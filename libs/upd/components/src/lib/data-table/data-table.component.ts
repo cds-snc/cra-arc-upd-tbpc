@@ -241,10 +241,10 @@ export class DataTableComponent<T extends object> {
   }
 
   getEventValue(event: Event): string {
-    return (event.target as HTMLInputElement).value.replace(
-      /^.+?(?=www\.)/i,
-      '',
-    );
+    return (event.target as HTMLInputElement).value
+      .replace(/^.+?(?=www\.|apps(?:[1-8])?\.|cms-sgj\.)/i, '')
+      .replace(/^apps[1-8]\./i, 'apps.')
+      .replace(/\/#\//g, '/');
   }
 
   updateSelectedNodes(nodes: SelectedNode[]) {
@@ -297,7 +297,9 @@ export class DataTableComponent<T extends object> {
       | 'pageStatus'
       | 'taskStatus'
       | 'archivedStatus'
-      | 'pageArchivedStatus',
+      | 'pageArchivedStatus'
+      | 'languageStatus'
+      | 'portalPageType',
     value: any, // template is untyped
   ) {
     if (filterConfigType === 'category') {
@@ -324,10 +326,10 @@ export class DataTableComponent<T extends object> {
     // Custom filter for COPS types filter so its not using 'in' but 'contains' for an array of values
     this.filterService.register(
       'arrayContains',
-      (rowValue: any[], filterValue: string[]): boolean => {
-        if (!filterValue || filterValue.length === 0) return true;
-        if (!Array.isArray(rowValue)) return false;
-        return filterValue.some((fv) => rowValue.includes(fv));
+      (value: any[], filters: string[]): boolean => {
+        if (!filters || filters.length === 0) return true;
+        if (!Array.isArray(value)) return false;
+        return filters.some((fv) => value.includes(fv));
       },
     );
   }
