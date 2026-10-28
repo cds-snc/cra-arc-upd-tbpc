@@ -1603,7 +1603,7 @@
   "accessibility-code-snippet": "Code Snippet",
   "accessibility-automated-score": "Automated Accessibility Score",
   "accessibility-automated-score-tooltip": "Weighted by the severity of each failed and passed rule. Level AAA and experimental results are excluded.",
-  "accessibility-all-tests-passed": "All automated accessibility tests passed. Remember that automated testing can only detect about 30% of accessibility issues - manual testing is still required.",
+  "accessibility-all-tests-passed": "All automated accessibility tests passed. Automated testing cannot verify every WCAG success criterion, so manual testing is still required.",
   "accessibility-element": "Element",
   "accessibility-failed-tests-count": "Failed Tests ({{count}})",
   "accessibility-help": "Help",

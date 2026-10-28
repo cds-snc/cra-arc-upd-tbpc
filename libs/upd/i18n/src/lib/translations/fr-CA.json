@@ -1987,7 +1987,7 @@
   "accessibility-code-snippet": "Extrait de code",
   "accessibility-automated-score": "Score d'accessibilité automatisé",
   "accessibility-automated-score-tooltip": "Pondéré selon la gravité de chaque règle échouée et réussie. Les résultats de niveau AAA et expérimentaux sont exclus.",
-  "accessibility-all-tests-passed": "Tous les tests d'accessibilité automatisés ont réussi. N'oubliez pas que les tests automatisés ne peuvent détecter qu'environ 30% des problèmes d'accessibilité - des tests manuels sont toujours nécessaires.",
+  "accessibility-all-tests-passed": "Tous les tests d'accessibilité automatisés ont réussi. Les tests automatisés ne peuvent pas vérifier tous les critères de succès WCAG. Des tests manuels sont donc toujours nécessaires.",
   "accessibility-element": "Élément",
   "accessibility-failed-tests-count": "Tests échoués ({{count}})",
   "accessibility-help": "Aide",
