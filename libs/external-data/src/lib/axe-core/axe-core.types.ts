@@ -1,6 +1,7 @@
 import type {
   AccessibilityConformanceLevel,
   AccessibilityImpact,
+  AccessibilityViewport,
 } from '@dua-upd/types-common';
 
 export const WCAG_TAGS = [
@@ -10,6 +11,13 @@ export const WCAG_TAGS = [
   'wcag21aa',
   'best-practice',
 ] as const;
+
+export type { AccessibilityViewport };
+
+export const AUDIT_VIEWPORTS: readonly AccessibilityViewport[] = [
+  'desktop',
+  'mobile',
+];
 
 export const EXCLUDED_SELECTORS = [
   '.global-header nav',
@@ -30,7 +38,25 @@ export const AAA_RULES = [
   'meta-refresh-no-exceptions',
 ] as const;
 
-export const OPT_IN_RULES = ['target-size', ...AAA_RULES] as const;
+/**
+ * axe ships these disabled and still in development, so they may produce false
+ * positives. Enabled for the reference-only tab and excluded from scoring.
+ */
+export const EXPERIMENTAL_RULES = [
+  'css-orientation-lock',
+  'focus-order-semantics',
+  'hidden-content',
+  'label-content-name-mismatch',
+  'p-as-heading',
+  'table-fake-caption',
+  'td-has-header',
+] as const;
+
+export const OPT_IN_RULES = [
+  'target-size',
+  ...AAA_RULES,
+  ...EXPERIMENTAL_RULES,
+] as const;
 
 export const OPT_IN_RULE_OPTIONS: Record<string, { enabled: boolean }> =
   Object.fromEntries(OPT_IN_RULES.map((id) => [id, { enabled: true }]));
@@ -50,6 +76,19 @@ export const CONFORMANCE_LEVEL_TAGS: readonly (readonly [
 ];
 
 export const UNSCORED_LEVELS: readonly AccessibilityConformanceLevel[] = ['AAA'];
+
+/**
+ * Node detail is only actionable where a person has to do something, so it is kept
+ * for failures and manual checks and dropped for passes and non-applicable results.
+ * Without this a single response reached 4.7 MB, 14,858 of its 18,330 nodes being
+ * `hidden-content` passes.
+ */
+export const NODE_DETAIL_CATEGORIES: readonly string[] = [
+  'failed',
+  'manual_check',
+];
+
+export const MAX_AUDIT_NODES = 25;
 
 export const IMPACT_WEIGHTS: Record<AccessibilityImpact, number> = {
   critical: 10,

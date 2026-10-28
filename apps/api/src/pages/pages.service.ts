@@ -613,15 +613,11 @@ export class PagesService {
       return {
         en: {
           success: true,
-          data: {
-            desktop: results.en,
-          },
+          data: results.en,
         },
         fr: {
           success: true,
-          data: {
-            desktop: results.fr,
-          },
+          data: results.fr,
         },
       };
     } catch (error) {

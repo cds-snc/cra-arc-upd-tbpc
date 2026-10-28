@@ -10,6 +10,7 @@ import frLocale from 'axe-core/locales/fr.json';
 import { Retry } from '@dua-upd/utils-common';
 import type {
   AccessibilityAudit,
+  AccessibilityViewportResults,
   AccessibilityAuditNode,
   AccessibilityCheckResult,
   AccessibilityConformanceLevel,
@@ -18,13 +19,17 @@ import type {
 } from '@dua-upd/types-common';
 import { AxeCoreClient } from './axe-core.client';
 import {
+  AUDIT_VIEWPORTS,
   CONFORMANCE_LEVEL_TAGS,
   EXCLUDED_SELECTORS,
   IMPACT_WEIGHTS,
+  MAX_AUDIT_NODES,
+  NODE_DETAIL_CATEGORIES,
   OPT_IN_RULE_OPTIONS,
   STORED_HTML_DISABLED_RULES,
   UNSCORED_LEVELS,
   WCAG_TAGS,
+  type AccessibilityViewport,
   type AxeAuditSource,
   type StoredHtmlSnapshot,
 } from './axe-core.types';
@@ -39,16 +44,6 @@ const wcagTagRegex = /^wcag(\d)(\d)(\d+)?$/;
 
 const checkTypes = ['any', 'all', 'none'] as const;
 
-const categoryScores: Record<
-  AccessibilityAudit['category'],
-  { score: number | null; displayMode: string }
-> = {
-  failed: { score: 0, displayMode: 'binary' },
-  passed: { score: 1, displayMode: 'binary' },
-  manual_check: { score: null, displayMode: 'manual' },
-  not_applicable: { score: null, displayMode: 'notApplicable' },
-};
-
 const frRules = (
   frLocale as {
     rules: Record<string, { help?: string; description?: string }>;
@@ -58,6 +53,7 @@ const frRules = (
 export type AxeAuditOptions = {
   withScripts?: boolean;
   settleMs?: number;
+  viewport?: AccessibilityViewport;
 };
 
 @Injectable()
@@ -88,31 +84,52 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     return this.audit({ kind: 'html', url, html, title, lang }, options);
   }
 
+  /**
+   * Both viewports run concurrently: navigation dominates and is IO-bound, so the
+   * pair costs about the same wall-clock as one (13.3s vs 22.4s sequential).
+   */
   async runAccessibilityTestForBothLocales(
     url: string,
     options: AxeAuditOptions = {},
-  ): Promise<{ en: AccessibilityTestResult; fr: AccessibilityTestResult }> {
-    const en = await this.runAccessibilityTest(url, options);
+  ): Promise<{ en: AccessibilityViewportResults; fr: AccessibilityViewportResults }> {
+    const results = await Promise.all(
+      AUDIT_VIEWPORTS.map((viewport) =>
+        this.runAccessibilityTest(url, { ...options, viewport }),
+      ),
+    );
 
-    return { en, fr: this.translateResultToFrench(en) };
+    const en = Object.fromEntries(
+      AUDIT_VIEWPORTS.map((viewport, i) => [viewport, results[i]]),
+    ) as AccessibilityViewportResults;
+
+    const fr = Object.fromEntries(
+      AUDIT_VIEWPORTS.map((viewport, i) => [
+        viewport,
+        this.translateResultToFrench(results[i]),
+      ]),
+    ) as AccessibilityViewportResults;
+
+    return { en, fr };
   }
 
   private async audit(
     source: AxeAuditSource,
-    { withScripts = true, settleMs = 2500 }: AxeAuditOptions,
+    { withScripts = true, settleMs = 2500, viewport = 'desktop' }: AxeAuditOptions,
   ): Promise<AccessibilityTestResult> {
-    this.logger.log(`Running accessibility test for ${source.url}`);
+    this.logger.log(
+      `Running accessibility test for ${source.url} (${viewport})`,
+    );
 
     if (source.kind === 'url') {
       assertAuditableUrl(source.url);
     }
 
-    const context = await this.client.createContext();
+    const context = await this.client.createContext(viewport);
 
     try {
       const page = await context.newPage();
 
-      await page.route('**/*', (route) => {
+      await page.route('**/*', async (route) => {
         const request = route.request();
 
         if (isAnalyticsRequest(request.url())) {
@@ -121,6 +138,10 @@ export class AxeCoreService implements BeforeApplicationShutdown {
 
         if (!withScripts && request.resourceType() === 'script') {
           return route.abort();
+        }
+
+        if (await this.client.tryServeFromCache(route, source.url)) {
+          return;
         }
 
         return route.continue();
@@ -168,7 +189,7 @@ export class AxeCoreService implements BeforeApplicationShutdown {
 
       const results = await builder.analyze();
 
-      return this.mapResults(source.url, results);
+      return this.mapResults(source.url, results, viewport);
     } catch (error) {
       this.logger.error(
         `Failed to run accessibility test for ${source.url}:`,
@@ -183,12 +204,13 @@ export class AxeCoreService implements BeforeApplicationShutdown {
   private mapResults(
     url: string,
     results: AxeResults,
+    viewport: AccessibilityViewport,
   ): AccessibilityTestResult {
     const score = this.calculateScore(results);
 
     return {
       url,
-      strategy: 'desktop',
+      viewport,
       score,
       scoreDisplay: `${Math.round(score * 100)}%`,
       audits: this.mapAxeResultsToAudits(results),
@@ -213,24 +235,27 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     result: Result,
     category: AccessibilityAudit['category'],
   ): AccessibilityAudit {
-    const nodes = result.nodes.map((node) => this.mapNode(node));
+    const detailed = NODE_DETAIL_CATEGORIES.includes(category);
+    const nodes = detailed
+      ? result.nodes.slice(0, MAX_AUDIT_NODES).map((node) => this.mapNode(node))
+      : undefined;
 
     return {
       id: result.id,
       title: result.help,
       description: result.description,
-      ...categoryScores[category],
       category,
-      snippet: nodes[0]?.html,
-      selector: nodes[0]?.target.join(' '),
+      snippet: nodes?.[0]?.html,
+      selector: nodes?.[0]?.target.join(' '),
       impact: (result.impact as AccessibilityImpact) || undefined,
       tags: result.tags,
       helpUrl: result.helpUrl,
       nodes,
       conformanceLevel: this.getConformanceLevel(result.tags),
+      experimental: this.isExperimental(result.tags) || undefined,
       wcagCriteria: this.extractWcagCriteria(result.tags),
-      howToFix: nodes[0]?.failureSummary,
-      affectedCount: nodes.length,
+      howToFix: nodes?.[0]?.failureSummary,
+      affectedCount: result.nodes.length,
     };
   }
 
@@ -260,7 +285,15 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     )?.[0];
   }
 
+  private isExperimental(tags: string[]): boolean {
+    return tags.includes('experimental');
+  }
+
   private isScored(tags: string[]): boolean {
+    if (this.isExperimental(tags)) {
+      return false;
+    }
+
     const level = this.getConformanceLevel(tags);
 
     return !level || !UNSCORED_LEVELS.includes(level);
@@ -290,9 +323,13 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     const scored = (rules: Result[]) =>
       rules.filter(({ tags }) => this.isScored(tags));
 
-    const passedWeight = this.totalImpactWeight(scored(results.passes));
-    const totalWeight =
-      passedWeight + this.totalImpactWeight(scored(results.violations));
+    const violations = scored(results.violations);
+    const violatedIds = new Set(violations.map(({ id }) => id));
+
+    const passedWeight = this.totalImpactWeight(
+      scored(results.passes).filter(({ id }) => !violatedIds.has(id)),
+    );
+    const totalWeight = passedWeight + this.totalImpactWeight(violations);
 
     return totalWeight === 0 ? 1 : passedWeight / totalWeight;
   }
