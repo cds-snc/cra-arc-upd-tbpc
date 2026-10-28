@@ -48,7 +48,6 @@ export type AccessibilityAudit = {
   description: string;
   category: 'failed' | 'manual_check' | 'passed' | 'not_applicable';
   snippet?: string;
-  helpText?: string;
   selector?: string;
   impact?: AccessibilityImpact;
   tags?: string[];

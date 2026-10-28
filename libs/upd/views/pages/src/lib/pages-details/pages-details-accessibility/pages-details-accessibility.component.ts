@@ -1,245 +1,382 @@
-import { Component, inject, computed, SecurityContext } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { I18nFacade } from '@dua-upd/upd/state';
 import { PagesDetailsFacade } from '../+state/pages-details.facade';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { TranslateService } from '@ngx-translate/core';
 import { globalColours } from '@dua-upd/utils-common';
 import type {
   ColumnConfig,
   AccessibilityAudit,
+  AccessibilityImpact,
+  AccessibilityViewport,
 } from '@dua-upd/types-common';
+import {
+  AUTOMATED_CRITERIA_COUNT,
+  MANUAL_CRITERIA,
+  WCAG_AA_CRITERIA_COUNT,
+} from './manual-criteria';
+
+const VIEWPORTS: readonly AccessibilityViewport[] = ['desktop', 'mobile'];
+
+type CategorizedAudits = {
+  failed: AccessibilityAudit[];
+  manual: AccessibilityAudit[];
+  passed: AccessibilityAudit[];
+  notApplicable: AccessibilityAudit[];
+  reference: AccessibilityAudit[];
+  experimental: AccessibilityAudit[];
+};
+
+type AuditTableRow = { category: string; count: number };
+
+/** `globalColours` carries no red, so the failure series needs its own colour. */
+const FAILED_SERIES_COLOUR = '#df2929';
+
+const IMPACT_ORDER: Record<string, number> = {
+  critical: 0,
+  serious: 1,
+  moderate: 2,
+  minor: 3,
+};
 
 @Component({
-    selector: 'upd-pages-details-accessibility',
-    templateUrl: './pages-details-accessibility.component.html',
-    styleUrls: ['./pages-details-accessibility.component.css'],
-    standalone: false
+  selector: 'upd-pages-details-accessibility',
+  templateUrl: './pages-details-accessibility.component.html',
+  styleUrls: ['./pages-details-accessibility.component.css'],
+  standalone: false,
 })
 export class PagesDetailsAccessibilityComponent {
   private i18n = inject(I18nFacade);
   private pageDetailsService = inject(PagesDetailsFacade);
-  private sanitizer = inject(DomSanitizer);
-  private translateService = inject(TranslateService);
 
-  currentLang$ = this.i18n.currentLang$;
   pageUrl$ = this.pageDetailsService.pageUrl$;
-  currentLang = toSignal(this.currentLang$);
+  currentLang = this.i18n.currentLang;
   url = toSignal(this.pageUrl$);
 
   accessibilityData = toSignal(this.pageDetailsService.accessibility$);
   accessibilityError = toSignal(this.pageDetailsService.accessibilityError$);
-  private _accessibilityLoading = toSignal(this.pageDetailsService.accessibilityLoading$);
+  private _accessibilityLoading = toSignal(
+    this.pageDetailsService.accessibilityLoading$,
+  );
 
-  // Only show loading if we don't have cached data for current page
-  isTestRunning = computed(() => {
-    const data = this.accessibilityData();
-    const loading = this._accessibilityLoading();
-    // Show loading only if loading is true AND we don't have data yet
-    return loading && !data;
+  private manualCriteriaSection =
+    viewChild<ElementRef<HTMLElement>>('manualCriteriaSection');
+
+  readonly automatedCriteriaCount = AUTOMATED_CRITERIA_COUNT;
+  readonly wcagCriteriaCount = WCAG_AA_CRITERIA_COUNT;
+  readonly manualCriteriaCount = MANUAL_CRITERIA.length;
+
+  /**
+   * English links to the Understanding page, which explains how to test the criterion;
+   * W3C publishes no French Understanding, so French links to the authorized
+   * translation of the Recommendation instead.
+   */
+  manualCriteria = computed(() => {
+    const isFrench = this.currentLang() === 'fr-CA';
+
+    return MANUAL_CRITERIA.map((criterion) => ({
+      num: criterion.num,
+      level: criterion.level,
+      title: isFrench ? criterion.fr : criterion.en,
+      url: isFrench
+        ? `https://www.w3.org/Translations/WCAG22-fr/#${criterion.slug}`
+        : `https://www.w3.org/WAI/WCAG22/Understanding/${criterion.slug}.html`,
+    }));
   });
+
+  readonly viewportLabels: Record<string, string> = {
+    desktop: 'accessibility-viewport-desktop',
+    mobile: 'accessibility-viewport-mobile',
+  } satisfies Record<AccessibilityViewport, string>;
+
+  readonly detailedCategories: Record<string, boolean> = {
+    failed: true,
+    manual_check: true,
+  };
+
+  readonly categoryLabels: Record<string, string> = {
+    failed: 'accessibility-failed-tests',
+    manual_check: 'accessibility-manual-checks',
+    passed: 'accessibility-passed-tests',
+    not_applicable: 'accessibility-not-applicable',
+  } satisfies Record<AccessibilityAudit['category'], string>;
+
+  readonly levelClasses: Record<string, string> = {
+    A: 'border text-muted',
+    AA: 'border text-muted',
+    AAA: 'border text-muted',
+    'best-practice': 'bg-warning text-dark',
+  };
+
+  readonly impactClasses: Record<string, string> = {
+    critical: 'text-danger',
+    serious: 'text-danger',
+    moderate: 'text-warning',
+    minor: 'text-muted',
+  } satisfies Record<AccessibilityImpact, string>;
+
+  isTestRunning = computed(
+    () => this._accessibilityLoading() && !this.accessibilityData(),
+  );
 
   errorMessage = computed(() => {
     const error = this.accessibilityError();
-    return error ? this.translateService.instant(error) : '';
+    return error ? this.i18n.service.instant(error) : '';
   });
 
   testResults = computed(() => {
     const data = this.accessibilityData();
-    const lang = this.currentLang();
-    const langKey = lang === 'fr-CA' ? 'fr' : 'en';
+    const langKey = this.currentLang() === 'fr-CA' ? 'fr' : 'en';
 
-    if (data && data[langKey]) {
-      return data[langKey];
-    }
-    return null;
+    return data?.[langKey] ?? null;
   });
 
-  desktopChartData = computed(() => {
-    const results = this.testResults();
-    if (results?.data?.desktop?.audits) {
-      return this.getAuditDistributionData(results.data.desktop.audits);
-    }
-    return null;
+  private viewportResults = computed(() => this.testResults()?.data ?? null);
+
+  private auditedViewports = computed(() => {
+    const data = this.viewportResults();
+
+    return data ? VIEWPORTS.filter((viewport) => data[viewport]) : [];
   });
 
-  desktopMetrics = computed(() => {
-    const results = this.testResults();
-    if (results?.data?.desktop?.audits) {
-      return this.getAutomatedTestMetrics(results.data.desktop.audits);
+  /**
+   * One self-contained report per viewport — overview, metrics and findings — so that
+   * each tab describes a single screen size. A merged view produced contradictory
+   * statuses, because the ARIA rules are `not_applicable` on desktop and `passed` on
+   * mobile, where canada.ca serves the markup they test.
+   */
+  viewportReports = computed(() => {
+    const data = this.viewportResults();
+
+    if (!data) {
+      return null;
     }
-    return null;
+
+    return this.auditedViewports().map((viewport) => {
+      const audits = data[viewport]?.audits ?? [];
+      const categorized = this.categorize(audits);
+      const table = this.tableFor(categorized);
+
+      return {
+        viewport,
+        scoreDisplay: data[viewport]?.scoreDisplay ?? '',
+        testedAt: data[viewport]?.testedAt,
+        verdict: this.verdictFor(categorized.failed),
+        categorized,
+        metrics: this.metricsFor(categorized),
+        table,
+        chart: this.chartFor(table),
+      };
+    });
   });
 
-  auditTableCols = computed<ColumnConfig<{ category: string; count: number }>[]>(() => [
-    {
-      field: 'category',
-      header: 'Category',
-      translate: true,
-    },
-    {
-      field: 'count',
-      header: 'Count',
-      pipe: 'number',
-    }
-  ]);
+  /**
+   * AAA and experimental results are split out rather than filtered by category, so
+   * they can never reach the score, the conformance verdict or the failure counts.
+   */
+  private categorize(audits: AccessibilityAudit[]): CategorizedAudits {
+    const scored = audits.filter(
+      (audit) => !audit.experimental && audit.conformanceLevel !== 'AAA',
+    );
 
-  auditTableData = computed(() => {
-    const results = this.testResults();
-    if (!results?.data?.desktop?.audits) return null;
+    const failed = scored
+      .filter((audit) => audit.category === 'failed')
+      .sort(this.byConformanceThenImpact);
 
-    const categorized = this.getCategorizedAudits(results.data.desktop.audits);
-    return [
-      { category: 'accessibility-failed-tests', count: categorized.failed.length },
-      { category: 'accessibility-passed-tests', count: categorized.passed.length },
-      { category: 'accessibility-manual-checks', count: categorized.manual.length },
-      { category: 'accessibility-not-applicable', count: categorized.notApplicable.length }
-    ];
-  });
+    /**
+     * axe evaluates per node, so a rule with both failing and passing nodes comes back
+     * in `violations` *and* `passes`. Counting it in both buckets would count one rule
+     * twice in `totalAutomated` and credit a failing rule as a pass.
+     */
+    const failedIds = new Set(failed.map((audit) => audit.id));
 
-  private manualVerificationMapping: { [key: string]: string } = {
-    'Interactive controls are keyboard focusable': 'accessibility-manual-interactive-control',
-    'Interactive elements indicate their purpose and state': 'accessibility-manual-interactive-elements',
-    'The page has a logical tab order': 'accessibility-manual-logical-tab',
-    'Visual order on the page follows DOM order': 'accessibility-manual-dom-order',
-    'User focus is not accidentally trapped in a region': 'accessibility-manual-focus-trap',
-    'The user\'s focus is directed to new content added to the page': 'accessibility-manual-new-content',
-    'HTML5 landmark elements are used to improve navigation': 'accessibility-manual-html5-landmark',
-    'Offscreen content is hidden from assistive technology': 'accessibility-manual-offscreen-content',
-    'Custom controls have associated labels': 'accessibility-manual-custom-control',
-    'Custom controls have ARIA roles': 'accessibility-manual-aria-roles'
+    return {
+      failed,
+      manual: scored
+        .filter((audit) => audit.category === 'manual_check')
+        .sort(this.byConformanceThenImpact),
+      passed: scored.filter(
+        (audit) => audit.category === 'passed' && !failedIds.has(audit.id),
+      ),
+      notApplicable: scored.filter(
+        (audit) => audit.category === 'not_applicable',
+      ),
+      reference: audits.filter(
+        (audit) => !audit.experimental && audit.conformanceLevel === 'AAA',
+      ),
+      experimental: audits.filter((audit) => audit.experimental),
+    };
+  }
+
+  /**
+   * Conformance failures sort above best-practice ones, so what actually breaks WCAG
+   * is read first; impact orders each group. Best-practice rules carry no criterion
+   * and cannot affect conformance, which is why the verdict count and the Failed tab
+   * count legitimately differ.
+   */
+  private byConformanceThenImpact = (
+    a: AccessibilityAudit,
+    b: AccessibilityAudit,
+  ): number => {
+    const blocking = (audit: AccessibilityAudit) =>
+      audit.conformanceLevel === 'A' || audit.conformanceLevel === 'AA' ? 0 : 1;
+
+    return (
+      blocking(a) - blocking(b) ||
+      (IMPACT_ORDER[a.impact ?? ''] ?? 9) - (IMPACT_ORDER[b.impact ?? ''] ?? 9)
+    );
   };
 
-
-  getCategorizedAudits(audits: AccessibilityAudit[]) {
-    const processedAudits = audits.map(audit => {
-      if (audit.category === 'manual_check') {
-        const translationKey = this.manualVerificationMapping[audit.title];
-        if (translationKey) {
-          return {
-            ...audit,
-            title: this.translateService.instant(translationKey),
-            description: this.translateService.instant(`${translationKey}-description`)
-          };
-        }
-      }
-      return audit;
-    });
+  /**
+   * WCAG conformance is binary: a single Level A or AA failure means the page does
+   * not conform, however high the score. Best-practice failures carry no criterion
+   * and so cannot affect conformance.
+   */
+  private verdictFor(failed: AccessibilityAudit[]) {
+    const blocking = failed.filter(
+      (audit) =>
+        audit.conformanceLevel === 'A' || audit.conformanceLevel === 'AA',
+    );
 
     return {
-      failed: processedAudits.filter(audit => audit.category === 'failed'),
-      passed: processedAudits.filter(audit => audit.category === 'passed'),
-      manual: processedAudits.filter(audit => audit.category === 'manual_check'),
-      notApplicable: processedAudits.filter(audit => audit.category === 'not_applicable')
+      conformant: blocking.length === 0,
+      blockingCount: blocking.length,
+      affectedElements: blocking.reduce(
+        (total, audit) => total + (audit.affectedCount ?? 0),
+        0,
+      ),
+      bestPracticeCount: failed.length - blocking.length,
     };
   }
 
-  getAuditDistributionData(audits: AccessibilityAudit[]) {
-    const categorized = this.getCategorizedAudits(audits);
-    const values = [
-      categorized.failed.length,
-      categorized.passed.length,
-      categorized.manual.length,
-      categorized.notApplicable.length
-    ];
-    
-    const labelKeys = [
-      'accessibility-failed-tests',
-      'accessibility-passed-tests',
-      'accessibility-manual-checks',
-      'accessibility-not-applicable'
-    ];
-
-    const colors = [
-      '#df2929',
-      globalColours[2],
-      globalColours[1],
-      globalColours[0]
-    ];
-    
-    const filteredData = values.reduce((acc, value, index) => {
-      if (value > 0) {
-        acc.series.push(value);
-        acc.labels.push(this.translateService.instant(labelKeys[index]));
-        acc.colors.push(colors[index]);
-      }
-      return acc;
-    }, { series: [] as number[], labels: [] as string[], colors: [] as string[] });
-    
-    if (filteredData.series.length === 0) {
-      return {
-        series: [{
-          name: 'Audits',
-          data: [1]
-        }],
-        labels: [this.translateService.instant('accessibility-no-data')],
-        colors: [globalColours[0]]
-      };
-    }
-    
-    return {
-      series: [{
-        name: 'Audits',
-        data: filteredData.series
-      }],
-      labels: filteredData.labels,
-      colors: filteredData.colors
-    };
-  }
-
-  getAutomatedTestMetrics(audits: AccessibilityAudit[]) {
-    const categorized = this.getCategorizedAudits(audits);
-    const automatedTestable = categorized.failed.length + categorized.passed.length;
-    const passRate = automatedTestable > 0 ?
-      Math.round((categorized.passed.length / automatedTestable) * 100) : 0;
+  private metricsFor(categorized: CategorizedAudits) {
+    const automatedTestable =
+      categorized.failed.length + categorized.passed.length;
 
     return {
       totalAutomated: automatedTestable,
       failed: categorized.failed.length,
       passed: categorized.passed.length,
-      passRate,
+      passRate:
+        automatedTestable > 0
+          ? Math.round((categorized.passed.length / automatedTestable) * 100)
+          : 0,
       manualChecks: categorized.manual.length,
-      notApplicable: categorized.notApplicable.length
+      manualElements: categorized.manual.reduce(
+        (total, audit) => total + (audit.affectedCount ?? 0),
+        0,
+      ),
+      notApplicable: categorized.notApplicable.length,
+      reference: categorized.reference.length,
+      experimental: categorized.experimental.length,
     };
   }
 
-  trackByAuditId(_index: number, audit: AccessibilityAudit): string {
-    return audit.id;
+  private tableFor(categorized: CategorizedAudits): AuditTableRow[] {
+    return [
+      {
+        category: 'accessibility-failed-tests',
+        count: categorized.failed.length,
+      },
+      {
+        category: 'accessibility-passed-tests',
+        count: categorized.passed.length,
+      },
+      {
+        category: 'accessibility-manual-checks',
+        count: categorized.manual.length,
+      },
+      {
+        category: 'accessibility-not-applicable',
+        count: categorized.notApplicable.length,
+      },
+    ];
   }
 
-  getScoreClass(score: number): string {
-    if (score > 0.5) return 'text-success';
-    return 'text-danger';
+  private chartFor(table: AuditTableRow[]) {
+    const colors = [
+      FAILED_SERIES_COLOUR,
+      globalColours[2],
+      globalColours[1],
+      globalColours[0],
+    ];
+
+    const populated = table.reduce(
+      (acc, { category, count }, index) => {
+        if (count > 0) {
+          acc.series.push(count);
+          acc.labels.push(this.i18n.service.instant(category));
+          acc.colors.push(colors[index]);
+        }
+        return acc;
+      },
+      { series: [] as number[], labels: [] as string[], colors: [] as string[] },
+    );
+
+    if (populated.series.length === 0) {
+      return {
+        series: [{ name: 'Audits', data: [1] }],
+        labels: [this.i18n.service.instant('accessibility-no-data')],
+        colors: [globalColours[0]],
+      };
+    }
+
+    return {
+      series: [{ name: 'Audits', data: populated.series }],
+      labels: populated.labels,
+      colors: populated.colors,
+    };
   }
+
+  auditTableCols = computed<ColumnConfig<AuditTableRow>[]>(() => [
+    {
+      field: 'category',
+      header: 'category',
+      translate: true,
+    },
+    {
+      field: 'count',
+      header: 'count',
+      pipe: 'number',
+    },
+  ]);
 
   getDequeUrl(audit: AccessibilityAudit): string {
-    const baseUrl = audit.helpUrl || `https://dequeuniversity.com/rules/axe/latest/${audit.id}`;
+    const baseUrl =
+      audit.helpUrl ||
+      `https://dequeuniversity.com/rules/axe/latest/${audit.id}`;
+
     if (this.currentLang() === 'fr-CA') {
-      return baseUrl.includes('?') ? `${baseUrl}&lang=fr` : `${baseUrl}?lang=fr`;
+      return baseUrl.includes('?')
+        ? `${baseUrl}&lang=fr`
+        : `${baseUrl}?lang=fr`;
     }
+
     return baseUrl;
   }
 
-  parseMarkdownLinks(description: string): SafeHtml {
-    const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  /**
+   * A plain fragment href is resolved by the router against the base URL and lands on
+   * the default route, so the jump is done here instead. Focus follows the scroll so
+   * the link behaves for keyboard users, not just visually.
+   */
+  scrollToManualCriteria(event: Event) {
+    event.preventDefault();
 
-    const isEnglish = this.currentLang() === 'en-CA';
+    const section = this.manualCriteriaSection()?.nativeElement;
 
-    const htmlDescription = description.replace(markdownLinkRegex, (_match, linkText, url) => {
-      let processedUrl = url;
-      if (!isEnglish && url.includes('https://developer.chrome.com/docs/lighthouse/accessibility')) {
-        processedUrl = url.includes('?') ? `${url}&hl=fr` : `${url}?hl=fr`;
-      }
-
-      return `<a href="${processedUrl}" target="_blank" rel="noopener noreferrer" class="text-primary">${linkText}</a>`;
-    });
-
-    return this.sanitizer.sanitize(SecurityContext.HTML, htmlDescription) || description;
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    section?.focus({ preventScroll: true });
   }
-
 
   runAccessibilityTest() {
     const currentUrl = this.url();
+
     if (currentUrl) {
       this.pageDetailsService.refreshAccessibilityTest(currentUrl);
     }
