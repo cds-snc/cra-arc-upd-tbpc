@@ -21,8 +21,7 @@ import {
   loadAccessibilityError,
   loadPagesDetailsError,
 } from './pages-details.actions';
-import { selectPagesDetailsData, selectAccessibilityData } from './pages-details.selectors';
-import * as PagesDetailsSelectors from './pages-details.selectors';
+import { selectPagesDetailsData } from './pages-details.selectors';
 import { UrlHash } from '@dua-upd/types-common';
 import type { LocalizedAccessibilityTestResponse } from '@dua-upd/types-common';
 
@@ -156,22 +155,6 @@ export class PagesDetailsEffects {
             }),
           ),
       ),
-    );
-  });
-
-  triggerAccessibilityOnPageLoad$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(loadPagesDetailsSuccess),
-      filter(({ data }) => !!data && !!data.url),
-      concatLatestFrom(() => [
-        this.store.select(PagesDetailsSelectors.selectPagesDetailsState)
-      ]),
-      filter(([{ data }, state]) => {
-        const url = data!.url;
-        const hasCache = !!state.accessibilityByUrl[url];
-        return !hasCache;
-      }),
-      map(([{ data }]) => loadAccessibilityInit({ url: data!.url })),
     );
   });
 }

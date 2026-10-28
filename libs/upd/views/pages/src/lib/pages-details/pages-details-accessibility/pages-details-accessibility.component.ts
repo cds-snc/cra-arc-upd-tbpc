@@ -126,7 +126,8 @@ export class PagesDetailsAccessibilityComponent {
   );
 
   errorMessage = computed(() => {
-    const error = this.accessibilityError();
+    const error = this.accessibilityError() ?? this.testResults()?.error;
+
     return error ? this.i18n.service.instant(error) : '';
   });
 
