@@ -23,19 +23,20 @@ type CachedAsset = {
 const CACHEABLE_ORIGINS = [
   'https://www.canada.ca/',
   'https://ajax.googleapis.com/',
+  'https://fonts.gstatic.com/',
 ];
 
 /**
- * Deliberately excludes images and media: those are per-page, so caching them would grow
- * without bound, and axe reads alt text from the DOM rather than pixels. Restricted to
- * these three, the cache held 12 entries / 0.83 MB across three pages and stays flat as
- * page count grows, because every page requests the same template assets.
+ * Matched on the URL's extension rather than Chromium's `resourceType`, which mislabels
+ * assets: WET-BOEW's `i18n/en.min.js`, `json-patch.min.js` and `jsonpointer.min.js` are
+ * all reported as `image` and so were never cached.
+ *
+ * Images and media are deliberately absent. Those are per-page, so caching them would
+ * grow without bound, and axe reads alt text from the DOM rather than pixels. Restricted
+ * this way the cache stays flat as page count grows, because every page requests the
+ * same template assets.
  */
-const CACHEABLE_RESOURCE_TYPES: ReadonlySet<string> = new Set([
-  'stylesheet',
-  'script',
-  'font',
-]);
+const CACHEABLE_EXTENSIONS = /\.(?:js|mjs|css|woff2?|ttf|otf|eot)(?:\?|$)/i;
 
 const MAX_CACHED_ASSETS = 200;
 
@@ -114,7 +115,7 @@ export class AxeCoreClient {
       request.method() !== 'GET' ||
       url === pageUrl ||
       !CACHEABLE_ORIGINS.some((origin) => url.startsWith(origin)) ||
-      !CACHEABLE_RESOURCE_TYPES.has(request.resourceType())
+      !CACHEABLE_EXTENSIONS.test(url)
     ) {
       return false;
     }

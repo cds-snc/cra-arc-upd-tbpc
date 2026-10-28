@@ -101,6 +101,18 @@ export const NODE_DETAIL_CATEGORIES: readonly string[] = [
 
 export const MAX_AUDIT_NODES = 25;
 
+/**
+ * WET-BOEW builds most of canada.ca's accessibility markup *after* the load event, and
+ * is not finished when `load` fires. Measured on the CRA home page, the DOM goes from
+ * 502 to 1,194 elements and ARIA attributes from 43 to 699 in the seconds afterwards.
+ * A fixed delay therefore audited a half-enhanced page and moved rules between
+ * `passed` and `not_applicable` from one run to the next; waiting on WET-BOEW's own
+ * readiness flag gave identical results across every run of a 12-run comparison.
+ *
+ * Bounded because a page that never loads WET-BOEW has no `wb` object to wait for.
+ */
+export const WET_BOEW_READY_TIMEOUT_MS = 20_000;
+
 export const IMPACT_WEIGHTS: Record<AccessibilityImpact, number> = {
   critical: 10,
   serious: 5,

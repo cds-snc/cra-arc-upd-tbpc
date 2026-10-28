@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import AxeBuilder from '@axe-core/playwright';
+import type { Page } from 'playwright';
 import type { AxeResults, NodeResult, Result } from 'axe-core';
 import frLocale from 'axe-core/locales/fr.json';
 import { Retry } from '@dua-upd/utils-common';
@@ -29,6 +30,7 @@ import {
   STORED_HTML_DISABLED_RULES,
   UNSCORED_LEVELS,
   WCAG22_LEVEL_TAGS,
+  WET_BOEW_READY_TIMEOUT_MS,
   WCAG_TAGS,
   type AccessibilityViewport,
   type AxeAuditSource,
@@ -53,7 +55,6 @@ const frRules = (
 
 export type AxeAuditOptions = {
   withScripts?: boolean;
-  settleMs?: number;
   viewport?: AccessibilityViewport;
 };
 
@@ -115,7 +116,7 @@ export class AxeCoreService implements BeforeApplicationShutdown {
 
   private async audit(
     source: AxeAuditSource,
-    { withScripts = true, settleMs = 2500, viewport = 'desktop' }: AxeAuditOptions,
+    { withScripts = true, viewport = 'desktop' }: AxeAuditOptions,
   ): Promise<AccessibilityTestResult> {
     this.logger.log(
       `Running accessibility test for ${source.url} (${viewport})`,
@@ -149,7 +150,9 @@ export class AxeCoreService implements BeforeApplicationShutdown {
       });
 
       if (source.kind === 'url') {
-        const response = await page.goto(source.url, { waitUntil: 'load' });
+        const response = await page.goto(source.url, {
+          waitUntil: 'domcontentloaded',
+        });
 
         // without this an error page would be audited and scored as if it were the page
         if (response && !response.ok()) {
@@ -169,10 +172,8 @@ export class AxeCoreService implements BeforeApplicationShutdown {
         );
       }
 
-      // WET-BOEW enhances markup after load; auditing before it settles misses
-      // the ARIA attributes and elements it generates
-      if (withScripts && settleMs > 0) {
-        await page.waitForTimeout(settleMs);
+      if (withScripts) {
+        await this.waitForEnhancement(page);
       }
 
       const rules =
@@ -199,6 +200,28 @@ export class AxeCoreService implements BeforeApplicationShutdown {
       throw error;
     } finally {
       await context.close();
+    }
+  }
+
+  /**
+   * Resolves once WET-BOEW reports itself ready, or when the wait times out, in which
+   * case the page is audited as it stands rather than failing the whole run.
+   */
+  private async waitForEnhancement(page: Page): Promise<void> {
+    try {
+      await page.waitForFunction(
+        // `globalThis` rather than `window`: this runs in the page, but it is
+        // type-checked in a Node project with no DOM lib.
+        () =>
+          (globalThis as unknown as { wb?: { isReady?: boolean } }).wb
+            ?.isReady === true,
+        null,
+        { timeout: WET_BOEW_READY_TIMEOUT_MS },
+      );
+    } catch {
+      this.logger.warn(
+        `WET-BOEW did not report ready within ${WET_BOEW_READY_TIMEOUT_MS}ms, auditing the page as it stands`,
+      );
     }
   }
 
