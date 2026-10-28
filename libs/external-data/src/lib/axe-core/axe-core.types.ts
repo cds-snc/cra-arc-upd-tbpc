@@ -78,6 +78,17 @@ export const CONFORMANCE_LEVEL_TAGS: readonly (readonly [
 export const UNSCORED_LEVELS: readonly AccessibilityConformanceLevel[] = ['AAA'];
 
 /**
+ * Criteria added in WCAG 2.2. They run and are reported, but are excluded from the
+ * score and the conformance verdict, which gate on WCAG 2.1 AA.
+ *
+ * Matched exactly, never by prefix: axe also tags criterion numbers, so `wcag221`,
+ * `wcag222` and `wcag224` are SC 2.2.1/2.2.2/2.2.4 of WCAG 2.0 — not WCAG 2.2. Of the
+ * 105 rules axe ships, only `target-size` (SC 2.5.8) carries a real 2.2 level tag; the
+ * other five 2.2 A/AA criteria have no automated test and sit in MANUAL_CRITERIA.
+ */
+export const WCAG22_LEVEL_TAGS: readonly string[] = ['wcag22a', 'wcag22aa'];
+
+/**
  * Node detail is only actionable where a person has to do something, so it is kept
  * for failures and manual checks and dropped for passes and non-applicable results.
  * Without this a single response reached 4.7 MB, 14,858 of its 18,330 nodes being

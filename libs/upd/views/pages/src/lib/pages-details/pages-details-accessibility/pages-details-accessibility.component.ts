@@ -28,6 +28,7 @@ type CategorizedAudits = {
   manual: AccessibilityAudit[];
   passed: AccessibilityAudit[];
   notApplicable: AccessibilityAudit[];
+  advisory: AccessibilityAudit[];
   reference: AccessibilityAudit[];
   experimental: AccessibilityAudit[];
 };
@@ -181,7 +182,10 @@ export class PagesDetailsAccessibilityComponent {
    */
   private categorize(audits: AccessibilityAudit[]): CategorizedAudits {
     const scored = audits.filter(
-      (audit) => !audit.experimental && audit.conformanceLevel !== 'AAA',
+      (audit) =>
+        !audit.experimental &&
+        audit.conformanceLevel !== 'AAA' &&
+        !audit.advisory,
     );
 
     const failed = scored
@@ -205,6 +209,12 @@ export class PagesDetailsAccessibilityComponent {
       ),
       notApplicable: scored.filter(
         (audit) => audit.category === 'not_applicable',
+      ),
+      advisory: audits.filter(
+        (audit) =>
+          !audit.experimental &&
+          audit.conformanceLevel !== 'AAA' &&
+          audit.advisory,
       ),
       reference: audits.filter(
         (audit) => !audit.experimental && audit.conformanceLevel === 'AAA',
@@ -272,6 +282,7 @@ export class PagesDetailsAccessibilityComponent {
         0,
       ),
       notApplicable: categorized.notApplicable.length,
+      advisory: categorized.advisory.length,
       reference: categorized.reference.length,
       experimental: categorized.experimental.length,
     };

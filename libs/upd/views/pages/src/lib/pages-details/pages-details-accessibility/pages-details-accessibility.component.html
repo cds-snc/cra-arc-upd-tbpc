@@ -187,16 +187,19 @@
           </div>
         </div>
         <div class="row mt-3">
-          <div class="col-3">
+          <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-manual-checks-needed', tooltip: 'accessibility-manual-checks-tooltip', value: report.metrics.manualElements }"></ng-container>
           </div>
-          <div class="col-3">
+          <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-not-applicable-card', tooltip: 'accessibility-not-applicable-card-tooltip', value: report.metrics.notApplicable }"></ng-container>
           </div>
-          <div class="col-3">
+          <div class="col-6 col-md">
+            <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-advisory-tab', tooltip: 'accessibility-advisory-note', value: report.metrics.advisory }"></ng-container>
+          </div>
+          <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-reference-tab', tooltip: 'accessibility-reference-note', value: report.metrics.reference }"></ng-container>
           </div>
-          <div class="col-3">
+          <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-experimental-tab', tooltip: 'accessibility-experimental-note', value: report.metrics.experimental }"></ng-container>
           </div>
         </div>
@@ -227,6 +230,9 @@
             </p-tab>
             <p-tab value="notApplicable">
               {{ 'accessibility-not-applicable-count' | translate: { count: report.categorized.notApplicable.length } }}
+            </p-tab>
+            <p-tab value="advisory">
+              {{ 'accessibility-advisory-count' | translate: { count: report.categorized.advisory.length } }}
             </p-tab>
             <p-tab value="reference">
               {{ 'accessibility-reference-count' | translate: { count: report.categorized.reference.length } }}
@@ -274,6 +280,23 @@
               }
               @for (audit of report.categorized.notApplicable; track audit.id) {
                 <ng-container *ngTemplateOutlet="summaryRow; context: { audit: audit, textClass: 'text-muted' }"></ng-container>
+              }
+            </p-tabpanel>
+
+            <p-tabpanel value="advisory">
+              <div class="alert alert-warning" role="alert">
+                <i class="pi pi-exclamation-triangle"></i>
+                {{ 'accessibility-advisory-note' | translate }}
+              </div>
+              @if (report.categorized.advisory.length === 0) {
+                <p class="text-muted mb-0">{{ 'accessibility-none-in-group' | translate }}</p>
+              }
+              @for (audit of report.categorized.advisory; track audit.id + audit.category) {
+                @if (detailedCategories[audit.category]) {
+                  <ng-container *ngTemplateOutlet="finding; context: { audit: audit, showCategory: true }"></ng-container>
+                } @else {
+                  <ng-container *ngTemplateOutlet="summaryRow; context: { audit: audit, showCategory: true, textClass: audit.category === 'passed' ? 'text-success' : 'text-muted' }"></ng-container>
+                }
               }
             </p-tabpanel>
 

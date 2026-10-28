@@ -28,6 +28,7 @@ import {
   OPT_IN_RULE_OPTIONS,
   STORED_HTML_DISABLED_RULES,
   UNSCORED_LEVELS,
+  WCAG22_LEVEL_TAGS,
   WCAG_TAGS,
   type AccessibilityViewport,
   type AxeAuditSource,
@@ -253,6 +254,7 @@ export class AxeCoreService implements BeforeApplicationShutdown {
       nodes,
       conformanceLevel: this.getConformanceLevel(result.tags),
       experimental: this.isExperimental(result.tags) || undefined,
+      advisory: this.isAdvisory(result.tags) || undefined,
       wcagCriteria: this.extractWcagCriteria(result.tags),
       howToFix: nodes?.[0]?.failureSummary,
       affectedCount: result.nodes.length,
@@ -289,8 +291,12 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     return tags.includes('experimental');
   }
 
+  private isAdvisory(tags: string[]): boolean {
+    return WCAG22_LEVEL_TAGS.some((tag) => tags.includes(tag));
+  }
+
   private isScored(tags: string[]): boolean {
-    if (this.isExperimental(tags)) {
+    if (this.isExperimental(tags) || this.isAdvisory(tags)) {
       return false;
     }
 

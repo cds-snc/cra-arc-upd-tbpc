@@ -55,6 +55,7 @@ export type AccessibilityAudit = {
   nodes?: AccessibilityAuditNode[];
   conformanceLevel?: AccessibilityConformanceLevel;
   experimental?: boolean;
+  advisory?: boolean;
   wcagCriteria?: string[];
   howToFix?: string;
   affectedCount?: number;
