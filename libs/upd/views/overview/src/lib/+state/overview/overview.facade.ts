@@ -20,6 +20,7 @@ import {
   round,
   getArraySelectedAbsoluteChange,
   type UnwrapObservable,
+  getTaskStatus,
 } from '@dua-upd/utils-common';
 import type { PickByType } from '@dua-upd/utils-common';
 import * as OverviewActions from './overview.actions';
@@ -623,9 +624,22 @@ export class OverviewFacade {
   );
 
   topTasksTable = toSignal(
-    this.overviewData$.pipe(map((data) => data?.topTasksTable || [])),
+    this.overviewData$.pipe(
+      map((data) =>
+        (data?.topTasksTable || []).map((row) => ({
+          ...row,
+          taskStatus:
+            getTaskStatus(
+              row.performance_score,
+              row.historical_average,
+              row.historical_months,
+            ) || '',
+        })),
+      ),
+    ),
     { initialValue: [] },
   );
+
 
   searchAssessmentData$ = combineLatest([
     this.overviewData$,

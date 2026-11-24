@@ -282,6 +282,11 @@ export interface OverviewData
     _id: string;
     tmf_rank: number;
     title: string;
+    historical_average: number | null;
+    historical_months: number | null;
+    performance_score?: number | null;
+    performance_score_percent_change?: number | null;
+    performance_score_difference?: number | null;
     visits: number | null;
     calls: number | null;
     calls_per_100_visits: number | null;

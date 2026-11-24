@@ -16,6 +16,14 @@ import { OverviewFacade } from '../+state/overview/overview.facade';
 import { combineLatest } from 'rxjs';
 import type { UnwrapSignal } from '@dua-upd/utils-common/types';
 
+const taskStatusCategories = [
+  'On track',
+  'Watch',
+  'Action required',
+  'Pending',
+  'Unscored',
+] as const;
+
 @Component({
     selector: 'upd-overview-summary',
     templateUrl: './overview-summary.component.html',
@@ -297,6 +305,48 @@ export class OverviewSummaryComponent implements OnInit {
             link: '_id' 
           },
           translate: true,
+        },
+        {
+          field: 'taskStatus',
+          header: 'Status',
+          secondaryHeader: 'Performance Status',
+          group: 'tab-taskperformance',
+          type: 'label',
+          typeParam: 'taskStatus',
+          filterConfig: {
+            type: 'taskStatus',
+            categories: taskStatusCategories.map((status) => ({
+              name: status,
+              value: status,
+            })),
+          },
+          frozen: true,
+        },
+        {
+          field: 'performance_score',
+          header: 'rps',
+          pipe: 'percent',
+          group: 'tab-taskperformance',
+          tooltip: 'rps-tooltip',
+          hide: true,
+        },
+        {
+          field: 'performance_score_percent_change',
+          header: 'rps-change',
+          pipe: 'percent',
+          pipeParam: '1.0-2',
+          upGoodDownBad: true,
+          indicator: true,
+          useArrows: true,
+          showTextColours: true,
+          secondaryField: {
+            field: 'performance_score_difference',
+            pipe: 'number',
+            pipeParam: '1.0-2',
+          },
+          hide: true,
+          width: '175px',
+          group: 'tab-taskperformance',
         },
         {
           field: 'visits',
