@@ -102,6 +102,21 @@ export const NODE_DETAIL_CATEGORIES: readonly string[] = [
 export const MAX_AUDIT_NODES = 25;
 
 /**
+ * Reasons axe gives when its hit-test cannot resolve what is painted behind the text,
+ * so the element is unmeasurable rather than awaiting human judgement. canada.ca's
+ * stretched-link overlays and equal-height grids trigger them on every page measured
+ * (11 of 11, across 7 departments), so without this split a content owner is handed
+ * dozens of elements that hold nothing to review. Counted before MAX_AUDIT_NODES trims
+ * the detail, for the same reason as `affectedCount`.
+ */
+export const UNMEASURABLE_MESSAGE_KEYS: readonly string[] = [
+  'bgOverlap',
+  'elmPartiallyObscured',
+  'elmPartiallyObscuring',
+  'pseudoContent',
+];
+
+/**
  * WET-BOEW builds most of canada.ca's accessibility markup *after* the load event, and
  * is not finished when `load` fires. Measured on the CRA home page, the DOM goes from
  * 502 to 1,194 elements and ARIA attributes from 43 to 699 in the seconds afterwards.

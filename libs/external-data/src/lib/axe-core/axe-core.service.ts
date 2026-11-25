@@ -28,6 +28,7 @@ import {
   NODE_DETAIL_CATEGORIES,
   OPT_IN_RULE_OPTIONS,
   STORED_HTML_DISABLED_RULES,
+  UNMEASURABLE_MESSAGE_KEYS,
   UNSCORED_LEVELS,
   WCAG22_LEVEL_TAGS,
   WET_BOEW_READY_TIMEOUT_MS,
@@ -263,6 +264,9 @@ export class AxeCoreService implements BeforeApplicationShutdown {
     const nodes = detailed
       ? result.nodes.slice(0, MAX_AUDIT_NODES).map((node) => this.mapNode(node))
       : undefined;
+    const unmeasurableCount = detailed
+      ? this.countUnmeasurableNodes(result.nodes) || undefined
+      : undefined;
 
     return {
       id: result.id,
@@ -281,7 +285,20 @@ export class AxeCoreService implements BeforeApplicationShutdown {
       wcagCriteria: this.extractWcagCriteria(result.tags),
       howToFix: nodes?.[0]?.failureSummary,
       affectedCount: result.nodes.length,
+      unmeasurableCount,
     };
+  }
+
+  private countUnmeasurableNodes(nodes: NodeResult[]): number {
+    return nodes.filter((node) =>
+      checkTypes.some((checkType) =>
+        (node[checkType] || []).some(({ data }) =>
+          UNMEASURABLE_MESSAGE_KEYS.includes(
+            (data as { messageKey?: string } | undefined)?.messageKey ?? '',
+          ),
+        ),
+      ),
+    ).length;
   }
 
   private mapNode(node: NodeResult): AccessibilityAuditNode {

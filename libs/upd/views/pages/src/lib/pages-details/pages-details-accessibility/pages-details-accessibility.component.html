@@ -66,6 +66,12 @@
       </p>
     }
 
+    @if (audit.unmeasurableCount) {
+      <p class="small text-muted mb-2">
+        <i class="pi pi-info-circle me-1"></i>{{ 'accessibility-elements-unmeasurable' | translate: { unmeasurable: audit.unmeasurableCount, reviewable: audit.affectedCount - audit.unmeasurableCount } }}
+      </p>
+    }
+
     @if (audit.nodes?.length) {
       @if (audit.affectedCount > audit.nodes.length) {
         <p class="small text-muted mb-2">
@@ -193,9 +199,11 @@
           <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-not-applicable-card', tooltip: 'accessibility-not-applicable-card-tooltip', value: report.metrics.notApplicable }"></ng-container>
           </div>
-          <div class="col-6 col-md">
-            <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-advisory-tab', tooltip: 'accessibility-advisory-note', value: report.metrics.advisory }"></ng-container>
-          </div>
+          @if (showAdvisoryTab) {
+            <div class="col-6 col-md">
+              <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-advisory-tab', tooltip: 'accessibility-advisory-note', value: report.metrics.advisory }"></ng-container>
+            </div>
+          }
           <div class="col-6 col-md">
             <ng-container *ngTemplateOutlet="metricTile; context: { title: 'accessibility-reference-tab', tooltip: 'accessibility-reference-note', value: report.metrics.reference }"></ng-container>
           </div>
@@ -231,9 +239,11 @@
             <p-tab value="notApplicable">
               {{ 'accessibility-not-applicable-count' | translate: { count: report.categorized.notApplicable.length } }}
             </p-tab>
-            <p-tab value="advisory">
-              {{ 'accessibility-advisory-count' | translate: { count: report.categorized.advisory.length } }}
-            </p-tab>
+            @if (showAdvisoryTab) {
+              <p-tab value="advisory">
+                {{ 'accessibility-advisory-count' | translate: { count: report.categorized.advisory.length } }}
+              </p-tab>
+            }
             <p-tab value="reference">
               {{ 'accessibility-reference-count' | translate: { count: report.categorized.reference.length } }}
             </p-tab>
@@ -283,22 +293,24 @@
               }
             </p-tabpanel>
 
-            <p-tabpanel value="advisory">
-              <div class="alert alert-warning" role="alert">
-                <i class="pi pi-exclamation-triangle"></i>
-                {{ 'accessibility-advisory-note' | translate }}
-              </div>
-              @if (report.categorized.advisory.length === 0) {
-                <p class="text-muted mb-0">{{ 'accessibility-none-in-group' | translate }}</p>
-              }
-              @for (audit of report.categorized.advisory; track audit.id + audit.category) {
-                @if (detailedCategories[audit.category]) {
-                  <ng-container *ngTemplateOutlet="finding; context: { audit: audit, showCategory: true }"></ng-container>
-                } @else {
-                  <ng-container *ngTemplateOutlet="summaryRow; context: { audit: audit, showCategory: true, textClass: audit.category === 'passed' ? 'text-success' : 'text-muted' }"></ng-container>
+            @if (showAdvisoryTab) {
+              <p-tabpanel value="advisory">
+                <div class="alert alert-warning" role="alert">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  {{ 'accessibility-advisory-note' | translate }}
+                </div>
+                @if (report.categorized.advisory.length === 0) {
+                  <p class="text-muted mb-0">{{ 'accessibility-none-in-group' | translate }}</p>
                 }
-              }
-            </p-tabpanel>
+                @for (audit of report.categorized.advisory; track audit.id + audit.category) {
+                  @if (detailedCategories[audit.category]) {
+                    <ng-container *ngTemplateOutlet="finding; context: { audit: audit, showCategory: true }"></ng-container>
+                  } @else {
+                    <ng-container *ngTemplateOutlet="summaryRow; context: { audit: audit, showCategory: true, textClass: audit.category === 'passed' ? 'text-success' : 'text-muted' }"></ng-container>
+                  }
+                }
+              </p-tabpanel>
+            }
 
             <p-tabpanel value="reference">
               <div class="alert alert-info" role="alert">

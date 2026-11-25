@@ -59,4 +59,5 @@ export type AccessibilityAudit = {
   wcagCriteria?: string[];
   howToFix?: string;
   affectedCount?: number;
+  unmeasurableCount?: number;
 };

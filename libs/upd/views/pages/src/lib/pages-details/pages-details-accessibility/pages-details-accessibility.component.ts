@@ -73,6 +73,15 @@ export class PagesDetailsAccessibilityComponent {
   readonly manualCriteriaCount = MANUAL_CRITERIA.length;
 
   /**
+   * The WCAG 2.2 results are hidden pending confirmation of whether the applicable
+   * standard is 2.1 AA or 2.2 AA. `target-size` is the only 2.2-tagged rule axe ships
+   * and it still runs and is still returned, so this flag is the only thing to undo.
+   * If the standard turns out to be 2.2, promote it to scored via WCAG22_LEVEL_TAGS
+   * rather than showing it here.
+   */
+  readonly showAdvisoryTab = false;
+
+  /**
    * English links to the Understanding page, which explains how to test the criterion;
    * W3C publishes no French Understanding, so French links to the authorized
    * translation of the Recommendation instead.
@@ -279,7 +288,8 @@ export class PagesDetailsAccessibilityComponent {
           : 0,
       manualChecks: categorized.manual.length,
       manualElements: categorized.manual.reduce(
-        (total, audit) => total + (audit.affectedCount ?? 0),
+        (total, audit) =>
+          total + (audit.affectedCount ?? 0) - (audit.unmeasurableCount ?? 0),
         0,
       ),
       notApplicable: categorized.notApplicable.length,
